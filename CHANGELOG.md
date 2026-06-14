@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.7.1-beta] — 2026-06-14
+
+### Fixed
+- **Operations visibility:** published (`open`) events could not be started — the
+  "Έναρξη δράσης" button was shown but the state machine forbade `open → active`,
+  so activation silently failed and the event never appeared in Κέντρο Επιχειρήσεων.
+  Added `active` to the allowed transitions from `open`.
+
 ## [0.7.0-beta] — 2026-06-14
 
 ### Added
