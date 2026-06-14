@@ -57,6 +57,8 @@ $router->post('/events/{id}/reconcile', 'EventController@saveReconciliation');
 $router->post('/events/{id}/remind', 'EventController@remind');
 $router->post('/events/{id}/cancel', 'EventController@cancel');
 $router->post('/events/{id}/clone',  'EventController@clone');
+$router->post('/events/{id}/save-template', 'EventController@saveTemplate');
+$router->post('/event-templates/{id}/delete', 'EventController@deleteTemplate');
 
 /* Municipality admin: applications */
 $router->get('/events/{id}/applications', 'ApplicationController@index');

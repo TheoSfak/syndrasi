@@ -1,5 +1,6 @@
 <?php
-$isEdit = $event !== null;
+$isEdit = $event !== null && !empty($event['id']);
+$templateId = $templateId ?? null;
 $v = function ($key, $default = '') use ($event) {
     $oldVal = old($key, null);
     if ($oldVal !== null && $oldVal !== '') return $oldVal;
@@ -17,6 +18,7 @@ $dtVal = function ($key) use ($event) {
 
 <form method="post" action="<?= e(url($isEdit ? '/events/' . $event['id'] . '/update' : '/events/store')) ?>" class="card shadow-sm">
   <?= csrf_field() ?>
+  <?php if (!empty($templateId)): ?><input type="hidden" name="template_id" value="<?= (int) $templateId ?>"><?php endif; ?>
   <div class="card-body row g-3">
     <div class="col-md-8">
       <label class="form-label">Τίτλος *</label>

@@ -80,6 +80,13 @@
         <button class="btn btn-outline-secondary"><i class="bi bi-copy me-1"></i>Κλωνοποίηση</button>
       </form>
 
+      <!-- Save as reusable template -->
+      <form method="post" action="<?= e(url('/events/' . $event['id'] . '/save-template')) ?>" class="input-group" style="max-width:300px">
+        <?= csrf_field() ?>
+        <input type="text" name="template_name" class="form-control form-control-sm" placeholder="Όνομα προτύπου (προαιρετικό)">
+        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-bookmark-plus me-1"></i>Ως πρότυπο</button>
+      </form>
+
       <?php if (!empty($event['public_token']) && $event['status'] !== 'draft'): ?>
         <!-- Share public link -->
         <?php $publicUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')

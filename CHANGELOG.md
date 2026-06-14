@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.7.0-beta] — 2026-06-14
+
+### Added
+- **Event templates** (core fields + shifts): save an event as a reusable template
+  ("Ως πρότυπο" on the event page) and spin up new events from it ("Νέα από πρότυπο"
+  on the events list). Shifts are stored as offsets and re-created with concrete
+  datetimes on the new event. New `event_templates` table (migration 007) + `EventTemplate` model.
+
 ## [0.6.0-beta] — 2026-06-14
 
 ### Added
