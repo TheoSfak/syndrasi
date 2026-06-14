@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.7.2-beta] — 2026-06-14
+
+### Changed
+- **Operations auto-live:** published (`open`) events now appear automatically in
+  Κέντρο Επιχειρήσεων and the War Room once the current time is within their
+  start/end window — no manual "Έναρξη δράσης" required (manual start still works).
+  Also surfaced in "Ξεκινά σύντομα" within 60 minutes of start.
+
 ## [0.7.1-beta] — 2026-06-14
 
 ### Fixed
