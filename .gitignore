@@ -1,0 +1,33 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Runtime / generated
+/storage/logs/*
+/storage/exports/*
+/storage/uploads/*
+!/storage/logs/.gitkeep
+!/storage/exports/.gitkeep
+!/storage/uploads/.gitkeep
+
+# Local config with secrets (commit *.example instead if needed)
+config/local.php
+.env
+.env.*
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Build / working artifacts
+*.fix.php
+*.fix.js
+*.new.md
+*.new
+*.bak
+*.orig

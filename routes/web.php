@@ -1,0 +1,182 @@
+<?php
+/**
+ * SynDrasi - Route definitions.
+ * @var Router $router
+ */
+
+/* Public (no auth required) */
+$router->get('/public/events/{token}', 'PublicEventController@show');
+
+/* Home: redirect by role */
+$router->get('/', 'AuthController@home');
+
+/* Auth */
+$router->get('/login', 'AuthController@showLogin');
+$router->post('/login', 'AuthController@login');
+$router->post('/logout', 'AuthController@logout');
+$router->get('/forgot-password', 'AuthController@showForgotPassword');
+$router->post('/forgot-password', 'AuthController@sendResetLink');
+$router->get('/reset-password', 'AuthController@showResetForm');
+$router->post('/reset-password', 'AuthController@doResetPassword');
+$router->get('/profile', 'AuthController@profile');
+$router->post('/profile/password', 'AuthController@changePassword');
+
+/* Notifications */
+$router->get('/notifications', 'NotificationController@index');
+$router->post('/notifications/{id}/read', 'NotificationController@markRead');
+$router->post('/notifications/read-all', 'NotificationController@markAllRead');
+
+/* Municipality admin: dashboard */
+$router->get('/dashboard', 'DashboardController@municipality');
+
+/* Municipality admin: volunteer teams */
+$router->get('/teams', 'TeamController@index');
+$router->get('/teams/create', 'TeamController@create');
+$router->post('/teams/store', 'TeamController@store');
+$router->get('/teams/{id}/edit', 'TeamController@edit');
+$router->post('/teams/{id}/update', 'TeamController@update');
+$router->post('/teams/{id}/toggle', 'TeamController@toggleStatus');
+
+/* Municipality admin: events */
+$router->get('/events', 'EventController@index');
+$router->get('/events/drafts', 'EventController@drafts');
+$router->get('/events/closed', 'EventController@closed');
+$router->get('/events/completed', 'EventController@completed');
+$router->get('/events/calendar', 'EventController@calendar');
+$router->get('/events/create', 'EventController@create');
+$router->post('/events/store', 'EventController@store');
+$router->get('/events/{id}', 'EventController@show');
+$router->get('/events/{id}/edit', 'EventController@edit');
+$router->post('/events/{id}/update', 'EventController@update');
+$router->post('/events/{id}/publish', 'EventController@publish');
+$router->post('/events/{id}/activate', 'EventController@activate');
+$router->post('/events/{id}/complete', 'EventController@complete');
+$router->post('/events/{id}/archive', 'EventController@archive');
+$router->get('/events/{id}/reconcile', 'EventController@reconcile');
+$router->post('/events/{id}/reconcile', 'EventController@saveReconciliation');
+$router->post('/events/{id}/remind', 'EventController@remind');
+$router->post('/events/{id}/cancel', 'EventController@cancel');
+$router->post('/events/{id}/clone',  'EventController@clone');
+
+/* Municipality admin: applications */
+$router->get('/events/{id}/applications', 'ApplicationController@index');
+$router->post('/applications/{id}/approve', 'ApplicationController@approve');
+$router->post('/applications/{id}/reject', 'ApplicationController@reject');
+$router->post('/events/{id}/applications/bulk', 'ApplicationController@bulkApprove');
+$router->get('/applications', 'ApplicationController@pending');
+
+/* Municipality admin: event shifts management */
+$router->post('/events/{id}/shifts/store', 'ShiftController@store');
+$router->post('/events/{id}/shifts/{sid}/update', 'ShiftController@update');
+$router->post('/events/{id}/shifts/{sid}/delete', 'ShiftController@destroy');
+$router->post('/shift-applications/{id}/approve', 'ShiftController@approve');
+$router->post('/shift-applications/{id}/reject', 'ShiftController@reject');
+
+/* Team admin: Mobile Action Hub */
+$router->get('/team/live/{id}', 'TeamPortalController@live');
+$router->get('/team/qr-checkin/{id}', 'TeamPortalController@qrCheckin');
+
+/* Team portal: shift apply / cancel */
+$router->post('/team/events/{id}/shifts/{sid}/apply', 'ShiftController@teamApply');
+$router->post('/team/shift-applications/{id}/cancel', 'ShiftController@teamCancel');
+
+/* Municipality admin & operator: operational page */
+$router->get('/operations', 'OperationController@index');
+$router->get('/operations/war-room', 'OperationController@warRoom');
+$router->get('/operations/war-room/stream', 'OperationController@warRoomStream');
+$router->get('/operations/events/{id}', 'OperationController@show');
+$router->get('/operations/events/{id}/gate-qr', 'OperationController@gateQr');
+$router->get('/operations/events/{id}/status', 'OperationController@status');
+$router->get('/operations/events/{id}/locations', 'OperationController@locations');
+$router->post('/operations/events/{id}/note', 'OperationController@addNote');
+$router->post('/shortages/{id}/acknowledge', 'OperationController@acknowledgeShortage');
+$router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage');
+
+/* Municipality admin: statistics, awards, reports/exports */
+$router->get('/statistics', 'StatisticsController@index');
+$router->get('/statistics/teams/{id}', 'StatisticsController@team');
+$router->get('/analytics', 'AnalyticsController@index');
+$router->get('/analytics/export', 'AnalyticsController@export');
+$router->get('/awards', 'AwardController@index');
+$router->get('/reports', 'ReportController@index');
+$router->get('/exports/events', 'ReportController@exportEvents');
+$router->get('/exports/events/{id}/applications', 'ReportController@exportEventApplications');
+$router->get('/exports/events/{id}/coverage', 'ReportController@exportEventCoverage');
+$router->get('/exports/team-statistics', 'ReportController@exportTeamStatistics');
+$router->get('/exports/municipality-statistics', 'ReportController@exportMunicipalityStatistics');
+$router->get('/exports/awards', 'ReportController@exportAwards');
+
+/* PDF print views */
+$router->get('/reports/pdf/event/{id}/coverage',    'ReportController@pdfCoverage');
+$router->get('/reports/pdf/event/{id}/certificate', 'ReportController@pdfCertificate');
+$router->get('/reports/pdf/awards/{id}',            'ReportController@pdfAwards');
+$router->get('/reports/pdf/annual/{id}',            'ReportController@pdfAnnual');
+
+/* Team admin */
+$router->get('/team/dashboard', 'TeamPortalController@dashboard');
+$router->get('/team/events', 'TeamPortalController@events');
+$router->get('/team/events/{id}', 'TeamPortalController@showEvent');
+$router->post('/team/events/{id}/apply', 'TeamPortalController@apply');
+$router->post('/team/events/{id}/application/members', 'TeamPortalController@updateApplicationMembers');
+$router->post('/team/applications/{id}/cancel', 'TeamPortalController@cancelApplication');
+$router->get('/team/applications', 'TeamPortalController@applications');
+$router->get('/team/operations/events/{id}', 'TeamPortalController@operations');
+$router->post('/team/operations/events/{id}/checkin', 'TeamPortalController@checkin');
+$router->post('/team/operations/events/{id}/send-location', 'TeamPortalController@sendLocation');
+
+/* Team debrief */
+$router->get('/team/events/{id}/debrief',  'TeamPortalController@debrief');
+$router->post('/team/events/{id}/debrief', 'TeamPortalController@saveDebrief');
+
+/* Municipality admin: event debriefs overview */
+$router->get('/events/{id}/debriefs', 'EventController@debriefs');
+$router->post('/team/operations/events/{id}/shortage', 'TeamPortalController@reportShortage');
+$router->post('/team/events/{id}/report', 'TeamPortalController@submitReport');
+$router->get('/team/statistics', 'TeamPortalController@statistics');
+
+/* Team admin: member roster */
+$router->get('/team/members', 'TeamMemberController@index');
+$router->get('/team/members/create', 'TeamMemberController@create');
+$router->post('/team/members', 'TeamMemberController@store');
+$router->get('/team/members/{id}/edit', 'TeamMemberController@edit');
+$router->get('/team/members/{id}/stats', 'TeamMemberController@stats');
+$router->get('/team/members/{id}/certificate', 'TeamMemberController@certificate');
+$router->post('/team/members/{id}', 'TeamMemberController@update');
+$router->post('/team/members/{id}/toggle', 'TeamMemberController@toggle');
+
+/* Municipality admin: settings */
+$router->get('/settings', 'SettingsController@index');
+$router->post('/settings/mail', 'SettingsController@saveMail');
+$router->post('/settings/mail/test', 'SettingsController@testMail');
+$router->post('/settings/map', 'SettingsController@saveMap');
+$router->post('/settings/awards', 'SettingsController@saveAwards');
+$router->post('/settings/notifications', 'SettingsController@saveNotifications');
+$router->post('/settings/event-defaults', 'SettingsController@saveEventDefaults');
+$router->post('/settings/branding', 'SettingsController@saveBranding');
+$router->post('/settings/member-fields', 'SettingsController@saveMemberFields');
+$router->post('/settings/email-templates', 'SettingsController@saveEmailTemplates');
+
+/* Web Push subscription management */
+$router->get('/push/vapid-key', 'PushController@vapidKey');
+$router->post('/push/subscribe', 'PushController@subscribe');
+$router->post('/push/unsubscribe', 'PushController@unsubscribe');
+
+/* Cron endpoints (token-protected, no session required) */
+$router->get('/cron/shift-reminders', 'CronController@shiftReminders');
+
+/* Super admin */
+$router->get('/admin/dashboard', 'AdminController@dashboard');
+$router->get('/admin/municipalities', 'AdminController@municipalities');
+$router->post('/admin/municipalities/store', 'AdminController@storeMunicipality');
+$router->get('/admin/municipalities/{id}', 'AdminController@showMunicipality');
+$router->post('/admin/municipalities/{id}/update', 'AdminController@updateMunicipality');
+$router->post('/admin/municipalities/{id}/toggle', 'AdminController@toggleMunicipality');
+$router->get('/admin/users', 'AdminController@users');
+$router->post('/admin/users/store', 'AdminController@storeUser');
+$router->post('/admin/users/{id}/update', 'AdminController@updateUser');
+$router->post('/admin/users/{id}/reset-password', 'AdminController@resetUserPassword');
+$router->post('/admin/users/{id}/toggle', 'AdminController@toggleUser');
+$router->post('/admin/impersonate/{id}', 'AdminController@impersonate');
+$router->post('/admin/stop-impersonation', 'AdminController@stopImpersonation');
+$router->get('/admin/settings', 'AdminController@settings');
+$router->post('/admin/settings', 'AdminController@saveSettings');
