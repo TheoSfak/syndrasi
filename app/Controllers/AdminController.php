@@ -190,4 +190,169 @@ class AdminController
             'volunteer_hours'=> round((float) dbq(
                 "SELECT COALESCE(SUM(TIMESTAMPDIFF(MINUTE,e.start_datetime,e.end_datetime)/60 * ea.approved_people),0)
                  FROM event_applications ea JOIN events e ON e.id=ea.event_id
-      
+                       WHERE ea.municipality_id = :mid AND ea.status = 'approved' AND e.status = 'completed'",
+                ['mid' => $id]
+            )->fetchColumn(), 1),
+        ];
+
+        render('municipalities/show', [
+            'pageTitle' => $m['name'],
+            'm'         => $m,
+            'users'     => $users,
+            'teams'     => $teams,
+            'stats'     => $stats,
+        ]);
+    }
+
+    /* --------------------------------------------------------------- Users */
+
+    public function users()
+    {
+        requireRole(['super_admin']);
+        $users = dbq(
+            'SELECT u.*, m.name AS municipality_name, t.name AS team_name
+             FROM users u
+             LEFT JOIN municipalities m ON m.id = u.municipality_id
+             LEFT JOIN volunteer_teams t ON t.id = u.team_id
+             ORDER BY u.role, u.name'
+        )->fetchAll();
+
+        render('settings/users', [
+            'pageTitle'      => 'Χρήστες',
+            'users'          => $users,
+            'municipalities' => Municipality::all(),
+        ]);
+    }
+
+    public function storeUser()
+    {
+        requireRole(['super_admin']);
+        $name  = post_str('name');
+        $email = strtolower(trim(post_str('email')));
+        $role  = post_str('role');
+        $pass  = post_str('password');
+        $validRoles = ['super_admin', 'municipality_admin', 'team_admin', 'event_operator'];
+        if ($name === '' || $email === '' || !in_array($role, $validRoles, true) || strlen($pass) < 8) {
+            flash_set('danger', 'Συμπληρώστε όλα τα πεδία (κωδικός τουλάχιστον 8 χαρακτήρες).');
+            redirect('/admin/users');
+        }
+        if (User::findByEmail($email)) {
+            flash_set('danger', 'Υπάρχει ήδη χρήστης με αυτό το email.');
+            redirect('/admin/users');
+        }
+        $mid = post_int('municipality_id') ?: null;
+        $tid = post_int('team_id') ?: null;
+        if ($role === 'super_admin') { $mid = null; $tid = null; }
+        if ($role !== 'team_admin')  { $tid = null; }
+        dbq(
+            "INSERT INTO users (municipality_id, team_id, name, email, phone, password_hash, role, status)
+             VALUES (:mid, :tid, :name, :email, :phone, :ph, :role, 'active')",
+            ['mid' => $mid, 'tid' => $tid, 'name' => $name, 'email' => $email,
+             'phone' => post_str('phone') ?: null, 'ph' => password_hash($pass, PASSWORD_DEFAULT), 'role' => $role]
+        );
+        audit('user_created', 'user', (int) db()->lastInsertId(), $email);
+        flash_set('success', 'Ο χρήστης δημιουργήθηκε.');
+        redirect('/admin/users');
+    }
+
+    public function updateUser($id)
+    {
+        requireRole(['super_admin']);
+        $user = User::find($id);
+        if (!$user) { abort(404, 'Ο χρήστης δεν βρέθηκε.'); }
+        $name  = post_str('name');
+        $email = strtolower(trim(post_str('email')));
+        $role  = post_str('role');
+        $validRoles = ['super_admin', 'municipality_admin', 'team_admin', 'event_operator'];
+        if ($name === '' || $email === '' || !in_array($role, $validRoles, true)) {
+            flash_set('danger', 'Συμπληρώστε σωστά όλα τα πεδία.');
+            redirect('/admin/users');
+        }
+        $existing = User::findByEmail($email);
+        if ($existing && (int) $existing['id'] !== (int) $user['id']) {
+            flash_set('danger', 'Το email χρησιμοποιείται ήδη από άλλον χρήστη.');
+            redirect('/admin/users');
+        }
+        $mid = post_int('municipality_id') ?: null;
+        $tid = post_int('team_id') ?: null;
+        if ($role === 'super_admin') { $mid = null; $tid = null; }
+        if ($role !== 'team_admin')  { $tid = null; }
+        dbq(
+            'UPDATE users SET name = :name, email = :email, phone = :phone,
+                    role = :role, municipality_id = :mid, team_id = :tid WHERE id = :id',
+            ['name' => $name, 'email' => $email, 'phone' => post_str('phone') ?: null,
+             'role' => $role, 'mid' => $mid, 'tid' => $tid, 'id' => $user['id']]
+        );
+        audit('user_updated', 'user', (int) $user['id'], $email);
+        flash_set('success', 'Ο χρήστης ενημερώθηκε.');
+        redirect('/admin/users');
+    }
+
+    public function resetUserPassword($id)
+    {
+        requireRole(['super_admin']);
+        $user = User::find($id);
+        if (!$user) { abort(404, 'Ο χρήστης δεν βρέθηκε.'); }
+        $pass = post_str('password');
+        if (strlen($pass) < 8) {
+            flash_set('danger', 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
+            redirect('/admin/users');
+        }
+        User::updatePassword((int) $user['id'], password_hash($pass, PASSWORD_DEFAULT));
+        audit('user_password_reset', 'user', (int) $user['id']);
+        flash_set('success', 'Ο κωδικός του χρήστη ενημερώθηκε.');
+        redirect('/admin/users');
+    }
+
+    public function toggleUser($id)
+    {
+        requireRole(['super_admin']);
+        $user = User::find($id);
+        if (!$user) { abort(404, 'Ο χρήστης δεν βρέθηκε.'); }
+        if ((int) $user['id'] === current_user_id()) {
+            flash_set('danger', 'Δεν μπορείτε να αλλάξετε την κατάσταση του εαυτού σας.');
+            redirect('/admin/users');
+        }
+        dbq(
+            "UPDATE users SET status = IF(status = 'active', 'inactive', 'active') WHERE id = :id",
+            ['id' => $user['id']]
+        );
+        audit('user_status_toggled', 'user', (int) $user['id']);
+        flash_set('success', 'Η κατάσταση του χρήστη άλλαξε.');
+        redirect('/admin/users');
+    }
+
+    /* -------------------------------------------------------- Global settings */
+
+    public function settings()
+    {
+        requireRole(['super_admin']);
+        $settings = [];
+        foreach (['platform_announcement', 'support_email'] as $k) {
+            $settings[$k] = dbq(
+                'SELECT setting_value FROM app_settings WHERE setting_key = :k LIMIT 1',
+                ['k' => $k]
+            )->fetchColumn() ?: '';
+        }
+        render('settings/index', [
+            'pageTitle' => 'Ρυθμίσεις Πλατφόρμας',
+            'settings'  => $settings,
+        ]);
+    }
+
+    public function saveSettings()
+    {
+        requireRole(['super_admin']);
+        foreach (['platform_announcement', 'support_email'] as $k) {
+            $v = post_str($k);
+            dbq(
+                "INSERT INTO app_settings (setting_key, setting_value) VALUES (:k, :v)
+                 ON DUPLICATE KEY UPDATE setting_value = :v2",
+                ['k' => $k, 'v' => $v, 'v2' => $v]
+            );
+        }
+        audit('platform_settings_updated', 'app_settings', null);
+        flash_set('success', 'Οι ρυθμίσεις αποθηκεύτηκαν.');
+        redirect('/admin/settings');
+    }
+}

@@ -83,4 +83,6 @@ class CronController
         if (!$stored || !hash_equals((string) $stored, $secret)) {
             http_response_code(403);
             exit(json_encode(['error' => 'Invalid secret.']));
-  
+          }
+    }
+}
