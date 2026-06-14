@@ -184,4 +184,3 @@ $completionRate = $approvedCount > 0
   <?php endif ?>
 
 </div>
-                                       

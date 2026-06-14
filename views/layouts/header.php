@@ -50,4 +50,30 @@
         <i class="bi bi-bell"></i>
         <?php if ($unreadCount > 0): ?>
           <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"><?= (int) $unreadCount ?></span>
-        <?php en
+        <?php endif; ?>
+      </a>
+      <div class="dropdown">
+        <button class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
+          <i class="bi bi-person-circle me-1"></i>
+          <span class="d-none d-md-inline"><?= e(current_user() ? current_user()['name'] : '') ?></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="<?= e(url('/profile')) ?>"><i class="bi bi-person me-2"></i>Το προφίλ μου</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <form method="post" action="<?= e(url('/logout')) ?>">
+              <?= csrf_field() ?>
+              <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Αποσύνδεση</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <?php include BASE_PATH . '/views/layouts/sidebar.php'; ?>
+    <main class="col-lg-10 ms-sm-auto px-3 px-md-4 py-4">
+      <?php include BASE_PATH . '/views/layouts/flash.php'; ?>

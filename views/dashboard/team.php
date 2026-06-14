@@ -89,4 +89,11 @@
               <td><?= e(gr_datetime($ev['start_datetime'])) ?></td>
               <td><?= (int) $ev['approved_people'] ?></td>
               <td><?= status_badge($ev['status']) ?></td>
-              <td class="text-end"><a class="b
+              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= e(url('/team/events/' . $ev['id'])) ?>">Προβολή</a></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</div>

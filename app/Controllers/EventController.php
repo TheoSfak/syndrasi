@@ -316,4 +316,172 @@ class EventController
                         'id'     => $appId,
                         'eid'    => $event['id'],
                     ]
-       
+                );
+
+                // --- Volunteer participation records ---
+                $presencePost = isset($_POST['member_present'][$appId]) && is_array($_POST['member_present'][$appId])
+                    ? $_POST['member_present'][$appId] : [];
+
+                if (!empty($presencePost)) {
+                    // Get all assigned members so we can record absence too
+                    $assignedMembers = TeamMember::forApplication($appId);
+
+                    // Calculate hours from actual arrival → departure (or event times)
+                    $fromTs = $arrivTs  ? strtotime($arrivTs)  : strtotime($event['start_datetime']);
+                    $toTs   = $departTs ? strtotime($departTs) : strtotime($event['end_datetime']);
+                    $hours  = max(0, round(($toTs - $fromTs) / 3600, 2));
+
+                    // Fetch application for team_id + mission_commander_id
+                    $appRow = dbq(
+                        'SELECT team_id, mission_commander_id FROM event_applications WHERE id = :id',
+                        ['id' => $appId]
+                    )->fetch();
+                    $teamId     = $appRow ? (int) $appRow['team_id'] : 0;
+                    $commanderId = $appRow && $appRow['mission_commander_id']
+                        ? (int) $appRow['mission_commander_id'] : null;
+
+                    // Build presences array: include all assigned members, marking absent those not checked
+                    $presences = [];
+                    foreach ($assignedMembers as $m) {
+                        $mid = (int) $m['id'];
+                        $presences[$mid] = [
+                            'present' => isset($presencePost[$mid]) ? 1 : 0,
+                            'notes'   => null,
+                        ];
+                    }
+
+                    VolunteerParticipation::saveForApplication(
+                        (int) $event['id'],
+                        $teamId,
+                        $appId,
+                        (int) $event['municipality_id'],
+                        $presences,
+                        $hours,
+                        $commanderId
+                    );
+                }
+            }
+
+            dbq(
+                'UPDATE events SET reconciliation_notes = :notes WHERE id = :id',
+                ['notes' => $notes ?: null, 'id' => $event['id']]
+            );
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            error_log('saveReconciliation() transaction failed: ' . $e->getMessage());
+            flash_set('danger', 'Σφάλμα κατά την αποθήκευση. Παρακαλώ δοκιμάστε ξανά.');
+            redirect('/events/' . $event['id'] . '/reconcile');
+        }
+
+        audit('event_reconciled', 'event', $event['id']);
+        flash_set('success', 'Τα δεδομένα αρχειοθέτησης αποθηκεύτηκαν.');
+        redirect('/events/' . $event['id'] . '/reconcile');
+    }
+
+    // --------------------------------------------------------------- Clone
+
+    /** POST /events/{id}/clone — copy to new draft, redirect to edit */
+    public function clone($id)
+    {
+        requireRole(['municipality_admin']);
+        $event = Event::findForCurrent((int) $id);
+
+        $data = [
+            'municipality_id'             => $event['municipality_id'],
+            'category_id'                 => $event['category_id'],
+            'title'                       => 'Αντίγραφο: ' . $event['title'],
+            'description'                 => $event['description'],
+            'location_name'               => $event['location_name'],
+            'address'                     => $event['address'],
+            'latitude'                    => $event['latitude'],
+            'longitude'                   => $event['longitude'],
+            'start_datetime'              => $event['start_datetime'],
+            'end_datetime'                => $event['end_datetime'],
+            'requested_people'            => $event['requested_people'],
+            'requested_vehicle'           => $event['requested_vehicle'],
+            'requested_medical_equipment' => $event['requested_medical_equipment'],
+            'instructions'                => $event['instructions'],
+            'status'                      => 'draft',
+            'created_by'                  => current_user_id(),
+        ];
+
+        $newId = Event::create($data);
+        audit('event_cloned', 'event', $newId, 'cloned from #' . $event['id'] . ': ' . $event['title']);
+        flash_set('success', 'Η δράση αντιγράφηκε ως πρόχειρο. Ενημερώστε τις ημερομηνίες και δημοσιεύστε.');
+        redirect('/events/' . $newId . '/edit');
+    }
+
+    // -------------------------------------------------------------- Debriefs
+
+    /** GET /events/{id}/debriefs — admin overview of all team debriefs for an event */
+    public function debriefs($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event    = Event::findForCurrent($id);
+        $debriefs = TeamDebrief::forEvent($event['id']);
+        $stats    = TeamDebrief::statsForEvent($event['id']);
+
+        // How many approved teams haven't submitted yet
+        $approvedCount = (int) dbq(
+            "SELECT COUNT(*) FROM event_applications WHERE event_id = :eid AND status = 'approved'",
+            ['eid' => $event['id']]
+        )->fetchColumn();
+
+        render('events/debriefs', [
+            'pageTitle'     => 'Debriefs: ' . $event['title'],
+            'event'         => $event,
+            'debriefs'      => $debriefs,
+            'stats'         => $stats,
+            'approvedCount' => $approvedCount,
+        ]);
+    }
+
+    // ------------------------------------------------------------ Helpers
+
+    /** Validate event form. Returns data array or null. */
+    private function validated()
+    {
+        $title = post_str('title');
+        $start = post_str('start_datetime');
+        $end   = post_str('end_datetime');
+
+        $errors = [];
+        if ($title === '') {
+            $errors[] = 'Ο τίτλος είναι υποχρεωτικός.';
+        }
+        if ($start === '' || strtotime($start) === false) {
+            $errors[] = 'Η ημερομηνία έναρξης δεν είναι έγκυρη.';
+        }
+        if ($end === '' || strtotime($end) === false) {
+            $errors[] = 'Η ημερομηνία λήξης δεν είναι έγκυρη.';
+        }
+        if (empty($errors) && strtotime($end) <= strtotime($start)) {
+            $errors[] = 'Η λήξη πρέπει να είναι μετά την έναρξη.';
+        }
+
+        if ($errors) {
+            remember_old();
+            foreach ($errors as $err) {
+                flash_set('danger', $err);
+            }
+            return null;
+        }
+
+        return [
+            'category_id'                 => post_int('category_id') ?: null,
+            'title'                       => $title,
+            'description'                 => post_str('description') ?: null,
+            'location_name'               => post_str('location_name') ?: null,
+            'address'                     => post_str('address') ?: null,
+            'latitude'                    => post_float_or_null('latitude'),
+            'longitude'                   => post_float_or_null('longitude'),
+            'start_datetime'              => date('Y-m-d H:i:s', strtotime($start)),
+            'end_datetime'                => date('Y-m-d H:i:s', strtotime($end)),
+            'requested_people'            => max(0, post_int('requested_people')),
+            'requested_vehicle'           => post_bool('requested_vehicle'),
+            'requested_medical_equipment' => post_bool('requested_medical_equipment'),
+            'instructions'                => post_str('instructions') ?: null,
+        ];
+    }
+}

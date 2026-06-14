@@ -80,4 +80,67 @@
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <span class="fw-semibold"><i class="bi bi-building me-1"></i> Χρήση ανά δήμο</span>
         <a href="<?= e(url('/admin/municipalities')) ?>" class="btn btn-sm btn-outline-primary">Διαχείριση</a>
-  
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Δήμος</th>
+              <th>Κατάσταση</th>
+              <th class="text-center">Ομάδες</th>
+              <th class="text-center">Δράσεις</th>
+              <th class="text-center">Χρήστες</th>
+              <th class="text-center">Ώρες εθελ.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if (!$municipalityUsage): ?>
+              <tr><td colspan="7" class="text-muted py-4 text-center">Δεν υπάρχουν δήμοι.</td></tr>
+            <?php endif; ?>
+            <?php foreach ($municipalityUsage as $m): ?>
+              <tr>
+                <td class="fw-semibold"><?= e($m['name']) ?></td>
+                <td>
+                  <span class="badge text-bg-<?= $m['status'] === 'active' ? 'success' : 'secondary' ?>">
+                    <?= $m['status'] === 'active' ? 'Ενεργός' : 'Ανενεργός' ?>
+                  </span>
+                </td>
+                <td class="text-center"><?= (int) $m['teams_count'] ?></td>
+                <td class="text-center"><?= (int) $m['events_count'] ?></td>
+                <td class="text-center"><?= (int) $m['users_count'] ?></td>
+                <td class="text-center"><?= number_format((float) ($m['volunteer_hours'] ?? 0), 0) ?></td>
+                <td>
+                  <a href="<?= e(url('/admin/municipalities/' . $m['id'])) ?>" class="btn btn-sm btn-outline-secondary" title="Λεπτομέρειες">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-journal-text me-1"></i> Πρόσφατη δραστηριότητα</div>
+      <ul class="list-group list-group-flush" style="max-height:420px;overflow-y:auto">
+        <?php if (!$recentAudit): ?>
+          <li class="list-group-item text-muted small">Δεν υπάρχει καταγεγραμμένη δραστηριότητα.</li>
+        <?php endif; ?>
+        <?php foreach ($recentAudit as $log): ?>
+          <li class="list-group-item small py-2">
+            <div class="text-muted" style="font-size:11px"><?= e(gr_datetime($log['created_at'])) ?></div>
+            <strong><?= e($log['user_name'] ?: 'Σύστημα') ?></strong>:
+            <?= e($log['action']) ?>
+            <?php if ($log['entity_type']): ?>
+              <span class="text-muted">(<?= e($log['entity_type']) ?> #<?= e($log['entity_id']) ?>)</span>
+            <?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  </div>
+</div>

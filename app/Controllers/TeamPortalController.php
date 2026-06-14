@@ -467,4 +467,266 @@ class TeamPortalController
     {
         requireRole(['team_admin']);
         $event = Event::find($id);
-        if (!$event || (int) $event['municipality_id'] !== (int) current_municipalit
+        if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
+            json_out(['success' => false, 'message' => 'Η δράση δεν βρέθηκε.'], 404);
+        }
+        $application = EventApplication::findByEventTeam($event['id'], current_team_id());
+        if (!$application || $application['status'] !== 'approved') {
+            json_out(['success' => false, 'message' => 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη δράση.'], 403);
+        }
+        if (!in_array($event['status'], ['active', 'confirmed'], true)) {
+            json_out(['success' => false, 'message' => 'Η δράση δεν είναι ενεργή.'], 422);
+        }
+
+        $input = json_input();
+        $lat = isset($input['latitude']) ? (float) $input['latitude'] : null;
+        $lng = isset($input['longitude']) ? (float) $input['longitude'] : null;
+        $accuracy = isset($input['accuracy']) ? (float) $input['accuracy'] : null;
+
+        if ($lat === null || $lng === null || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            json_out(['success' => false, 'message' => 'Μη έγκυρες συντεταγμένες.'], 422);
+        }
+
+        dbq(
+            'INSERT INTO location_pings (municipality_id, event_id, team_id, user_id, latitude, longitude, accuracy)
+             VALUES (:mid, :eid, :tid, :uid, :lat, :lng, :acc)',
+            [
+                'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => current_team_id(),
+                'uid' => $_SESSION['user_id'], 'lat' => $lat, 'lng' => $lng, 'acc' => $accuracy,
+            ]
+        );
+
+        json_out(['success' => true, 'message' => 'Η τοποθεσία στάλθηκε.']);
+    }
+
+    /** POST /team/operations/events/{id}/shortage — report a resource shortage. */
+    public function reportShortage($id)
+    {
+        requireRole(['team_admin']);
+        $event = Event::find($id);
+        if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Η δράση δεν βρέθηκε.');
+        }
+        $tid         = current_team_id();
+        $application = EventApplication::findByEventTeam($event['id'], $tid);
+        if (!$application || $application['status'] !== 'approved') {
+            flash_set('danger', 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη δράση.');
+            redirect('/team/operations/events/' . $event['id']);
+        }
+
+        $type = post_str('shortage_type');
+        if (!in_array($type, ['people', 'equipment', 'medical_supplies', 'vehicle', 'other'], true)) {
+            flash_set('danger', 'Μη έγκυρος τύπος έλλειψης.');
+            redirect('/team/operations/events/' . $event['id']);
+        }
+        $severity = post_str('severity');
+        if (!in_array($severity, ['low', 'medium', 'high', 'critical'], true)) {
+            $severity = 'medium';
+        }
+        $title = trim(post_str('title'));
+        if ($title === '') {
+            flash_set('danger', 'Συμπληρώστε τίτλο έλλειψης.');
+            redirect('/team/operations/events/' . $event['id']);
+        }
+
+        dbq(
+            "INSERT INTO shortage_reports
+             (municipality_id, event_id, team_id, reported_by, shortage_type, severity, title, description, status)
+             VALUES (:mid, :eid, :tid, :uid, :type, :sev, :title, :descr, 'open')",
+            [
+                'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
+                'uid' => $_SESSION['user_id'], 'type' => $type, 'sev' => $severity,
+                'title' => $title, 'descr' => post_str('description') ?: null,
+            ]
+        );
+        audit('shortage_reported', 'event', $event['id'], 'type: ' . $type . ', severity: ' . $severity);
+
+        $team = VolunteerTeam::find($tid);
+        NotificationService::notifyMunicipality(
+            $event['municipality_id'],
+            $event['id'],
+            'Νέα έλλειψη: ' . $title,
+            ($team['name'] ?? 'Ομάδα') . ' ανέφερε έλλειψη (' . $severity . ') στη δράση ' . $event['title'] . '.',
+            'shortage'
+        );
+
+        flash_set('success', 'Η έλλειψη αναφέρθηκε στο κέντρο επιχειρήσεων.');
+        $from = post_str('_from');
+        redirect($from === 'live' ? '/team/live/' . $event['id'] : '/team/operations/events/' . $event['id']);
+    }
+
+    /** POST /team/events/{id}/report — team post-event report (upsert). */
+    public function submitReport($id)
+    {
+        requireRole(['team_admin']);
+        $event = Event::find($id);
+        if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Η δράση δεν βρέθηκε.');
+        }
+        $tid         = current_team_id();
+        $application = EventApplication::findByEventTeam($event['id'], $tid);
+        if (!$application || $application['status'] !== 'approved') {
+            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη δράση.');
+            redirect('/team/events/' . $event['id']);
+        }
+
+        $incidents = max(0, post_int('incidents_count'));
+        $transfers = max(0, post_int('transfers_count'));
+        $firstAid  = max(0, post_int('first_aid_count'));
+        $summary   = post_str('summary') ?: null;
+        $notes     = post_str('notes') ?: null;
+
+        $existing = dbq(
+            "SELECT id FROM event_reports WHERE event_id = :eid AND team_id = :tid AND report_type = 'team_report' LIMIT 1",
+            ['eid' => $event['id'], 'tid' => $tid]
+        )->fetch();
+
+        if ($existing) {
+            dbq(
+                'UPDATE event_reports
+                 SET incidents_count = :inc, transfers_count = :tr, first_aid_count = :fa,
+                     summary = :sum, notes = :notes
+                 WHERE id = :id',
+                ['inc' => $incidents, 'tr' => $transfers, 'fa' => $firstAid,
+                 'sum' => $summary, 'notes' => $notes, 'id' => $existing['id']]
+            );
+        } else {
+            dbq(
+                "INSERT INTO event_reports
+                 (municipality_id, event_id, team_id, report_type, incidents_count, transfers_count, first_aid_count, summary, notes, created_by)
+                 VALUES (:mid, :eid, :tid, 'team_report', :inc, :tr, :fa, :sum, :notes, :uid)",
+                ['mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
+                 'inc' => $incidents, 'tr' => $transfers, 'fa' => $firstAid,
+                 'sum' => $summary, 'notes' => $notes, 'uid' => $_SESSION['user_id']]
+            );
+        }
+        audit('team_report_submitted', 'event', $event['id']);
+        flash_set('success', 'Η αναφορά καταχωρήθηκε.');
+        redirect('/team/events/' . $event['id']);
+    }
+
+    /** GET /team/statistics */
+    public function statistics()
+    {
+        requireRole(['team_admin']);
+        $tid  = current_team_id();
+        $team = VolunteerTeam::find($tid);
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+
+        $stats = StatsService::teamStats($tid, $year);
+
+        $history = dbq(
+            "SELECT e.title, e.start_datetime, e.end_datetime, c.name AS category_name,
+                    ea.approved_people, ci.present_people, ci.status AS checkin_status
+             FROM event_applications ea
+             JOIN events e ON e.id = ea.event_id
+             LEFT JOIN event_categories c ON c.id = e.category_id
+             LEFT JOIN (
+                SELECT oc1.* FROM operational_checkins oc1
+                JOIN (SELECT event_id, team_id, MAX(id) AS last_id FROM operational_checkins GROUP BY event_id, team_id) x
+                  ON x.last_id = oc1.id
+             ) ci ON ci.event_id = ea.event_id AND ci.team_id = ea.team_id
+             WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
+               AND YEAR(e.start_datetime) = :year
+             ORDER BY e.start_datetime DESC",
+            ['tid' => $tid, 'year' => $year]
+        )->fetchAll();
+
+        render('team/statistics', [
+            'pageTitle' => 'Στατιστικά Ομάδας',
+            'team'      => $team,
+            'stats'     => $stats,
+            'history'   => $history,
+            'year'      => $year,
+        ]);
+    }
+
+    /** GET /team/events/{id}/debrief — post-event debrief form. */
+    public function debrief($id)
+    {
+        requireRole(['team_admin']);
+        $event = Event::find($id);
+        if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Η δράση δεν βρέθηκε.');
+        }
+        $tid         = current_team_id();
+        $application = EventApplication::findByEventTeam($event['id'], $tid);
+        if (!$application || $application['status'] !== 'approved') {
+            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη δράση.');
+            redirect('/team/events/' . $event['id']);
+        }
+
+        $debrief = TeamDebrief::findByEventTeam((int) $event['id'], (int) $tid);
+
+        render('team/debrief', [
+            'pageTitle'   => 'Απολογισμός · ' . $event['title'],
+            'event'       => $event,
+            'application' => $application,
+            'debrief'     => $debrief,
+        ]);
+    }
+
+    /** POST /team/events/{id}/debrief — save the post-event debrief. */
+    public function saveDebrief($id)
+    {
+        requireRole(['team_admin']);
+        $event = Event::find($id);
+        if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Η δράση δεν βρέθηκε.');
+        }
+        $tid         = current_team_id();
+        $application = EventApplication::findByEventTeam($event['id'], $tid);
+        if (!$application || $application['status'] !== 'approved') {
+            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη δράση.');
+            redirect('/team/events/' . $event['id']);
+        }
+
+        $rating = post_int('organization_rating');
+        if ($rating < 1 || $rating > 5) {
+            $rating = 3;
+        }
+
+        TeamDebrief::upsert([
+            'event_id'              => (int) $event['id'],
+            'team_id'               => (int) $tid,
+            'municipality_id'       => (int) $event['municipality_id'],
+            'submitted_by'          => (int) $_SESSION['user_id'],
+            'actual_volunteers'     => max(0, post_int('actual_volunteers')),
+            'volunteer_hours'       => (float) str_replace(',', '.', (string) post_str('volunteer_hours')),
+            'incidents_count'       => max(0, post_int('incidents_count')),
+            'what_went_well'        => post_str('what_went_well') ?: null,
+            'what_went_wrong'       => post_str('what_went_wrong') ?: null,
+            'incidents_description' => post_str('incidents_description') ?: null,
+            'organization_rating'   => $rating,
+            'comments'              => post_str('comments') ?: null,
+        ]);
+        audit('team_debrief_submitted', 'event', $event['id']);
+
+        flash_set('success', 'Ο απολογισμός υποβλήθηκε. Ευχαριστούμε!');
+        redirect('/team/events/' . $event['id']);
+    }
+
+    // ---------------------------------------------------------- Private helpers
+
+    /**
+     * Resolve the event and the current team's approved application, or abort.
+     * @param bool $requireActive when true, the event must be currently active.
+     * @return array{event: array, application: array}
+     */
+    private function approvedContext($id, bool $requireActive = false): array
+    {
+        $event = Event::find($id);
+        if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Η δράση δεν βρέθηκε.');
+        }
+        $application = EventApplication::findByEventTeam($event['id'], current_team_id());
+        if (!$application || $application['status'] !== 'approved') {
+            abort(403, 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη δράση.');
+        }
+        if ($requireActive && $event['status'] !== 'active') {
+            flash_set('warning', 'Η δράση δεν είναι ενεργή αυτή τη στιγμή.');
+            redirect('/team/operations/events/' . $event['id']);
+        }
+        return ['event' => $event, 'application' => $application];
+    }
+}

@@ -123,4 +123,30 @@ class SmtpMailer
         // Detect stream timeout (fgets returned false and the socket timed out)
         if ($response === '') {
             $meta = stream_get_meta_data($this->socket);
-            if (!empty(
+            if (!empty($meta['timed_out'])) {
+                throw new Exception('Timeout σύνδεσης SMTP (' . $context . '): δεν απάντησε ο server εντός 5 δευτερολέπτων.');
+            }
+        }
+        $code = (int) substr($response, 0, 3);
+        if (!in_array($code, $codes, true)) {
+            $clean = trim(preg_replace('/\s+/', ' ', $response));
+            throw new Exception('SMTP σφάλμα (' . $context . '): ' . ($clean !== '' ? $clean : 'χωρίς απάντηση'));
+        }
+    }
+
+    private static function encodeHeader($text)
+    {
+        if (preg_match('/[^\x20-\x7e]/', (string) $text)) {
+            return '=?UTF-8?B?' . base64_encode($text) . '?=';
+        }
+        return (string) $text;
+    }
+
+    private function close()
+    {
+        if (is_resource($this->socket)) {
+            fclose($this->socket);
+        }
+        $this->socket = null;
+    }
+}

@@ -73,6 +73,56 @@ class ApplicationController
         redirect('/events/' . $application['event_id'] . '/applications');
     }
 
+    /** POST /events/{id}/applications/bulk — batch approve or reject multiple applications */
+    public function bulkApprove($eventId)
+    {
+        requireRole(['municipality_admin']);
+        $event  = Event::findForCurrent((int) $eventId);
+        $action = post_str('bulk_action'); // 'approve' | 'reject'
+        $appIds = isset($_POST['app_ids']) && is_array($_POST['app_ids'])
+            ? array_map('intval', $_POST['app_ids']) : [];
+
+        if (empty($appIds)) {
+            flash_set('warning', 'Δεν επιλέξατε καμία δήλωση.');
+            redirect('/events/' . $event['id'] . '/applications');
+        }
+        if (!in_array($action, ['approve', 'reject'], true)) {
+            flash_set('warning', 'Μη έγκυρη ενέργεια.');
+            redirect('/events/' . $event['id'] . '/applications');
+        }
+
+        $count = 0;
+        foreach ($appIds as $appId) {
+            $app = EventApplication::find($appId);
+            if (!$app
+                || (int) $app['event_id']        !== (int) $event['id']
+                || (int) $app['municipality_id']  !== (int) current_municipality_id()
+                || $app['status'] !== 'pending') {
+                continue;
+            }
+
+            if ($action === 'approve') {
+                $people = isset($_POST['approved_people'][$appId])
+                    ? (int) $_POST['approved_people'][$appId]
+                    : (int) $app['offered_people'];
+                if ($people < 1) $people = (int) $app['offered_people'];
+                EventApplication::approve($appId, $people, null, current_user_id());
+                $app['approved_people'] = $people;
+                NotificationService::applicationApproved($event, $app);
+                audit('application_approved', 'event_application', $appId, 'bulk, people: ' . $people);
+            } else {
+                EventApplication::reject($appId, null, current_user_id());
+                NotificationService::applicationRejected($event, $app, '');
+                audit('application_rejected', 'event_application', $appId, 'bulk');
+            }
+            $count++;
+        }
+
+        $label = $action === 'approve' ? 'εγκρίθηκαν' : 'απορρίφθηκαν';
+        flash_set('success', $count . ' δηλώσεις ' . $label . '.');
+        redirect('/events/' . $event['id'] . '/applications');
+    }
+
     private function findOwn($id)
     {
         $application = EventApplication::find($id);

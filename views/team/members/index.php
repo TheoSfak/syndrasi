@@ -59,4 +59,15 @@
                   <?= csrf_field() ?>
                   <button type="submit" class="btn btn-sm <?= $m['status'] === 'active' ? 'btn-outline-warning' : 'btn-outline-success' ?>"
                     title="<?= $m['status'] === 'active' ? 'Απενεργοποίηση' : 'Ενεργοποίηση' ?>">
-                    <i class="bi <?= $m['status'] === 'active' ? 'bi-pause-circle' : 'bi-play-circle
+                    <i class="bi <?= $m['status'] === 'active' ? 'bi-pause-circle' : 'bi-play-circle' ?>"></i>
+                  </button>
+                </form>
+              <?php endif; ?>
+            </td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+</div>
+<?php endif; ?>

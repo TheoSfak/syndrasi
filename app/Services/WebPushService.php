@@ -319,4 +319,29 @@ class WebPushService
                . "\x06\x08\x2a\x86\x48\xce\x3d\x03\x01\x07" // OID prime256v1
              . "\x03\x42\x00"                      // BIT STRING (66 bytes)
              . $keyBin;                            // 65 bytes key
-   
+        return "-----BEGIN PUBLIC KEY-----\r\n"
+             . chunk_split(base64_encode($der), 64, "\r\n")
+             . "-----END PUBLIC KEY-----\r\n";
+    }
+
+    /**
+     * Convert DER-encoded ECDSA signature to raw r||s (32+32 bytes).
+     */
+    private static function derToRaw(string $der): string
+    {
+        // DER: 30 [len] 02 [rlen] [r bytes] 02 [slen] [s bytes]
+        $offset = 2; // skip 30 [len]
+        $rLen   = ord($der[$offset + 1]);
+        $rOff   = $offset + 2;
+        if (ord($der[$rOff]) === 0x00) { $rLen--; $rOff++; }
+        $r = str_pad(substr($der, $rOff, $rLen), 32, "\x00", STR_PAD_LEFT);
+
+        $sOff0 = $rOff + $rLen;
+        $sLen  = ord($der[$sOff0 + 1]);
+        $sOff  = $sOff0 + 2;
+        if (ord($der[$sOff]) === 0x00) { $sLen--; $sOff++; }
+        $s = str_pad(substr($der, $sOff, $sLen), 32, "\x00", STR_PAD_LEFT);
+
+        return $r . $s;
+    }
+}

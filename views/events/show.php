@@ -166,4 +166,171 @@
       <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
         <span><i class="bi bi-clock-history me-1"></i> Βάρδιες
           <?php if ($shifts): ?>
-            <span cla
+            <span class="badge bg-primary ms-1"><?= count($shifts) ?></span>
+          <?php endif; ?>
+        </span>
+        <?php if (!in_array($event['status'], ['completed','cancelled'], true)): ?>
+        <button class="btn btn-sm btn-outline-success" type="button" data-bs-toggle="collapse" data-bs-target="#addShiftForm">
+          <i class="bi bi-plus-circle me-1"></i>Νέα Βάρδια
+        </button>
+        <?php endif; ?>
+      </div>
+
+      <?php if (!in_array($event['status'], ['completed','cancelled'], true)): ?>
+      <div class="collapse" id="addShiftForm">
+        <div class="card-body border-bottom bg-light">
+          <form method="post" action="<?= e(url('/events/' . $event['id'] . '/shifts/store')) ?>" class="row g-2">
+            <?= csrf_field() ?>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Όνομα βάρδιας *</label>
+              <input type="text" name="name" class="form-control form-control-sm" placeholder="π.χ. Πρωινή βάρδια" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Έναρξη *</label>
+              <input type="datetime-local" name="start_datetime" class="form-control form-control-sm" required
+                     value="<?= e(date('Y-m-d\TH:i', strtotime($event['start_datetime']))) ?>">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">Λήξη *</label>
+              <input type="datetime-local" name="end_datetime" class="form-control form-control-sm" required
+                     value="<?= e(date('Y-m-d\TH:i', strtotime($event['end_datetime']))) ?>">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-semibold">Ζητούμενα</label>
+              <input type="number" name="required_people" class="form-control form-control-sm" min="0" value="0">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Σημειώσεις</label>
+              <input type="text" name="notes" class="form-control form-control-sm" placeholder="Προαιρετικές οδηγίες για τη βάρδια">
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-plus-circle me-1"></i>Προσθήκη βάρδιας</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <?php endif; ?>
+
+      <?php if (!$shifts): ?>
+        <div class="card-body text-muted"><i class="bi bi-info-circle me-1"></i> Δεν έχουν οριστεί βάρδιες για αυτή τη δράση.</div>
+      <?php else: ?>
+        <?php
+          // Index shift applications by shift_id for quick lookup
+          $shiftAppsByShift = [];
+          foreach ($shiftApps as $sa) {
+              $shiftAppsByShift[$sa['shift_id']][] = $sa;
+          }
+        ?>
+        <div class="list-group list-group-flush">
+          <?php foreach ($shifts as $sh): ?>
+          <div class="list-group-item px-3 py-3">
+            <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+              <div>
+                <div class="fw-semibold"><i class="bi bi-clock me-1 text-primary"></i><?= e($sh['name']) ?></div>
+                <div class="text-muted small">
+                  <?= e(gr_datetime($sh['start_datetime'])) ?> – <?= e(gr_time($sh['end_datetime'])) ?>
+                  <?php if ($sh['required_people']): ?>
+                    · <span class="text-secondary"><?= (int) $sh['required_people'] ?> ζητούμενα</span>
+                  <?php endif; ?>
+                  <?php if ($sh['notes']): ?>
+                    · <em><?= e($sh['notes']) ?></em>
+                  <?php endif; ?>
+                </div>
+              </div>
+              <?php if (!in_array($event['status'], ['completed','cancelled'], true)): ?>
+              <div class="d-flex gap-1 flex-shrink-0">
+                <button class="btn btn-xs btn-outline-secondary" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#editShift<?= (int)$sh['id'] ?>">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="post" action="<?= e(url('/events/' . $event['id'] . '/shifts/' . $sh['id'] . '/delete')) ?>"
+                      onsubmit="return confirm('Διαγραφή βάρδιας «<?= addslashes(e($sh['name'])) ?>»;')">
+                  <?= csrf_field() ?>
+                  <button class="btn btn-xs btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+              <?php endif; ?>
+            </div>
+
+            <?php /* Edit collapse */ ?>
+            <div class="collapse mt-2" id="editShift<?= (int)$sh['id'] ?>">
+              <form method="post" action="<?= e(url('/events/' . $event['id'] . '/shifts/' . $sh['id'] . '/update')) ?>" class="row g-2 bg-light rounded p-2">
+                <?= csrf_field() ?>
+                <div class="col-md-4">
+                  <input type="text" name="name" class="form-control form-control-sm" value="<?= e($sh['name']) ?>" required>
+                </div>
+                <div class="col-md-3">
+                  <input type="datetime-local" name="start_datetime" class="form-control form-control-sm" required
+                         value="<?= e(date('Y-m-d\TH:i', strtotime($sh['start_datetime']))) ?>">
+                </div>
+                <div class="col-md-3">
+                  <input type="datetime-local" name="end_datetime" class="form-control form-control-sm" required
+                         value="<?= e(date('Y-m-d\TH:i', strtotime($sh['end_datetime']))) ?>">
+                </div>
+                <div class="col-md-2">
+                  <input type="number" name="required_people" class="form-control form-control-sm" min="0" value="<?= (int)$sh['required_people'] ?>">
+                </div>
+                <div class="col-10">
+                  <input type="text" name="notes" class="form-control form-control-sm" placeholder="Σημειώσεις" value="<?= e($sh['notes']) ?>">
+                </div>
+                <div class="col-2 text-end">
+                  <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-save"></i></button>
+                </div>
+              </form>
+            </div>
+
+            <?php /* Shift applications for this shift */ ?>
+            <?php $appsForShift = $shiftAppsByShift[$sh['id']] ?? []; ?>
+            <?php if ($appsForShift): ?>
+            <div class="mt-2">
+              <table class="table table-sm table-bordered mb-0 small">
+                <thead class="table-light"><tr><th>Ομάδα</th><th>Προσφορά</th><th>Εγκεκριμένα</th><th>Κατάσταση</th><th></th></tr></thead>
+                <tbody>
+                  <?php foreach ($appsForShift as $sa): ?>
+                  <tr>
+                    <td><?= e($sa['team_name']) ?></td>
+                    <td><?= (int)$sa['offered_people'] ?></td>
+                    <td><?= $sa['approved_people'] ? (int)$sa['approved_people'] : '—' ?></td>
+                    <td><?= status_badge($sa['status']) ?></td>
+                    <td class="text-end" style="min-width:180px">
+                      <?php if ($sa['status'] === 'pending'): ?>
+                      <form method="post" action="<?= e(url('/shift-applications/' . $sa['id'] . '/approve')) ?>" class="d-inline">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="approved_people" value="<?= (int)$sa['offered_people'] ?>">
+                        <button class="btn btn-xs btn-success">✓ Έγκριση</button>
+                      </form>
+                      <form method="post" action="<?= e(url('/shift-applications/' . $sa['id'] . '/reject')) ?>" class="d-inline ms-1">
+                        <?= csrf_field() ?>
+                        <button class="btn btn-xs btn-outline-danger">✗ Απόρριψη</button>
+                      </form>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+            <?php else: ?>
+              <div class="text-muted small mt-1"><i class="bi bi-people me-1"></i>Δεν υπάρχουν δηλώσεις για αυτή τη βάρδια.</div>
+            <?php endif; ?>
+          </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+  </div>
+
+  <div class="col-lg-5">
+    <?php if ($event['latitude'] !== null && $event['longitude'] !== null): ?>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold"><i class="bi bi-map me-1"></i> Τοποθεσία</div>
+        <div class="card-body p-2">
+          <div id="eventMap" data-lat="<?= e($event['latitude']) ?>" data-lng="<?= e($event['longitude']) ?>" data-title="<?= e($event['title']) ?>"></div>
+        </div>
+      </div>
+    <?php endif; ?>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-earmark-text me-1"></i> Αναφορές δράσης

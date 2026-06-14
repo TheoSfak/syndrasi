@@ -166,4 +166,14 @@
           <div class="form-text">Εγκεκριμένα άτομα: <?= (int) $application['approved_people'] ?></div>
         </div>
         <div class="mb-2">
-          <label c
+          <label class="form-label">Σχόλιο (προαιρετικό)</label>
+          <input type="text" name="message" class="form-control" placeholder="π.χ. Ένα μέλος ασθένησε">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Άκυρο</button>
+        <button type="submit" class="btn btn-warning">Δήλωση Παρουσίας</button>
+      </div>
+    </form>
+  </div>
+</div>

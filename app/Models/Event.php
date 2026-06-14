@@ -193,3 +193,35 @@ class Event
                  description = :description,
                  location_name = :location_name,
                  address = :address,
+                 latitude = :latitude,
+                 longitude = :longitude,
+                 start_datetime = :start_datetime,
+                 end_datetime = :end_datetime,
+                 requested_people = :requested_people,
+                 requested_vehicle = :requested_vehicle,
+                 requested_medical_equipment = :requested_medical_equipment,
+                 instructions = :instructions
+             WHERE id = :id",
+            array_merge($data, ['id' => $id])
+        );
+    }
+
+    public static function markPublished(int $id): void
+    {
+        dbq(
+            "UPDATE events SET status = 'open', published_at = NOW() WHERE id = :id",
+            ['id' => $id]
+        );
+    }
+
+    public static function setStatus(int $id, string $status): void
+    {
+        if (!in_array($status, self::VALID_STATUSES, true)) {
+            throw new InvalidArgumentException("Invalid event status: '{$status}'");
+        }
+        dbq(
+            "UPDATE events SET status = :status WHERE id = :id",
+            ['status' => $status, 'id' => $id]
+        );
+    }
+}

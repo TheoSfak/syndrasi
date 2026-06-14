@@ -251,6 +251,31 @@ class ReportController
         ],false);
     }
 
+    public function pdfAwards($year)
+    {
+        requireRole(['municipality_admin']);
+        $year = (int)$year;
+        if ($year < 2020 || $year > 2040) { abort(400,'Μη έγκυρο έτος.'); }
+        $mid  = current_municipality_id();
+        $mun  = Municipality::find($mid);
+        $s    = MunicipalitySetting::all($mid);
+        $logo = $s['branding_logo_url'] ?? null;
+        $thresholds = [
+            'bronze_events' => (int)($s['award_bronze_events'] ?? 5),
+            'silver_events' => (int)($s['award_silver_events'] ?? 10),
+            'gold_events'   => (int)($s['award_gold_events']   ?? 20),
+            'min_events'    => (int)($s['award_min_events']    ?? 3),
+        ];
+        $awards  = StatsService::awards($mid,$year,$thresholds);
+        $ranking = StatsService::teamRanking($mid,$year);
+        audit('pdf_awards',null,null,'year: '.$year);
+        render('reports/pdf_awards',[
+            'pageTitle'=>'Επιβράβευση Εθελοντισμού '.$year,
+            'mun'=>$mun,'logo'=>$logo,'year'=>$year,
+            'awards'=>$awards,'ranking'=>$ranking,
+        ],false);
+    }
+
     /** GET /reports/pdf/annual/{year} — full-year branded PDF for city council. */
     public function pdfAnnual($year)
     {
@@ -350,30 +375,5 @@ class ReportController
             'byCategory'      => $byCategory,
             'teamLeaderboard' => $teamLeaderboard,
         ], false);
-    }
-
-    public function pdfAwards($year)
-    {
-        requireRole(['municipality_admin']);
-        $year = (int)$year;
-        if ($year < 2020 || $year > 2040) { abort(400,'Μη έγκυρο έτος.'); }
-        $mid  = current_municipality_id();
-        $mun  = Municipality::find($mid);
-        $s    = MunicipalitySetting::all($mid);
-        $logo = $s['branding_logo_url'] ?? null;
-        $thresholds = [
-            'bronze_events' => (int)($s['award_bronze_events'] ?? 5),
-            'silver_events' => (int)($s['award_silver_events'] ?? 10),
-            'gold_events'   => (int)($s['award_gold_events']   ?? 20),
-            'min_events'    => (int)($s['award_min_events']    ?? 3),
-        ];
-        $awards  = StatsService::awards($mid,$year,$thresholds);
-        $ranking = StatsService::teamRanking($mid,$year);
-        audit('pdf_awards',null,null,'year: '.$year);
-        render('reports/pdf_awards',[
-            'pageTitle'=>'Επιβράβευση Εθελοντισμού '.$year,
-            'mun'=>$mun,'logo'=>$logo,'year'=>$year,
-            'awards'=>$awards,'ranking'=>$ranking,
-        ],false);
     }
 }

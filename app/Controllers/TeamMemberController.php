@@ -199,4 +199,47 @@ class TeamMemberController
         foreach (TeamMember::OPTIONAL_FIELDS as $f) {
             if (!empty($fieldConfig[$f]['visible']) && !empty($fieldConfig[$f]['required'])) {
                 if (post_str($f) === '') {
-                    $errors[] = 'Το πεδίο «' . field_label($f) . '» είναι υποχρε
+                    $errors[] = 'Το πεδίο «' . field_label($f) . '» είναι υποχρεωτικό.';
+                }
+            }
+        }
+        return $errors;
+    }
+
+    private function collectData($teamId, $municipalityId): array
+    {
+        return [
+            'team_id'                      => $teamId,
+            'municipality_id'              => $municipalityId,
+            'full_name'                    => post_str('full_name'),
+            'phone'                        => post_str('phone'),
+            'email'                        => post_str('email') ?: null,
+            'date_of_birth'                => post_str('date_of_birth') ?: null,
+            'address'                      => post_str('address') ?: null,
+            'civil_protection_registry_no' => post_str('civil_protection_registry_no') ?: null,
+            'role_in_team'                 => post_str('role_in_team') ?: null,
+            'notes'                        => post_str('notes') ?: null,
+            'blood_type'                   => post_str('blood_type') ?: null,
+            'driving_license'              => post_str('driving_license') ?: null,
+            'certifications'               => post_str('certifications') ?: null,
+            'id_number'                    => post_str('id_number') ?: null,
+            'amka'                         => post_str('amka') ?: null,
+            'is_team_admin'                => 0,
+        ];
+    }
+}
+
+// Helper: human-readable field labels for error messages
+if (!function_exists('field_label')) {
+    function field_label(string $key): string
+    {
+        $map = [
+            'blood_type'       => 'Ομάδα Αίματος',
+            'driving_license'  => 'Δίπλωμα Οδήγησης',
+            'certifications'   => 'Πιστοποιήσεις',
+            'id_number'        => 'Αριθμός Ταυτότητας',
+            'amka'             => 'ΑΜΚΑ',
+        ];
+        return $map[$key] ?? $key;
+    }
+}

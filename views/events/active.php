@@ -58,4 +58,12 @@
                 <?php endif; ?>
               </td>
               <td class="text-end text-nowrap">
-                <a href="<?= e(url('/events/' . $e['id'])) ?>" class="btn btn-sm btn-outline-pri
+                <a href="<?= e(url('/events/' . $e['id'])) ?>" class="btn btn-sm btn-outline-primary">Προβολή</a>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<?php endif; ?>

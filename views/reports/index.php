@@ -78,3 +78,73 @@
   </div>
 
   <!-- Per-event exports + PDFs -->
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-semibold">
+        <i class="bi bi-calendar-event me-1"></i> Αναφορές ανά δράση
+      </div>
+      <?php if (!$events): ?>
+        <div class="card-body text-muted">Δεν υπάρχουν δράσεις.</div>
+      <?php else: ?>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Δράση</th>
+                <th>Ημερομηνία</th>
+                <th>Κατάσταση</th>
+                <th class="text-end">Εξαγωγή</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($events as $ev): ?>
+                <tr>
+                  <td class="fw-semibold"><?= e($ev['title']) ?></td>
+                  <td class="small text-nowrap"><?= e(gr_date($ev['start_datetime'])) ?></td>
+                  <td><?= status_badge($ev['status']) ?></td>
+                  <td class="text-end">
+                    <div class="d-flex gap-1 justify-content-end flex-wrap">
+                      <!-- CSV exports -->
+                      <a class="btn btn-sm btn-outline-secondary"
+                         href="<?= e(url('/exports/events/' . $ev['id'] . '/applications')) ?>"
+                         title="Δηλώσεις CSV">
+                        <i class="bi bi-filetype-csv"></i> Δηλώσεις
+                      </a>
+                      <a class="btn btn-sm btn-outline-secondary"
+                         href="<?= e(url('/exports/events/' . $ev['id'] . '/coverage')) ?>"
+                         title="Κάλυψη CSV">
+                        <i class="bi bi-filetype-csv"></i> Κάλυψη
+                      </a>
+                      <!-- PDF reports (only for completed/active) -->
+                      <?php if (in_array($ev['status'], ['active','closed','completed'])): ?>
+                        <a class="btn btn-sm btn-outline-danger"
+                           href="<?= e(url('/reports/pdf/event/' . $ev['id'] . '/coverage')) ?>"
+                           target="_blank" title="Αναφορά Κάλυψης PDF">
+                          <i class="bi bi-file-earmark-pdf"></i> PDF Κάλυψη
+                        </a>
+                        <a class="btn btn-sm btn-outline-success"
+                           href="<?= e(url('/reports/pdf/event/' . $ev['id'] . '/certificate')) ?>"
+                           target="_blank" title="Πιστοποιητικά Ομάδων">
+                          <i class="bi bi-award"></i> Πιστοποιητικά
+                        </a>
+                      <?php endif; ?>
+                    </div>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <!-- PDF legend -->
+    <div class="mt-3 p-3 bg-light rounded border d-flex gap-3 flex-wrap align-items-start" style="font-size:12px">
+      <div><i class="bi bi-file-earmark-pdf text-danger me-1"></i><strong>PDF Κάλυψη</strong> — Επίσημη αναφορά ανάπτυξης ομάδων με υπογραφές. Εκτυπώνεται από browser.</div>
+      <div><i class="bi bi-award text-success me-1"></i><strong>Πιστοποιητικά</strong> — Μία σελίδα ανά ομάδα, κατάλληλη για επίσημη απονομή.</div>
+      <div><i class="bi bi-trophy text-warning me-1"></i><strong>Επιβράβευση</strong> — Τελετή βράβευσης με κάλυψη + κατάταξη.</div>
+      <div><i class="bi bi-file-earmark-bar-graph text-primary me-1"></i><strong>Ετήσια Έκθεση</strong> — 4 σελίδες για Δημοτικό Συμβούλιο: δράσεις, ανάλυση, κατάταξη ομάδων.</div>
+    </div>
+  </div>
+
+</div>

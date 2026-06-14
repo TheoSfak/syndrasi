@@ -48,4 +48,85 @@
                     <?= status_badge($ev['application_status']) ?>
                     <?php if ($ev['application_status'] === 'approved'): ?>
                       <span class="small text-success fw-semibold"><?= (int) $ev['approved_people'] ?> άτομα</span>
-              
+                    <?php endif; ?>
+                  </div>
+                <?php endif; ?>
+
+                <div class="mt-auto d-grid gap-2">
+                  <a href="<?= e(url('/team/events/' . $ev['id'])) ?>" class="btn btn-outline-primary">
+                    <?= $ev['application_id'] ? 'Προβολή' : 'Προβολή & Δήλωση' ?>
+                  </a>
+                  <?php if ($ev['status'] === 'active' && $ev['application_status'] === 'approved'): ?>
+                    <a href="<?= e(url('/team/operations/events/' . $ev['id'])) ?>" class="btn btn-warning">
+                      <i class="bi bi-geo-alt me-1"></i>Επιχειρησιακές Ενέργειες
+                    </a>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- Κλειστές / Ολοκληρωμένες -->
+  <div class="tab-pane fade" id="tab-closed">
+    <?php if (!$closedEvents): ?>
+      <div class="card shadow-sm"><div class="card-body text-muted">Δεν υπάρχουν κλειστές δράσεις με συμμετοχή της ομάδας σας.</div></div>
+    <?php else: ?>
+      <div class="card shadow-sm">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Δράση</th>
+                <th>Ημερομηνία</th>
+                <th class="text-center">Άτομα</th>
+                <th>Κατάσταση</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($closedEvents as $ev): ?>
+                <tr class="text-muted">
+                  <td><strong class="text-body"><?= e($ev['title']) ?></strong></td>
+                  <td class="small text-nowrap"><?= e(gr_datetime($ev['start_datetime'])) ?></td>
+                  <td class="text-center small">
+                    <?php if ($ev['actual_people'] !== null): ?>
+                      <span class="fw-semibold text-body"><?= (int) $ev['actual_people'] ?></span>
+                      <span class="text-muted">/ <?= (int) $ev['approved_people'] ?></span>
+                    <?php else: ?>
+                      <?= (int) $ev['approved_people'] ?>
+                    <?php endif; ?>
+                  </td>
+                  <td><?= status_badge($ev['status']) ?></td>
+                  <td class="text-end d-flex gap-1 justify-content-end">
+                    <a href="<?= e(url('/team/events/' . $ev['id'])) ?>" class="btn btn-sm btn-outline-secondary">Προβολή</a>
+                    <?php if ($ev['status'] === 'completed'): ?>
+                      <a href="<?= e(url('/team/events/' . $ev['id'] . '/debrief')) ?>"
+                         class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-clipboard2-check me-1"></i>Debrief
+                      </a>
+                    <?php endif ?>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <?php endif; ?>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var hash = window.location.hash;
+  if (hash) {
+    var t = document.querySelector('#eventsNav a[href="' + hash + '"]');
+    if (t) { new bootstrap.Tab(t).show(); }
+  }
+})();
+</script>

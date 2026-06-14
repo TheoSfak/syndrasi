@@ -249,4 +249,80 @@ class SettingsController
         $requiredFields = isset($_POST['mf_required']) && is_array($_POST['mf_required']) ? $_POST['mf_required'] : [];
 
         $config = [];
-        fore
+        foreach ($optionalFields as $f) {
+            $visible  = in_array($f, $visibleFields, true);
+            $required = $visible && in_array($f, $requiredFields, true);
+            $config[$f] = ['visible' => $visible, 'required' => $required];
+        }
+
+        MunicipalitySetting::setMany($mid, ['member_fields_config' => json_encode($config)]);
+        audit('municipality_member_fields_updated', 'municipality', $mid);
+
+        flash_set('success', 'Η διαμόρφωση πεδίων μελών αποθηκεύτηκε.');
+        redirect('/settings#tab-members');
+    }
+
+    /* ── Email templates ─────────────────────────────────────────────────── */
+
+    public function saveEmailTemplates()
+    {
+        requireRole(['municipality_admin']);
+        $mid  = current_municipality_id();
+        $defs = EmailTemplate::definitions();
+
+        $tplPost = isset($_POST['tpl']) && is_array($_POST['tpl']) ? $_POST['tpl'] : [];
+        $toSave  = [];
+
+        foreach ($defs as $type => $def) {
+            if (!isset($tplPost[$type])) {
+                continue;
+            }
+            $subject = trim((string) ($tplPost[$type]['subject'] ?? ''));
+            $body    = trim((string) ($tplPost[$type]['body']    ?? ''));
+
+            // If both match the defaults exactly, clear the override so default is used
+            if ($subject === $def['subject'] && $body === $def['body']) {
+                $toSave['email_tpl_' . $type] = '';
+            } else {
+                $toSave['email_tpl_' . $type] = json_encode([
+                    'subject' => $subject !== '' ? $subject : $def['subject'],
+                    'body'    => $body    !== '' ? $body    : $def['body'],
+                ]);
+            }
+        }
+
+        MunicipalitySetting::setMany($mid, $toSave);
+        audit('municipality_email_templates_updated', 'municipality', $mid);
+
+        flash_set('success', 'Τα πρότυπα email αποθηκεύτηκαν.');
+        redirect('/settings#tab-email-templates');
+    }
+
+    /* ── Branding & timezone ──────────────────────────────────────────── */
+
+    public function saveBranding()
+    {
+        requireRole(['municipality_admin']);
+        $mid = current_municipality_id();
+
+        $logoUrl = post_str('branding_logo_url');
+        if ($logoUrl !== '' && !filter_var($logoUrl, FILTER_VALIDATE_URL)) {
+            flash_set('danger', 'Μη έγκυρο URL λογότυπου. Χρησιμοποιήστε πλήρες URL (https://...).');
+            redirect('/settings');
+        }
+
+        $tz = post_str('timezone');
+        if (!in_array($tz, timezone_identifiers_list(), true)) {
+            $tz = 'Europe/Athens';
+        }
+
+        MunicipalitySetting::setMany($mid, [
+            'branding_logo_url' => $logoUrl,
+            'timezone'          => $tz,
+        ]);
+        audit('municipality_branding_updated', 'municipality', $mid, 'tz:' . $tz);
+
+        flash_set('success', 'Οι ρυθμίσεις εμφάνισης αποθηκεύτηκαν.');
+        redirect('/settings');
+    }
+}

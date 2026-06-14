@@ -334,7 +334,7 @@ body.ops-dark main             { background:transparent!important; }
     document.body.classList.toggle('ops-dark');
   });
 
-  /* ─── Render helpers ─── */
+  /* ─── Poll status ─── */
   function statusIcon(s) {
     var icons = { present_full:'bi-check-circle-fill text-success', present_partial:'bi-check-circle text-warning',
                   not_present:'bi-circle text-muted', departed:'bi-box-arrow-right text-secondary' };

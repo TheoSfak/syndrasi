@@ -80,4 +80,11 @@ function refreshOperationalMap() {
         var html = '<strong>' + t.team_name + '</strong><br>' +
           t.status_label + '<br>' +
           'Άτομα: ' + (t.present_people !== null ? t.present_people : '—') + ' / ' + t.approved_people + '<br>' +
-          '<span class="text-muted">Σ
+          '<span class="text-muted">Στίγμα: ' + (t.last_ping_at || '—') + '</span>';
+        marker.bindPopup(html);
+        marker.addTo(syndrasiOpMap);
+        syndrasiOpMarkers.push(marker);
+      });
+    })
+    .catch(function () { /* silent */ });
+}

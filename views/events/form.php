@@ -99,4 +99,134 @@ $dtVal = function ($key) use ($event) {
     <div class="col-md-4 d-flex align-items-center">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="requested_medical_equipment" id="reqMedical" value="1" <?= $v('requested_medical_equipment') ? 'checked' : '' ?>>
-        <label c
+        <label class="form-check-label" for="reqMedical">Απαιτείται υγειονομικός εξοπλισμός</label>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">Οδηγίες προς τις ομάδες</label>
+      <textarea name="instructions" class="form-control" rows="2" placeholder="π.χ. Προσέλευση 30 λεπτά πριν την έναρξη."><?= e($v('instructions', !$isEdit ? ($defaultInstructions ?? '') : '')) ?></textarea>
+    </div>
+  </div>
+
+  <div class="card-footer d-flex flex-wrap gap-2">
+    <?php if ($isEdit): ?>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση αλλαγών</button>
+    <?php else: ?>
+      <button class="btn btn-outline-secondary" type="submit" name="action" value="draft"><i class="bi bi-file-earmark me-1"></i>Αποθήκευση ως πρόχειρη</button>
+      <button class="btn btn-primary" type="submit" name="action" value="publish"
+              onclick="return confirm('Η δράση θα δημοσιευθεί και όλες οι ενεργές ομάδες θα ειδοποιηθούν. Συνέχεια;')">
+        <i class="bi bi-megaphone me-1"></i>Δημοσίευση στις ομάδες
+      </button>
+    <?php endif; ?>
+    <a class="btn btn-link text-muted" href="<?= e(url('/events')) ?>">Άκυρο</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  const urlInput    = document.getElementById('mapsUrlInput');
+  const latField    = document.getElementById('latField');
+  const lngField    = document.getElementById('lngField');
+  const coordDisp   = document.getElementById('mapsCoordDisplay');
+  const latDisp     = document.getElementById('mapsLatDisplay');
+  const lngDisp     = document.getElementById('mapsLngDisplay');
+  const statusOk    = document.getElementById('mapsParseStatus');
+  const statusErr   = document.getElementById('mapsParseError');
+  const clearBtn    = document.getElementById('mapsClearBtn');
+
+  /**
+   * Try every known Google Maps URL pattern and return {lat, lng} or null.
+   *
+   * Patterns handled:
+   *  /maps/place/.../@lat,lng,...z
+   *  /maps?q=lat,lng
+   *  /maps/search/.../@lat,lng
+   *  maps.google.com/?q=lat,lng
+   *  maps.google.com/?ll=lat,lng
+   *  /maps/dir/.../lat,lng
+   *  short URL geo:lat,lng inside href  (edge case)
+   */
+  function parseGoogleMapsUrl(raw) {
+    const url = raw.trim();
+    if (!url) return null;
+
+    const patterns = [
+      // @lat,lng,zoom   (most common share link)
+      /@(-?\d+\.?\d*),(-?\d+\.?\d*)/,
+      // q=lat,lng
+      /[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,
+      // ll=lat,lng
+      /[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/,
+      // destination/lat,lng  (directions)
+      /\/(-?\d+\.?\d*),(-?\d+\.?\d*)(?:[,\/]|$)/,
+    ];
+
+    for (const re of patterns) {
+      const m = url.match(re);
+      if (m) {
+        const lat = parseFloat(m[1]);
+        const lng = parseFloat(m[2]);
+        if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+          return { lat: lat.toFixed(7).replace(/\.?0+$/, ''),
+                   lng: lng.toFixed(7).replace(/\.?0+$/, '') };
+        }
+      }
+    }
+    return null;
+  }
+
+  function applyCoords(coords) {
+    latField.value = coords.lat;
+    lngField.value = coords.lng;
+    latDisp.textContent = coords.lat;
+    lngDisp.textContent = coords.lng;
+    coordDisp.classList.remove('d-none');
+    statusOk.classList.remove('d-none');
+    statusErr.classList.add('d-none');
+    urlInput.classList.remove('is-invalid');
+    urlInput.classList.add('is-valid');
+  }
+
+  function clearCoords() {
+    latField.value = '';
+    lngField.value = '';
+    coordDisp.classList.add('d-none');
+    statusOk.classList.add('d-none');
+    statusErr.classList.add('d-none');
+    urlInput.classList.remove('is-valid', 'is-invalid');
+  }
+
+  function onInput() {
+    const val = urlInput.value.trim();
+    if (!val) { clearCoords(); return; }
+    const coords = parseGoogleMapsUrl(val);
+    if (coords) {
+      applyCoords(coords);
+    } else {
+      clearCoords();
+      statusErr.classList.remove('d-none');
+      urlInput.classList.add('is-invalid');
+    }
+  }
+
+  urlInput.addEventListener('input',  onInput);
+  urlInput.addEventListener('paste',  function () { setTimeout(onInput, 50); });
+  clearBtn.addEventListener('click', function () {
+    urlInput.value = '';
+    clearCoords();
+    urlInput.focus();
+  });
+
+  // On edit page: if lat/lng already set, restore display state
+  (function () {
+    const lat = latField.value.trim();
+    const lng = lngField.value.trim();
+    if (lat && lng) {
+      latDisp.textContent = lat;
+      lngDisp.textContent = lng;
+      coordDisp.classList.remove('d-none');
+    }
+  })();
+})();
+</script>

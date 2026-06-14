@@ -37,6 +37,11 @@
         <button type="submit" class="btn btn-lg w-100 text-white" style="background:#0f766e">
           <i class="bi bi-box-arrow-in-right me-1"></i> Σύνδεση
         </button>
+        <div class="text-center mt-3 small">
+          <a href="<?= e(url('/forgot-password')) ?>" class="text-decoration-none" style="color:#0f766e">
+            <i class="bi bi-key me-1"></i>Ξεχάσατε τον κωδικό;
+          </a>
+        </div>
       </form>
     </div>
     <div class="card-footer text-center text-muted small py-3">

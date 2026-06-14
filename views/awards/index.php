@@ -73,4 +73,18 @@ $cards = [
                 <strong><?= e($r['team_name']) ?></strong>
                 <span class="text-muted small"><?= e($r['team_type'] ?: '') ?></span>
                 <?php if ($r['tier'] === 'gold'):   ?><span title="Χρυσή συμμετοχή">🥇</span>
-                <?
+                <?php elseif ($r['tier'] === 'silver'): ?><span title="Ασημένια συμμετοχή">🥈</span>
+                <?php elseif ($r['tier'] === 'bronze'): ?><span title="Χάλκινη συμμετοχή">🥉</span>
+                <?php endif; ?>
+              </td>
+              <td><?= (int) $r['events_count'] ?></td>
+              <td><?= e(gr_number($r['volunteer_hours'], 1)) ?></td>
+              <td><?= $r['consistency_score'] !== null ? e(gr_number($r['consistency_score'], 1)) . '%' : '—' ?></td>
+              <td><?= $r['avg_response_minutes'] !== null ? e(gr_number($r['avg_response_minutes'])) . '′' : '—' ?></td>
+            </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  <?php endif; ?>
+</div>

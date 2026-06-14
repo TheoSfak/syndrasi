@@ -27,7 +27,11 @@ Thumbs.db
 # Build / working artifacts
 *.fix.php
 *.fix.js
+*.swap.php
 *.new.md
 *.new
 *.bak
 *.orig
+
+# Local pre-edit backups (safety snapshots, never committed)
+/_backups/

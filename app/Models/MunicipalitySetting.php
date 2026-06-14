@@ -38,4 +38,10 @@ class MunicipalitySetting
         foreach ($settings as $key => $value) {
             dbq(
                 'INSERT INTO municipality_settings (municipality_id, setting_key, setting_value)
-     
+                 VALUES (:mid, :k, :v)
+                 ON DUPLICATE KEY UPDATE setting_value = :v2',
+                ['mid' => $municipalityId, 'k' => $key, 'v' => $value, 'v2' => $value]
+            );
+        }
+    }
+}

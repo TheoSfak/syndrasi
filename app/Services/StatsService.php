@@ -315,4 +315,26 @@ class StatsService
             if ($r['volunteer_hours'] > 0 && ($bestContribution === null || $r['volunteer_hours'] > $bestContribution['volunteer_hours'])) {
                 $bestContribution = $r;
             }
-            if ($r['events_count'] > 0 && (
+            if ($r['events_count'] > 0 && ($mostActive === null || $r['events_count'] > $mostActive['events_count'])) {
+                $mostActive = $r;
+            }
+            if ($r['events_count'] >= $minEvents && $r['consistency_score'] !== null
+                && ($mostConsistent === null || $r['consistency_score'] > $mostConsistent['consistency_score'])) {
+                $mostConsistent = $r;
+            }
+            if ($r['avg_response_minutes'] !== null && $r['events_count'] >= $minEvents
+                && ($fastestResponse === null || $r['avg_response_minutes'] < $fastestResponse['avg_response_minutes'])) {
+                $fastestResponse = $r;
+            }
+        }
+
+        return [
+            'best_contribution' => $bestContribution,
+            'most_active'       => $mostActive,
+            'most_consistent'   => $mostConsistent,
+            'fastest_response'  => $fastestResponse,
+            'ranking'           => $ranking,
+            'thresholds'        => $thresholds,
+        ];
+    }
+}
