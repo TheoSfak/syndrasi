@@ -20,13 +20,10 @@
       <?php if ($applications): ?>
         <?php foreach ($applications as $app): ?>
           <?php
-            // Load assigned members for this application
-            $appMembers = TeamMember::forApplication($app['id']);
-            // Load existing participation records (for re-editing)
-            $existingVp = [];
-            foreach (VolunteerParticipation::forApplication($app['id']) as $vp) {
-              $existingVp[$vp['member_id']] = $vp;
-            }
+            // Assigned members + existing participation are pre-loaded by the
+            // controller (batched) to avoid N+1 queries here.
+            $appMembers = $membersByApp[$app['id']] ?? [];
+            $existingVp = $existingByApp[$app['id']] ?? [];
             // Calculate hours from actual times if available
             $arriv  = $app['actual_arrival_time']  ?? $event['start_datetime'];
             $depart = $app['actual_departure_time'] ?? $event['end_datetime'];

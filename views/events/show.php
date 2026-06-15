@@ -80,6 +80,13 @@
         <button class="btn btn-outline-secondary"><i class="bi bi-copy me-1"></i>Κλωνοποίηση</button>
       </form>
 
+      <!-- Save as reusable template -->
+      <form method="post" action="<?= e(url('/events/' . $event['id'] . '/save-template')) ?>" class="input-group" style="max-width:300px">
+        <?= csrf_field() ?>
+        <input type="text" name="template_name" class="form-control form-control-sm" placeholder="Όνομα προτύπου (προαιρετικό)">
+        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-bookmark-plus me-1"></i>Ως πρότυπο</button>
+      </form>
+
       <?php if (!empty($event['public_token']) && $event['status'] !== 'draft'): ?>
         <!-- Share public link -->
         <?php $publicUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
@@ -333,4 +340,33 @@
 
     <div class="card shadow-sm">
       <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-file-earmark-text me-1"></i> Αναφορές δράσης
+        <span><i class="bi bi-file-earmark-text me-1"></i> Αναφορές δράσης</span>
+      </div>
+      <?php if (empty($reports)): ?>
+        <div class="card-body text-muted small">Δεν υπάρχουν αναφορές ακόμη.</div>
+      <?php else: ?>
+        <div class="list-group list-group-flush">
+          <?php foreach ($reports as $r): ?>
+          <div class="list-group-item">
+            <div class="fw-semibold small">
+              <i class="bi bi-people me-1 text-primary"></i><?= e($r['team_name'] ?? 'Δήμος') ?>
+              <span class="text-muted fw-normal">· <?= e(gr_datetime($r['created_at'])) ?></span>
+            </div>
+            <div class="small text-muted mt-1">
+              Περιστατικά: <strong><?= (int) $r['incidents_count'] ?></strong> ·
+              Διακομιδές: <strong><?= (int) $r['transfers_count'] ?></strong> ·
+              Α&#39; βοήθειες: <strong><?= (int) $r['first_aid_count'] ?></strong>
+            </div>
+            <?php if (!empty($r['summary'])): ?>
+              <div class="small mt-1"><?= nl2br(e($r['summary'])) ?></div>
+            <?php endif; ?>
+            <?php if (!empty($r['notes'])): ?>
+              <div class="small text-muted mt-1"><em><?= nl2br(e($r['notes'])) ?></em></div>
+            <?php endif; ?>
+          </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>

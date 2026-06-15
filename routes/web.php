@@ -7,6 +7,10 @@
 /* Public (no auth required) */
 $router->get('/public/events/{token}', 'PublicEventController@show');
 
+/* Emergency mobilization — volunteer response (token link, no login required) */
+$router->get('/m/{token}',         'MobilizationController@respondForm');
+$router->post('/m/{token}/respond', 'MobilizationController@respond');
+
 /* Home: redirect by role */
 $router->get('/', 'AuthController@home');
 
@@ -57,6 +61,8 @@ $router->post('/events/{id}/reconcile', 'EventController@saveReconciliation');
 $router->post('/events/{id}/remind', 'EventController@remind');
 $router->post('/events/{id}/cancel', 'EventController@cancel');
 $router->post('/events/{id}/clone',  'EventController@clone');
+$router->post('/events/{id}/save-template', 'EventController@saveTemplate');
+$router->post('/event-templates/{id}/delete', 'EventController@deleteTemplate');
 
 /* Municipality admin: applications */
 $router->get('/events/{id}/applications', 'ApplicationController@index');
@@ -79,6 +85,15 @@ $router->get('/team/qr-checkin/{id}', 'TeamPortalController@qrCheckin');
 /* Team portal: shift apply / cancel */
 $router->post('/team/events/{id}/shifts/{sid}/apply', 'ShiftController@teamApply');
 $router->post('/team/shift-applications/{id}/cancel', 'ShiftController@teamCancel');
+
+/* Municipality admin & operator: emergency mobilization (command side) */
+$router->get('/mobilizations',                 'MobilizationController@index');
+$router->get('/mobilizations/new',             'MobilizationController@create');
+$router->post('/mobilizations',                'MobilizationController@store');
+$router->get('/mobilizations/{id}',            'MobilizationController@show');
+$router->get('/mobilizations/{id}/stream',     'MobilizationController@stream');
+$router->post('/mobilizations/{id}/stand-down', 'MobilizationController@standDown');
+$router->post('/mobilizations/{id}/checkin',   'MobilizationController@checkin');
 
 /* Municipality admin & operator: operational page */
 $router->get('/operations', 'OperationController@index');
@@ -163,6 +178,7 @@ $router->post('/push/unsubscribe', 'PushController@unsubscribe');
 
 /* Cron endpoints (token-protected, no session required) */
 $router->get('/cron/shift-reminders', 'CronController@shiftReminders');
+$router->get('/cron/cleanup', 'CronController@cleanup');
 
 /* Super admin */
 $router->get('/admin/dashboard', 'AdminController@dashboard');
@@ -180,3 +196,10 @@ $router->post('/admin/impersonate/{id}', 'AdminController@impersonate');
 $router->post('/admin/stop-impersonation', 'AdminController@stopImpersonation');
 $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/settings', 'AdminController@saveSettings');
+
+/* Super admin: maintenance (cron) + self-update */
+$router->post('/admin/maintenance/cleanup', 'MaintenanceController@cleanup');
+$router->post('/admin/updates/backup',      'MaintenanceController@backup');
+$router->post('/admin/updates/check',       'MaintenanceController@checkUpdate');
+$router->post('/admin/updates/apply',       'MaintenanceController@applyUpdate');
+$router->post('/admin/migrations/run',      'MaintenanceController@runMigrations');

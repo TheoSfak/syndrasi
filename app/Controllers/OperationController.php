@@ -19,7 +19,7 @@ class OperationController
              WHERE e.municipality_id = :mid
                AND (
                  e.status = 'active'
-                 OR (e.status IN ('confirmed','review')
+                 OR (e.status IN ('open','confirmed','review')
                      AND NOW() >= e.start_datetime
                      AND NOW() <= e.end_datetime)
                )
@@ -33,7 +33,7 @@ class OperationController
                     (SELECT COUNT(*) FROM event_applications ea WHERE ea.event_id=e.id AND ea.status='approved') AS teams_approved
              FROM events e LEFT JOIN event_categories c ON c.id=e.category_id
              WHERE e.municipality_id = :mid
-               AND e.status IN ('confirmed','review')
+               AND e.status IN ('open','confirmed','review')
                AND e.start_datetime > NOW()
                AND e.start_datetime <= DATE_ADD(NOW(), INTERVAL 60 MINUTE)
              ORDER BY e.start_datetime ASC",
@@ -436,7 +436,7 @@ class OperationController
              WHERE e.municipality_id = :mid
                AND (
                  e.status = 'active'
-                 OR (e.status IN ('confirmed','review')
+                 OR (e.status IN ('open','confirmed','review')
                      AND NOW() >= e.start_datetime
                      AND NOW() <= e.end_datetime)
                )

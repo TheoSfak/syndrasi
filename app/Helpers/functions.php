@@ -14,6 +14,13 @@ function config($file)
     return $cache[$file];
 }
 
+/** Read an environment variable with a fallback default. */
+function env($key, $default = null)
+{
+    $val = getenv($key);
+    return $val !== false ? $val : $default;
+}
+
 /* -------------------------------------------------------------- Database */
 
 function db()
@@ -368,6 +375,22 @@ function gr_number($num, $decimals = 0)
 }
 
 /* ------------------------------------------------------------ Validation */
+
+/**
+ * Validate a password (and optionally its confirmation).
+ * Returns a Greek error message, or null when the password is acceptable.
+ * Pass $confirm = null to skip the match check (e.g. admin-set passwords).
+ */
+function password_error($password, $confirm = null, $min = 8)
+{
+    if (mb_strlen((string) $password) < $min) {
+        return 'Ο κωδικός πρέπει να έχει τουλάχιστον ' . $min . ' χαρακτήρες.';
+    }
+    if ($confirm !== null && $password !== $confirm) {
+        return 'Οι κωδικοί δεν ταιριάζουν.';
+    }
+    return null;
+}
 
 function post_str($key, $default = '')
 {

@@ -131,11 +131,11 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
           ?>
           <div>
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="small fw-semibold" style="color:<?= $color ?>"><?= $label ?></span>
+              <span class="small fw-semibold" style="color:<?= e($color) ?>"><?= e($label) ?></span>
               <span class="small text-muted"><?= $cnt ?> (<?= $pct ?>%)</span>
             </div>
             <div class="cov-bar-wrap">
-              <div style="width:<?= $pct ?>%;height:100%;border-radius:4px;background:<?= $color ?>;"></div>
+              <div style="width:<?= $pct ?>%;height:100%;border-radius:4px;background:<?= e($color) ?>;"></div>
             </div>
           </div>
           <?php endforeach; ?>

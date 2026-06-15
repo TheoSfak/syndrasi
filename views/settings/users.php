@@ -12,17 +12,9 @@ $roleBadge = [
     'event_operator'     => 'info',
 ];
 
-/* Build teams list indexed by municipality_id for JS */
-$teamsByMuni = [];
-foreach ($municipalities as $mun) {
-    $teams = dbq(
-        'SELECT id, name FROM volunteer_teams WHERE municipality_id = :mid AND status = :s ORDER BY name',
-        ['mid' => $mun['id'], 's' => 'active']
-    )->fetchAll();
-    if ($teams) {
-        $teamsByMuni[(int) $mun['id']] = $teams;
-    }
-}
+/* $teamsByMuni (active teams indexed by municipality_id) is supplied by the
+   controller. Default to an empty array for safety. */
+$teamsByMuni = $teamsByMuni ?? [];
 ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">

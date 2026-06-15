@@ -115,6 +115,35 @@ class TeamMember
         )->fetchAll();
     }
 
+    /**
+     * Batched version of forApplication() — avoids N+1 when listing many
+     * applications. Returns a map: applicationId => [member rows].
+     */
+    public static function forApplications(array $applicationIds)
+    {
+        $map = [];
+        if (empty($applicationIds)) {
+            return $map;
+        }
+        $ids = array_map('intval', $applicationIds);
+        foreach ($ids as $id) {
+            $map[$id] = [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = db()->prepare(
+            "SELECT eam.application_id, tm.*
+             FROM event_application_members eam
+             JOIN team_members tm ON tm.id = eam.member_id
+             WHERE eam.application_id IN ($placeholders)
+             ORDER BY tm.is_team_admin DESC, tm.full_name ASC"
+        );
+        $stmt->execute($ids);
+        foreach ($stmt->fetchAll() as $row) {
+            $map[(int) $row['application_id']][] = $row;
+        }
+        return $map;
+    }
+
     // ------------------------------------------------------ Conflict checking
 
     /**

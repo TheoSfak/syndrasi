@@ -281,7 +281,7 @@ CREATE TABLE municipality_settings (
 CREATE TABLE app_settings (
   setting_key VARCHAR(100) PRIMARY KEY,
   setting_value TEXT NULL,
-  updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

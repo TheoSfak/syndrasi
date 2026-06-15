@@ -15,7 +15,7 @@ class Event
      */
     private const TRANSITIONS = [
         'draft'     => ['open', 'cancelled'],
-        'open'      => ['review', 'confirmed', 'completed', 'cancelled'],
+        'open'      => ['review', 'confirmed', 'active', 'completed', 'cancelled'],
         'review'    => ['confirmed', 'active', 'completed', 'cancelled'],
         'confirmed' => ['active', 'completed', 'cancelled'],
         'active'    => ['completed'],

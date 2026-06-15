@@ -67,6 +67,20 @@ class CronController
         ]);
     }
 
+    /**
+     * GET /cron/cleanup
+     * Purges transient rows that accumulate in app_settings and never expire:
+     *   - login rate-limit counters/locks (login_fail_* / login_lock_*)
+     *   - per-shift "already reminded" flags for shifts that ended long ago
+     *   - expired/used password-reset tokens
+     * Safe to run daily.
+     */
+    public function cleanup()
+    {
+        $this->authCron();
+        json_out(array_merge(['success' => true], MaintenanceService::cleanup()));
+    }
+
     /* ── Private ─────────────────────────────────────────────────────────── */
 
     private function authCron()
@@ -83,4 +97,6 @@ class CronController
         if (!$stored || !hash_equals((string) $stored, $secret)) {
             http_response_code(403);
             exit(json_encode(['error' => 'Invalid secret.']));
-  
+          }
+    }
+}

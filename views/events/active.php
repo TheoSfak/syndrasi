@@ -10,6 +10,25 @@
     <a href="<?= e(url('/events/drafts')) ?>" class="btn btn-sm btn-outline-secondary">
       <i class="bi bi-file-earmark me-1"></i>Πρόχειρα
     </a>
+    <?php if (!empty($templates)): ?>
+    <div class="dropdown">
+      <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" type="button">
+        <i class="bi bi-bookmark me-1"></i>Νέα από πρότυπο
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <?php foreach ($templates as $tpl): ?>
+        <li class="d-flex align-items-center justify-content-between pe-2">
+          <a class="dropdown-item" href="<?= e(url('/events/create?template=' . (int) $tpl['id'])) ?>"><?= e($tpl['name']) ?></a>
+          <form method="post" action="<?= e(url('/event-templates/' . (int) $tpl['id'] . '/delete')) ?>"
+                onsubmit="return confirm('Διαγραφή προτύπου;')">
+            <?= csrf_field() ?>
+            <button class="btn btn-sm btn-link text-danger p-0" title="Διαγραφή"><i class="bi bi-trash"></i></button>
+          </form>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+    <?php endif; ?>
     <a href="<?= e(url('/events/create')) ?>" class="btn btn-sm btn-primary">
       <i class="bi bi-plus-lg me-1"></i>Νέα Δράση
     </a>

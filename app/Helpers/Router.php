@@ -40,7 +40,15 @@ class Router
             if ($m !== $method) {
                 continue;
             }
-            $regex = '#^' . preg_replace('/\{[a-zA-Z_]+\}/', '(\d+)', $pattern) . '$#';
+            // {token} matches an alphanumeric string (used by public/share links);
+            // every other {param} matches a numeric id.
+            $regex = '#^' . preg_replace_callback(
+                '/\{([a-zA-Z_]+)\}/',
+                function ($m) {
+                    return $m[1] === 'token' ? '([A-Za-z0-9]+)' : '(\d+)';
+                },
+                $pattern
+            ) . '$#';
             if (preg_match($regex, $path, $matches)) {
                 array_shift($matches);
                 list($class, $action) = explode('@', $handler);

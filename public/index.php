@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (!verify_csrf($token)) {
         if (wants_json()) {
-            json_response(['success' => false, 'message' => 'Μη έγκυρο αίτημα ασφαλείας. Ανανεώστε τη σελίδα.'], 419);
+            json_out(['success' => false, 'message' => 'Μη έγκυρο αίτημα ασφαλείας. Ανανεώστε τη σελίδα.'], 419);
         }
         http_response_code(419);
         exit('Μη έγκυρο αίτημα ασφαλείας. Παρακαλούμε ανανεώστε τη σελίδα και προσπαθήστε ξανά.');

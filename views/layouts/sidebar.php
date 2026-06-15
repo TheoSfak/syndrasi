@@ -6,6 +6,7 @@ $menus = [];
 if ($role === 'municipality_admin') {
     $menus = [
         ['/dashboard',    'bi-speedometer2',              'Πίνακας Ελέγχου'],
+        ['/mobilizations', 'bi-broadcast-pin',            'Κάλεσμα Έκτακτης Ανάγκης'],
         ['/operations',   'bi-broadcast',                 'Κέντρο Επιχειρήσεων'],
         ['/operations/war-room', 'bi-diagram-3',          'Κέντρο Συντονισμού'],
         ['/events',       'bi-calendar-event',            'Δράσεις'],
@@ -21,6 +22,7 @@ if ($role === 'municipality_admin') {
 } elseif ($role === 'event_operator') {
     $menus = [
         ['/dashboard',  'bi-speedometer2',  'Πίνακας Ελέγχου'],
+        ['/mobilizations', 'bi-broadcast-pin', 'Κάλεσμα Έκτακτης Ανάγκης'],
         ['/operations', 'bi-broadcast',     'Κέντρο Επιχειρήσεων'],
         ['/operations/war-room', 'bi-diagram-3', 'Κέντρο Συντονισμού'],
         ['/events',     'bi-calendar-event','Δράσεις'],

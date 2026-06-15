@@ -82,6 +82,20 @@ SynDrasi είναι μια απλή, εγκαταστάσιμη (PWA) web εφα
 
 PDO prepared statements παντού, CSRF token σε όλα τα POST, `htmlspecialchars()` στην έξοδο, `password_hash()`/`password_verify()`, role-based access control, απομόνωση δεδομένων ανά δήμο (multi-tenant), audit log, ασφαλή session cookies.
 
+## Διαδικασία έκδοσης (Release process)
+
+Ροή κυκλοφορίας — αναλυτικά στο [`DEPLOY.md`](DEPLOY.md):
+
+1. Ανάπτυξη στον φάκελο εργασίας (Desktop).
+2. Συγχρονισμός στο web root: `C:\xampp\htdocs\syndrasi`.
+3. `commit` στο git.
+4. Νέο **tag** (ενημέρωσε το αρχείο `VERSION`).
+5. **Δημιούργησε το GitHub _Release_** για το tag — ⚠️ **ΠΟΤΕ μην ξεχνάς το Release.**
+
+> Ένα tag δεν θεωρείται ολοκληρωμένο αν δεν έχει και Release. Ο ενσωματωμένος updater
+> (Ρυθμίσεις Πλατφόρμας → Updates) διαβάζει το νεότερο Release/tag από το GitHub.
+> Πάντα: push τρέχοντος κώδικα → bump `VERSION` → tag → publish Release.
+
 ---
 
 Πρόταση από Σφακιανάκη Θεόδωρο | email: theodore.sfakianakis@gmail.com | κιν. 6945139015

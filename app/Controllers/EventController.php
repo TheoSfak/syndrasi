@@ -21,6 +21,7 @@ class EventController
         render('events/active', [
             'pageTitle' => 'Ενεργές Δράσεις',
             'events'    => $events,
+            'templates' => EventTemplate::forMunicipality($mid),
         ]);
     }
 
@@ -117,9 +118,34 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $mid = current_municipality_id();
+
+        // Optional prefill from a saved template (?template=ID)
+        $prefill = null;
+        $templateId = null;
+        if (isset($_GET['template'])) {
+            $tpl = EventTemplate::findForMunicipality((int) $_GET['template'], $mid);
+            if ($tpl) {
+                $templateId = (int) $tpl['id'];
+                $prefill = [
+                    'title'                       => $tpl['title'],
+                    'category_id'                 => $tpl['category_id'],
+                    'description'                 => $tpl['description'],
+                    'location_name'               => $tpl['location_name'],
+                    'address'                     => $tpl['address'],
+                    'latitude'                    => $tpl['latitude'],
+                    'longitude'                   => $tpl['longitude'],
+                    'requested_people'            => $tpl['requested_people'],
+                    'requested_vehicle'           => $tpl['requested_vehicle'],
+                    'requested_medical_equipment' => $tpl['requested_medical_equipment'],
+                    'instructions'                => $tpl['instructions'],
+                ];
+            }
+        }
+
         render('events/form', [
             'pageTitle'           => 'Νέα Δράση',
-            'event'               => null,
+            'event'               => $prefill,
+            'templateId'          => $templateId,
             'categories'          => Event::categories(),
             'defaultInstructions' => MunicipalitySetting::get($mid, 'event_default_instructions', ''),
         ]);
@@ -138,6 +164,27 @@ class EventController
 
         $id = Event::create($data);
         audit('event_created', 'event', $id, $data['title']);
+
+        // Re-create shifts from the source template, if started from one
+        $templateId = post_int('template_id');
+        if ($templateId) {
+            $tpl = EventTemplate::findForMunicipality($templateId, $data['municipality_id']);
+            if ($tpl && !empty($tpl['shifts_json'])) {
+                $tplShifts = json_decode($tpl['shifts_json'], true) ?: [];
+                $baseStart = strtotime($data['start_datetime']);
+                foreach ($tplShifts as $sh) {
+                    EventShift::create([
+                        'event_id'        => $id,
+                        'municipality_id' => $data['municipality_id'],
+                        'name'            => $sh['name'] ?? 'Βάρδια',
+                        'start_datetime'  => date('Y-m-d H:i:s', $baseStart + ((int) ($sh['start_offset_min'] ?? 0)) * 60),
+                        'end_datetime'    => date('Y-m-d H:i:s', $baseStart + ((int) ($sh['end_offset_min'] ?? 0)) * 60),
+                        'required_people' => (int) ($sh['required_people'] ?? 0),
+                        'notes'           => $sh['notes'] ?? null,
+                    ]);
+                }
+            }
+        }
 
         if (post_str('action') === 'publish') {
             Event::markPublished($id);
@@ -270,10 +317,19 @@ class EventController
         requireRole(['municipality_admin']);
         $event        = Event::findForCurrent($id);
         $applications = EventApplication::forEvent($event['id']);
+
+        // Pre-load members + existing participation for ALL applications in two
+        // queries (avoids an N+1 of two queries per application inside the view).
+        $appIds         = array_column($applications, 'id');
+        $membersByApp   = TeamMember::forApplications($appIds);
+        $existingByApp  = VolunteerParticipation::forApplications($appIds);
+
         render('events/reconcile', [
-            'pageTitle'    => 'Αρχειοθέτηση: ' . $event['title'],
-            'event'        => $event,
-            'applications' => $applications,
+            'pageTitle'     => 'Αρχειοθέτηση: ' . $event['title'],
+            'event'         => $event,
+            'applications'  => $applications,
+            'membersByApp'  => $membersByApp,
+            'existingByApp' => $existingByApp,
         ]);
     }
 
@@ -440,6 +496,61 @@ class EventController
     // ------------------------------------------------------------ Helpers
 
     /** Validate event form. Returns data array or null. */
+    /** POST /events/{id}/save-template — snapshot this event (core fields + shifts) as a reusable template. */
+    public function saveTemplate($id)
+    {
+        requireRole(['municipality_admin']);
+        $event = Event::findForCurrent($id);
+
+        $name = trim(post_str('template_name'));
+        if ($name === '') {
+            $name = $event['title'];
+        }
+
+        $baseStart = strtotime($event['start_datetime']);
+        $shifts = [];
+        foreach (EventShift::forEvent($event['id']) as $sh) {
+            $shifts[] = [
+                'name'             => $sh['name'],
+                'start_offset_min' => (int) round((strtotime($sh['start_datetime']) - $baseStart) / 60),
+                'end_offset_min'   => (int) round((strtotime($sh['end_datetime']) - $baseStart) / 60),
+                'required_people'  => (int) $sh['required_people'],
+                'notes'            => $sh['notes'],
+            ];
+        }
+
+        EventTemplate::create([
+            'municipality_id'             => $event['municipality_id'],
+            'name'                        => $name,
+            'title'                       => $event['title'],
+            'category_id'                 => $event['category_id'],
+            'description'                 => $event['description'],
+            'location_name'               => $event['location_name'],
+            'address'                     => $event['address'],
+            'latitude'                    => $event['latitude'],
+            'longitude'                   => $event['longitude'],
+            'requested_people'            => (int) $event['requested_people'],
+            'requested_vehicle'           => (int) $event['requested_vehicle'],
+            'requested_medical_equipment' => (int) $event['requested_medical_equipment'],
+            'instructions'                => $event['instructions'],
+            'shifts_json'                 => json_encode($shifts, JSON_UNESCAPED_UNICODE),
+            'created_by'                  => $_SESSION['user_id'],
+        ]);
+        audit('event_template_created', 'event', $event['id'], $name);
+        flash_set('success', 'Το πρότυπο «' . $name . '» αποθηκεύτηκε.');
+        redirect('/events/' . $event['id']);
+    }
+
+    /** POST /event-templates/{id}/delete */
+    public function deleteTemplate($id)
+    {
+        requireRole(['municipality_admin']);
+        EventTemplate::delete((int) $id, current_municipality_id());
+        audit('event_template_deleted', 'event_template', (int) $id);
+        flash_set('success', 'Το πρότυπο διαγράφηκε.');
+        redirect('/events');
+    }
+
     private function validated()
     {
         $title = post_str('title');

@@ -104,6 +104,35 @@ class VolunteerParticipation
     }
 
     /**
+     * Batched version of forApplication() — avoids N+1 when listing many
+     * applications. Returns a map: applicationId => [memberId => vp row].
+     */
+    public static function forApplications(array $appIds): array
+    {
+        $map = [];
+        if (empty($appIds)) {
+            return $map;
+        }
+        $ids = array_map('intval', $appIds);
+        foreach ($ids as $id) {
+            $map[$id] = [];
+        }
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = db()->prepare(
+            "SELECT vp.*, tm.full_name AS member_name, tm.specialty
+             FROM volunteer_participations vp
+             JOIN team_members tm ON tm.id = vp.member_id
+             WHERE vp.application_id IN ($placeholders)
+             ORDER BY tm.full_name ASC"
+        );
+        $stmt->execute($ids);
+        foreach ($stmt->fetchAll() as $row) {
+            $map[(int) $row['application_id']][(int) $row['member_id']] = $row;
+        }
+        return $map;
+    }
+
+    /**
      * Municipality-level leaderboard: top members by hours across all events.
      */
     public static function topMembers(int $municipalityId, int $limit = 20): array

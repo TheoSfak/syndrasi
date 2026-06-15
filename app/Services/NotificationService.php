@@ -348,4 +348,108 @@ class NotificationService
             MailService::send($member['email'], $member['full_name'], $tpl['subject'], $tpl['body'], $mid);
         }
     }
+
+    /* ── Emergency mobilization ──────────────────────────────────────────── */
+
+    /**
+     * Fan out an emergency call-out.
+     *  - Email each targeted member their personal response link (best-effort).
+     *  - Web-push to members who also hold a user account (matched by email).
+     *  - In-app + push awareness ping to municipality command staff (no email).
+     * Every channel is wrapped so one failure never blocks the rest.
+     * $targets = rows from MobilizationResponse::seedTargets (id, token, email, phone, full_name).
+     */
+    public static function mobilize(array $mob, array $targets)
+    {
+        $mid   = (int) $mob['municipality_id'];
+        $sev   = severity_label($mob['severity']);
+        $title = 'Κάλεσμα έκτακτης ανάγκης: ' . $mob['title'];
+
+        // Map active user accounts of this municipality by email → id (for push).
+        $usersByEmail = [];
+        foreach (dbq(
+            'SELECT id, email FROM users WHERE municipality_id = :mid AND status = :st',
+            ['mid' => $mid, 'st' => 'active']
+        )->fetchAll() as $u) {
+            if (!empty($u['email'])) {
+                $usersByEmail[mb_strtolower($u['email'])] = (int) $u['id'];
+            }
+        }
+
+        foreach ($targets as $t) {
+            $link   = self::absoluteUrl('/m/' . $t['token']);
+            $pushed = false;
+            $email  = !empty($t['email']) ? mb_strtolower($t['email']) : '';
+
+            // Prefer the directly linked account (migration 010); fall back to
+            // matching the member's email to a municipality user.
+            $pushUserId = !empty($t['user_id']) ? (int) $t['user_id']
+                        : (($email !== '' && isset($usersByEmail[$email])) ? $usersByEmail[$email] : null);
+            if ($pushUserId) {
+                try {
+                    WebPushService::sendToUser($pushUserId, [
+                        'title' => $title,
+                        'body'  => $sev . ' — πατήστε για να απαντήσετε.',
+                        'url'   => '/m/' . $t['token'],
+                    ]);
+                    $pushed = true;
+                } catch (Throwable $e) {
+                    error_log('[Mobilize] push failed: ' . $e->getMessage());
+                }
+            }
+
+            if (!empty($t['email'])) {
+                try {
+                    $body = '<p>Ενεργοποιήθηκε <strong>κάλεσμα έκτακτης ανάγκης</strong> (' . e($sev) . ').</p>'
+                          . '<p><strong>' . e($mob['title']) . '</strong></p>'
+                          . (!empty($mob['location_name']) ? '<p>Τοποθεσία: ' . e($mob['location_name']) . '</p>' : '')
+                          . '<p>Παρακαλούμε δηλώστε αν μπορείτε να ανταποκριθείτε:</p>'
+                          . '<p><a href="' . $link . '">' . $link . '</a></p>';
+                    MailService::send($t['email'], $t['full_name'] ?? '', $title, $body, $mid);
+                } catch (Throwable $e) {
+                    error_log('[Mobilize] email failed: ' . $e->getMessage());
+                }
+            }
+
+            // SMS — most reliable channel for volunteers without an account.
+            // Uses the configured driver (default 'log' → storage/logs/sms.log).
+            if (!empty($t['phone'])) {
+                try {
+                    $sms = $mob['title'] . ' — Κάλεσμα έκτακτης ανάγκης (' . $sev . '). '
+                         . 'Απαντήστε εδώ: ' . $link;
+                    SmsService::send($t['phone'], $sms);
+                } catch (Throwable $e) {
+                    error_log('[Mobilize] sms failed: ' . $e->getMessage());
+                }
+            }
+
+            MobilizationResponse::markNotified((int) $t['id'], $pushed);
+        }
+
+        // Awareness ping to command staff — in-app + push only (no email noise).
+        try {
+            $msg = 'Στάλθηκε κάλεσμα σε ' . count($targets) . ' εθελοντές (' . $sev . ').';
+            foreach (User::municipalityAdmins($mid) as $admin) {
+                Notification::create([
+                    'municipality_id' => $mid,
+                    'user_id'         => $admin['id'],
+                    'title'           => $title,
+                    'message'         => $msg,
+                    'type'            => 'mobilization',
+                    'email_sent'      => 0,
+                ]);
+                self::sendPush($admin['id'], $title, $msg);
+            }
+        } catch (Throwable $e) {
+            error_log('[Mobilize] command notify failed: ' . $e->getMessage());
+        }
+    }
+
+    /** Build an absolute URL (scheme+host) for links sent off-site, e.g. email. */
+    private static function absoluteUrl(string $path): string
+    {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        return $scheme . '://' . $host . url($path);
+    }
 }

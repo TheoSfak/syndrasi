@@ -194,12 +194,8 @@ class AuthController
             flash_set('danger', 'Ο σύνδεσμος επαναφοράς είναι άκυρος ή έχει λήξει.');
             redirect('/forgot-password');
         }
-        if (mb_strlen($password) < 8) {
-            flash_set('danger', 'Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
-            redirect('/reset-password?token=' . urlencode($token));
-        }
-        if ($password !== $confirm) {
-            flash_set('danger', 'Οι κωδικοί δεν ταιριάζουν.');
+        if ($pwErr = password_error($password, $confirm)) {
+            flash_set('danger', $pwErr);
             redirect('/reset-password?token=' . urlencode($token));
         }
 
@@ -256,12 +252,8 @@ class AuthController
             flash_set('danger', 'Ο τρέχων κωδικός δεν είναι σωστός.');
             redirect('/profile');
         }
-        if (mb_strlen($new) < 8) {
-            flash_set('danger', 'Ο νέος κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
-            redirect('/profile');
-        }
-        if ($new !== $confirm) {
-            flash_set('danger', 'Η επιβεβαίωση κωδικού δεν ταιριάζει.');
+        if ($pwErr = password_error($new, $confirm)) {
+            flash_set('danger', $pwErr);
             redirect('/profile');
         }
 
