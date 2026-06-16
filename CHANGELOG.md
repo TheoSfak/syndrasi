@@ -4,6 +4,32 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.8.3-beta] — 2026-06-16
+
+### Added
+- **PWA install banner (κάτω δεξιά)** — διακριτικό, dismissible banner που προτρέπει
+  τον χρήστη να εγκαταστήσει την εφαρμογή στο κινητό. Σε Android/Chromium πιάνει το
+  `beforeinstallprompt` και ενεργοποιεί το native install prompt· σε iOS Safari (που
+  δεν στέλνει το event) εμφανίζει οδηγίες «Κοινή χρήση → Προσθήκη στην αρχική οθόνη».
+  Κρύβεται σε standalone mode και επανεμφανίζεται 7 μέρες μετά από απόρριψη
+  (`localStorage`). Υλοποίηση εξ ολοκλήρου στο `pwa.js` — δεν χρειάστηκε αλλαγή layouts.
+- **iOS standalone meta tags** στο `header.php` (`apple-mobile-web-app-capable`,
+  status-bar style, app title) ώστε η εγκατεστημένη εφαρμογή να ανοίγει full-screen
+  σε iPhone.
+
+### Fixed
+- **Άκυρο `manifest.json`** — αφαιρέθηκε ένα τελικό NUL byte που έκανε το αρχείο
+  αυστηρά μη-έγκυρο JSON.
+- **Service worker με απόλυτα paths** — το `service-worker.js` χρησιμοποιούσε
+  leading-slash paths (`/offline.html`, `/assets/...`) που έσπαγαν το offline
+  fallback και το precache όταν η εφαρμογή σερβίρεται σε υποφάκελο. Τώρα υπολογίζει
+  το BASE από το `self.location` και δουλεύει είτε στη ρίζα είτε σε υποφάκελο.
+
+### Changed
+- Βελτιωμένο `manifest.json`: προστέθηκαν `id`, `scope`, `categories`, `dir`, και
+  ξεχωριστά `any`/`maskable` icons για σωστή installability. Cache bumped σε
+  `syndrasi-v3` (παλιά caches καθαρίζονται αυτόματα στο activate).
+
 ## [0.8.2-beta] — 2026-06-15
 
 ### Added

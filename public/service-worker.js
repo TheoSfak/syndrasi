@@ -2,22 +2,31 @@
  * Static assets: stale-while-revalidate (serve cached fast, refresh in background).
  * Pages: network-first with offline fallback.
  *
+ * Path-aware: BASE is derived from the SW's own location, so the same file works
+ * whether the app is served from the domain root (web root -> /public) or from a
+ * sub-folder (e.g. http://host/syndrasi/public/). Never hard-code leading-slash
+ * paths for local assets — they break under a sub-path install.
+ *
  * NOTE: bump CACHE_NAME whenever the caching logic changes so old caches are purged.
  */
 
-var CACHE_NAME = 'syndrasi-v2';
-var OFFLINE_URL = '/offline.html';
+var CACHE_NAME = 'syndrasi-v3';
+
+// Scope directory of this service worker, e.g. '' (root) or '/syndrasi/public'
+var BASE = self.location.pathname.replace(/\/service-worker\.js$/, '');
+
+var OFFLINE_URL = BASE + '/offline.html';
 
 var PRECACHE_URLS = [
   OFFLINE_URL,
-  '/manifest.json',
-  '/assets/css/app.css',
-  '/assets/js/app.js',
-  '/assets/js/pwa.js',
-  '/assets/js/maps.js',
-  '/assets/js/charts.js',
-  '/assets/img/icons/icon-192.png',
-  '/assets/img/icons/icon-512.png',
+  BASE + '/manifest.json',
+  BASE + '/assets/css/app.css',
+  BASE + '/assets/js/app.js',
+  BASE + '/assets/js/pwa.js',
+  BASE + '/assets/js/maps.js',
+  BASE + '/assets/js/charts.js',
+  BASE + '/assets/img/icons/icon-192.png',
+  BASE + '/assets/img/icons/icon-512.png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css'

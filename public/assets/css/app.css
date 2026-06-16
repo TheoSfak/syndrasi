@@ -868,3 +868,79 @@ footer {
   .ds-val  { font-size: 1.6rem; }
   .ds-icon { font-size: 1.9rem; }
 }
+
+/* ── PWA install banner (bottom-right) ─────────────────────────────── */
+.syndrasi-install-banner {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3000;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: 14px 16px 14px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #0f766e;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15, 118, 110, .22);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.syndrasi-install-banner.is-visible { opacity: 1; transform: translateY(0); }
+.syndrasi-install-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 1.25rem;
+}
+.syndrasi-install-content { flex: 1 1 auto; min-width: 0; }
+.syndrasi-install-title {
+  font-weight: 700;
+  font-size: .95rem;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+.syndrasi-install-body {
+  font-size: .82rem;
+  color: #475569;
+  line-height: 1.35;
+}
+.syndrasi-install-btn {
+  margin-top: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 600;
+  font-size: .85rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.syndrasi-install-btn:hover { background: #0d655e; }
+.syndrasi-install-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.syndrasi-install-close:hover { color: #475569; }
+@media (max-width: 575.98px) {
+  .syndrasi-install-banner { right: 12px; left: 12px; bottom: 12px; width: auto; }
+}
