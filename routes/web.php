@@ -11,6 +11,15 @@ $router->get('/public/events/{token}', 'PublicEventController@show');
 $router->get('/m/{token}',         'MobilizationController@respondForm');
 $router->post('/m/{token}/respond', 'MobilizationController@respond');
 
+/* Mission Commander field hub (token link, no login required) */
+$router->get('/f/{token}',           'FieldController@hub');
+$router->get('/f/{token}/comms',     'FieldController@comms');
+$router->post('/f/{token}/location', 'FieldController@location');
+$router->post('/f/{token}/status',   'FieldController@status');
+$router->post('/f/{token}/sos',      'FieldController@sos');
+$router->post('/f/{token}/ack-order','FieldController@ackOrder');
+$router->post('/f/{token}/photo',    'FieldController@photo');
+
 /* Home: redirect by role */
 $router->get('/', 'AuthController@home');
 
@@ -27,6 +36,7 @@ $router->post('/profile/password', 'AuthController@changePassword');
 
 /* Notifications */
 $router->get('/notifications', 'NotificationController@index');
+$router->get('/notifications/poll', 'NotificationController@poll');
 $router->post('/notifications/{id}/read', 'NotificationController@markRead');
 $router->post('/notifications/read-all', 'NotificationController@markAllRead');
 
@@ -140,6 +150,7 @@ $router->get('/team/events/{id}', 'TeamPortalController@showEvent');
 $router->post('/team/events/{id}/apply', 'TeamPortalController@apply');
 $router->post('/team/events/{id}/application/members', 'TeamPortalController@updateApplicationMembers');
 $router->post('/team/applications/{id}/cancel', 'TeamPortalController@cancelApplication');
+$router->post('/team/applications/{id}/send-field-link', 'TeamPortalController@sendFieldLink');
 $router->get('/team/applications', 'TeamPortalController@applications');
 $router->get('/team/operations/events/{id}', 'TeamPortalController@operations');
 $router->post('/team/operations/events/{id}/checkin', 'TeamPortalController@checkin');

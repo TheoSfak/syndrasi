@@ -23,6 +23,9 @@
   </div>
 <?php endif; ?>
 
+<!-- Pinned ΕΝΤΟΛΕΣ (unacknowledged orders) -->
+<div id="orderBanner" style="display:none"></div>
+
 <!-- SOS + Γρήγορη ενημέρωση + Επικοινωνία -->
 <?php $opsActive = ($event['status'] === 'active'); ?>
 <div class="row g-3 mb-4">
@@ -61,6 +64,44 @@
     </div>
   </div>
 </div>
+
+<!-- Χάρτης Δράσης (θέση ομάδας + σημείο δράσης) -->
+<?php
+$evLat = isset($event['latitude'])  && $event['latitude']  !== null && $event['latitude']  !== '' ? (float) $event['latitude']  : null;
+$evLng = isset($event['longitude']) && $event['longitude'] !== null && $event['longitude'] !== '' ? (float) $event['longitude'] : null;
+$tLat  = $lastPing && $lastPing['latitude']  !== null ? (float) $lastPing['latitude']  : null;
+$tLng  = $lastPing && $lastPing['longitude'] !== null ? (float) $lastPing['longitude'] : null;
+?>
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-map me-1 text-success"></i> Χάρτης Δράσης</span>
+    <?php if ($lastPing): ?><span class="small text-muted">Τελευταίο στίγμα: <?= e(gr_time($lastPing['created_at'])) ?></span>
+    <?php else: ?><span class="small text-muted">Στείλτε στίγμα για να φανεί η θέση σας</span><?php endif; ?>
+  </div>
+  <div id="teamMap" style="height:300px;border-radius:0 0 .5rem .5rem;background:#eef2f3"></div>
+</div>
+<script>
+window.addEventListener('load', function () {
+  if (typeof L === 'undefined' || !document.getElementById('teamMap')) return;
+  var evLat = <?= $evLat !== null ? $evLat : 'null' ?>, evLng = <?= $evLng !== null ? $evLng : 'null' ?>;
+  var tLat  = <?= $tLat  !== null ? $tLat  : 'null' ?>, tLng  = <?= $tLng  !== null ? $tLng  : 'null' ?>;
+  var center = (tLat !== null) ? [tLat, tLng] : ((evLat !== null) ? [evLat, evLng] : [35.3387, 25.1442]);
+  var map = L.map('teamMap').setView(center, 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+  var b = [];
+  if (evLat !== null) {
+    L.marker([evLat, evLng]).addTo(map).bindPopup('<b>Σημείο δράσης</b><br><?= e(addslashes($event['location_name'] ?: $event['title'])) ?>');
+    b.push([evLat, evLng]);
+  }
+  if (tLat !== null) {
+    L.circleMarker([tLat, tLng], { radius: 9, color: '#0d6efd', fillColor: '#0d6efd', fillOpacity: .85 })
+      .addTo(map).bindPopup('Η θέση της ομάδας μας');
+    b.push([tLat, tLng]);
+  }
+  if (b.length > 1) { try { map.fitBounds(b, { padding: [40, 40], maxZoom: 16 }); } catch (e) {} }
+  setTimeout(function () { map.invalidateSize(); }, 200);
+});
+</script>
 
 <!-- Αίτημα / Αποστολή Φωτογραφίας -->
 <div class="card shadow-sm mb-4 <?= $photoRequest ? 'border-info border-2' : '' ?>">
@@ -364,10 +405,28 @@
     }
     if (sosBtn) sosBtn.disabled = true;
   }
+  var orderBannerEl = document.getElementById('orderBanner');
+  function renderOrders(msgs) {
+    if (!orderBannerEl) return;
+    var pending = (msgs || []).filter(function (m) { return m.kind === 'order' && !m.acknowledged_at; });
+    if (!pending.length) { orderBannerEl.innerHTML = ''; orderBannerEl.style.display = 'none'; return; }
+    orderBannerEl.style.display = '';
+    orderBannerEl.innerHTML = pending.map(function (m) {
+      var who = m.sender_name || 'Δήμος';
+      var t = (m.created_at || '').substr(11, 5);
+      return '<div class="alert alert-warning border-warning border-2 shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2" role="alert">' +
+        '<div><div class="fw-bold"><i class="bi bi-megaphone-fill me-1"></i>ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ</div>' +
+        '<div class="fs-6">' + esc(m.body || '') + '</div>' +
+        '<div class="small text-muted">' + esc(who) + ' · ' + t + '</div></div>' +
+        '<button type="button" class="btn btn-warning fw-bold" onclick="ackOrder(' + m.id + ')"><i class="bi bi-check2-all me-1"></i>Επιβεβαίωση λήψης</button>' +
+        '</div>';
+    }).join('');
+  }
+
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); } })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); } })
       .catch(function () {});
   }
   pollComms();

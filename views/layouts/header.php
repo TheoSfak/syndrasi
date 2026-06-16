@@ -50,11 +50,10 @@
         <i class="bi bi-bell-slash" id="pushIcon"></i>
       </button>
       <?php endif; ?>
-      <a href="<?= e(url('/notifications')) ?>" class="btn btn-outline-light position-relative" title="Ειδοποιήσεις">
+      <a href="<?= e(url('/notifications')) ?>" class="btn btn-outline-light position-relative" title="Ειδοποιήσεις" id="navNotifBell">
         <i class="bi bi-bell"></i>
-        <?php if ($unreadCount > 0): ?>
-          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"><?= (int) $unreadCount ?></span>
-        <?php endif; ?>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+              id="navNotifBadge" <?= $unreadCount > 0 ? '' : 'style="display:none"' ?>><?= (int) $unreadCount ?></span>
       </a>
       <div class="dropdown">
         <button class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">

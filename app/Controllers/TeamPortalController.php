@@ -121,6 +121,14 @@ class TeamPortalController
         // Shifts for this event (with team's application status per shift)
         $shifts = EventShift::forTeamOnEvent($event['id'], $tid);
 
+        // Mission Commander field link (no-login) — only for approved apps with a commander
+        $fieldToken = null;
+        $commander  = null;
+        if ($application && $application['status'] === 'approved' && !empty($application['mission_commander_id'])) {
+            $fieldToken = EventApplication::ensureFieldToken((int) $application['id']);
+            $commander  = TeamMember::find((int) $application['mission_commander_id']);
+        }
+
         render('team/event_show', [
             'pageTitle'            => $event['title'],
             'event'                => $event,
@@ -132,7 +140,39 @@ class TeamPortalController
             'applicationMembers'   => $applicationMembers,
             'canEditMembers'       => $canEditMembers,
             'shifts'               => $shifts,
+            'fieldToken'           => $fieldToken,
+            'commander'            => $commander,
         ]);
+    }
+
+    /** POST /team/applications/{id}/send-field-link — SMS the commander's field link. */
+    public function sendFieldLink($id)
+    {
+        requireRole(['team_admin']);
+        $application = EventApplication::find((int) $id);
+        if (!$application || (int) $application['team_id'] !== (int) current_team_id()) {
+            abort(404, 'Δεν βρέθηκε η δήλωση.');
+        }
+        if ($application['status'] !== 'approved' || empty($application['mission_commander_id'])) {
+            flash_set('danger', 'Δεν υπάρχει εγκεκριμένη δήλωση με Mission Υπεύθυνο.');
+            redirect('/team/events/' . $application['event_id']);
+        }
+        $commander = TeamMember::find((int) $application['mission_commander_id']);
+        if (!$commander || empty($commander['phone'])) {
+            flash_set('danger', 'Ο Mission Υπεύθυνος δεν έχει καταχωρημένο τηλέφωνο.');
+            redirect('/team/events/' . $application['event_id']);
+        }
+        $token = EventApplication::ensureFieldToken((int) $application['id']);
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $link = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . url('/f/' . $token);
+        $sms = 'SynDrasi — Πεδίο δράσης «' . $application['event_title'] . '». Σύνδεσμος υπευθύνου: ' . $link;
+
+        $ok = SmsService::send($commander['phone'], $sms, (int) $application['municipality_id']);
+        audit('field_link_sms', 'event_application', (int) $application['id'], 'to ' . $commander['phone']);
+        flash_set($ok ? 'success' : 'warning',
+            $ok ? ('Ο σύνδεσμος στάλθηκε με SMS στον/στην ' . $commander['full_name'] . '.')
+                : ('Δεν στάλθηκε SMS (' . (SmsService::lastError() ?: 'έλεγξε τις ρυθμίσεις SMS') . '). Μπορείτε να αντιγράψετε τον σύνδεσμο.'));
+        redirect('/team/events/' . $application['event_id']);
     }
 
     public function apply($id)
@@ -197,6 +237,7 @@ class TeamPortalController
                 'UPDATE event_applications SET mission_commander_id = :cid WHERE id = :id',
                 ['cid' => $commanderId, 'id' => $appId]
             );
+            EventApplication::ensureFieldToken($appId);
             $pdo->commit();
         } catch (Exception $e) {
             $pdo->rollBack();
@@ -275,6 +316,7 @@ class TeamPortalController
                 'UPDATE event_applications SET mission_commander_id = :cid, offered_people = :cnt WHERE id = :id',
                 ['cid' => $commanderId, 'cnt' => count($memberIds), 'id' => $application['id']]
             );
+            EventApplication::ensureFieldToken($application['id']);
             $pdo2->commit();
         } catch (Exception $e) {
             $pdo2->rollBack();

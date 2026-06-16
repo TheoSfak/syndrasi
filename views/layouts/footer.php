@@ -86,6 +86,68 @@
   });
 })();
 </script>
+
+<!-- App-wide live notifications: bell badge + toast popups -->
+<div id="toastZone" style="position:fixed;top:70px;right:16px;z-index:3000;display:flex;flex-direction:column;gap:8px;max-width:340px"></div>
+<script>
+(function () {
+  'use strict';
+  var BASE  = window.baseUrl || '';
+  var badge = document.getElementById('navNotifBadge');
+  var zone  = document.getElementById('toastZone');
+  var seenMax = 0, primed = false;
+
+  function esc(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+
+  function iconFor(type) {
+    if (type === 'sos') return 'bi-exclamation-octagon-fill';
+    if (type === 'photo_request') return 'bi-camera-fill';
+    if (type === 'ops_message') return 'bi-chat-dots-fill';
+    if (type === 'shortage' || type === 'shortage_update') return 'bi-exclamation-triangle-fill';
+    return 'bi-bell-fill';
+  }
+
+  function showToast(n) {
+    var el = document.createElement('div');
+    el.style.cssText = 'background:#0f766e;color:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);overflow:hidden;animation:none';
+    if (n.type === 'sos') { el.style.background = '#b91c1c'; }
+    el.innerHTML = '<div class="d-flex align-items-start">' +
+      '<div class="p-2 ps-3 pt-2"><i class="bi ' + iconFor(n.type) + '" style="font-size:1.1rem"></i></div>' +
+      '<div class="p-2 flex-grow-1"><div class="fw-bold small">' + esc(n.title) + '</div>' +
+      '<div class="small" style="opacity:.92">' + esc(n.message) + '</div></div>' +
+      '<button type="button" class="btn-close btn-close-white m-2" aria-label="Close"></button></div>';
+    el.querySelector('.btn-close').addEventListener('click', function () { el.remove(); });
+    el.addEventListener('click', function (e) { if (!e.target.closest('.btn-close')) { window.location.href = BASE + '/notifications'; } });
+    el.style.cursor = 'pointer';
+    zone.appendChild(el);
+    setTimeout(function () { el.remove(); }, 9000);
+  }
+
+  function poll() {
+    fetch(BASE + '/notifications/poll', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok) return;
+        if (badge) {
+          if (d.count > 0) { badge.textContent = d.count; badge.style.display = ''; }
+          else { badge.style.display = 'none'; }
+        }
+        var items = d.items || [];
+        var maxId = seenMax;
+        items.forEach(function (n) { if (n.id > maxId) maxId = n.id; });
+        if (primed) {
+          items.filter(function (n) { return n.id > seenMax; })
+               .sort(function (a, b) { return a.id - b.id; })
+               .forEach(showToast);
+        }
+        seenMax = maxId; primed = true;
+      })
+      .catch(function () {});
+  }
+  poll();
+  setInterval(poll, 15000);
+})();
+</script>
 <?php endif; ?>
 </body>
 </html>

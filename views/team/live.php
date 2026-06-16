@@ -378,6 +378,14 @@ body { min-height: 100dvh; }
 .msg-compose { display: flex; gap: 8px; padding: 0 14px 14px; }
 .msg-compose input { flex: 1; background: #0d1a1a; border: 1px solid #1e3333; border-radius: 10px; color: #e8f5f4; font-size: 14px; padding: 12px; outline: none; }
 .msg-compose button { background: #0e7490; color: #fff; border: none; border-radius: 10px; padding: 0 16px; font-size: 18px; cursor: pointer; }
+
+/* ── Pinned order banner ─────────────────────────────────────────────────── */
+.order-pin { background: linear-gradient(135deg, #7c2d12 0%, #b45309 100%); border: 1px solid #f59e0b; border-radius: 16px; padding: 16px; margin-bottom: 12px; animation: sosPulse 1.4s infinite; }
+.order-pin-head { font-weight: 900; color: #fde68a; font-size: 14px; letter-spacing: .03em; display: flex; align-items: center; gap: 6px; }
+.order-pin-body { color: #fff; font-size: 16px; margin: 8px 0 12px; line-height: 1.35; }
+.order-pin-btn { background: #facc15; color: #1a1400; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; padding: 14px 16px; width: 100%; cursor: pointer; }
+.order-pin-btn:active { transform: scale(.98); }
+.order-pin-time { font-size: 11px; color: #fde68a; opacity: .8; margin-top: 8px; text-align: right; }
 </style>
 </head>
 <body>
@@ -432,6 +440,9 @@ if ($flash):
 </div>
 
 <div class="hub-body">
+
+  <!-- Pinned ΕΝΤΟΛΕΣ (unacknowledged orders) -->
+  <div id="orderBanner" style="display:none"></div>
 
   <!-- ── 0. SOS / Έκτακτη Ανάγκη ────────────────────────────────────── -->
   <div>
@@ -878,10 +889,26 @@ if ($flash):
     }
     if (sosBtn) { sosBtn.disabled = true; sosBtn.querySelector('.sos-btn-sub').textContent = 'SOS ενεργό'; }
   }
+  var orderBannerEl = document.getElementById('orderBanner');
+  function renderOrders(msgs) {
+    if (!orderBannerEl) return;
+    var pending = (msgs || []).filter(function (m) { return m.kind === 'order' && !m.acknowledged_at; });
+    if (!pending.length) { orderBannerEl.innerHTML = ''; orderBannerEl.style.display = 'none'; return; }
+    orderBannerEl.style.display = '';
+    orderBannerEl.innerHTML = pending.map(function (m) {
+      var t = (m.created_at || '').substr(11, 5);
+      return '<div class="order-pin">' +
+        '<div class="order-pin-head"><i class="bi bi-megaphone-fill"></i> ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ</div>' +
+        '<div class="order-pin-body">' + escapeHtml(m.body || '') + '</div>' +
+        '<button type="button" class="order-pin-btn" onclick="ackOrder(' + m.id + ')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button>' +
+        '<div class="order-pin-time">' + t + '</div></div>';
+    }).join('');
+  }
+
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); } })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); } })
       .catch(function () {});
   }
   pollComms();

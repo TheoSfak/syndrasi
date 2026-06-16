@@ -231,6 +231,34 @@
               <?php endforeach; ?>
             </ul>
           <?php endif; ?>
+
+          <?php if (!empty($fieldToken)):
+            $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $fieldUrl = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . url('/f/' . $fieldToken);
+          ?>
+          <hr class="my-3">
+          <div class="p-3 rounded border border-2 border-warning bg-warning-subtle">
+            <div class="fw-semibold mb-1"><i class="bi bi-link-45deg me-1"></i>Σύνδεσμος πεδίου — Mission Υπεύθυνος</div>
+            <div class="small text-muted mb-2">Ο/Η <strong><?= e($commander['full_name'] ?? '—') ?></strong> μπορεί να στέλνει στίγμα, SOS, ενημερώσεις και να λαμβάνει εντολές <strong>χωρίς λογαριασμό</strong>, από αυτόν τον προσωπικό σύνδεσμο.</div>
+            <div class="input-group input-group-sm mb-2">
+              <input type="text" class="form-control" id="fieldLinkInput" value="<?= e($fieldUrl) ?>" readonly onclick="this.select()">
+              <button class="btn btn-outline-secondary" type="button" onclick="copyFieldLink()"><i class="bi bi-clipboard me-1"></i>Αντιγραφή</button>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <form method="post" action="<?= e(url('/team/applications/' . $application['id'] . '/send-field-link')) ?>" class="m-0">
+                <?= csrf_field() ?>
+                <button class="btn btn-sm btn-success" type="submit" <?= empty($commander['phone']) ? 'disabled title="Ο υπεύθυνος δεν έχει τηλέφωνο"' : '' ?>>
+                  <i class="bi bi-chat-dots me-1"></i>Αποστολή με SMS<?= !empty($commander['phone']) ? ' (' . e($commander['phone']) . ')' : '' ?>
+                </button>
+              </form>
+              <a class="btn btn-sm btn-outline-primary" href="<?= e($fieldUrl) ?>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>Άνοιγμα</a>
+            </div>
+          </div>
+          <script>
+          function copyFieldLink(){var i=document.getElementById('fieldLinkInput');i.select();i.setSelectionRange(0,99999);
+            if(navigator.clipboard){navigator.clipboard.writeText(i.value).then(function(){},function(){});}else{try{document.execCommand('copy');}catch(e){}}}
+          </script>
+          <?php endif; ?>
         </div>
 
         <?php if ($application['status'] === 'approved' && $event['status'] === 'active'): ?>

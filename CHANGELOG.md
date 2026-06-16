@@ -4,6 +4,29 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.1-beta] — 2026-06-17
+
+### Added
+- **Σύνδεσμος πεδίου για τον Mission Υπεύθυνο (χωρίς login).** Ο αρχηγός ορίζει
+  υπεύθυνο δράσης (μέλος χωρίς λογαριασμό)· τώρα παράγεται προσωπικό token link
+  `/f/{token}` όπου ο υπεύθυνος στέλνει **GPS στίγμα, status pings, SOS, φωτογραφία**
+  και **βλέπει/επιβεβαιώνει εντολές** του δήμου. Όλα εμφανίζονται στο Επιχειρησιακό
+  Κέντρο κάτω από το όνομα της ομάδας. Ο αρχηγός μοιράζεται τον σύνδεσμο με **SMS** ή
+  **αντιγραφή** από τη σελίδα της δράσης. Νέα migration `013_field_token.sql`
+  (`event_applications.field_token`), νέος `FieldController` + view `field/hub`.
+- **Ειδοποιήσεις σε όλη την εφαρμογή** — global poller (~15s) που ενημερώνει ζωντανά
+  το καμπανάκι 🔔 και βγάζει **toast popup** για κάθε νέα ειδοποίηση (αίτημα φωτο,
+  εντολή/μήνυμα, SOS, ελλείψεις), σε όποια σελίδα κι αν είναι ο χρήστης. Νέο endpoint
+  `/notifications/poll`.
+- **Χάρτης στην πλευρά της ομάδας** (σελίδα Επιχειρησιακών Ενεργειών): σημείο δράσης +
+  θέση ομάδας (τελευταίο στίγμα).
+- **Καρφιτσωμένο banner ΕΝΤΟΛΗΣ** στην κορυφή των σελίδων της ομάδας (& field hub) για
+  κάθε ανεπιβεβαίωτη εντολή — παραμένει μέχρι «Επιβεβαίωση λήψης».
+
+### Notes
+- Χρειάζεται εκτέλεση της migration `013_field_token.sql` (Platform Settings → Updates
+  → run pending, ή import). Οι υπόλοιπες αλλαγές δεν χρειάζονται migration.
+
 ## [0.9.0-beta] — 2026-06-16
 
 ### Added — Active-event communications (Κέντρο Επιχειρήσεων)

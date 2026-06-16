@@ -113,6 +113,34 @@ class EventApplication
         dbq("UPDATE event_applications SET status = 'cancelled' WHERE id = :id", ['id' => $id]);
     }
 
+    /** Ensure a no-login field token exists for the mission commander; return it. */
+    public static function ensureFieldToken(int $appId): string
+    {
+        $row = dbq('SELECT field_token FROM event_applications WHERE id = :id LIMIT 1', ['id' => $appId])->fetch();
+        $tok = ($row && !empty($row['field_token'])) ? $row['field_token'] : null;
+        if (!$tok) {
+            $tok = bin2hex(random_bytes(32)); // 64 hex chars
+            dbq('UPDATE event_applications SET field_token = :t WHERE id = :id', ['t' => $tok, 'id' => $appId]);
+        }
+        return $tok;
+    }
+
+    /** Resolve a field token to its application row (with team + event context). */
+    public static function findByFieldToken(string $token)
+    {
+        $token = preg_replace('/[^a-f0-9]/', '', strtolower($token));
+        if (strlen($token) !== 64) { return null; }
+        return dbq(
+            'SELECT ea.*, t.name AS team_name, e.title AS event_title, e.status AS event_status,
+                    e.start_datetime, e.end_datetime, e.location_name, e.latitude, e.longitude
+             FROM event_applications ea
+             JOIN volunteer_teams t ON t.id = ea.team_id
+             JOIN events e ON e.id = ea.event_id
+             WHERE ea.field_token = :t LIMIT 1',
+            ['t' => $token]
+        )->fetch() ?: null;
+    }
+
     /** Short historical summary of a team (used in the review screen). */
     public static function teamHistorySummary($teamId)
     {
