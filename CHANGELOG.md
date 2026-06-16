@@ -4,6 +4,34 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.0-beta] — 2026-06-16
+
+### Added — Active-event communications (Κέντρο Επιχειρήσεων)
+- **SOS / Man-down** — one-tap πλήκτρο SOS στο Mobile Action Hub και στη σελίδα
+  Επιχειρησιακών Ενεργειών της ομάδας. Στέλνει αυτόματα GPS, και ειδοποιεί **forced
+  push + SMS** όλο το command staff (admins + operators) ανεξάρτητα από ρυθμίσεις.
+  Στο Επιχειρησιακό Κέντρο εμφανίζεται κόκκινο alarm banner που αναβοσβήνει, με
+  **Επιβεβαίωση** (κλείνει τον loop πίσω στην ομάδα) και **Κλείσιμο**.
+- **Αμφίδρομο chat** ανά ομάδα μέσα στη δράση — η ομάδα και ο δήμος ανταλλάσσουν
+  μηνύματα· εμφανίζονται live (SSE στο command, ~5s polling στην ομάδα).
+- **Broadcast / Εντολή από το command** — ο δήμος στέλνει μήνυμα ή **εντολή** σε μία
+  ομάδα ή σε όλες (broadcast). Οι εντολές ζητούν **ACK** από την ομάδα, που φαίνεται
+  στο board.
+- **Loop επιβεβαίωσης ελλείψεων** — όταν ο δήμος κάνει «Σε γνώση»/«Λύθηκε» μια έλλειψη,
+  ειδοποιείται η ομάδα (in-app + push). Υλοποιήθηκαν τα `acknowledgeShortage` /
+  `resolveShortage` (τα routes υπήρχαν αλλά έδειχναν σε ανύπαρκτες μεθόδους).
+- **Γρήγορα status pings** — ένα-tap: «Φτάσαμε στο σημείο», «Ολοκληρώθηκε», «Χρειαζόμαστε
+  ενίσχυση», «Επιστροφή στη βάση», «Έχουμε περιστατικό».
+
+### Technical
+- Migration `012_ops_comms.sql`: `sos_alerts` + `event_messages`. Νέα models
+  `SosAlert`, `EventMessage`· `User::commandStaff()`. Νέα endpoints σε
+  `TeamPortalController` (sos/message/status-ping/ack-order/comms) και
+  `OperationController` (sosAck/sosResolve/sendMessage + shortage ack/resolve). Το SSE
+  snapshot και το `status()` μεταφέρουν πλέον `sos` + `messages`.
+- **Χρειάζεται εκτέλεση migration** (Platform Settings → Updates → run pending, ή import
+  του `012_ops_comms.sql`).
+
 ## [0.8.4-beta] — 2026-06-16
 
 ### Added

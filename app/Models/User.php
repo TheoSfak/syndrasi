@@ -39,4 +39,15 @@ class User
             ['mid' => $municipalityId, 'role' => 'municipality_admin', 'st' => 'active']
         )->fetchAll();
     }
+
+    /** Command staff of a municipality: admins + event operators (active). */
+    public static function commandStaff($municipalityId)
+    {
+        return dbq(
+            "SELECT * FROM users
+             WHERE municipality_id = :mid AND status = 'active'
+               AND role IN ('municipality_admin','event_operator')",
+            ['mid' => $municipalityId]
+        )->fetchAll();
+    }
 }

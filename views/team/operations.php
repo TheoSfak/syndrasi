@@ -23,6 +23,118 @@
   </div>
 <?php endif; ?>
 
+<!-- SOS + Γρήγορη ενημέρωση + Επικοινωνία -->
+<?php $opsActive = ($event['status'] === 'active'); ?>
+<div class="row g-3 mb-4">
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100 border-danger border-2">
+      <div class="card-body">
+        <button type="button" id="sosBtn" class="btn btn-danger w-100 fw-bold py-3 d-flex align-items-center justify-content-center gap-2"
+                style="font-size:1.15rem" <?= !$opsActive ? 'disabled' : '' ?>>
+          <i class="bi bi-exclamation-octagon-fill fs-3"></i> SOS — ΚΙΝΔΥΝΟΣ
+        </button>
+        <div id="sosBanner" class="alert mt-2 mb-0 py-2 small" style="display:none"></div>
+        <hr class="my-3">
+        <div class="small fw-semibold text-muted mb-2"><i class="bi bi-lightning-charge me-1"></i>Γρήγορη ενημέρωση</div>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="arrived" <?= !$opsActive ? 'disabled' : '' ?>>Φτάσαμε στο σημείο</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="task_complete" <?= !$opsActive ? 'disabled' : '' ?>>Ολοκληρώθηκε</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="need_backup" <?= !$opsActive ? 'disabled' : '' ?>>Χρειαζόμαστε ενίσχυση</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="returning" <?= !$opsActive ? 'disabled' : '' ?>>Επιστροφή στη βάση</button>
+          <button type="button" class="btn btn-outline-danger btn-sm ping-btn" data-code="incident" <?= !$opsActive ? 'disabled' : '' ?>>Έχουμε περιστατικό</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-dots me-1"></i> Επικοινωνία με τον δήμο</div>
+      <div class="card-body d-flex flex-column">
+        <div id="msgList" class="flex-grow-1 mb-2" style="max-height:260px;overflow-y:auto;min-height:120px">
+          <div class="text-muted small text-center py-3">Φόρτωση…</div>
+        </div>
+        <div class="input-group">
+          <input type="text" id="msgInput" class="form-control" placeholder="Μήνυμα προς τον δήμο…" maxlength="500">
+          <button class="btn btn-primary" id="msgSend" type="button"><i class="bi bi-send"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Αίτημα / Αποστολή Φωτογραφίας -->
+<div class="card shadow-sm mb-4 <?= $photoRequest ? 'border-info border-2' : '' ?>">
+  <div class="card-body">
+    <?php if ($photoRequest): ?>
+      <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-camera-fill fs-5"></i>
+        <div><strong>Ο δήμος ζήτησε φωτογραφία</strong> για αυτή τη δράση. Τραβήξτε ή ανεβάστε μία παρακάτω.</div>
+      </div>
+    <?php endif; ?>
+    <h2 class="h5 mb-1"><i class="bi bi-camera me-1 text-info"></i>Αποστολή Φωτογραφίας στον δήμο</h2>
+    <p class="small text-muted">Εμφανίζεται στον επιχειρησιακό χάρτη του δήμου στο σημείο που τραβήχτηκε (αν επιτρέψετε τοποθεσία).</p>
+    <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/photo')) ?>" enctype="multipart/form-data" id="photoForm">
+      <?= csrf_field() ?>
+      <input type="hidden" name="latitude" id="photoLat">
+      <input type="hidden" name="longitude" id="photoLng">
+      <input type="hidden" name="request_id" value="<?= $photoRequest ? (int) $photoRequest['id'] : '' ?>">
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-5">
+          <label class="form-label small mb-1">Φωτογραφία</label>
+          <input type="file" name="photo" accept="image/*" capture="environment" class="form-control" required>
+        </div>
+        <div class="col-sm-5">
+          <label class="form-label small mb-1">Σχόλιο (προαιρετικό)</label>
+          <input type="text" name="caption" maxlength="255" class="form-control" placeholder="π.χ. σημείο, κατάσταση…">
+        </div>
+        <div class="col-sm-2 d-grid">
+          <button class="btn btn-info text-white" id="photoSubmit"><i class="bi bi-upload me-1"></i>Αποστολή</button>
+        </div>
+      </div>
+      <div id="photoGeoNote" class="small text-muted mt-1"></div>
+    </form>
+    <?php if (!empty($teamPhotos)): ?>
+      <div class="small text-muted mt-3 mb-1">Σταλμένες φωτογραφίες:</div>
+      <div class="d-flex flex-wrap gap-2">
+        <?php foreach ($teamPhotos as $tp): ?>
+          <a href="<?= e(url('/operations/photos/' . $tp['id'])) ?>" target="_blank" rel="noopener"
+             title="<?= e(gr_datetime($tp['created_at'])) ?><?= $tp['latitude'] === null ? ' · χωρίς τοποθεσία' : '' ?>">
+            <img src="<?= e(url('/operations/photos/' . $tp['id'])) ?>" loading="lazy"
+                 style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid <?= $tp['latitude'] !== null ? '#0ea5e9' : '#94a3b8' ?>">
+          </a>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById('photoForm');
+  if (!form) return;
+  var note = document.getElementById('photoGeoNote');
+  var submitted = false;
+  form.addEventListener('submit', function (e) {
+    if (submitted) return;            // second pass: let it submit for real
+    e.preventDefault();
+    var btn = document.getElementById('photoSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-geo-alt me-1"></i>Τοποθεσία…';
+    function go() { submitted = true; form.submit(); }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        document.getElementById('photoLat').value = pos.coords.latitude;
+        document.getElementById('photoLng').value = pos.coords.longitude;
+        go();
+      }, function () {
+        if (note) note.textContent = 'Χωρίς τοποθεσία — η φωτό θα σταλεί χωρίς σημείο στον χάρτη.';
+        go();
+      }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
+    } else { go(); }
+  });
+})();
+</script>
+
 <div class="row g-3 mb-4">
   <div class="col-md-6">
     <div class="card shadow-sm h-100">
@@ -147,6 +259,121 @@
     </ul>
   </div>
 <?php endif; ?>
+
+<script>
+(function () {
+  'use strict';
+  var BASE = window.baseUrl || '';
+  var CSRF = window.csrfToken || '';
+  var EID  = <?= (int) $event['id'] ?>;
+  var IS_ACTIVE = <?= $opsActive ? 'true' : 'false' ?>;
+
+  function postJSON(path, body) {
+    return fetch(BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); });
+  }
+  function esc(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+
+  /* SOS */
+  var sosBtn = document.getElementById('sosBtn');
+  var sosBanner = document.getElementById('sosBanner');
+  if (sosBtn) {
+    sosBtn.addEventListener('click', function () {
+      if (!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ο δήμος ότι κινδυνεύετε. Συνέχεια;')) return;
+      sosBtn.disabled = true;
+      var send = function (lat, lng, acc) {
+        postJSON('/team/operations/events/' + EID + '/sos', { latitude: lat, longitude: lng, accuracy: acc })
+          .then(function () { pollComms(); })
+          .catch(function () { sosBtn.disabled = false; });
+      };
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (p) { send(p.coords.latitude, p.coords.longitude, p.coords.accuracy); },
+          function () { send(null, null, null); },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+      } else { send(null, null, null); }
+    });
+  }
+
+  /* Quick status pings */
+  document.querySelectorAll('.ping-btn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.disabled) return;
+      var orig = b.innerHTML;
+      b.disabled = true;
+      postJSON('/team/operations/events/' + EID + '/status-ping', { code: b.dataset.code })
+        .then(function () { b.innerHTML = '✓ Στάλθηκε'; setTimeout(function () { b.innerHTML = orig; b.disabled = false; }, 2500); pollComms(); })
+        .catch(function () { b.innerHTML = orig; b.disabled = false; });
+    });
+  });
+
+  /* Comms */
+  var msgInput = document.getElementById('msgInput');
+  var msgSend  = document.getElementById('msgSend');
+  function sendMsg() {
+    var body = (msgInput.value || '').trim();
+    if (!body) return;
+    msgInput.value = '';
+    postJSON('/team/operations/events/' + EID + '/message', { body: body }).then(pollComms);
+  }
+  if (msgSend)  { msgSend.addEventListener('click', sendMsg); }
+  if (msgInput) { msgInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); sendMsg(); } }); }
+  window.ackOrder = function (id) { postJSON('/team/operations/events/' + EID + '/ack-order', { message_id: id }).then(pollComms); };
+
+  var msgListEl = document.getElementById('msgList');
+  function renderMsgs(msgs) {
+    if (!msgListEl) return;
+    if (!msgs || !msgs.length) { msgListEl.innerHTML = '<div class="text-muted small text-center py-3">Καμία επικοινωνία ακόμη.</div>'; return; }
+    msgListEl.innerHTML = msgs.map(function (m) {
+      var fromCmd = m.sender_role === 'command';
+      var align = fromCmd ? '' : 'text-end';
+      var bg = m.kind === 'order' ? 'bg-warning-subtle border border-warning'
+             : (m.kind === 'status' ? 'bg-success-subtle' : (fromCmd ? 'bg-primary-subtle' : 'bg-light'));
+      var who = fromCmd ? 'Δήμος' : (m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substr(11, 5);
+      var html = '<div class="' + align + ' mb-2"><div class="d-inline-block text-start p-2 rounded ' + bg + '" style="max-width:90%">' +
+                 (m.kind === 'order' ? '<strong>📋 ΕΝΤΟΛΗ:</strong> ' : '') + esc(m.body || '');
+      if (m.kind === 'order') {
+        html += m.acknowledged_at
+          ? '<div class="small text-success mt-1"><i class="bi bi-check2-all"></i> Επιβεβαιώθηκε</div>'
+          : '<div class="mt-1"><button class="btn btn-warning btn-sm py-0" onclick="ackOrder(' + m.id + ')">Επιβεβαίωση λήψης</button></div>';
+      }
+      html += '<div class="text-muted" style="font-size:.68rem">' + esc(who) + ' · ' + t + '</div></div></div>';
+      return html;
+    }).join('');
+    msgListEl.scrollTop = msgListEl.scrollHeight;
+  }
+  function renderSos(sos) {
+    if (!sosBanner) return;
+    if (!sos) {
+      sosBanner.style.display = 'none';
+      if (sosBtn) sosBtn.disabled = !IS_ACTIVE;
+      return;
+    }
+    sosBanner.style.display = 'block';
+    if (sos.status === 'acknowledged') {
+      sosBanner.className = 'alert alert-info mt-2 mb-0 py-2 small';
+      sosBanner.innerHTML = '<i class="bi bi-check2-all"></i> Το SOS ελήφθη από τον δήμο' + (sos.ack_name ? ' (' + esc(sos.ack_name) + ')' : '') + ' — έρχεται βοήθεια.';
+    } else {
+      sosBanner.className = 'alert alert-danger mt-2 mb-0 py-2 small';
+      sosBanner.innerHTML = '<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης από τον δήμο…';
+    }
+    if (sosBtn) sosBtn.disabled = true;
+  }
+  function pollComms() {
+    fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); } })
+      .catch(function () {});
+  }
+  pollComms();
+  setInterval(pollComms, 5000);
+})();
+</script>
 
 <!-- Partial presence modal -->
 <div class="modal fade" id="partialModal" tabindex="-1">

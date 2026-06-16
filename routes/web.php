@@ -106,9 +106,12 @@ $router->get('/operations/events/{id}/status', 'OperationController@status');
 $router->get('/operations/events/{id}/locations', 'OperationController@locations');
 $router->post('/operations/events/{id}/note', 'OperationController@addNote');
 $router->post('/operations/events/{id}/request-photo', 'OperationController@requestPhoto');
+$router->post('/operations/events/{id}/message', 'OperationController@sendMessage');
 $router->get('/operations/photos/{id}', 'OperationController@servePhoto');
 $router->post('/shortages/{id}/acknowledge', 'OperationController@acknowledgeShortage');
 $router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage');
+$router->post('/sos/{id}/acknowledge', 'OperationController@sosAck');
+$router->post('/sos/{id}/resolve', 'OperationController@sosResolve');
 
 /* Municipality admin: statistics, awards, reports/exports */
 $router->get('/statistics', 'StatisticsController@index');
@@ -142,6 +145,11 @@ $router->get('/team/operations/events/{id}', 'TeamPortalController@operations');
 $router->post('/team/operations/events/{id}/checkin', 'TeamPortalController@checkin');
 $router->post('/team/operations/events/{id}/send-location', 'TeamPortalController@sendLocation');
 $router->post('/team/operations/events/{id}/photo', 'TeamPortalController@uploadPhoto');
+$router->post('/team/operations/events/{id}/sos', 'TeamPortalController@sos');
+$router->post('/team/operations/events/{id}/message', 'TeamPortalController@sendTeamMessage');
+$router->post('/team/operations/events/{id}/status-ping', 'TeamPortalController@statusPing');
+$router->post('/team/operations/events/{id}/ack-order', 'TeamPortalController@ackOrder');
+$router->get('/team/operations/events/{id}/comms', 'TeamPortalController@commsFeed');
 
 /* Team debrief */
 $router->get('/team/events/{id}/debrief',  'TeamPortalController@debrief');

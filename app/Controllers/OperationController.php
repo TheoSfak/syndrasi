@@ -9,6 +9,7 @@ class OperationController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $mid = current_municipality_id();
+        $this->autoCloseExpired($mid);
 
         $live = dbq(
             "SELECT e.*, c.name AS category_name,
@@ -21,7 +22,7 @@ class OperationController
                  e.status = 'active'
                  OR (e.status IN ('open','confirmed','review')
                      AND NOW() >= e.start_datetime
-                     AND NOW() <= e.end_datetime)
+                     AND NOW() <= DATE_ADD(e.end_datetime, INTERVAL 4 HOUR))
                )
              ORDER BY e.start_datetime ASC",
             ['mid' => $mid]
@@ -136,6 +137,7 @@ class OperationController
 
         $activity = $this->buildActivityFeed($eid);
 
+        $pendingPhoto = array_flip(array_map('intval', PhotoRequest::pendingTeamIds($eid)));
         $teamsPayload = [];
         foreach ($teams as $t) {
             $pingAge    = null;
@@ -159,6 +161,7 @@ class OperationController
                 'ping_age_min'   => $pingAgeMin,
                 'ping_lat'       => $t['last_lat'] ? (float)$t['last_lat'] : null,
                 'ping_lng'       => $t['last_lng'] ? (float)$t['last_lng'] : null,
+                'photo_pending'  => isset($pendingPhoto[(int) $t['team_id']]),
             ];
         }
 
@@ -179,6 +182,8 @@ class OperationController
             'shortages' => $shortages,
             'notes'     => $notes,
             'activity'  => $activity,
+            'sos'       => SosAlert::activeForEvent((int) $eid),
+            'messages'  => EventMessage::forEvent((int) $eid),
         ]);
     }
 
@@ -208,7 +213,81 @@ class OperationController
             }
         }
 
-        json_out(['ok' => true, 'pings' => array_values($latest)]);
+        json_out([
+            'ok'     => true,
+            'pings'  => array_values($latest),
+            'photos' => self::photoMarkers($eid),
+        ]);
+    }
+
+    /** Map-ready photo list for an event. */
+    private static function photoMarkers(int $eid): array
+    {
+        $out = [];
+        foreach (EventPhoto::forEvent($eid) as $p) {
+            $out[] = [
+                'id'        => (int) $p['id'],
+                'team_id'   => (int) $p['team_id'],
+                'team_name' => $p['team_name'],
+                'lat'       => $p['latitude'] !== null ? (float) $p['latitude'] : null,
+                'lng'       => $p['longitude'] !== null ? (float) $p['longitude'] : null,
+                'url'       => url('/operations/photos/' . (int) $p['id']),
+                'age_min'   => (int) $p['age_min'],
+                'caption'   => $p['caption'],
+                'at'        => gr_datetime($p['created_at']),
+            ];
+        }
+        return $out;
+    }
+
+    /** POST /operations/events/{id}/request-photo — ask a team for a photo. */
+    public function requestPhoto($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent($id);
+        $tid   = post_int('team_id');
+        $team  = VolunteerTeam::find($tid);
+        if (!$team || (int) $team['municipality_id'] !== (int) $event['municipality_id']) {
+            abort(404, 'Η ομάδα δεν βρέθηκε.');
+        }
+        PhotoRequest::create((int) $event['municipality_id'], (int) $event['id'], $tid, current_user_id());
+        NotificationService::photoRequested($event, $team);
+        audit('photo_requested', 'event', $event['id'], 'team ' . $tid);
+
+        if (wants_json()) {
+            json_out(['ok' => true]);
+        }
+        flash_set('success', 'Ζητήθηκε φωτογραφία από την ομάδα «' . $team['name'] . '».');
+        redirect('/operations/events/' . $event['id']);
+    }
+
+    /** GET /operations/photos/{id} — stream a stored photo (protected). */
+    public function servePhoto($id)
+    {
+        requireLogin();
+        $photo = EventPhoto::find((int) $id);
+        if (!$photo) {
+            abort(404, 'Η φωτογραφία δεν βρέθηκε.');
+        }
+        $role = current_role();
+        if (in_array($role, ['municipality_admin', 'event_operator'], true)) {
+            requireMunicipalityAccess($photo['municipality_id']);
+        } elseif ($role === 'team_admin') {
+            if ((int) $photo['team_id'] !== (int) current_team_id()) {
+                abort(403, 'Δεν έχετε πρόσβαση.');
+            }
+        } else {
+            abort(403, 'Δεν έχετε πρόσβαση.');
+        }
+        $path = EventPhoto::path($photo);
+        if ($path === null) {
+            abort(404, 'Το αρχείο δεν βρέθηκε.');
+        }
+        header('Content-Type: ' . (function_exists('mime_content_type') ? (mime_content_type($path) ?: 'image/jpeg') : 'image/jpeg'));
+        header('Content-Length: ' . filesize($path));
+        header('Cache-Control: private, max-age=3600');
+        readfile($path);
+        exit;
     }
 
     /**
@@ -306,6 +385,7 @@ class OperationController
             }
         }
 
+        $pendingPhoto = array_flip(array_map('intval', PhotoRequest::pendingTeamIds($eid)));
         $teamsPayload = [];
         foreach ($teams as $t) {
             $pingAge = $pingAgeMin = null;
@@ -328,6 +408,7 @@ class OperationController
                 'ping_age_min'    => $pingAgeMin,
                 'ping_lat'        => $t['last_lat'] ? (float) $t['last_lat'] : null,
                 'ping_lng'        => $t['last_lng'] ? (float) $t['last_lng'] : null,
+                'photo_pending'   => isset($pendingPhoto[(int) $t['team_id']]),
             ];
         }
 
@@ -349,6 +430,9 @@ class OperationController
             'notes'     => $notes,
             'activity'  => $activity,
             'pings'     => array_values($latestPings),
+            'photos'    => self::photoMarkers($eid),
+            'sos'       => SosAlert::activeForEvent($eid),
+            'messages'  => EventMessage::forEvent($eid),
         ];
     }
 
@@ -372,6 +456,109 @@ class OperationController
         json_out(['ok' => true, 'ts' => date('H:i')]);
     }
 
+    /* ── Active-event comms (command side) ───────────────────────────────── */
+
+    /** POST /sos/{id}/acknowledge — command acknowledges a team SOS; notifies team. */
+    public function sosAck($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $alert = SosAlert::find((int) $id);
+        if (!$alert || (int) $alert['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Το SOS δεν βρέθηκε.');
+        }
+        SosAlert::acknowledge((int) $id, current_user_id());
+        $event = Event::find($alert['event_id']);
+        if ($event) {
+            try { NotificationService::sosAcknowledged($alert, $event); } catch (Throwable $e) {}
+        }
+        audit('sos_acknowledged', 'event', (int) $alert['event_id'], 'sos ' . $id);
+        if (wants_json()) { json_out(['ok' => true]); }
+        flash_set('success', 'Το SOS επιβεβαιώθηκε· η ομάδα ενημερώθηκε.');
+        redirect('/operations/events/' . $alert['event_id']);
+    }
+
+    /** POST /sos/{id}/resolve — close an SOS. */
+    public function sosResolve($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $alert = SosAlert::find((int) $id);
+        if (!$alert || (int) $alert['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Το SOS δεν βρέθηκε.');
+        }
+        SosAlert::resolve((int) $id, current_user_id());
+        audit('sos_resolved', 'event', (int) $alert['event_id'], 'sos ' . $id);
+        if (wants_json()) { json_out(['ok' => true]); }
+        flash_set('success', 'Το SOS έκλεισε.');
+        redirect('/operations/events/' . $alert['event_id']);
+    }
+
+    /** POST /operations/events/{id}/message — command → team(s): message or order. */
+    public function sendMessage($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event  = Event::findForCurrent($id);
+        $body   = trim(post_str('body'));
+        $kind   = post_str('kind') === 'order' ? 'order' : 'message';
+        $teamId = post_int('team_id') ?: null;   // null = broadcast to all approved teams
+        if ($body === '') { json_out(['ok' => false, 'error' => 'Κενό μήνυμα.']); return; }
+
+        EventMessage::create([
+            'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $teamId,
+            'role' => 'command', 'uid' => current_user_id(), 'kind' => $kind, 'body' => $body,
+        ]);
+
+        if ($teamId) {
+            $teamIds = [$teamId];
+        } else {
+            $teamIds = array_map('intval', dbq(
+                "SELECT DISTINCT team_id FROM event_applications WHERE event_id = :eid AND status = 'approved'",
+                ['eid' => $event['id']]
+            )->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        }
+        try { NotificationService::commandMessage($event, $teamIds, $kind, $body); } catch (Throwable $e) {}
+        audit('ops_message_sent', 'event', (int) $event['id'], $kind . ($teamId ? ' team ' . $teamId : ' broadcast'));
+        json_out(['ok' => true]);
+    }
+
+    /** POST /shortages/{id}/acknowledge */
+    public function acknowledgeShortage($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $this->updateShortageStatus((int) $id, 'acknowledged');
+    }
+
+    /** POST /shortages/{id}/resolve */
+    public function resolveShortage($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $this->updateShortageStatus((int) $id, 'resolved');
+    }
+
+    /** Shared shortage state change + team notification (Feature 4: ack loop). */
+    private function updateShortageStatus(int $id, string $action): void
+    {
+        $sh = dbq('SELECT * FROM shortage_reports WHERE id = :id LIMIT 1', ['id' => $id])->fetch();
+        if (!$sh || (int) $sh['municipality_id'] !== (int) current_municipality_id()) {
+            abort(404, 'Η έλλειψη δεν βρέθηκε.');
+        }
+        $uid = current_user_id();
+        if ($action === 'acknowledged') {
+            dbq("UPDATE shortage_reports SET status='acknowledged', acknowledged_by=:uid, acknowledged_at=NOW()
+                 WHERE id=:id AND status='open'", ['uid' => $uid, 'id' => $id]);
+        } else {
+            dbq("UPDATE shortage_reports SET status='resolved', resolved_by=:uid, resolved_at=NOW()
+                 WHERE id=:id AND status<>'resolved'", ['uid' => $uid, 'id' => $id]);
+        }
+        $event = Event::find($sh['event_id']);
+        if ($event) {
+            try { NotificationService::shortageHandled($sh, $event, $action); } catch (Throwable $e) {}
+        }
+        audit('shortage_' . $action, 'event', (int) $sh['event_id'], 'shortage ' . $id);
+        if (wants_json()) { json_out(['ok' => true]); }
+        flash_set('success', $action === 'resolved' ? 'Η έλλειψη επιλύθηκε.' : 'Η έλλειψη επιβεβαιώθηκε.');
+        redirect('/operations/events/' . $sh['event_id']);
+    }
+
     /* ═══════════════════ WAR ROOM (multi-event) ═══════════════════ */
 
     /** GET /operations/war-room — all active events on one map. */
@@ -379,6 +566,7 @@ class OperationController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $mid         = current_municipality_id();
+        $this->autoCloseExpired($mid);
         $munSettings = MunicipalitySetting::all($mid);
 
         // Initial snapshot rendered server-side so the page is useful before SSE.
@@ -401,6 +589,7 @@ class OperationController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $mid = current_municipality_id();
+        $this->autoCloseExpired($mid);
 
         session_write_close();
         while (ob_get_level() > 0) {
@@ -423,6 +612,27 @@ class OperationController
     }
 
     /**
+     * Lazy auto-close: events shown in operations stay open after their end time
+     * and must be closed by the municipality admin. If still open 4 hours after
+     * their end, they are closed automatically here (no cron needed — runs on
+     * every operations / war-room load and stream poll).
+     */
+    private function autoCloseExpired(int $mid): void
+    {
+        $n = dbq(
+            "UPDATE events
+             SET status = 'closed'
+             WHERE municipality_id = :mid
+               AND status IN ('active', 'open', 'confirmed', 'review')
+               AND end_datetime < DATE_SUB(NOW(), INTERVAL 4 HOUR)",
+            ['mid' => $mid]
+        )->rowCount();
+        if ($n > 0) {
+            audit('events_auto_closed', 'event', null, $n . ' event(s) auto-closed (4h grace)');
+        }
+    }
+
+    /**
      * Aggregate snapshot of every active/live event for a municipality.
      * Per event: status, location, coverage stats, open shortages, latest team pings.
      * Coverage is computed via teamStatusList() so figures match the single-event
@@ -438,7 +648,7 @@ class OperationController
                  e.status = 'active'
                  OR (e.status IN ('open','confirmed','review')
                      AND NOW() >= e.start_datetime
-                     AND NOW() <= e.end_datetime)
+                     AND NOW() <= DATE_ADD(e.end_datetime, INTERVAL 4 HOUR))
                )
              ORDER BY e.start_datetime ASC",
             ['mid' => $mid]
@@ -517,6 +727,7 @@ class OperationController
                     'open_shortages'  => $openShort,
                 ],
                 'pings'         => array_values($latest),
+                'photos'        => self::photoMarkers($eid),
             ];
         }
 

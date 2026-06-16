@@ -78,6 +78,25 @@ body.ops-dark main             { background:transparent!important; }
 .shift-pill.upcoming { background:rgba(148,163,184,.2);border:1px solid rgba(148,163,184,.4); }
 .shift-pill.active   { background:rgba(34,197,94,.18);border:1px solid rgba(34,197,94,.5);color:#4ade80; }
 .shift-pill.ended    { background:rgba(100,116,139,.1);border:1px solid rgba(100,116,139,.3);opacity:.7; }
+
+/* ── SOS alarm ─────────────────────────────────────────────────────────── */
+.sos-alarm { display:none;margin-bottom:1rem;border-radius:16px;padding:1rem 1.2rem;background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff;animation:sosAlarmPulse 1s infinite; }
+.sos-alarm.show { display:block; }
+@keyframes sosAlarmPulse { 0%{box-shadow:0 0 0 0 rgba(239,68,68,.55)} 70%{box-shadow:0 0 0 14px rgba(239,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0)} }
+.sos-alarm-head { display:flex;align-items:center;gap:.6rem;font-weight:900;font-size:1.15rem;letter-spacing:.04em;margin-bottom:.4rem; }
+.sos-alarm-item { display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;padding:.55rem 0;border-top:1px solid rgba(255,255,255,.25); }
+.sos-alarm-item .sa-team { font-weight:800; }
+.sos-alarm-item .sa-meta { font-size:.78rem;opacity:.9; }
+.sos-alarm-item .btn { --bs-btn-padding-y:.15rem; }
+
+/* ── Comms thread ──────────────────────────────────────────────────────── */
+.msg-thread { max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.4rem; }
+.cmsg { padding:.42rem .6rem;border-radius:10px;font-size:.82rem;line-height:1.35;max-width:90%; }
+.cmsg-team    { align-self:flex-start;background:rgba(13,148,136,.14);border:1px solid rgba(13,148,136,.4); }
+.cmsg-command { align-self:flex-end;  background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.4); }
+.cmsg-order   { align-self:flex-end;  background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.5); }
+.cmsg-status  { align-self:flex-start;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.45);font-weight:700; }
+.cmsg-meta { font-size:.66rem;opacity:.7;margin-top:2px; }
 </style>
 
 <!-- ═══════════ COMMAND HEADER ═══════════ -->
@@ -108,12 +127,12 @@ body.ops-dark main             { background:transparent!important; }
         <button class="btn btn-sm btn-outline-light" id="btnRefresh"><i class="bi bi-arrow-clockwise"></i></button>
         <a class="btn btn-sm btn-outline-light" href="<?= e(url('/operations/events/' . $eid . '/gate-qr')) ?>" target="_blank" title="QR Πύλης — δήλωση παρουσίας"><i class="bi bi-qr-code"></i></a>
         <a class="btn btn-sm btn-outline-light" href="<?= e(url('/events/' . $eid)) ?>"><i class="bi bi-arrow-left"></i></a>
-        <!-- Πρόωρη Λήξη -->
-        <form method="post" action="<?= e(url('/events/' . $eid . '/complete')) ?>"
-              onsubmit="return confirm('Πρόωρη λήξη δράσης;\nΗ δράση θα οριστεί ως ΟΛΟΚΛΗΡΩΜΕΝΗ τώρα.')">
+        <!-- Κλείσιμο δράσης (→ closed, για αρχειοθέτηση) -->
+        <form method="post" action="<?= e(url('/events/' . $eid . '/close')) ?>"
+              onsubmit="return confirm('Κλείσιμο δράσης;\nΗ δράση θα κλείσει και θα πάει για αρχειοθέτηση.')">
           <input type="hidden" name="_token" value="<?= e($csrfToken) ?>">
-          <button class="btn btn-sm btn-danger w-100" title="Πρόωρη Λήξη Δράσης">
-            <i class="bi bi-stop-circle-fill"></i>
+          <button class="btn btn-sm btn-danger w-100" title="Κλείσιμο Δράσης">
+            <i class="bi bi-door-closed-fill"></i>
           </button>
         </form>
       </div>
@@ -130,6 +149,9 @@ body.ops-dark main             { background:transparent!important; }
     <div class="ops-stat text-white ms-auto" style="opacity:.7"><div class="val" style="font-size:1.1rem" id="sv-clk">--</div><div class="lbl">Ενημέρωση</div></div>
   </div>
 </div>
+
+<!-- ═══════════ SOS ALARM ═══════════ -->
+<div class="sos-alarm" id="sosAlarm"></div>
 
 <!-- ═══════════ MAIN GRID ═══════════ -->
 <div class="row g-3">
@@ -214,6 +236,60 @@ body.ops-dark main             { background:transparent!important; }
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ═══════════ COMMS (command ↔ teams) ═══════════ -->
+<div class="card mt-3">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-chat-dots me-1 text-primary"></i>Επικοινωνία με ομάδες</span>
+    <span class="badge bg-primary" id="msgBadge">0</span>
+  </div>
+  <div class="card-body">
+    <div class="row g-2 align-items-end mb-3">
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Παραλήπτης</label>
+        <select class="form-select form-select-sm" id="cmsgTeam">
+          <option value="">📢 Όλες οι ομάδες (broadcast)</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small mb-1">Μήνυμα / εντολή</label>
+        <input type="text" class="form-control form-control-sm" id="cmsgBody" maxlength="500" placeholder="Γράψτε μήνυμα ή εντολή…">
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-primary flex-fill" id="cmsgSendMsg"><i class="bi bi-send me-1"></i>Μήνυμα</button>
+        <button type="button" class="btn btn-sm btn-warning flex-fill fw-bold" id="cmsgSendOrder" title="Στέλνεται ως εντολή — ζητά επιβεβαίωση λήψης από την ομάδα"><i class="bi bi-megaphone me-1"></i>Εντολή</button>
+      </div>
+    </div>
+    <div class="msg-thread" id="msgThread"><div class="text-muted small text-center">Καμία επικοινωνία ακόμη.</div></div>
+  </div>
+</div>
+
+<!-- Φωτογραφίες ομάδων -->
+<div class="card mt-3" id="photosCard" style="display:none">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-images me-1 text-info"></i>Φωτογραφίες ομάδων</span>
+    <span class="badge bg-info" id="photosBadge">0</span>
+  </div>
+  <div class="card-body p-2 d-flex flex-wrap gap-2" id="photosBox"></div>
+</div>
+
+<!-- Photo viewer modal -->
+<div class="modal fade" id="photoModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title" id="photoModalLabel">Φωτογραφία</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-1" style="background:#111">
+        <img id="photoModalImg" src="" alt="" style="max-width:100%;max-height:75vh">
+      </div>
+      <div class="modal-footer py-2">
+        <a id="photoModalDl" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>Άνοιγμα σε νέα καρτέλα</a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -367,6 +443,7 @@ body.ops-dark main             { background:transparent!important; }
               '<span class="fw-bold" style="font-size:1.1rem">' + (t.present_people||0) + '/' + t.approved_people + '</span>' +
               '<div class="small text-muted">άτομα</div></div></div>' +
               (t.ping_lat ? '<div class="mt-1 small"><span class="ping-dot ' + pingCls + '"></span>' + (t.ping_age || '') + '</div>' : '') +
+              '<button type="button" class="btn btn-outline-info btn-sm w-100 mt-1 py-0 req-photo-btn" data-team="' + t.team_id + '"' + (t.photo_pending ? ' disabled' : '') + '><i class="bi bi-camera me-1"></i>' + (t.photo_pending ? 'Ζητήθηκε φωτό' : 'Ζήτησε φωτό') + '</button>' +
               '</div></div>';
     });
     html += '</div>';
@@ -392,15 +469,96 @@ body.ops-dark main             { background:transparent!important; }
     var html = '';
     items.forEach(function(s) {
       var sev = s.severity || 'medium';
+      var actions = '';
+      if (s.status === 'open') {
+        actions = '<button type="button" class="btn btn-outline-warning btn-sm py-0 sh-ack-btn" data-id="' + s.id + '">Σε γνώση</button>' +
+                  '<button type="button" class="btn btn-outline-success btn-sm py-0 sh-res-btn" data-id="' + s.id + '">Λύθηκε</button>';
+      } else if (s.status === 'acknowledged') {
+        actions = '<button type="button" class="btn btn-outline-success btn-sm py-0 sh-res-btn" data-id="' + s.id + '">Λύθηκε</button>';
+      }
       html += '<div class="card sc ' + s.status + ' mb-1 p-2">' +
               '<div class="d-flex justify-content-between align-items-start">' +
               '<div><span class="badge text-bg-' + (sevCls[sev]||'secondary') + ' me-1">' + (sevLbl[sev]||sev) + '</span>' +
               '<strong class="small">' + esc(s.title) + '</strong>' +
               '<div class="text-muted small">' + esc(s.team_name) + '</div></div>' +
               '<span class="badge text-bg-' + (s.status==='open'?'danger':s.status==='acknowledged'?'warning':'success') + '">' +
-              (s.status==='open'?'Ανοιχτή':s.status==='acknowledged'?'Σε γνώση':'Λύθηκε') + '</span></div></div>';
+              (s.status==='open'?'Ανοιχτή':s.status==='acknowledged'?'Σε γνώση':'Λύθηκε') + '</span></div>' +
+              (actions ? '<div class="d-flex gap-1 mt-2 justify-content-end">' + actions + '</div>' : '') +
+              '</div>';
     });
     box.innerHTML = html;
+  }
+
+  /* ─── SOS alarm ─── */
+  function renderSos(items) {
+    var box = document.getElementById('sosAlarm');
+    if (!box) return;
+    items = items || [];
+    if (!items.length) { box.className = 'sos-alarm'; box.innerHTML = ''; return; }
+    var html = '<div class="sos-alarm-head"><i class="bi bi-exclamation-octagon-fill"></i> SOS — ΕΝΕΡΓΟ ΠΕΡΙΣΤΑΤΙΚΟ (' + items.length + ')</div>';
+    items.forEach(function(s) {
+      var geo = (s.latitude && s.longitude)
+        ? '<a class="btn btn-light btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps?q=' + s.latitude + ',' + s.longitude + '"><i class="bi bi-geo-alt-fill"></i> Χάρτης</a>'
+        : '<span class="sa-meta">χωρίς τοποθεσία</span>';
+      var actions = s.status === 'active'
+        ? '<button type="button" class="btn btn-light btn-sm sos-ack-btn" data-id="' + s.id + '">Επιβεβαίωση</button>'
+        : '<span class="badge text-bg-info">Σε γνώση' + (s.ack_name ? ' · ' + esc(s.ack_name) : '') + '</span>';
+      html += '<div class="sos-alarm-item">' +
+              '<span class="sa-team"><i class="bi bi-people-fill me-1"></i>' + esc(s.team_name) + '</span>' +
+              '<span class="sa-meta">' + esc((s.created_at||'').substring(11,16)) + (s.note ? ' · ' + esc(s.note) : '') + '</span>' +
+              '<span class="ms-auto d-flex gap-1 align-items-center">' + geo + actions +
+              '<button type="button" class="btn btn-outline-light btn-sm sos-res-btn" data-id="' + s.id + '">Κλείσιμο</button>' +
+              '</span></div>';
+    });
+    box.innerHTML = html;
+    box.className = 'sos-alarm show';
+  }
+
+  /* ─── Comms thread ─── */
+  function renderMessages(msgs) {
+    var box = document.getElementById('msgThread');
+    if (!box) return;
+    msgs = msgs || [];
+    document.getElementById('msgBadge').textContent = msgs.length;
+    if (!msgs.length) { box.innerHTML = '<div class="text-muted small text-center">Καμία επικοινωνία ακόμη.</div>'; return; }
+    box.innerHTML = msgs.map(function(m) {
+      var cls = m.kind === 'order' ? 'cmsg-order'
+              : (m.kind === 'status' ? 'cmsg-status'
+              : (m.sender_role === 'command' ? 'cmsg-command' : 'cmsg-team'));
+      var who = m.sender_role === 'command' ? 'Δήμος' : (m.team_name || m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substring(11,16);
+      var tag = m.team_id ? esc(m.team_name || '') : (m.sender_role === 'command' ? '📢 Όλες' : '');
+      var ackTxt = '';
+      if (m.kind === 'order') {
+        ackTxt = m.acknowledged_at ? ' · <span style="color:#16a34a">✓ Επιβεβαιώθηκε</span>' : ' · <span style="opacity:.7">αναμονή ACK</span>';
+      }
+      return '<div class="cmsg ' + cls + '"><div>' +
+             (m.kind === 'order' ? '<strong>📋 ΕΝΤΟΛΗ:</strong> ' : '') + esc(m.body || '') + '</div>' +
+             '<div class="cmsg-meta">' + esc(who) + (tag ? ' → ' + tag : '') + ' · ' + t + ackTxt + '</div></div>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  /* ─── Recipient select (preserve current selection) ─── */
+  function populateTeamSelect(teams) {
+    var sel = document.getElementById('cmsgTeam');
+    if (!sel || !teams) return;
+    var cur = sel.value;
+    var opts = '<option value="">📢 Όλες οι ομάδες (broadcast)</option>';
+    teams.forEach(function(t) { opts += '<option value="' + t.team_id + '">' + esc(t.team_name) + '</option>'; });
+    sel.innerHTML = opts;
+    sel.value = cur;
+  }
+
+  /* ─── POST helper (form-encoded, JSON response) ─── */
+  function postForm(path, fields) {
+    var body = '_token=' + encodeURIComponent(CSRF);
+    Object.keys(fields || {}).forEach(function(k){ body += '&' + k + '=' + encodeURIComponent(fields[k]); });
+    return fetch(BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: body
+    }).then(function(r){ return r.json().catch(function(){ return {}; }); });
   }
 
   function renderActivity(items) {
@@ -453,8 +611,12 @@ body.ops-dark main             { background:transparent!important; }
     renderShortages(d.shortages);
     renderActivity(d.activity);
     renderNotes(d.notes);
+    if (d.teams) populateTeamSelect(d.teams);
+    renderSos(d.sos);
+    renderMessages(d.messages);
     /* map pings included in SSE snapshot */
     if (d.pings) updateMap(d.pings);
+    if (d.photos) updatePhotos(d.photos);
     /* flash sections where count increased */
     if (!isNaN(prevCi) && (d.stats.checked_in || 0) > prevCi) flashEl('teamsBox');
     if (!isNaN(prevSh) && (d.stats.open_shortages || 0) > prevSh) flashEl('shortagesBox');
@@ -480,7 +642,7 @@ body.ops-dark main             { background:transparent!important; }
   function pollLocations() {
     fetch(BASE + '/operations/events/' + EID + '/locations')
       .then(function(r){ return r.json(); })
-      .then(function(d) { if (d.ok) updateMap(d.pings); })
+      .then(function(d) { if (d.ok) { updateMap(d.pings); updatePhotos(d.photos); } })
       .catch(function(){});
   }
 
@@ -517,6 +679,59 @@ body.ops-dark main             { background:transparent!important; }
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  /* ─── Photos: request, map markers, list, modal ─── */
+  var photoMarkers = {};
+
+  function requestPhoto(teamId, btn) {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Αποστολή…'; }
+    var fd = new FormData(); fd.append('_token', CSRF); fd.append('team_id', teamId);
+    fetch(BASE + '/operations/events/' + EID + '/request-photo', { method:'POST', body: fd, headers:{ 'Accept':'application/json' } })
+      .then(function(r){ return r.json(); })
+      .then(function(){ if (btn) { btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Ζητήθηκε φωτό'; } })
+      .catch(function(){ if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-camera me-1"></i>Ζήτησε φωτό'; } });
+  }
+
+  function openPhoto(url, label) {
+    document.getElementById('photoModalImg').src = url;
+    document.getElementById('photoModalLabel').textContent = label || 'Φωτογραφία';
+    document.getElementById('photoModalDl').href = url;
+    if (window.bootstrap) { bootstrap.Modal.getOrCreateInstance(document.getElementById('photoModal')).show(); }
+  }
+
+  function updatePhotos(photos) {
+    photos = photos || [];
+    Object.keys(photoMarkers).forEach(function(k){ map.removeLayer(photoMarkers[k]); });
+    photoMarkers = {};
+    var card = document.getElementById('photosCard');
+    var box  = document.getElementById('photosBox');
+    if (!card || !box) return;
+    document.getElementById('photosBadge').textContent = photos.length;
+    card.style.display = photos.length ? '' : 'none';
+    var html = '';
+    photos.forEach(function(ph){
+      var border = ph.lat !== null && ph.lng !== null ? '#0ea5e9' : '#94a3b8';
+      html += '<img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) +
+              '" title="' + esc(ph.team_name) + ' · ' + esc(ph.at) + (ph.lat === null ? ' · χωρίς τοποθεσία' : '') +
+              '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ' + border + '">';
+      if (ph.lat !== null && ph.lng !== null) {
+        var icon = L.divIcon({ className:'', html:'<div style="background:#0ea5e9;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><i class="bi bi-camera-fill" style="color:#fff;font-size:11px;transform:rotate(45deg)"></i></div>', iconSize:[24,24], iconAnchor:[12,22] });
+        var m = L.marker([ph.lat, ph.lng], { icon: icon });
+        m.bindPopup('<div style="text-align:center"><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" style="max-width:170px;max-height:130px;border-radius:6px;cursor:pointer"><br><b>' + esc(ph.team_name) + '</b><br><span class="text-muted" style="font-size:.72rem">' + esc(ph.at) + '</span></div>');
+        m.addTo(map);
+        photoMarkers[ph.id] = m;
+      }
+    });
+    box.innerHTML = html;
+  }
+
+  /* delegated clicks: request button + photo thumbnails */
+  document.addEventListener('click', function(e){
+    var thumb = e.target.closest ? e.target.closest('.photo-thumb') : null;
+    if (thumb) { openPhoto(thumb.getAttribute('data-url'), thumb.getAttribute('data-label')); return; }
+    var rb = e.target.closest ? e.target.closest('.req-photo-btn') : null;
+    if (rb && !rb.disabled) { requestPhoto(rb.getAttribute('data-team'), rb); }
+  });
+
   /* ─── SSE connection ─── */
   var sseEs = null;
 
@@ -542,8 +757,33 @@ body.ops-dark main             { background:transparent!important; }
     sseEs.onerror = function() { setSseBadge('reconnecting'); };
   }
 
+  /* ─── Comms composer ─── */
+  function sendCmsg(kind) {
+    var bodyEl = document.getElementById('cmsgBody');
+    var teamEl = document.getElementById('cmsgTeam');
+    var body = (bodyEl.value || '').trim();
+    if (!body) { bodyEl.focus(); return; }
+    if (kind === 'order' && !confirm('Αποστολή ως ΕΝΤΟΛΗ;\nΗ ομάδα θα κληθεί να επιβεβαιώσει τη λήψη.')) return;
+    postForm('/operations/events/' + EID + '/message', { body: body, kind: kind, team_id: teamEl.value })
+      .then(function(){ bodyEl.value = ''; pollStatus(); });
+  }
+  document.getElementById('cmsgSendMsg').addEventListener('click', function(){ sendCmsg('message'); });
+  document.getElementById('cmsgSendOrder').addEventListener('click', function(){ sendCmsg('order'); });
+  document.getElementById('cmsgBody').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); sendCmsg('message'); } });
+
+  /* ─── SOS / shortage action buttons (delegated) ─── */
+  document.addEventListener('click', function(e){
+    if (!e.target || !e.target.closest) return;
+    var b;
+    if ((b = e.target.closest('.sos-ack-btn'))) { b.disabled = true; postForm('/sos/' + b.dataset.id + '/acknowledge', {}).then(pollStatus); }
+    else if ((b = e.target.closest('.sos-res-btn'))) { if (confirm('Κλείσιμο SOS;')) { b.disabled = true; postForm('/sos/' + b.dataset.id + '/resolve', {}).then(pollStatus); } }
+    else if ((b = e.target.closest('.sh-ack-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/acknowledge', {}).then(pollStatus); }
+    else if ((b = e.target.closest('.sh-res-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/resolve', {}).then(pollStatus); }
+  });
+
   /* ─── Boot ─── */
   connectSSE();
+  pollStatus();
   /* Locations are now included in the SSE snapshot.
      pollLocations() remains available for the manual refresh button. */
 

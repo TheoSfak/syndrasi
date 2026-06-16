@@ -326,6 +326,58 @@ body { min-height: 100dvh; }
   font-size: 10px; color: #4dd4c4; opacity: .6;
   text-align: center; padding: 4px;
 }
+
+/* ── SOS ────────────────────────────────────────────────────────────────── */
+.sos-btn {
+  width: 100%; padding: 24px 20px; border: none; border-radius: 18px;
+  background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%); color: #fff; cursor: pointer;
+  display: flex; align-items: center; gap: 16px; text-align: left;
+  transition: transform .1s;
+}
+.sos-btn:active { transform: scale(.98); }
+.sos-btn:disabled { opacity: .45; cursor: not-allowed; }
+.sos-btn-icon { font-size: 40px; flex-shrink: 0; }
+.sos-btn-label { font-size: 22px; font-weight: 900; letter-spacing: .04em; }
+.sos-btn-sub { font-size: 12px; opacity: .9; margin-top: 2px; }
+.sos-pulse { animation: sosPulse 1.2s infinite; }
+@keyframes sosPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.6); }
+  70%  { box-shadow: 0 0 0 18px rgba(239,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+.sos-active-banner {
+  margin-top: 10px; padding: 12px 14px; border-radius: 12px;
+  background: #2a0d0d; border: 1px solid #7f1d1d; color: #fca5a5;
+  font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+}
+.sos-active-banner.ack { background: #0d2233; border-color: #1e40af; color: #93c5fd; }
+
+/* ── Quick status pings ──────────────────────────────────────────────────── */
+.ping-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px 14px; }
+.ping-btn {
+  padding: 14px 10px; border: none; border-radius: 12px; cursor: pointer;
+  background: #13302e; color: #7fe6d8; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px; text-align: left; transition: transform .1s;
+}
+.ping-btn:active { transform: scale(.96); }
+.ping-btn:disabled { opacity: .35; cursor: not-allowed; }
+.ping-btn i { font-size: 20px; flex-shrink: 0; }
+.ping-btn.full { grid-column: 1 / -1; background: #3a1414; color: #fca5a5; }
+
+/* ── Comms thread ────────────────────────────────────────────────────────── */
+.msg-list { padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+.msg { padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.35; max-width: 90%; }
+.msg-time { font-size: 10px; opacity: .6; margin-top: 3px; }
+.msg-command { align-self: flex-start; background: #13243a; color: #cfe3ff; border: 1px solid #1e3a5f; }
+.msg-team    { align-self: flex-end;   background: #0e3d3a; color: #cdebe6; }
+.msg-order   { align-self: flex-start; background: #3a2a0d; color: #fcd9a5; border: 1px solid #78510f; }
+.msg-status  { align-self: flex-end;   background: #13302e; color: #9be8da; font-weight: 700; }
+.msg-ack-btn { margin-top: 6px; background: #facc15; color: #1a1400; border: none; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 800; cursor: pointer; }
+.msg-acked   { margin-top: 4px; font-size: 11px; color: #4ade80; font-weight: 700; }
+.msg-empty   { color: #4b7070; font-size: 12px; text-align: center; padding: 14px; }
+.msg-compose { display: flex; gap: 8px; padding: 0 14px 14px; }
+.msg-compose input { flex: 1; background: #0d1a1a; border: 1px solid #1e3333; border-radius: 10px; color: #e8f5f4; font-size: 14px; padding: 12px; outline: none; }
+.msg-compose button { background: #0e7490; color: #fff; border: none; border-radius: 10px; padding: 0 16px; font-size: 18px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -380,6 +432,18 @@ if ($flash):
 </div>
 
 <div class="hub-body">
+
+  <!-- ── 0. SOS / Έκτακτη Ανάγκη ────────────────────────────────────── -->
+  <div>
+    <button class="sos-btn" id="sosBtn" <?= !$isActive ? 'disabled' : '' ?>>
+      <i class="bi bi-exclamation-octagon-fill sos-btn-icon"></i>
+      <div style="flex:1">
+        <div class="sos-btn-label">SOS — ΚΙΝΔΥΝΟΣ</div>
+        <div class="sos-btn-sub">Πατήστε για άμεση κλήση βοήθειας στον δήμο</div>
+      </div>
+    </button>
+    <div class="sos-active-banner" id="sosBanner" style="display:none"></div>
+  </div>
 
   <!-- ── 1. Αποστολή Στίγματος ──────────────────────────────────────── -->
   <div class="action-card">
@@ -541,6 +605,28 @@ if ($flash):
   </div>
   <?php endif; ?>
 
+  <!-- ── Γρήγορη ενημέρωση (status pings) ────────────────────────────── -->
+  <div class="action-card">
+    <div class="presence-header"><i class="bi bi-lightning-charge"></i> Γρήγορη ενημέρωση</div>
+    <div class="ping-grid">
+      <button type="button" class="ping-btn" data-code="arrived" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-geo-alt-fill"></i> Φτάσαμε στο σημείο</button>
+      <button type="button" class="ping-btn" data-code="task_complete" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-check2-circle"></i> Ολοκληρώθηκε</button>
+      <button type="button" class="ping-btn" data-code="need_backup" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-people-fill"></i> Χρειαζόμαστε ενίσχυση</button>
+      <button type="button" class="ping-btn" data-code="returning" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-box-arrow-left"></i> Επιστροφή στη βάση</button>
+      <button type="button" class="ping-btn full" data-code="incident" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-exclamation-triangle-fill"></i> Έχουμε περιστατικό</button>
+    </div>
+  </div>
+
+  <!-- ── Επικοινωνία με τον δήμο ──────────────────────────────────────── -->
+  <div class="action-card">
+    <div class="presence-header"><i class="bi bi-chat-dots"></i> Επικοινωνία με τον δήμο</div>
+    <div class="msg-list" id="msgList"><div class="msg-empty">Φόρτωση…</div></div>
+    <div class="msg-compose">
+      <input type="text" id="msgInput" placeholder="Μήνυμα προς τον δήμο…" maxlength="500">
+      <button type="button" id="msgSend" title="Αποστολή"><i class="bi bi-send"></i></button>
+    </div>
+  </div>
+
   <div id="wakeLockIndicator"><i class="bi bi-phone"></i> Η οθόνη παραμένει ενεργή</div>
 </div><!-- .hub-body -->
 
@@ -550,6 +636,16 @@ if ($flash):
   var BASE = window.baseUrl || '';
   var EID  = <?= $eid ?>;
   var CSRF = window.csrfToken || '';
+  var IS_ACTIVE = <?= $isActive ? 'true' : 'false' ?>;
+
+  function postJSON(path, body) {
+    return fetch(BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); });
+  }
+  function escapeHtml(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
 
   /* ── Wake Lock (keep screen on) ─────────────────────────────────── */
   var wakeLock = null;
@@ -679,6 +775,117 @@ if ($flash):
       b.classList.toggle('selected', b.dataset.val === val);
     });
   };
+
+  /* ── SOS ────────────────────────────────────────────────────────── */
+  var sosBtn = document.getElementById('sosBtn');
+  var sosBanner = document.getElementById('sosBanner');
+  if (sosBtn) {
+    sosBtn.addEventListener('click', function () {
+      if (!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ο δήμος ότι κινδυνεύετε. Συνέχεια;')) return;
+      sosBtn.disabled = true;
+      sosBtn.querySelector('.sos-btn-sub').textContent = 'Λήψη τοποθεσίας…';
+      var send = function (lat, lng, acc) {
+        postJSON('/team/operations/events/' + EID + '/sos', { latitude: lat, longitude: lng, accuracy: acc })
+          .then(function (d) {
+            if (d && d.success) { sosBtn.querySelector('.sos-btn-sub').textContent = 'SOS εστάλη — ο δήμος ειδοποιήθηκε'; pollComms(); }
+            else { sosBtn.disabled = false; sosBtn.querySelector('.sos-btn-sub').textContent = (d && d.message) || 'Αποτυχία — δοκιμάστε ξανά'; }
+          })
+          .catch(function () { sosBtn.disabled = false; sosBtn.querySelector('.sos-btn-sub').textContent = 'Σφάλμα σύνδεσης — δοκιμάστε ξανά'; });
+      };
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (p) { send(p.coords.latitude, p.coords.longitude, p.coords.accuracy); },
+          function () { send(null, null, null); },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+      } else { send(null, null, null); }
+    });
+  }
+
+  /* ── Quick status pings ─────────────────────────────────────────── */
+  document.querySelectorAll('.ping-btn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.disabled) return;
+      var orig = b.innerHTML;
+      b.disabled = true; b.style.opacity = '.6';
+      postJSON('/team/operations/events/' + EID + '/status-ping', { code: b.dataset.code })
+        .then(function () {
+          b.innerHTML = '<i class="bi bi-check2"></i> Στάλθηκε';
+          setTimeout(function () { b.innerHTML = orig; b.disabled = false; b.style.opacity = ''; }, 2500);
+          pollComms();
+        })
+        .catch(function () { b.innerHTML = orig; b.disabled = false; b.style.opacity = ''; });
+    });
+  });
+
+  /* ── Comms: send + ack ──────────────────────────────────────────── */
+  var msgInput = document.getElementById('msgInput');
+  var msgSend  = document.getElementById('msgSend');
+  function sendMsg() {
+    var body = (msgInput.value || '').trim();
+    if (!body) return;
+    msgInput.value = '';
+    postJSON('/team/operations/events/' + EID + '/message', { body: body }).then(pollComms);
+  }
+  if (msgSend)  { msgSend.addEventListener('click', sendMsg); }
+  if (msgInput) { msgInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); sendMsg(); } }); }
+
+  window.ackOrder = function (id) {
+    postJSON('/team/operations/events/' + EID + '/ack-order', { message_id: id }).then(pollComms);
+  };
+
+  /* ── Comms polling (~5s) ────────────────────────────────────────── */
+  var msgListEl = document.getElementById('msgList');
+  function renderMsgs(msgs) {
+    if (!msgListEl) return;
+    if (!msgs || !msgs.length) { msgListEl.innerHTML = '<div class="msg-empty">Καμία επικοινωνία ακόμη.</div>'; return; }
+    msgListEl.innerHTML = msgs.map(function (m) {
+      var cls = m.kind === 'order' ? 'msg-order'
+              : (m.kind === 'status' ? 'msg-status'
+              : (m.sender_role === 'command' ? 'msg-command' : 'msg-team'));
+      var who = m.sender_role === 'command' ? 'Δήμος' : (m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substr(11, 5);
+      var html = '<div class="msg ' + cls + '"><div>' +
+                 (m.kind === 'order' ? '📋 <strong>ΕΝΤΟΛΗ:</strong> ' : '') + escapeHtml(m.body || '') + '</div>';
+      if (m.kind === 'order') {
+        html += m.acknowledged_at
+          ? '<div class="msg-acked"><i class="bi bi-check2-all"></i> Επιβεβαιώθηκε</div>'
+          : '<button class="msg-ack-btn" onclick="ackOrder(' + m.id + ')">Επιβεβαίωση λήψης</button>';
+      }
+      html += '<div class="msg-time">' + who + ' · ' + t + '</div></div>';
+      return html;
+    }).join('');
+    msgListEl.scrollTop = msgListEl.scrollHeight;
+  }
+  function renderSos(sos) {
+    if (!sosBanner) return;
+    if (!sos) {
+      sosBanner.style.display = 'none';
+      if (sosBtn) { sosBtn.classList.remove('sos-pulse'); sosBtn.disabled = !IS_ACTIVE;
+        if (IS_ACTIVE) sosBtn.querySelector('.sos-btn-sub').textContent = 'Πατήστε για άμεση κλήση βοήθειας στον δήμο'; }
+      return;
+    }
+    sosBanner.style.display = 'flex';
+    if (sos.status === 'acknowledged') {
+      sosBanner.className = 'sos-active-banner ack';
+      sosBanner.innerHTML = '<i class="bi bi-check2-all"></i> Το SOS ελήφθη από τον δήμο' +
+        (sos.ack_name ? ' (' + escapeHtml(sos.ack_name) + ')' : '') + ' — έρχεται βοήθεια.';
+      if (sosBtn) sosBtn.classList.remove('sos-pulse');
+    } else {
+      sosBanner.className = 'sos-active-banner';
+      sosBanner.innerHTML = '<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης από τον δήμο…';
+      if (sosBtn) sosBtn.classList.add('sos-pulse');
+    }
+    if (sosBtn) { sosBtn.disabled = true; sosBtn.querySelector('.sos-btn-sub').textContent = 'SOS ενεργό'; }
+  }
+  function pollComms() {
+    fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); } })
+      .catch(function () {});
+  }
+  pollComms();
+  setInterval(pollComms, 5000);
 
 })();
 </script>

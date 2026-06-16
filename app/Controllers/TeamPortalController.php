@@ -403,13 +403,74 @@ class TeamPortalController
         )->fetchAll();
 
         render('team/operations', [
-            'pageTitle'   => 'Επιχειρησιακές Ενέργειες',
-            'event'       => $event,
-            'application' => $application,
-            'lastCheckin' => $lastCheckin,
-            'lastPing'    => $lastPing,
-            'shortages'   => $shortages,
+            'pageTitle'    => 'Επιχειρησιακές Ενέργειες',
+            'event'        => $event,
+            'application'  => $application,
+            'lastCheckin'  => $lastCheckin,
+            'lastPing'     => $lastPing,
+            'shortages'    => $shortages,
+            'photoRequest' => PhotoRequest::pendingForEventTeam((int) $event['id'], (int) current_team_id()),
+            'teamPhotos'   => EventPhoto::forTeamEvent((int) $event['id'], (int) current_team_id()),
         ]);
+    }
+
+    /** POST /team/operations/events/{id}/photo — upload a (geotagged) photo. */
+    public function uploadPhoto($id)
+    {
+        requireRole(['team_admin']);
+        $context = $this->approvedContext($id);
+        $event   = $context['event'];
+        $tid     = (int) current_team_id();
+        $back    = '/team/operations/events/' . $event['id'];
+
+        if (empty($_FILES['photo']) || (int) ($_FILES['photo']['error'] ?? 1) !== UPLOAD_ERR_OK) {
+            flash_set('danger', 'Δεν επιλέχθηκε έγκυρη φωτογραφία.');
+            redirect($back);
+        }
+        $f = $_FILES['photo'];
+        if ((int) $f['size'] > 12 * 1024 * 1024) {
+            flash_set('danger', 'Η φωτογραφία είναι πολύ μεγάλη (μέγιστο 12MB).');
+            redirect($back);
+        }
+        $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        $info    = @getimagesize($f['tmp_name']);
+        $mime    = $info['mime'] ?? '';
+        if (!isset($allowed[$mime])) {
+            flash_set('danger', 'Επιτρέπονται μόνο εικόνες JPG / PNG / WebP.');
+            redirect($back);
+        }
+
+        $dir = BASE_PATH . EventPhoto::DIR;
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            flash_set('danger', 'Αδυναμία αποθήκευσης (φάκελος).');
+            redirect($back);
+        }
+        $name = 'ev' . (int) $event['id'] . '_t' . $tid . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
+        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) {
+            flash_set('danger', 'Αποτυχία αποθήκευσης φωτογραφίας.');
+            redirect($back);
+        }
+
+        $lat = post_float_or_null('latitude');
+        $lng = post_float_or_null('longitude');
+        if ($lat !== null && ($lat < -90 || $lat > 90))   { $lat = null; }
+        if ($lng !== null && ($lng < -180 || $lng > 180)) { $lng = null; }
+        if ($lat === null || $lng === null) { $lat = null; $lng = null; }
+
+        $rid = post_int('request_id') ?: null;
+        EventPhoto::create([
+            'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
+            'uid' => $_SESSION['user_id'], 'rid' => $rid, 'file' => $name,
+            'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
+        ]);
+        if ($rid) {
+            PhotoRequest::fulfill($rid);
+        }
+        NotificationService::photoUploaded($event, $tid);
+        audit('photo_uploaded', 'event', $event['id'], 'team ' . $tid);
+
+        flash_set('success', 'Η φωτογραφία στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        redirect($back);
     }
 
     /** POST /team/operations/events/{id}/checkin */
@@ -553,6 +614,122 @@ class TeamPortalController
         flash_set('success', 'Η έλλειψη αναφέρθηκε στο κέντρο επιχειρήσεων.');
         $from = post_str('_from');
         redirect($from === 'live' ? '/team/live/' . $event['id'] : '/team/operations/events/' . $event['id']);
+    }
+
+    /* ── Active-event comms (team side) ─────────────────────────────────── */
+
+    /** Shared: validate approved team context for comms JSON endpoints. Returns [event, teamId]. */
+    private function commsContext($id): array
+    {
+        $event = Event::find($id);
+        if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
+            json_out(['success' => false, 'message' => 'Η δράση δεν βρέθηκε.'], 404);
+        }
+        $tid = current_team_id();
+        $application = EventApplication::findByEventTeam($event['id'], $tid);
+        if (!$application || $application['status'] !== 'approved') {
+            json_out(['success' => false, 'message' => 'Η ομάδα σας δεν είναι εγκεκριμένη.'], 403);
+        }
+        return [$event, (int) $tid];
+    }
+
+    /** POST /team/operations/events/{id}/sos — raise SOS / man-down (JSON). */
+    public function sos($id)
+    {
+        requireRole(['team_admin']);
+        [$event, $tid] = $this->commsContext($id);
+
+        $input = json_input();
+        $lat = isset($input['latitude'])  ? (float) $input['latitude']  : null;
+        $lng = isset($input['longitude']) ? (float) $input['longitude'] : null;
+        $acc = isset($input['accuracy'])  ? (float) $input['accuracy']  : null;
+        if ($lat === null || $lng === null || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            $lat = null; $lng = null; $acc = null;
+        }
+        $note = isset($input['note']) ? mb_substr(trim((string) $input['note']), 0, 255) : null;
+
+        $alertId = SosAlert::create([
+            'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
+            'uid' => $_SESSION['user_id'], 'lat' => $lat, 'lng' => $lng, 'acc' => $acc, 'note' => $note,
+        ]);
+        $alert = SosAlert::find($alertId);
+        $team  = VolunteerTeam::find($tid);
+        audit('sos_raised', 'event', $event['id'], 'team ' . $tid);
+        try {
+            NotificationService::sosRaised($alert, $event, $team);
+        } catch (Throwable $e) {
+            error_log('[SOS] notify failed: ' . $e->getMessage());
+        }
+
+        json_out(['success' => true, 'id' => $alertId, 'message' => 'SOS στάλθηκε — ο δήμος ειδοποιήθηκε.']);
+    }
+
+    /** POST /team/operations/events/{id}/message — team chat message to command (JSON). */
+    public function sendTeamMessage($id)
+    {
+        requireRole(['team_admin']);
+        [$event, $tid] = $this->commsContext($id);
+        $input = json_input();
+        $body  = trim((string) ($input['body'] ?? ''));
+        if ($body === '') { json_out(['success' => false, 'message' => 'Κενό μήνυμα.'], 422); }
+
+        EventMessage::create([
+            'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
+            'role' => 'team', 'uid' => $_SESSION['user_id'], 'kind' => 'message', 'body' => $body,
+        ]);
+        $team = VolunteerTeam::find($tid);
+        try { NotificationService::teamMessage($event, $team, 'Μήνυμα ομάδας', $body); } catch (Throwable $e) {}
+        json_out(['success' => true]);
+    }
+
+    /** POST /team/operations/events/{id}/status-ping — one-tap status ping (JSON). */
+    public function statusPing($id)
+    {
+        requireRole(['team_admin']);
+        [$event, $tid] = $this->commsContext($id);
+        $input = json_input();
+        $code  = (string) ($input['code'] ?? '');
+        if (!isset(EventMessage::STATUS_LABELS[$code])) {
+            json_out(['success' => false, 'message' => 'Άγνωστο status.'], 422);
+        }
+        $label = EventMessage::statusLabel($code);
+        EventMessage::create([
+            'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
+            'role' => 'team', 'uid' => $_SESSION['user_id'], 'kind' => 'status', 'code' => $code, 'body' => $label,
+        ]);
+        $team = VolunteerTeam::find($tid);
+        try { NotificationService::teamMessage($event, $team, 'Ενημέρωση κατάστασης', $label); } catch (Throwable $e) {}
+        json_out(['success' => true, 'message' => 'Στάλθηκε: ' . $label]);
+    }
+
+    /** POST /team/operations/events/{id}/ack-order — team ACKs a command order (JSON). */
+    public function ackOrder($id)
+    {
+        requireRole(['team_admin']);
+        [$event, $tid] = $this->commsContext($id);
+        $input  = json_input();
+        $msgId  = (int) ($input['message_id'] ?? 0);
+        $m      = EventMessage::find($msgId);
+        if (!$m || (int) $m['event_id'] !== (int) $event['id'] || $m['kind'] !== 'order'
+            || !($m['team_id'] === null || (int) $m['team_id'] === $tid)) {
+            json_out(['success' => false, 'message' => 'Η εντολή δεν βρέθηκε.'], 404);
+        }
+        EventMessage::acknowledge($msgId, $_SESSION['user_id']);
+        json_out(['success' => true]);
+    }
+
+    /** GET /team/operations/events/{id}/comms — polling feed for the team hub (JSON). */
+    public function commsFeed($id)
+    {
+        requireRole(['team_admin']);
+        [$event, $tid] = $this->commsContext($id);
+        $since = (int) ($_GET['since'] ?? 0);
+        json_out([
+            'success'  => true,
+            'messages' => EventMessage::forTeamEvent((int) $event['id'], $tid, $since),
+            'sos'      => SosAlert::latestForTeamEvent((int) $event['id'], $tid),
+            'now'      => date('H:i:s'),
+        ]);
     }
 
     /** POST /team/events/{id}/report — team post-event report (upsert). */
