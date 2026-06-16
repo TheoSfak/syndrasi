@@ -28,6 +28,7 @@ $tzOptions = [
   <li class="nav-item"><a class="nav-link" href="#tab-map"            data-bs-toggle="tab"><i class="bi bi-map me-1"></i>Χάρτης</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-awards"         data-bs-toggle="tab"><i class="bi bi-trophy me-1"></i>Βραβεία</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-notifications"  data-bs-toggle="tab"><i class="bi bi-bell me-1"></i>Ειδοποιήσεις</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-sms"            data-bs-toggle="tab"><i class="bi bi-chat-dots me-1"></i>SMS</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-event-defaults" data-bs-toggle="tab"><i class="bi bi-calendar-plus me-1"></i>Δράσεις</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-branding"       data-bs-toggle="tab"><i class="bi bi-palette me-1"></i>Εμφάνιση</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-members"          data-bs-toggle="tab"><i class="bi bi-people me-1"></i>Μέλη Ομάδων</a></li>
@@ -228,32 +229,40 @@ $tzOptions = [
       <div class="col-lg-7">
         <form method="post" action="<?= e(url('/settings/notifications')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-bell me-1"></i> Αποστολή email ειδοποιήσεων</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-bell me-1"></i> Κανάλι ειδοποιήσεων</div>
           <div class="card-body">
-            <p class="text-muted small">Οι in-app ειδοποιήσεις (κουδούνι) στέλνονται πάντα. Εδώ ελέγχετε αν αποστέλλεται και email.</p>
+            <p class="text-muted small">Οι in-app ειδοποιήσεις (κουδούνι) στέλνονται πάντα. Εδώ επιλέγετε αν θα αποστέλλεται επιπλέον <strong>Email</strong>, <strong>SMS</strong> ή <strong>και τα δύο</strong> ανά τύπο. Το SMS απαιτεί ρυθμισμένο gateway στην καρτέλα «SMS».</p>
             <?php
-            $toggles = [
-                ['notify_email_event_published',        'Νέα δράση δημοσιεύτηκε',       'Ειδοποίηση email σε όλες τις ενεργές ομάδες'],
-                ['notify_email_application_submitted',  'Νέα δήλωση συμμετοχής',        'Ειδοποίηση email στους διαχειριστές δήμου'],
-                ['notify_email_application_approved',   'Έγκριση συμμετοχής',           'Ειδοποίηση email στην ομάδα'],
-                ['notify_email_application_rejected',   'Απόρριψη συμμετοχής',          'Ειδοποίηση email στην ομάδα'],
-                ['notify_email_shortage_reported',      'Αναφορά έλλειψης',             'Ειδοποίηση email στους διαχειριστές δήμου'],
-                ['notify_email_event_reminder',         'Υπενθύμιση δράσης',            'Ειδοποίηση email (χειροκίνητη, κουμπί «Υπενθύμιση»)'],
-                ['notify_email_event_completed',        'Ολοκλήρωση δράσης',            'Ειδοποίηση email στις εγκεκριμένες ομάδες'],
+            $notifTypes = [
+                ['event_published',        'Νέα δράση δημοσιεύτηκε',  'Σε όλες τις ενεργές ομάδες'],
+                ['application_submitted',  'Νέα δήλωση συμμετοχής',   'Στους διαχειριστές δήμου'],
+                ['application_approved',   'Έγκριση συμμετοχής',      'Στην ομάδα'],
+                ['application_rejected',   'Απόρριψη συμμετοχής',     'Στην ομάδα'],
+                ['shortage_reported',      'Αναφορά έλλειψης',        'Στους διαχειριστές δήμου'],
+                ['event_reminder',         'Υπενθύμιση δράσης',       'Χειροκίνητη, κουμπί «Υπενθύμιση»'],
+                ['event_completed',        'Ολοκλήρωση δράσης',       'Στις εγκεκριμένες ομάδες'],
             ];
+            $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];
+            // Effective channel: explicit notify_channel_*, else legacy notify_email_* (default email)
+            $channelOf = function ($type) use ($settings) {
+                $ch = $settings['notify_channel_' . $type] ?? null;
+                if (in_array($ch, ['off', 'email', 'sms', 'both'], true)) { return $ch; }
+                return (isset($settings['notify_email_' . $type]) && $settings['notify_email_' . $type] === '0') ? 'off' : 'email';
+            };
             ?>
             <div class="list-group list-group-flush">
-              <?php foreach ($toggles as [$key, $label, $desc]): ?>
-              <label class="list-group-item d-flex justify-content-between align-items-start py-3 cursor-pointer" for="<?= e($key) ?>">
-                <div>
+              <?php foreach ($notifTypes as [$type, $label, $desc]): $cur = $channelOf($type); ?>
+              <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                <div class="me-3">
                   <div class="fw-semibold"><?= e($label) ?></div>
                   <div class="small text-muted"><?= e($desc) ?></div>
                 </div>
-                <div class="form-check form-switch ms-3 mt-1 flex-shrink-0">
-                  <input class="form-check-input" type="checkbox" name="<?= e($key) ?>" id="<?= e($key) ?>"
-                         value="1" <?= $notifyOn($key) ? 'checked' : '' ?>>
-                </div>
-              </label>
+                <select name="notify_channel_<?= e($type) ?>" class="form-select form-select-sm flex-shrink-0" style="width:auto;min-width:140px">
+                  <?php foreach ($channelOpts as $val => $optLabel): ?>
+                  <option value="<?= e($val) ?>" <?= $cur === $val ? 'selected' : '' ?>><?= e($optLabel) ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
               <?php endforeach; ?>
             </div>
           </div>
@@ -268,6 +277,60 @@ $tzOptions = [
           <div class="card-body small text-muted">
             <p>Η απενεργοποίηση ενός τύπου δεν επηρεάζει τις in-app ειδοποιήσεις — αυτές εμφανίζονται πάντα στο κουδούνι.</p>
             <p>Χρήσιμο όταν ο SMTP δεν έχει ρυθμιστεί ακόμα ή σε περίοδο δοκιμών για να αποφύγετε spam.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMS gateway -->
+  <div class="tab-pane fade" id="tab-sms">
+    <?php $smsDriver = $v('sms_driver'); $smsKeySet = ($v('sms_api_key') !== ''); ?>
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <form method="post" action="<?= e(url('/settings/sms')) ?>" class="card shadow-sm">
+          <?= csrf_field() ?>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-dots me-1"></i> SMS Gateway</div>
+          <div class="card-body row g-3">
+            <div class="col-12">
+              <label class="form-label">Τρόπος αποστολής SMS</label>
+              <select name="sms_driver" class="form-select">
+                <option value=""     <?= $smsDriver === ''     ? 'selected' : '' ?>>Προεπιλογή πλατφόρμας (<?= e(config('sms')['driver']) ?>)</option>
+                <option value="http" <?= $smsDriver === 'http' ? 'selected' : '' ?>>HTTP gateway (πραγματική αποστολή)</option>
+                <option value="log"  <?= $smsDriver === 'log'  ? 'selected' : '' ?>>Μόνο καταγραφή (log, για δοκιμές)</option>
+                <option value="none" <?= $smsDriver === 'none' ? 'selected' : '' ?>>Απενεργοποιημένο</option>
+              </select>
+              <div class="form-text">Για πραγματική αποστολή, ζητήστε API key & endpoint από τον πάροχό σας (π.χ. Yuboto, AppText, Vonage).</div>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">Όνομα αποστολέα (Sender)</label>
+              <input type="text" name="sms_sender" class="form-control" value="<?= e($v('sms_sender')) ?>" placeholder="SynDrasi" maxlength="11">
+              <div class="form-text">Έως 11 χαρακτήρες (alphanumeric sender ID).</div>
+            </div>
+            <div class="col-12"><hr class="my-1"><strong class="small text-muted">ΣΥΝΔΕΣΗ ΜΕ ΠΑΡΟΧΟ (HTTP)</strong></div>
+            <div class="col-12">
+              <label class="form-label">Endpoint (URL του gateway)</label>
+              <input type="url" name="sms_endpoint" class="form-control" value="<?= e($v('sms_endpoint')) ?>" placeholder="https://api.provider.gr/send">
+            </div>
+            <div class="col-12">
+              <label class="form-label">API Key</label>
+              <input type="password" name="sms_api_key" class="form-control" autocomplete="new-password"
+                     placeholder="<?= $smsKeySet ? '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)' : 'Επικολλήστε το κλειδί του παρόχου' ?>">
+              <div class="form-text"><?= $smsKeySet ? 'Υπάρχει ήδη αποθηκευμένο κλειδί. Συμπληρώστε μόνο αν θέλετε να το αλλάξετε.' : 'Το κλειδί αποθηκεύεται με ασφάλεια και δεν εμφανίζεται ξανά.' ?></div>
+            </div>
+          </div>
+          <div class="card-footer bg-white">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+          </div>
+        </form>
+      </div>
+      <div class="col-lg-5">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Πώς λειτουργεί</div>
+          <div class="card-body small text-muted">
+            <p>Τα <strong>credits SMS</strong> τα αγοράζετε απευθείας από τον πάροχο. Εδώ καταχωρείτε μόνο το κλειδί σύνδεσης ώστε η εφαρμογή να στέλνει μέσω του λογαριασμού σας.</p>
+            <p>Στην καρτέλα <strong>Ειδοποιήσεις</strong> επιλέγετε ανά τύπο αν θα φεύγει Email, SMS ή και τα δύο.</p>
+            <p>Σε λειτουργία <em>log</em>, τα μηνύματα γράφονται στο <code>storage/logs/sms.log</code> για δοκιμές χωρίς χρέωση.</p>
           </div>
         </div>
       </div>

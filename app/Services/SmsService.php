@@ -16,7 +16,38 @@ class SmsService
         return self::$lastError;
     }
 
-    public static function send($toPhone, string $message): bool
+    /**
+     * Resolve the effective SMS config for a municipality.
+     * Per-municipality settings (saved from the admin UI) win over the
+     * platform defaults in config/sms.php (which read env vars).
+     */
+    public static function resolveConfig($municipalityId = null): array
+    {
+        $cfg = config('sms');
+
+        if ($municipalityId) {
+            try {
+                $s = MunicipalitySetting::all($municipalityId);
+            } catch (Throwable $ex) {
+                $s = [];
+            }
+            $map = [
+                'sms_driver'   => 'driver',
+                'sms_sender'   => 'sender',
+                'sms_endpoint' => 'endpoint',
+                'sms_api_key'  => 'api_key',
+            ];
+            foreach ($map as $key => $cfgKey) {
+                if (isset($s[$key]) && $s[$key] !== '') {
+                    $cfg[$cfgKey] = $s[$key];
+                }
+            }
+        }
+
+        return $cfg;
+    }
+
+    public static function send($toPhone, string $message, $municipalityId = null): bool
     {
         self::$lastError = '';
         $phone = self::normalize($toPhone);
@@ -25,7 +56,7 @@ class SmsService
             return false;
         }
 
-        $cfg = config('sms');
+        $cfg = self::resolveConfig($municipalityId);
         try {
             switch ($cfg['driver']) {
                 case 'http':

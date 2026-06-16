@@ -195,26 +195,74 @@ class SettingsController
         requireRole(['municipality_admin']);
         $mid = current_municipality_id();
 
-        $keys = [
-            'notify_email_event_published',
-            'notify_email_application_submitted',
-            'notify_email_application_approved',
-            'notify_email_application_rejected',
-            'notify_email_shortage_reported',
-            'notify_email_event_reminder',
-            'notify_email_event_completed',
+        $types = [
+            'event_published',
+            'application_submitted',
+            'application_approved',
+            'application_rejected',
+            'shortage_reported',
+            'event_reminder',
+            'event_completed',
         ];
 
+        $allowed  = ['off', 'email', 'sms', 'both'];
         $settings = [];
-        foreach ($keys as $k) {
-            $settings[$k] = isset($_POST[$k]) ? '1' : '0';
+        foreach ($types as $t) {
+            $ch = isset($_POST['notify_channel_' . $t]) ? (string) $_POST['notify_channel_' . $t] : 'email';
+            if (!in_array($ch, $allowed, true)) { $ch = 'email'; }
+            $settings['notify_channel_' . $t] = $ch;
+            // Keep the legacy email flag in sync for backward compatibility
+            $settings['notify_email_' . $t] = in_array($ch, ['email', 'both'], true) ? '1' : '0';
         }
 
         MunicipalitySetting::setMany($mid, $settings);
         audit('municipality_notification_settings_updated', 'municipality', $mid);
 
         flash_set('success', 'Οι ρυθμίσεις ειδοποιήσεων αποθηκεύτηκαν.');
-        redirect('/settings');
+        redirect('/settings#tab-notifications');
+    }
+
+    /* ── SMS gateway ──────────────────────────────────────────────────── */
+
+    public function saveSms()
+    {
+        requireRole(['municipality_admin']);
+        $mid = current_municipality_id();
+
+        $driver = post_str('sms_driver');
+        if (!in_array($driver, ['', 'log', 'http', 'none'], true)) {
+            flash_set('danger', 'Μη έγκυρος τρόπος αποστολής SMS.');
+            redirect('/settings#tab-sms');
+        }
+
+        $endpoint = post_str('sms_endpoint');
+        if ($endpoint !== '' && !filter_var($endpoint, FILTER_VALIDATE_URL)) {
+            flash_set('danger', 'Μη έγκυρο URL gateway (SMS Endpoint).');
+            redirect('/settings#tab-sms');
+        }
+
+        if ($driver === 'http' && $endpoint === '') {
+            flash_set('danger', 'Για τον τρόπο HTTP απαιτείται το URL του gateway (Endpoint).');
+            redirect('/settings#tab-sms');
+        }
+
+        $settings = [
+            'sms_driver'   => $driver,
+            'sms_sender'   => post_str('sms_sender'),
+            'sms_endpoint' => $endpoint,
+        ];
+
+        // Keep the stored API key when the field is left empty
+        $key = isset($_POST['sms_api_key']) ? trim((string) $_POST['sms_api_key']) : '';
+        if ($key !== '') {
+            $settings['sms_api_key'] = $key;
+        }
+
+        MunicipalitySetting::setMany($mid, $settings);
+        audit('municipality_sms_settings_updated', 'municipality', $mid, 'driver: ' . ($driver !== '' ? $driver : 'default'));
+
+        flash_set('success', 'Οι ρυθμίσεις SMS αποθηκεύτηκαν.');
+        redirect('/settings#tab-sms');
     }
 
     /* ── Event defaults ───────────────────────────────────────────────── */

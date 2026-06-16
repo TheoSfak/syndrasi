@@ -6,14 +6,47 @@
 class NotificationService
 {
     /**
+     * Delivery channel for a notification type: 'off' | 'email' | 'sms' | 'both'.
+     * Reads notify_channel_<type>; falls back to the legacy notify_email_<type>
+     * toggle (1/unset → email, 0 → off). Default when nothing is set: 'email'.
+     */
+    public static function channelFor($municipalityId, $type)
+    {
+        if (!$municipalityId) { return 'email'; }
+        $ch = MunicipalitySetting::get($municipalityId, 'notify_channel_' . $type, null);
+        if ($ch !== null && in_array($ch, ['off', 'email', 'sms', 'both'], true)) {
+            return $ch;
+        }
+        // Legacy fallback
+        $legacy = MunicipalitySetting::get($municipalityId, 'notify_email_' . $type, null);
+        return $legacy === '0' ? 'off' : 'email';
+    }
+
+    /**
      * Returns true if email should be sent for this notification type.
-     * Default is ON; municipality admin can disable per type in settings.
+     * Default is ON; municipality admin can disable/switch per type in settings.
      */
     public static function shouldSendEmail($municipalityId, $type)
     {
-        if (!$municipalityId) { return true; }
-        $val = MunicipalitySetting::get($municipalityId, 'notify_email_' . $type, null);
-        return $val === null || $val === '1';
+        return in_array(self::channelFor($municipalityId, $type), ['email', 'both'], true);
+    }
+
+    /** Returns true if SMS should be sent for this notification type. */
+    public static function shouldSendSms($municipalityId, $type)
+    {
+        return in_array(self::channelFor($municipalityId, $type), ['sms', 'both'], true);
+    }
+
+    /** Send a short SMS to a recipient with a phone, best-effort. */
+    private static function maybeSms($municipalityId, $type, $phone, $title, $message)
+    {
+        if (empty($phone) || !self::shouldSendSms($municipalityId, $type)) { return; }
+        try {
+            $text = trim($title . ' — ' . strip_tags($message));
+            SmsService::send($phone, $text, $municipalityId);
+        } catch (Throwable $e) {
+            error_log('[Notify] sms failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -39,6 +72,8 @@ class NotificationService
                 'type'            => $type,
                 'email_sent'      => $sent ? 1 : 0,
             ]);
+            // SMS (if channel includes sms and the admin has a phone)
+            self::maybeSms($municipalityId, $type, $admin['phone'] ?? '', $title, $message);
             // Web push
             self::sendPush($admin['id'], $title, $message);
         }
@@ -66,6 +101,8 @@ class NotificationService
                 'type'            => $type,
                 'email_sent'      => $sent ? 1 : 0,
             ]);
+            // SMS (if channel includes sms and the admin has a phone)
+            self::maybeSms($municipalityId, $type, $admin['phone'] ?? '', $title, $message);
             // Web push
             self::sendPush($admin['id'], $title, $message);
         }
@@ -417,7 +454,7 @@ class NotificationService
                 try {
                     $sms = $mob['title'] . ' — Κάλεσμα έκτακτης ανάγκης (' . $sev . '). '
                          . 'Απαντήστε εδώ: ' . $link;
-                    SmsService::send($t['phone'], $sms);
+                    SmsService::send($t['phone'], $sms, $mid);
                 } catch (Throwable $e) {
                     error_log('[Mobilize] sms failed: ' . $e->getMessage());
                 }
@@ -442,6 +479,49 @@ class NotificationService
             }
         } catch (Throwable $e) {
             error_log('[Mobilize] command notify failed: ' . $e->getMessage());
+        }
+    }
+
+    /* ── Photo requests ──────────────────────────────────────────────────── */
+
+    /** Admin asked a team for a photo — notify the team (in-app + push). */
+    public static function photoRequested(array $event, array $team)
+    {
+        $title = 'Αίτημα φωτογραφίας';
+        $msg   = 'Ο δήμος ζητά φωτογραφία για τη δράση «' . $event['title'] . '».';
+        foreach (User::teamAdmins($team['id']) as $admin) {
+            Notification::create([
+                'municipality_id' => $event['municipality_id'],
+                'user_id'         => $admin['id'],
+                'team_id'         => $team['id'],
+                'event_id'        => $event['id'],
+                'title'           => $title,
+                'message'         => $msg,
+                'type'            => 'photo_request',
+                'email_sent'      => 0,
+            ]);
+            self::sendPush($admin['id'], $title, $msg);
+        }
+    }
+
+    /** Team uploaded a photo — notify municipality admins (in-app + push). */
+    public static function photoUploaded(array $event, int $teamId)
+    {
+        $team  = VolunteerTeam::find($teamId);
+        $tname = $team['name'] ?? ('#' . $teamId);
+        $title = 'Νέα φωτογραφία ομάδας';
+        $msg   = 'Η ομάδα «' . $tname . '» έστειλε φωτογραφία για τη δράση «' . $event['title'] . '».';
+        foreach (User::municipalityAdmins($event['municipality_id']) as $admin) {
+            Notification::create([
+                'municipality_id' => $event['municipality_id'],
+                'user_id'         => $admin['id'],
+                'event_id'        => $event['id'],
+                'title'           => $title,
+                'message'         => $msg,
+                'type'            => 'photo_uploaded',
+                'email_sent'      => 0,
+            ]);
+            self::sendPush($admin['id'], $title, $msg);
         }
     }
 

@@ -4,6 +4,25 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.8.4-beta] — 2026-06-16
+
+### Added
+- **SMS gateway ρυθμίσεις ανά δήμο** — νέα καρτέλα «SMS» στις Ρυθμίσεις Δήμου όπου ο
+  διαχειριστής ορίζει driver / sender / endpoint / **API key** του παρόχου. Αποθηκεύονται
+  στο `municipality_settings` (με τις env μεταβλητές του `config/sms.php` ως platform
+  default). Νέο `SmsService::resolveConfig()`· το `SmsService::send()` δέχεται πλέον
+  προαιρετικό `$municipalityId`.
+- **Επιλογέας καναλιού ανά τύπο ειδοποίησης** — η καρτέλα «Ειδοποιήσεις» αντικαθιστά τα
+  on/off email toggles με επιλογή **Καμία / Μόνο Email / Μόνο SMS / Email+SMS** ανά τύπο
+  (`notify_channel_<type>`). Το `NotificationService` στέλνει πλέον SMS στους διαχειριστές
+  με τηλέφωνο όταν το κανάλι το περιλαμβάνει· το κάλεσμα έκτακτης ανάγκης χρησιμοποιεί τα
+  per-δήμο SMS credentials. Διατηρείται backward-compat με το legacy `notify_email_<type>`.
+
+### Notes
+- Χωρίς migration — χρησιμοποιεί το υπάρχον `municipality_settings` (key/value) και
+  `users.phone`. Τα credits SMS αγοράζονται απευθείας από τον πάροχο· η εφαρμογή κρατά
+  μόνο το API key και στέλνει.
+
 ## [0.8.3-beta] — 2026-06-16
 
 ### Added

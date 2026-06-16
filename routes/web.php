@@ -54,6 +54,7 @@ $router->get('/events/{id}/edit', 'EventController@edit');
 $router->post('/events/{id}/update', 'EventController@update');
 $router->post('/events/{id}/publish', 'EventController@publish');
 $router->post('/events/{id}/activate', 'EventController@activate');
+$router->post('/events/{id}/close', 'EventController@close');
 $router->post('/events/{id}/complete', 'EventController@complete');
 $router->post('/events/{id}/archive', 'EventController@archive');
 $router->get('/events/{id}/reconcile', 'EventController@reconcile');
@@ -104,6 +105,8 @@ $router->get('/operations/events/{id}/gate-qr', 'OperationController@gateQr');
 $router->get('/operations/events/{id}/status', 'OperationController@status');
 $router->get('/operations/events/{id}/locations', 'OperationController@locations');
 $router->post('/operations/events/{id}/note', 'OperationController@addNote');
+$router->post('/operations/events/{id}/request-photo', 'OperationController@requestPhoto');
+$router->get('/operations/photos/{id}', 'OperationController@servePhoto');
 $router->post('/shortages/{id}/acknowledge', 'OperationController@acknowledgeShortage');
 $router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage');
 
@@ -138,6 +141,7 @@ $router->get('/team/applications', 'TeamPortalController@applications');
 $router->get('/team/operations/events/{id}', 'TeamPortalController@operations');
 $router->post('/team/operations/events/{id}/checkin', 'TeamPortalController@checkin');
 $router->post('/team/operations/events/{id}/send-location', 'TeamPortalController@sendLocation');
+$router->post('/team/operations/events/{id}/photo', 'TeamPortalController@uploadPhoto');
 
 /* Team debrief */
 $router->get('/team/events/{id}/debrief',  'TeamPortalController@debrief');
@@ -166,6 +170,7 @@ $router->post('/settings/mail/test', 'SettingsController@testMail');
 $router->post('/settings/map', 'SettingsController@saveMap');
 $router->post('/settings/awards', 'SettingsController@saveAwards');
 $router->post('/settings/notifications', 'SettingsController@saveNotifications');
+$router->post('/settings/sms', 'SettingsController@saveSms');
 $router->post('/settings/event-defaults', 'SettingsController@saveEventDefaults');
 $router->post('/settings/branding', 'SettingsController@saveBranding');
 $router->post('/settings/member-fields', 'SettingsController@saveMemberFields');
@@ -203,3 +208,5 @@ $router->post('/admin/updates/backup',      'MaintenanceController@backup');
 $router->post('/admin/updates/check',       'MaintenanceController@checkUpdate');
 $router->post('/admin/updates/apply',       'MaintenanceController@applyUpdate');
 $router->post('/admin/migrations/run',      'MaintenanceController@runMigrations');
+$router->get('/admin/backups/download',      'MaintenanceController@downloadBackup');
+$router->post('/admin/backups/restore',      'MaintenanceController@restoreBackup');
