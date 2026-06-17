@@ -62,6 +62,10 @@ body.ops-dark main             { background:transparent!important; }
 .map-overlay { position:absolute;top:10px;right:10px;z-index:1000;display:flex;gap:6px;opacity:0;transition:opacity .2s; }
 .map-wrap:hover .map-overlay { opacity:1; }
 
+.map-legend { display:flex;flex-wrap:wrap;gap:5px;padding:5px 2px; }
+.map-legend-chip { display:inline-flex;align-items:center;gap:5px;background:rgba(128,128,128,.1);border:1px solid rgba(128,128,128,.2);border-radius:20px;padding:2px 10px 2px 6px;font-size:.72rem;white-space:nowrap; }
+body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15);color:#e2e8f0; }
+
 .ldot { width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block;animation:ldp 1.6s ease-in-out infinite; }
 @keyframes ldp { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.6)} 50%{box-shadow:0 0 0 6px rgba(34,197,94,0)} }
 @keyframes spin { to{transform:rotate(360deg)} }
@@ -185,6 +189,9 @@ body.ops-dark main             { background:transparent!important; }
         </div>
       </div>
     </div>
+
+    <!-- Team color legend -->
+    <div id="mapLegend" class="map-legend mb-2" style="display:none"></div>
 
     <!-- Teams -->
     <div class="card">
@@ -435,12 +442,13 @@ body.ops-dark main             { background:transparent!important; }
     pings.forEach(function(p) {
       var key = 'team_' + p.team_id;
       var cls = p.age_min < 5 ? 'fresh' : p.age_min < 20 ? 'stale' : 'old';
-      var color = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
+      var teamColor     = teamColors[p.team_id] || '#94a3b8';
+      var freshnessClr  = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
       var html = '<div style="display:flex;flex-direction:column;align-items:center">' +
-                 '<div style="background:' + color + ';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.3)"></div>' +
+                 '<div style="background:' + teamColor + ';width:14px;height:14px;border-radius:50%;border:2.5px solid ' + freshnessClr + ';box-shadow:0 0 8px rgba(0,0,0,.3)"></div>' +
                  (ph ? '<div style="background:#0ea5e9;width:13px;height:13px;border-radius:50%;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;margin-top:2px"><i class="bi bi-camera-fill" style="font-size:7px;color:#fff"></i></div>' : '') +
                  '</div>';
-      var icon = L.divIcon({ className:'', html:html, iconSize:[12, ph ? 27 : 12], iconAnchor:[6,6] });
+      var icon = L.divIcon({ className:'', html:html, iconSize:[14, ph ? 29 : 14], iconAnchor:[7,7] });
       var ph = lastPhotosByTeam[p.team_id];
       var photoSnippet = ph
         ? '<br><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) + '"' +
@@ -504,10 +512,14 @@ body.ops-dark main             { background:transparent!important; }
       if (t.ping_age_min !== null) {
         pingCls = t.ping_age_min < 5 ? 'fresh' : t.ping_age_min < 20 ? 'stale' : 'old';
       }
+      if (!teamColors[t.team_id]) {
+        teamColors[t.team_id] = TEAM_COLORS[Object.keys(teamColors).length % TEAM_COLORS.length];
+      }
+      var tc = teamColors[t.team_id];
       if (cs && cs !== 'not_present') ci++;
-      html += '<div class="col-md-6"><div class="card team-card s-' + cs + ' p-2">' +
+      html += '<div class="col-md-6"><div class="card team-card s-' + cs + ' p-2" style="border-left-color:' + tc + '!important">' +
               '<div class="d-flex justify-content-between align-items-start">' +
-              '<div><div class="fw-semibold small">' + esc(t.team_name) + '</div>' +
+              '<div><div class="fw-semibold small"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + tc + ';margin-right:5px;vertical-align:middle;flex-shrink:0"></span>' + esc(t.team_name) + '</div>' +
               '<div class="small mt-1">' + statusIcon(cs) + '</div></div>' +
               '<div class="text-end">' +
               '<span class="fw-bold" style="font-size:1.1rem">' + (t.present_people||0) + '/' + t.approved_people + '</span>' +
@@ -524,6 +536,26 @@ body.ops-dark main             { background:transparent!important; }
     document.getElementById('teamBadge').textContent = ci + '/' + teams.length + ' παρόντες';
     document.getElementById('sv-teams').textContent = teams.length;
     document.getElementById('sv-ci').textContent = ci;
+    renderLegend();
+  }
+
+  function renderLegend() {
+    var box = document.getElementById('mapLegend');
+    if (!box) return;
+    var keys = Object.keys(teamColors);
+    if (!keys.length) { box.style.display = 'none'; return; }
+    var nameMap = {};
+    lastTeams.forEach(function(t){ nameMap[t.team_id] = t.team_name; });
+    var html = '';
+    keys.forEach(function(tid) {
+      var name = nameMap[tid];
+      if (!name) return;
+      html += '<div class="map-legend-chip">' +
+              '<div style="width:10px;height:10px;border-radius:50%;background:' + teamColors[tid] + ';flex-shrink:0"></div>' +
+              esc(name) + '</div>';
+    });
+    box.innerHTML = html;
+    box.style.display = html ? '' : 'none';
   }
 
   function renderShortages(items) {
@@ -779,6 +811,11 @@ body.ops-dark main             { background:transparent!important; }
     if (!s) return '';
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+
+  /* ─── Team color palette (auto-assigned, persisted per session) ─── */
+  var TEAM_COLORS = ['#ef4444','#3b82f6','#f59e0b','#8b5cf6','#10b981',
+                     '#f97316','#06b6d4','#ec4899','#84cc16','#6366f1'];
+  var teamColors = {};   /* team_id → hex color */
 
   /* ─── Photos: request, map markers, list, modal ─── */
   var photoMarkers     = {};
