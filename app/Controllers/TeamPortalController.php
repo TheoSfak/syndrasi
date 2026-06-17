@@ -512,9 +512,8 @@ class TeamPortalController
             'uid' => $_SESSION['user_id'], 'rid' => $rid, 'file' => $name,
             'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
         ]);
-        if ($rid) {
-            PhotoRequest::fulfill($rid);
-        }
+        // Always close any pending photo request for this team, with or without explicit rid.
+        PhotoRequest::fulfillForEventTeam((int) $event['id'], $tid);
         NotificationService::photoUploaded($event, $tid);
         audit('photo_uploaded', 'event', $event['id'], 'team ' . $tid);
 
@@ -776,11 +775,13 @@ class TeamPortalController
         [$event, $tid] = $this->commsContext($id);
         $since = (int) ($_GET['since'] ?? 0);
         json_out([
-            'success'  => true,
-            'messages' => EventMessage::forTeamEvent((int) $event['id'], $tid, $since),
-            'sos'      => SosAlert::latestForTeamEvent((int) $event['id'], $tid),
-            'room'     => EventRoomMessage::forEvent((int) $event['id']),
-            'now'      => date('H:i:s'),
+            'success'       => true,
+            'messages'      => EventMessage::forTeamEvent((int) $event['id'], $tid, $since),
+            'sos'           => SosAlert::latestForTeamEvent((int) $event['id'], $tid),
+            'room'          => EventRoomMessage::forEvent((int) $event['id']),
+            'photo_request' => PhotoRequest::pendingForEventTeam((int) $event['id'], $tid),
+            'gps_request'   => GpsRequest::pendingForEventTeam((int) $event['id'], $tid),
+            'now'           => date('H:i:s'),
         ]);
     }
 

@@ -394,6 +394,59 @@ body { min-height: 100dvh; }
 .order-pin-btn { background: #facc15; color: #1a1400; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; padding: 14px 16px; width: 100%; cursor: pointer; }
 .order-pin-btn:active { transform: scale(.98); }
 .order-pin-time { font-size: 11px; color: #fde68a; opacity: .8; margin-top: 8px; text-align: right; }
+
+/* ── Request banners (GPS / photo) ───────────────────────────────────────── */
+.req-banner {
+  margin: 0 0 0; padding: 10px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; font-weight: 700; color: #67e8f9;
+  background: #0e3047; border-top: 1px solid #164e63;
+  animation: reqPulse 2s infinite;
+}
+.req-banner i { font-size: 18px; flex-shrink: 0; }
+@keyframes reqPulse {
+  0%, 100% { background: #0e3047; }
+  50%       { background: #0c2a40; }
+}
+/* Photo upload card */
+.photo-toggle {
+  width: 100%; padding: 22px 20px; border: none; border-radius: 18px;
+  background: linear-gradient(135deg, #0e2d4d 0%, #0a2035 100%);
+  color: #67e8f9; cursor: pointer;
+  display: flex; align-items: center; gap: 16px; text-align: left;
+  transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-toggle.has-request { background: linear-gradient(135deg, #0e4d3d 0%, #0a2e26 100%); color: #4ade80; border: 1px solid #166534; animation: sosPulse 2s infinite; }
+.photo-toggle:active { transform: scale(.98); }
+.photo-toggle:disabled { opacity: .35; cursor: not-allowed; }
+.photo-toggle-icon { font-size: 36px; flex-shrink: 0; }
+.photo-toggle-label { font-size: 18px; font-weight: 800; color: #e8f5f4; }
+.photo-toggle-sub { font-size: 12px; color: #67e8f9; margin-top: 2px; }
+.photo-toggle.has-request .photo-toggle-sub { color: #86efac; }
+.photo-toggle-arrow { margin-left: auto; font-size: 20px; opacity: .5; transition: transform .2s; }
+.photo-toggle.open .photo-toggle-arrow { transform: rotate(90deg); }
+#photoUploadForm {
+  display: none;
+  border-top: 1px solid #1e3333;
+}
+#photoUploadForm.show { display: block; }
+.photo-form-inner { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.photo-file-input {
+  background: #0d1a1a; border: 2px dashed #1e4d4d; border-radius: 12px;
+  color: #e8f5f4; font-size: 14px; padding: 20px; width: 100%;
+  text-align: center; cursor: pointer;
+}
+.photo-file-input:focus { border-color: #4dd4c4; outline: none; }
+.photo-submit {
+  background: #0e7490; color: #fff; border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 800; padding: 16px;
+  cursor: pointer; width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background .15s;
+}
+.photo-submit:active { background: #0c5f78; }
+.photo-submit:disabled { opacity: .45; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -480,7 +533,47 @@ if ($flash):
       </div>
       <i class="bi bi-chevron-right loc-btn-arrow"></i>
     </button>
+    <div id="gpsBanner" style="display:none" class="req-banner">
+      <i class="bi bi-geo-alt-fill"></i> Ο δήμος ζητά το στίγμα GPS σας — πατήστε «Αποστολή Στίγματος»
+    </div>
     <div id="locResult"></div>
+  </div>
+
+  <!-- ── 1b. Αποστολή Φωτογραφίας ────────────────────────────────── -->
+  <div class="action-card" id="photoCard">
+    <button class="photo-toggle" id="photoToggle" onclick="togglePhoto()" <?= !$isActive ? 'disabled' : '' ?>>
+      <i class="bi bi-camera-fill photo-toggle-icon"></i>
+      <div>
+        <div class="photo-toggle-label">Αποστολή Φωτογραφίας</div>
+        <div class="photo-toggle-sub" id="photoToggleSub">Στείλτε φωτογραφία στον δήμο</div>
+      </div>
+      <i class="bi bi-chevron-right photo-toggle-arrow" id="photoArrow"></i>
+    </button>
+    <div id="photoBanner" style="display:none" class="req-banner">
+      <i class="bi bi-camera-fill"></i> Ο δήμος ζητά φωτογραφία — τραβήξτε ή επιλέξτε μία παρακάτω
+    </div>
+    <div id="photoUploadForm">
+      <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/photo')) ?>"
+            enctype="multipart/form-data" class="photo-form-inner" id="photoFormEl">
+        <?= csrf_field() ?>
+        <input type="hidden" name="_from" value="live">
+        <input type="hidden" name="latitude"   id="photoLat">
+        <input type="hidden" name="longitude"  id="photoLng">
+        <input type="hidden" name="request_id" id="photoRequestId">
+        <div class="form-group">
+          <label class="form-group" style="font-size:12px;color:#9ca3af;font-weight:600">Φωτογραφία *</label>
+          <input type="file" name="photo" accept="image/*" capture="environment"
+                 class="photo-file-input" id="photoFile" required>
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600">Λεζάντα (προαιρετικό)</label>
+          <input type="text" name="caption" class="form-input" placeholder="π.χ. Κατάσταση στο σημείο…" maxlength="200">
+        </div>
+        <button type="button" class="photo-submit" id="photoSubmitBtn" onclick="submitPhoto()">
+          <i class="bi bi-camera-fill"></i> Αποστολή Φωτογραφίας
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- ── Χάρτης ──────────────────────────────────────────────────────── -->
@@ -965,10 +1058,89 @@ if ($flash):
     });
   }
 
+  /* ── GPS / Photo request banners ────────────────────────────────── */
+  var gpsBannerEl  = document.getElementById('gpsBanner');
+  var photoBannerEl = document.getElementById('photoBanner');
+  var photoToggleEl = document.getElementById('photoToggle');
+  var photoToggleSubEl = document.getElementById('photoToggleSub');
+
+  function renderRequests(photoReq, gpsReq) {
+    // GPS request banner
+    if (gpsBannerEl) gpsBannerEl.style.display = gpsReq ? 'flex' : 'none';
+
+    // Photo request banner + card highlight
+    var hasPhoto = !!(photoReq && photoReq.id);
+    if (photoBannerEl) photoBannerEl.style.display = hasPhoto ? 'flex' : 'none';
+    if (photoToggleEl) {
+      photoToggleEl.classList.toggle('has-request', hasPhoto);
+      if (photoToggleSubEl) {
+        photoToggleSubEl.textContent = hasPhoto
+          ? '⚡ Ο δήμος ζητά φωτογραφία — πατήστε για να ανοίξει'
+          : 'Στείλτε φωτογραφία στον δήμο';
+      }
+    }
+    // Store request id for the hidden form field
+    var ridEl = document.getElementById('photoRequestId');
+    if (ridEl) ridEl.value = (photoReq && photoReq.id) ? photoReq.id : '';
+    // Auto-open photo form if there's a new request and it's not already open
+    if (hasPhoto) {
+      var form = document.getElementById('photoUploadForm');
+      if (form && !form.classList.contains('show')) {
+        form.classList.add('show');
+        if (photoToggleEl) photoToggleEl.classList.add('open');
+      }
+    }
+  }
+
+  window.togglePhoto = function () {
+    var f   = document.getElementById('photoUploadForm');
+    var tog = document.getElementById('photoToggle');
+    var arr = document.getElementById('photoArrow');
+    f.classList.toggle('show');
+    tog.classList.toggle('open');
+  };
+
+  window.submitPhoto = function () {
+    var fileEl = document.getElementById('photoFile');
+    if (!fileEl || !fileEl.files || !fileEl.files.length) {
+      alert('Επιλέξτε φωτογραφία πρώτα.');
+      return;
+    }
+    var btn = document.getElementById('photoSubmitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Λήψη GPS…';
+
+    function doSubmit(lat, lng) {
+      if (lat !== null) document.getElementById('photoLat').value = lat;
+      if (lng !== null) document.getElementById('photoLng').value = lng;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Αποστολή…';
+      document.getElementById('photoFormEl').submit();
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (p) { doSubmit(p.coords.latitude, p.coords.longitude); },
+        function ()  { doSubmit(null, null); },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } else {
+      doSubmit(null, null);
+    }
+  };
+
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); renderRoom(d.room); } })
+      .then(function (d) {
+        if (d && d.success) {
+          renderMsgs(d.messages);
+          renderSos(d.sos);
+          renderOrders(d.messages);
+          renderGeoPoints(d.messages);
+          renderRoom(d.room);
+          renderRequests(d.photo_request, d.gps_request);
+        }
+      })
       .catch(function () {});
   }
 

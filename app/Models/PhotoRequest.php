@@ -47,4 +47,14 @@ class PhotoRequest
             ['id' => $id]
         );
     }
+
+    /** Mark every pending request for a team/event as fulfilled (e.g. on any photo upload). */
+    public static function fulfillForEventTeam(int $eid, int $tid): void
+    {
+        dbq(
+            "UPDATE photo_requests SET status = 'fulfilled', fulfilled_at = NOW()
+             WHERE event_id = :eid AND team_id = :tid AND status = 'pending'",
+            ['eid' => $eid, 'tid' => $tid]
+        );
+    }
 }

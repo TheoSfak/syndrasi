@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.8-beta] — 2026-06-17
+
+### Fixed — Mobile Hub: αιτήματα φωτό & GPS δεν εμφανίζονταν
+- **`commsFeed()` δεν έδινε `photo_request` / `gps_request`** — το endpoint `/team/operations/events/{id}/comms`
+  επέστρεφε μόνο μηνύματα/SOS/room. Τώρα περιλαμβάνει και τα δύο εκκρεμή αιτήματα.
+- **Mobile Hub (`/team/live/{id}`) δεν είχε UI για αιτήματα** — προστέθηκε banner GPS στην κάρτα
+  τοποθεσίας και νέα κάρτα φωτό (`#photoCard`) με κουμπί toggle, αίτηση εικόνας, auto-GPS, και
+  banner που αναβοσβήνει όταν έχει εκκρεμές αίτημα φωτό.
+- **`PhotoRequest::fulfillForEventTeam()` έλειπε** — κατά upload χωρίς `request_id`, η upload
+  δεν έκλεινε το εκκρεμές αίτημα. Προστέθηκε η method (mirror του `GpsRequest`) και ο controller
+  την καλεί πλέον πάντα αυτόματα.
+
 ## [0.9.7-beta] — 2026-06-17
 
 ### Added — Αίτημα στίγματος GPS (command → ομάδα)
