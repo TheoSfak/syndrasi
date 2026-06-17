@@ -54,6 +54,58 @@ class UpdateService
         return ['ok' => true, 'name' => $name];
     }
 
+    /** List existing backups (newest first). */
+    public static function listBackups(): array
+    {
+        $out = [];
+        foreach (glob(BASE_PATH . '/storage/backups/*.zip') ?: [] as $f) {
+            $out[] = ['name' => basename($f), 'size' => filesize($f), 'mtime' => filemtime($f)];
+        }
+        usort($out, fn($a, $b) => $b['mtime'] <=> $a['mtime']);
+        return $out;
+    }
+
+    /** Validate a backup filename and return its full path, or null. */
+    public static function backupFile(string $name): ?string
+    {
+        $name = basename($name);
+        if (!preg_match('/^[A-Za-z0-9._-]+\.zip$/', $name)) {
+            return null;
+        }
+        $path = BASE_PATH . '/storage/backups/' . $name;
+        return is_file($path) ? $path : null;
+    }
+
+    /**
+     * Restore a backup: snapshot the current state first, then extract the
+     * backup over the app (config/ included; storage/ untouched — backups never
+     * contain it). Reverts changed files without deleting newer ones.
+     */
+    public static function restoreBackup(string $name): array
+    {
+        $path = self::backupFile($name);
+        if ($path === null) {
+            return ['ok' => false, 'error' => 'Μη έγκυρο αρχείο backup.'];
+        }
+        if (!class_exists('ZipArchive')) {
+            return ['ok' => false, 'error' => 'Λείπει η επέκταση PHP "zip".'];
+        }
+        // Safety: back up the current state before overwriting it.
+        self::backupNow();
+
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            return ['ok' => false, 'error' => 'Αδυναμία ανοίγματος του backup.'];
+        }
+        $ok = $zip->extractTo(BASE_PATH);
+        $zip->close();
+        if (!$ok) {
+            return ['ok' => false, 'error' => 'Η εξαγωγή του backup απέτυχε.'];
+        }
+        self::log('Restored backup ' . $name);
+        return ['ok' => true, 'name' => $name];
+    }
+
     /* ── Check latest release ──────────────────────────────────────────────── */
 
     public static function checkLatest(): array
@@ -229,9 +281,12 @@ class UpdateService
 
     private static function httpGet(string $url, string $token = '', bool $binary = false): array
     {
+        // NOTE: GitHub's zipball/archive endpoint returns HTTP 415 if asked for
+        // application/octet-stream (that media type is only for release *assets*).
+        // Use */* for binary downloads so codeload serves the source archive.
         $headers = [
             'User-Agent: SynDrasi-Updater',
-            'Accept: ' . ($binary ? 'application/octet-stream' : 'application/vnd.github+json'),
+            'Accept: ' . ($binary ? '*/*' : 'application/vnd.github+json'),
         ];
         if ($token !== '') {
             $headers[] = 'Authorization: token ' . $token;
