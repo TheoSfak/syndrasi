@@ -4,6 +4,11 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.17-beta] — 2026-06-18
+
+### Added — Χάρτης: badge φωτογραφίας πάνω στο GPS σήμα
+- Αν μια ομάδα έχει στείλει φωτογραφία, το GPS σήμα της στον χάρτη εμφανίζει τώρα ένα μικρό μπλε κυκλικό badge με εικονίδιο κάμερας κάτω από την έγχρωμη κουκκίδα — άμεσα ορατή ένδειξη ότι υπάρχει φωτό.
+
 ## [0.9.16-beta] — 2026-06-18
 
 ### Added — Φωτογραφίες: ετικέτα ομάδας + ώρα · φωτό στο GPS popup

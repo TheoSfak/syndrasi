@@ -435,9 +435,12 @@ body.ops-dark main             { background:transparent!important; }
     pings.forEach(function(p) {
       var key = 'team_' + p.team_id;
       var cls = p.age_min < 5 ? 'fresh' : p.age_min < 20 ? 'stale' : 'old';
-      var html = '<div style="background:' + (cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444') +
-                 ';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.3)"></div>';
-      var icon = L.divIcon({ className:'', html:html, iconSize:[12,12], iconAnchor:[6,6] });
+      var color = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
+      var html = '<div style="display:flex;flex-direction:column;align-items:center">' +
+                 '<div style="background:' + color + ';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.3)"></div>' +
+                 (ph ? '<div style="background:#0ea5e9;width:13px;height:13px;border-radius:50%;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;margin-top:2px"><i class="bi bi-camera-fill" style="font-size:7px;color:#fff"></i></div>' : '') +
+                 '</div>';
+      var icon = L.divIcon({ className:'', html:html, iconSize:[12, ph ? 27 : 12], iconAnchor:[6,6] });
       var ph = lastPhotosByTeam[p.team_id];
       var photoSnippet = ph
         ? '<br><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) + '"' +
