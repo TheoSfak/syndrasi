@@ -188,7 +188,7 @@ class TeamPortalController
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, 'Η δράση δεν βρέθηκε.');
         }
-        if (!in_array($event['status'], ['open', 'review'], true)) {
+        if (!in_array($event['status'], ['open', 'review', 'active'], true)) {
             flash_set('warning', 'Η δράση δεν δέχεται πλέον δηλώσεις συμμετοχής.');
             redirect('/team/events/' . $event['id']);
         }

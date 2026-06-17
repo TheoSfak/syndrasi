@@ -99,7 +99,7 @@
 
     <?php if (!$application): ?>
 
-      <?php if (in_array($event['status'], ['open', 'review'], true)): ?>
+      <?php if (in_array($event['status'], ['open', 'review', 'active'], true)): ?>
 
         <?php if (!$teamMembers): ?>
           <div class="alert alert-warning">
