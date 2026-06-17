@@ -82,4 +82,14 @@ function refreshOperationalMap() {
       data.teams.forEach(function (t) {
         if (t.latitude === null || t.longitude === null) { return; }
         var marker = L.marker([t.latitude, t.longitude], { title: t.team_name });
-        var
+        var html = '<strong>' + t.team_name + '</strong><br>' +
+          t.status_label + '<br>' +
+          'Άτομα: ' + (t.present_people !== null ? t.present_people : '—') + ' / ' + t.approved_people + '<br>' +
+          '<span class="text-muted">Στίγμα: ' + (t.last_ping_at || '—') + '</span>';
+        marker.bindPopup(html);
+        marker.addTo(syndrasiOpMap);
+        syndrasiOpMarkers.push(marker);
+      });
+    })
+    .catch(function () { /* silent */ });
+}

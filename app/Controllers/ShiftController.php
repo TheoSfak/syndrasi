@@ -162,4 +162,6 @@ class ShiftController
         EventShift::cancelApplication($app['shift_id'], $app['team_id']);
         audit('shift_cancelled', 'shift_application', $id);
         flash_set('success', 'Η δήλωση ακυρώθηκε.');
-        redirect('/team/events/' . $app['event_id'] . 
+        redirect('/team/events/' . $app['event_id'] . '#tab-shifts');
+    }
+}

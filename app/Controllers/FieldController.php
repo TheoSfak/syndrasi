@@ -205,4 +205,29 @@ class FieldController
             redirect($back);
         }
         $dir = BASE_PATH . EventPhoto::DIR;
-        if (!is_dir($dir) && !@mkdir($dir
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            flash_set('danger', 'Αδυναμία αποθήκευσης (φάκελος).');
+            redirect($back);
+        }
+        $name = 'ev' . (int) $app['event_id'] . '_t' . (int) $app['team_id'] . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
+        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) {
+            flash_set('danger', 'Αποτυχία αποθήκευσης φωτογραφίας.');
+            redirect($back);
+        }
+        $lat = post_float_or_null('latitude');
+        $lng = post_float_or_null('longitude');
+        if ($lat !== null && ($lat < -90 || $lat > 90))   { $lat = null; }
+        if ($lng !== null && ($lng < -180 || $lng > 180)) { $lng = null; }
+        if ($lat === null || $lng === null) { $lat = null; $lng = null; }
+
+        EventPhoto::create([
+            'mid' => $app['municipality_id'], 'eid' => $app['event_id'], 'tid' => $app['team_id'],
+            'uid' => $ctx['owner'] ?: null, 'rid' => null, 'file' => $name,
+            'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
+        ]);
+        try { NotificationService::photoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) {}
+
+        flash_set('success', 'Η φωτογραφία στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        redirect($back);
+    }
+}

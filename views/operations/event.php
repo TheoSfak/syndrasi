@@ -563,4 +563,341 @@ body.ops-dark main             { background:transparent!important; }
     if (!box) return;
     msgs = msgs || [];
     document.getElementById('msgBadge').textContent = msgs.length;
-    if (!msgs.length) { box.innerHTML = '<div class="text-muted small text-center">Καμία επικοινωνία 
+    if (!msgs.length) { box.innerHTML = '<div class="text-muted small text-center">Καμία επικοινωνία ακόμη.</div>'; return; }
+    box.innerHTML = msgs.map(function(m) {
+      var cls = m.kind === 'order' ? 'cmsg-order'
+              : (m.kind === 'status' ? 'cmsg-status'
+              : (m.sender_role === 'command' ? 'cmsg-command' : 'cmsg-team'));
+      var who = m.sender_role === 'command' ? 'Δήμος' : (m.team_name || m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substring(11,16);
+      var tag = m.team_id ? esc(m.team_name || '') : (m.sender_role === 'command' ? '📢 Όλες' : '');
+      var ackTxt = '';
+      if (m.kind === 'order') {
+        ackTxt = m.acknowledged_at ? ' · <span style="color:#16a34a">✓ Επιβεβαιώθηκε</span>' : ' · <span style="opacity:.7">αναμονή ACK</span>';
+      }
+      return '<div class="cmsg ' + cls + '"><div>' +
+             (m.kind === 'order' ? '<strong>📋 ΕΝΤΟΛΗ:</strong> ' : '') + esc(m.body || '') + '</div>' +
+             '<div class="cmsg-meta">' + esc(who) + (tag ? ' → ' + tag : '') + ' · ' + t + ackTxt + '</div></div>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  /* ─── Shared operations room ─── */
+  function renderRoom(msgs) {
+    var box = document.getElementById('roomThread');
+    if (!box) return;
+    msgs = msgs || [];
+    document.getElementById('roomBadge').textContent = msgs.length;
+    if (!msgs.length) { box.innerHTML = '<div class="text-muted small text-center">Κανένα μήνυμα ακόμη.</div>'; return; }
+    box.innerHTML = msgs.map(function (m) {
+      var cmd = m.sender_role === 'command';
+      var who = cmd ? 'Δήμος' : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substring(11, 16);
+      return '<div class="cmsg ' + (cmd ? 'cmsg-command' : 'cmsg-team') + '"><div>' + esc(m.body || '') +
+             '</div><div class="cmsg-meta">' + esc(who) + ' · ' + t + '</div></div>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+  (function () {
+    var inp = document.getElementById('roomInput');
+    var btn = document.getElementById('roomSend');
+    function send() { var b = (inp.value || '').trim(); if (!b) return; inp.value = ''; postForm('/operations/events/' + EID + '/room', { body: b }).then(pollStatus); }
+    if (btn) btn.addEventListener('click', send);
+    if (inp) inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+  })();
+
+  /* ─── Recipient select (preserve current selection) ─── */
+  function populateTeamSelect(teams) {
+    var sel = document.getElementById('cmsgTeam');
+    if (!sel || !teams) return;
+    var cur = sel.value;
+    var opts = '<option value="">📢 Όλες οι ομάδες (broadcast)</option>';
+    teams.forEach(function(t) { opts += '<option value="' + t.team_id + '">' + esc(t.team_name) + '</option>'; });
+    sel.innerHTML = opts;
+    sel.value = cur;
+  }
+
+  /* ─── POST helper (form-encoded, JSON response) ─── */
+  function postForm(path, fields) {
+    var body = '_token=' + encodeURIComponent(CSRF);
+    Object.keys(fields || {}).forEach(function(k){ body += '&' + k + '=' + encodeURIComponent(fields[k]); });
+    return fetch(BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      body: body
+    }).then(function(r){ return r.json().catch(function(){ return {}; }); });
+  }
+
+  function renderActivity(items) {
+    var box = document.getElementById('activityBox');
+    if (!items || !items.length) {
+      box.innerHTML = '<div class="text-muted small py-2 text-center">Δεν υπάρχει δραστηριότητα ακόμα.</div>';
+      return;
+    }
+    var iconMap = { checkin:'bi-check-circle-fill', shortage:'bi-exclamation-triangle-fill', note:'bi-journal-text' };
+    var clsMap  = { checkin:'bg-success text-white', shortage:'bg-danger text-white', note:'bg-warning text-dark' };
+    var html = '';
+    items.forEach(function(a) {
+      var ic = iconMap[a.type] || 'bi-dot';
+      var cl = clsMap[a.type]  || 'bg-secondary text-white';
+      html += '<div class="af-item"><div class="af-icon ' + cl + '"><i class="bi ' + ic + '"></i></div>' +
+              '<div class="flex-grow-1"><div class="small fw-semibold">' + esc(a.actor) + '</div>' +
+              '<div class="small text-muted" style="font-size:.73rem">' + esc(a.title) + '</div></div>' +
+              '<div class="af-time">' + esc((a.ts||'').substring(11,16)) + '</div></div>';
+    });
+    box.innerHTML = html;
+  }
+
+  function renderNotes(notes) {
+    var box = document.getElementById('notesBox');
+    if (!notes || !notes.length) {
+      box.innerHTML = '<div class="text-muted small text-center">Δεν υπάρχουν σημειώσεις.</div>';
+      return;
+    }
+    var html = '';
+    notes.forEach(function(n) {
+      html += '<div class="d-flex gap-2 mb-1 align-items-start">' +
+              '<span class="badge bg-warning text-dark mt-1" style="font-size:.6rem">' + esc((n.created_at||'').substring(11,16)) + '</span>' +
+              '<div class="small">' + esc(n.note) + '</div></div>';
+    });
+    box.innerHTML = html;
+  }
+
+  /* ─── Apply a full snapshot (from SSE or manual poll) ─── */
+  function applySnapshot(d) {
+    if (!d || !d.ok) return;
+    /* read previous counts before DOM update for change detection */
+    var prevCi = parseInt(document.getElementById('sv-ci').textContent, 10);
+    var prevSh = parseInt(document.getElementById('sv-sh').textContent, 10);
+    /* stats bar */
+    document.getElementById('sv-pers').textContent = d.stats.total_present || 0;
+    document.getElementById('sv-cov').textContent  = (d.stats.coverage || 0) + '%';
+    document.getElementById('sv-clk').textContent  = d.ts;
+    /* sections */
+    renderTeams(d.teams);
+    renderShortages(d.shortages);
+    renderActivity(d.activity);
+    renderNotes(d.notes);
+    if (d.teams) populateTeamSelect(d.teams);
+    renderSos(d.sos);
+    renderMessages(d.messages);
+    renderRoom(d.room);
+    /* map pings included in SSE snapshot */
+    if (d.pings) updateMap(d.pings);
+    if (d.photos) updatePhotos(d.photos);
+    /* flash sections where count increased */
+    if (!isNaN(prevCi) && (d.stats.checked_in || 0) > prevCi) flashEl('teamsBox');
+    if (!isNaN(prevSh) && (d.stats.open_shortages || 0) > prevSh) flashEl('shortagesBox');
+  }
+
+  function flashEl(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('sse-flash');
+    void el.offsetWidth; /* force reflow to restart animation */
+    el.classList.add('sse-flash');
+    setTimeout(function(){ el.classList.remove('sse-flash'); }, 800);
+  }
+
+  /* Manual status poll — used by the refresh button */
+  function pollStatus() {
+    fetch(BASE + '/operations/events/' + EID + '/status')
+      .then(function(r){ return r.json(); })
+      .then(function(d) { applySnapshot(d); })
+      .catch(function(){});
+  }
+
+  function pollLocations() {
+    fetch(BASE + '/operations/events/' + EID + '/locations')
+      .then(function(r){ return r.json(); })
+      .then(function(d) { if (d.ok) { updateMap(d.pings); updatePhotos(d.photos); } })
+      .catch(function(){});
+  }
+
+  /* ─── Refresh button ─── */
+  document.getElementById('btnRefresh').addEventListener('click', function() {
+    var ic = this.querySelector('i');
+    ic.classList.add('spin');
+    pollStatus(); pollLocations();
+    setTimeout(function(){ ic.classList.remove('spin'); }, 1000);
+  });
+
+  /* ─── Note form ─── */
+  document.getElementById('noteForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var inp = document.getElementById('noteInput');
+    var txt = inp.value.trim();
+    if (!txt) return;
+    inp.disabled = true;
+    fetch(BASE + '/operations/events/' + EID + '/note', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: '_token=' + encodeURIComponent(CSRF) + '&note=' + encodeURIComponent(txt)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.ok) { inp.value = ''; pollStatus(); }
+    })
+    .finally(function(){ inp.disabled = false; inp.focus(); });
+  });
+
+  /* ─── Utility ─── */
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ─── Photos: request, map markers, list, modal ─── */
+  var photoMarkers = {};
+
+  function requestPhoto(teamId, btn) {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Αποστολή…'; }
+    var fd = new FormData(); fd.append('_token', CSRF); fd.append('team_id', teamId);
+    fetch(BASE + '/operations/events/' + EID + '/request-photo', { method:'POST', body: fd, headers:{ 'Accept':'application/json' } })
+      .then(function(r){ return r.json(); })
+      .then(function(){ if (btn) { btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Ζητήθηκε φωτό'; } })
+      .catch(function(){ if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-camera me-1"></i>Ζήτησε φωτό'; } });
+  }
+
+  function openPhoto(url, label) {
+    document.getElementById('photoModalImg').src = url;
+    document.getElementById('photoModalLabel').textContent = label || 'Φωτογραφία';
+    document.getElementById('photoModalDl').href = url;
+    if (window.bootstrap) { bootstrap.Modal.getOrCreateInstance(document.getElementById('photoModal')).show(); }
+  }
+
+  function updatePhotos(photos) {
+    photos = photos || [];
+    Object.keys(photoMarkers).forEach(function(k){ map.removeLayer(photoMarkers[k]); });
+    photoMarkers = {};
+    var card = document.getElementById('photosCard');
+    var box  = document.getElementById('photosBox');
+    if (!card || !box) return;
+    document.getElementById('photosBadge').textContent = photos.length;
+    card.style.display = photos.length ? '' : 'none';
+    var html = '';
+    photos.forEach(function(ph){
+      var border = ph.lat !== null && ph.lng !== null ? '#0ea5e9' : '#94a3b8';
+      html += '<img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) +
+              '" title="' + esc(ph.team_name) + ' · ' + esc(ph.at) + (ph.lat === null ? ' · χωρίς τοποθεσία' : '') +
+              '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ' + border + '">';
+      if (ph.lat !== null && ph.lng !== null) {
+        var icon = L.divIcon({ className:'', html:'<div style="background:#0ea5e9;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><i class="bi bi-camera-fill" style="color:#fff;font-size:11px;transform:rotate(45deg)"></i></div>', iconSize:[24,24], iconAnchor:[12,22] });
+        var m = L.marker([ph.lat, ph.lng], { icon: icon });
+        m.bindPopup('<div style="text-align:center"><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" style="max-width:170px;max-height:130px;border-radius:6px;cursor:pointer"><br><b>' + esc(ph.team_name) + '</b><br><span class="text-muted" style="font-size:.72rem">' + esc(ph.at) + '</span></div>');
+        m.addTo(map);
+        photoMarkers[ph.id] = m;
+      }
+    });
+    box.innerHTML = html;
+  }
+
+  /* delegated clicks: request button + photo thumbnails */
+  document.addEventListener('click', function(e){
+    var thumb = e.target.closest ? e.target.closest('.photo-thumb') : null;
+    if (thumb) { openPhoto(thumb.getAttribute('data-url'), thumb.getAttribute('data-label')); return; }
+    var rb = e.target.closest ? e.target.closest('.req-photo-btn') : null;
+    if (rb && !rb.disabled) { requestPhoto(rb.getAttribute('data-team'), rb); }
+  });
+
+  /* ─── SSE connection ─── */
+  var sseEs = null;
+
+  function setSseBadge(state) {
+    var b = document.getElementById('liveBadge');
+    if (!b) return;
+    if (state === 'live') {
+      b.textContent = '◉ LIVE SSE';
+      b.className   = 'badge bg-success';
+    } else {
+      b.textContent = '↺ Επανασύνδεση…';
+      b.className   = 'badge bg-warning text-dark';
+    }
+  }
+
+  function connectSSE() {
+    if (sseEs) { try { sseEs.close(); } catch(e){} }
+    sseEs = new EventSource(BASE + '/operations/events/' + EID + '/stream');
+    sseEs.onopen = function() { setSseBadge('live'); };
+    sseEs.addEventListener('update', function(evt) {
+      try { applySnapshot(JSON.parse(evt.data)); } catch(e){}
+    });
+    sseEs.onerror = function() { setSseBadge('reconnecting'); };
+  }
+
+  /* ─── Comms composer ─── */
+  function sendCmsg(kind) {
+    var bodyEl = document.getElementById('cmsgBody');
+    var teamEl = document.getElementById('cmsgTeam');
+    var body = (bodyEl.value || '').trim();
+    if (!body) { bodyEl.focus(); return; }
+    if (kind === 'order' && !confirm('Αποστολή ως ΕΝΤΟΛΗ;\nΗ ομάδα θα κληθεί να επιβεβαιώσει τη λήψη.')) return;
+    postForm('/operations/events/' + EID + '/message', { body: body, kind: kind, team_id: teamEl.value })
+      .then(function(){ bodyEl.value = ''; pollStatus(); });
+  }
+  document.getElementById('cmsgSendMsg').addEventListener('click', function(){ sendCmsg('message'); });
+  document.getElementById('cmsgSendOrder').addEventListener('click', function(){ sendCmsg('order'); });
+  document.getElementById('cmsgBody').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); sendCmsg('message'); } });
+
+  /* ─── Geo point sender ─── */
+  var geoPick = false, geoTempMarker = null;
+  var geoPickBtn = document.getElementById('geoPickBtn');
+  var geoCoords  = document.getElementById('geoCoords');
+  function geoBtnReset() { if (geoPickBtn) { geoPickBtn.classList.remove('btn-warning'); geoPickBtn.classList.add('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Χάρτη'; } }
+  function setGeoPoint(lat, lng) {
+    geoCoords.value = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    if (geoTempMarker) { map.removeLayer(geoTempMarker); }
+    geoTempMarker = L.marker([lat, lng]).addTo(map).bindPopup('Επιλεγμένο σημείο').openPopup();
+  }
+  if (geoPickBtn) {
+    geoPickBtn.addEventListener('click', function () {
+      geoPick = !geoPick;
+      if (geoPick) { geoPickBtn.classList.add('btn-warning'); geoPickBtn.classList.remove('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Κλικ στον χάρτη…'; }
+      else { geoBtnReset(); }
+    });
+  }
+  map.on('click', function (e) {
+    if (!geoPick) return;
+    setGeoPoint(e.latlng.lat, e.latlng.lng);
+    geoPick = false; geoBtnReset();
+  });
+  var geoSendBtn = document.getElementById('geoSendBtn');
+  if (geoSendBtn) {
+    geoSendBtn.addEventListener('click', function () {
+      var raw = (geoCoords.value || '').trim();
+      var mm = raw.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);
+      if (!mm) { alert('Δώστε συντεταγμένες (lat, lng) ή πατήστε «Χάρτη» και κλικ στον χάρτη.'); return; }
+      var lat = parseFloat(mm[1]), lng = parseFloat(mm[2]);
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) { alert('Μη έγκυρες συντεταγμένες.'); return; }
+      var pkind = document.getElementById('geoKind').value;
+      if (pkind === 'incident' && !confirm('Αποστολή ΠΕΡΙΣΤΑΤΙΚΟΥ;\nΘα σταλεί forced push + SMS στην ομάδα.')) return;
+      postForm('/operations/events/' + EID + '/message', {
+        point_kind: pkind, latitude: lat, longitude: lng,
+        team_id: document.getElementById('cmsgTeam').value,
+        body: document.getElementById('geoNote').value
+      }).then(function () {
+        document.getElementById('geoNote').value = ''; geoCoords.value = '';
+        if (geoTempMarker) { map.removeLayer(geoTempMarker); geoTempMarker = null; }
+        pollStatus();
+      });
+    });
+  }
+
+  /* ─── SOS / shortage action buttons (delegated) ─── */
+  document.addEventListener('click', function(e){
+    if (!e.target || !e.target.closest) return;
+    var b;
+    if ((b = e.target.closest('.sos-ack-btn'))) { b.disabled = true; postForm('/sos/' + b.dataset.id + '/acknowledge', {}).then(pollStatus); }
+    else if ((b = e.target.closest('.sos-res-btn'))) { if (confirm('Κλείσιμο SOS;')) { b.disabled = true; postForm('/sos/' + b.dataset.id + '/resolve', {}).then(pollStatus); } }
+    else if ((b = e.target.closest('.sh-ack-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/acknowledge', {}).then(pollStatus); }
+    else if ((b = e.target.closest('.sh-res-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/resolve', {}).then(pollStatus); }
+  });
+
+  /* ─── Boot ─── */
+  connectSSE();
+  pollStatus();
+  /* Locations are now included in the SSE snapshot.
+     pollLocations() remains available for the manual refresh button. */
+
+})();
+</script>

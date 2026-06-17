@@ -654,6 +654,16 @@ if ($flash):
     </div>
   </div>
 
+  <!-- ── Δωμάτιο Επιχείρησης (κοινό κανάλι) ──────────────────────────── -->
+  <div class="action-card">
+    <div class="presence-header"><i class="bi bi-broadcast-pin"></i> Δωμάτιο Επιχείρησης</div>
+    <div class="msg-list" id="roomList"><div class="msg-empty">Φόρτωση…</div></div>
+    <div class="msg-compose">
+      <input type="text" id="roomInput" placeholder="Μήνυμα προς όλους…" maxlength="500">
+      <button type="button" id="roomSend" title="Αποστολή"><i class="bi bi-send"></i></button>
+    </div>
+  </div>
+
   <div id="wakeLockIndicator"><i class="bi bi-phone"></i> Η οθόνη παραμένει ενεργή</div>
 </div><!-- .hub-body -->
 
@@ -958,9 +968,31 @@ if ($flash):
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); } })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); renderRoom(d.room); } })
       .catch(function () {});
   }
+
+  /* Δωμάτιο Επιχείρησης */
+  var roomListEl = document.getElementById('roomList');
+  function renderRoom(msgs) {
+    if (!roomListEl) return;
+    if (!msgs || !msgs.length) { roomListEl.innerHTML = '<div class="msg-empty">Κανένα μήνυμα ακόμη.</div>'; return; }
+    roomListEl.innerHTML = msgs.map(function (m) {
+      var cmd = m.sender_role === 'command';
+      var who = cmd ? 'Δήμος' : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substr(11, 5);
+      return '<div class="msg ' + (cmd ? 'msg-command' : 'msg-team') + '"><div>' + escapeHtml(m.body || '') +
+             '</div><div class="msg-time">' + escapeHtml(who) + ' · ' + t + '</div></div>';
+    }).join('');
+    roomListEl.scrollTop = roomListEl.scrollHeight;
+  }
+  (function () {
+    var s = document.getElementById('roomSend'), i = document.getElementById('roomInput');
+    function send() { var b = (i.value || '').trim(); if (!b) return; i.value = ''; postJSON('/team/operations/events/' + EID + '/room', { body: b }).then(pollComms); }
+    if (s) s.addEventListener('click', send);
+    if (i) i.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+  })();
+
   pollComms();
   setInterval(pollComms, 5000);
 

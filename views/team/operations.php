@@ -227,4 +227,301 @@ window.addEventListener('load', function () {
             <?php endif; ?>
             <span class="text-muted">· <?= e(gr_time($lastCheckin['checked_in_at'])) ?></span>
           </p>
-  
+        <?php else: ?>
+          <p class="small text-muted mb-2">Δεν έχετε δηλώσει ακόμη παρουσία.</p>
+        <?php endif; ?>
+
+        <div class="d-grid gap-2">
+          <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/checkin')) ?>"
+                onsubmit="return confirm('Δήλωση: Παρών με όλη την ομάδα (<?= (int) $application['approved_people'] ?> άτομα);')">
+            <?= csrf_field() ?>
+            <input type="hidden" name="status" value="present_full">
+            <button class="btn btn-success btn-op" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
+              <i class="bi bi-check2-all me-1"></i>Παρών με όλη την ομάδα
+            </button>
+          </form>
+          <button class="btn btn-warning btn-op" type="button" data-bs-toggle="modal" data-bs-target="#partialModal" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
+            <i class="bi bi-check2 me-1"></i>Παρών με ελλείψεις
+          </button>
+          <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/checkin')) ?>"
+                onsubmit="return confirm('Δήλωση αποχώρησης της ομάδας από τη δράση;')">
+            <?= csrf_field() ?>
+            <input type="hidden" name="status" value="departed">
+            <button class="btn btn-outline-dark btn-op" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
+              <i class="bi bi-box-arrow-right me-1"></i>Αποχώρηση
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-white fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i> Αναφορά Έλλειψης</div>
+  <div class="card-body">
+    <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/shortage')) ?>"
+          onsubmit="return confirm('Να σταλεί η αναφορά έλλειψης στον δήμο;')">
+      <?= csrf_field() ?>
+      <div class="row g-2">
+        <div class="col-md-4">
+          <label class="form-label small">Τύπος έλλειψης *</label>
+          <select name="shortage_type" class="form-select" required>
+            <option value="people">Άτομα</option>
+            <option value="equipment">Εξοπλισμός</option>
+            <option value="medical_supplies">Υγειονομικό υλικό</option>
+            <option value="vehicle">Όχημα</option>
+            <option value="other">Άλλο</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">Σοβαρότητα</label>
+          <select name="severity" class="form-select">
+            <option value="low">Χαμηλή</option>
+            <option value="medium" selected>Μεσαία</option>
+            <option value="high">Υψηλή</option>
+            <option value="critical">Κρίσιμη</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label small">Σύντομος τίτλος *</label>
+          <input type="text" name="title" class="form-control" required placeholder="π.χ. Λείπουν 2 άτομα">
+        </div>
+        <div class="col-12">
+          <label class="form-label small">Περιγραφή</label>
+          <textarea name="description" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="col-12">
+          <button class="btn btn-danger btn-op" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
+            <i class="bi bi-send me-1"></i>Αποστολή Αναφοράς Έλλειψης
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<?php if ($shortages): ?>
+  <div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Οι αναφορές μας για αυτή τη δράση</div>
+    <ul class="list-group list-group-flush">
+      <?php foreach ($shortages as $s): ?>
+        <li class="list-group-item small">
+          <span class="badge text-bg-<?= e(status_color($s['severity'])) ?>"><?= e(severity_label($s['severity'])) ?></span>
+          <strong class="ms-1"><?= e($s['title']) ?></strong>
+          — <?= e(shortage_type_label($s['shortage_type'])) ?>
+          · <?= status_badge($s['status'] === 'open' ? 'pending' : $s['status']) ?>
+          <span class="text-muted">· <?= e(gr_datetime($s['created_at'])) ?></span>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+
+<script>
+(function () {
+  'use strict';
+  var BASE = window.baseUrl || '';
+  var CSRF = window.csrfToken || '';
+  var EID  = <?= (int) $event['id'] ?>;
+  var IS_ACTIVE = <?= $opsActive ? 'true' : 'false' ?>;
+
+  function postJSON(path, body) {
+    return fetch(BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); });
+  }
+  function esc(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+
+  /* SOS */
+  var sosBtn = document.getElementById('sosBtn');
+  var sosBanner = document.getElementById('sosBanner');
+  if (sosBtn) {
+    sosBtn.addEventListener('click', function () {
+      if (!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ο δήμος ότι κινδυνεύετε. Συνέχεια;')) return;
+      sosBtn.disabled = true;
+      var send = function (lat, lng, acc) {
+        postJSON('/team/operations/events/' + EID + '/sos', { latitude: lat, longitude: lng, accuracy: acc })
+          .then(function () { pollComms(); })
+          .catch(function () { sosBtn.disabled = false; });
+      };
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (p) { send(p.coords.latitude, p.coords.longitude, p.coords.accuracy); },
+          function () { send(null, null, null); },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+      } else { send(null, null, null); }
+    });
+  }
+
+  /* Quick status pings */
+  document.querySelectorAll('.ping-btn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (b.disabled) return;
+      var orig = b.innerHTML;
+      b.disabled = true;
+      postJSON('/team/operations/events/' + EID + '/status-ping', { code: b.dataset.code })
+        .then(function () { b.innerHTML = '✓ Στάλθηκε'; setTimeout(function () { b.innerHTML = orig; b.disabled = false; }, 2500); pollComms(); })
+        .catch(function () { b.innerHTML = orig; b.disabled = false; });
+    });
+  });
+
+  /* Comms */
+  var msgInput = document.getElementById('msgInput');
+  var msgSend  = document.getElementById('msgSend');
+  function sendMsg() {
+    var body = (msgInput.value || '').trim();
+    if (!body) return;
+    msgInput.value = '';
+    postJSON('/team/operations/events/' + EID + '/message', { body: body }).then(pollComms);
+  }
+  if (msgSend)  { msgSend.addEventListener('click', sendMsg); }
+  if (msgInput) { msgInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); sendMsg(); } }); }
+  window.ackOrder = function (id) { postJSON('/team/operations/events/' + EID + '/ack-order', { message_id: id }).then(pollComms); };
+
+  var msgListEl = document.getElementById('msgList');
+  function renderMsgs(msgs) {
+    if (!msgListEl) return;
+    if (!msgs || !msgs.length) { msgListEl.innerHTML = '<div class="text-muted small text-center py-3">Καμία επικοινωνία ακόμη.</div>'; return; }
+    msgListEl.innerHTML = msgs.map(function (m) {
+      var fromCmd = m.sender_role === 'command';
+      var align = fromCmd ? '' : 'text-end';
+      var bg = m.kind === 'order' ? 'bg-warning-subtle border border-warning'
+             : (m.kind === 'status' ? 'bg-success-subtle' : (fromCmd ? 'bg-primary-subtle' : 'bg-light'));
+      var who = fromCmd ? 'Δήμος' : (m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substr(11, 5);
+      var html = '<div class="' + align + ' mb-2"><div class="d-inline-block text-start p-2 rounded ' + bg + '" style="max-width:90%">' +
+                 (m.kind === 'order' ? '<strong>📋 ΕΝΤΟΛΗ:</strong> ' : '') + esc(m.body || '');
+      if (m.kind === 'order') {
+        html += m.acknowledged_at
+          ? '<div class="small text-success mt-1"><i class="bi bi-check2-all"></i> Επιβεβαιώθηκε</div>'
+          : '<div class="mt-1"><button class="btn btn-warning btn-sm py-0" onclick="ackOrder(' + m.id + ')">Επιβεβαίωση λήψης</button></div>';
+      }
+      html += '<div class="text-muted" style="font-size:.68rem">' + esc(who) + ' · ' + t + '</div></div></div>';
+      return html;
+    }).join('');
+    msgListEl.scrollTop = msgListEl.scrollHeight;
+  }
+  function renderSos(sos) {
+    if (!sosBanner) return;
+    if (!sos) {
+      sosBanner.style.display = 'none';
+      if (sosBtn) sosBtn.disabled = !IS_ACTIVE;
+      return;
+    }
+    sosBanner.style.display = 'block';
+    if (sos.status === 'acknowledged') {
+      sosBanner.className = 'alert alert-info mt-2 mb-0 py-2 small';
+      sosBanner.innerHTML = '<i class="bi bi-check2-all"></i> Το SOS ελήφθη από τον δήμο' + (sos.ack_name ? ' (' + esc(sos.ack_name) + ')' : '') + ' — έρχεται βοήθεια.';
+    } else {
+      sosBanner.className = 'alert alert-danger mt-2 mb-0 py-2 small';
+      sosBanner.innerHTML = '<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης από τον δήμο…';
+    }
+    if (sosBtn) sosBtn.disabled = true;
+  }
+  var orderBannerEl = document.getElementById('orderBanner');
+  function renderOrders(msgs) {
+    if (!orderBannerEl) return;
+    var pending = (msgs || []).filter(function (m) { return m.kind === 'order' && !m.acknowledged_at; });
+    if (!pending.length) { orderBannerEl.innerHTML = ''; orderBannerEl.style.display = 'none'; return; }
+    orderBannerEl.style.display = '';
+    orderBannerEl.innerHTML = pending.map(function (m) {
+      var who = m.sender_name || 'Δήμος';
+      var t = (m.created_at || '').substr(11, 5);
+      var isInc = m.point_kind === 'incident';
+      var head = isInc ? '⚠️ ΠΕΡΙΣΤΑΤΙΚΟ' : (m.point_kind === 'move' ? '➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ' : 'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var cls  = isInc ? 'alert-danger border-danger' : 'alert-warning border-warning';
+      var dir  = (m.latitude != null && m.longitude != null)
+        ? '<a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener" class="btn btn-primary"><i class="bi bi-geo-alt-fill me-1"></i>Οδηγίες</a>' : '';
+      return '<div class="alert ' + cls + ' border-2 shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2" role="alert">' +
+        '<div><div class="fw-bold"><i class="bi bi-megaphone-fill me-1"></i>' + head + '</div>' +
+        '<div class="fs-6">' + esc(m.body || '') + '</div>' +
+        '<div class="small text-muted">' + esc(who) + ' · ' + t + '</div></div>' +
+        '<div class="d-flex gap-2">' + dir +
+        '<button type="button" class="btn btn-warning fw-bold" onclick="ackOrder(' + m.id + ')"><i class="bi bi-check2-all me-1"></i>Επιβεβαίωση λήψης</button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  function renderGeoPoints(msgs) {
+    var map = window.__teamMap, grp = window.__teamGeo;
+    if (!map || !grp) return;
+    grp.clearLayers();
+    (msgs || []).forEach(function (m) {
+      if (m.latitude == null || m.longitude == null || !m.point_kind) return;
+      var color = m.point_kind === 'incident' ? '#dc2626' : (m.point_kind === 'move' ? '#2563eb' : '#0d9488');
+      var lbl   = m.point_kind === 'incident' ? '⚠️ Περιστατικό' : (m.point_kind === 'move' ? '➡️ Μετάβαση' : '📍 Σημείο');
+      L.circleMarker([m.latitude, m.longitude], { radius: 10, color: color, fillColor: color, fillOpacity: .7 }).addTo(grp)
+        .bindPopup('<b>' + lbl + '</b><br>' + esc(m.body || '') + '<br><a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener">Οδηγίες</a>');
+    });
+  }
+
+  function pollComms() {
+    fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); renderRoom(d.room); } })
+      .catch(function () {});
+  }
+
+  /* Δωμάτιο Επιχείρησης */
+  var roomList = document.getElementById('roomList');
+  function renderRoom(msgs) {
+    if (!roomList) return;
+    msgs = msgs || [];
+    var rb = document.getElementById('roomBadge'); if (rb) rb.textContent = msgs.length;
+    if (!msgs.length) { roomList.innerHTML = '<div class="text-muted small text-center py-3">Κανένα μήνυμα ακόμη.</div>'; return; }
+    roomList.innerHTML = msgs.map(function (m) {
+      var cmd = m.sender_role === 'command';
+      var who = cmd ? 'Δήμος' : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
+      var t = (m.created_at || '').substr(11, 5);
+      var bg = cmd ? 'bg-primary-subtle' : 'bg-light';
+      var align = cmd ? '' : 'text-end';
+      return '<div class="' + align + ' mb-2"><div class="d-inline-block text-start p-2 rounded ' + bg + '" style="max-width:90%">' +
+             esc(m.body || '') + '<div class="text-muted" style="font-size:.68rem">' + esc(who) + ' · ' + t + '</div></div></div>';
+    }).join('');
+    roomList.scrollTop = roomList.scrollHeight;
+  }
+  (function () {
+    var s = document.getElementById('roomSend'), i = document.getElementById('roomInput');
+    function send() { var b = (i.value || '').trim(); if (!b) return; i.value = ''; postJSON('/team/operations/events/' + EID + '/room', { body: b }).then(pollComms); }
+    if (s) s.addEventListener('click', send);
+    if (i) i.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
+  })();
+
+  pollComms();
+  setInterval(pollComms, 5000);
+})();
+</script>
+
+<!-- Partial presence modal -->
+<div class="modal fade" id="partialModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/checkin')) ?>" class="modal-content">
+      <?= csrf_field() ?>
+      <input type="hidden" name="status" value="present_partial">
+      <div class="modal-header">
+        <h5 class="modal-title">Παρών με ελλείψεις</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Πόσα άτομα είναι παρόντα; *</label>
+          <input type="number" name="present_people" class="form-control form-control-lg" min="1"
+                 max="<?= max(1, (int) $application['approved_people'] - 1) ?>" required>
+          <div class="form-text">Εγκεκριμένα άτομα: <?= (int) $application['approved_people'] ?></div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Σχόλιο (προαιρετικό)</label>
+          <input type="text" name="message" class="form-control" placeholder="π.χ. Ένα μέλος ασθένησε">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Άκυρο</button>
+        <button type="submit" class="btn btn-warning">Δήλωση Παρουσίας</button>
+      </div>
+    </form>
+  </div>
+</div>

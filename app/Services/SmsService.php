@@ -102,4 +102,103 @@ class SmsService
 
     /**
      * Generic HTTP gateway. Adapt the payload to your provider's API.
-     * Left intentionally simple — most Greek gateways accept a POST lik
+     * Left intentionally simple — most Greek gateways accept a POST like this.
+     */
+    private static function sendHttp(array $cfg, string $phone, string $message): bool
+    {
+        if (empty($cfg['endpoint']) || empty($cfg['api_key'])) {
+            self::$lastError = 'SMS gateway δεν έχει ρυθμιστεί (SMS_ENDPOINT / SMS_API_KEY).';
+            return false;
+        }
+        $payload = http_build_query([
+            'key'     => $cfg['api_key'],
+            'sender'  => $cfg['sender'],
+            'to'      => $phone,
+            'message' => $message,
+        ]);
+        $ch = curl_init($cfg['endpoint']);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $resp = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+        if ($resp === false || $code >= 400) {
+            self::$lastError = 'Gateway error: ' . ($err !== '' ? $err : ('HTTP ' . $code));
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * smsbox.gr driver (httpapi). Two auth modes:
+     *   - username + password (api_key field = password): we call auth.php to get a
+     *     fresh sesskey (valid 2h), then sendsms.php. Recommended for production.
+     *   - sesskey only (api_key field = the sesskey, no username): use it directly
+     *     on sendsms.php. Handy for a quick test (the sesskey expires in 2 hours).
+     * Success when the response starts with "OK".
+     */
+    private static function sendSmsbox(array $cfg, string $phone, string $message): bool
+    {
+        $base = 'https://www.smsbox.gr/httpapi';
+        $username = trim((string) ($cfg['username'] ?? ''));
+        $secret   = trim((string) ($cfg['api_key'] ?? ''));   // password OR sesskey
+        $from     = ($cfg['sender'] ?? '') !== '' ? $cfg['sender'] : 'SynDrasi';
+        $to       = ltrim($phone, '+');                        // smsbox wants digits (e.g. 30694...)
+
+        $sesskey = '';
+        if ($username !== '') {
+            // username + password → fetch a fresh sesskey
+            $auth = self::httpGet($base . '/auth.php?username=' . rawurlencode($username) . '&password=' . rawurlencode($secret));
+            $t = trim((string) $auth);
+            if (stripos($t, 'ok') === 0) {
+                $sesskey = trim(substr($t, 2));
+            } else {
+                self::$lastError = 'smsbox auth: ' . ($t !== '' ? $t : 'no response');
+                return false;
+            }
+        } else {
+            // api_key holds the sesskey directly (tolerate a pasted "OK xxxx")
+            $sesskey = (stripos($secret, 'ok ') === 0) ? trim(substr($secret, 3)) : $secret;
+        }
+        if ($sesskey === '') {
+            self::$lastError = 'smsbox: λείπει sesskey ή username/password.';
+            return false;
+        }
+
+        $url = $base . '/sendsms.php?sesskey=' . rawurlencode($sesskey)
+             . '&from=' . rawurlencode($from)
+             . '&to='   . rawurlencode($to)
+             . '&text=' . rawurlencode($message);
+        $resp = self::httpGet($url);
+        $t = trim((string) $resp);
+        if (stripos($t, 'ok') === 0) {
+            return true;
+        }
+        self::$lastError = 'smsbox: ' . ($t !== '' ? $t : 'no response');
+        return false;
+    }
+
+    /** Simple HTTP GET helper; returns body string or null on transport error. */
+    private static function httpGet(string $url): ?string
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_FOLLOWLOCATION => true,
+        ]);
+        $resp = curl_exec($ch);
+        $err  = curl_error($ch);
+        curl_close($ch);
+        if ($resp === false) {
+            self::$lastError = 'HTTP error: ' . $err;
+            return null;
+        }
+        return (string) $resp;
+    }
+}

@@ -207,4 +207,31 @@ $router->post('/push/subscribe', 'PushController@subscribe');
 $router->post('/push/unsubscribe', 'PushController@unsubscribe');
 
 /* Cron endpoints (token-protected, no session required) */
-$router->ge
+$router->get('/cron/shift-reminders', 'CronController@shiftReminders');
+$router->get('/cron/cleanup', 'CronController@cleanup');
+
+/* Super admin */
+$router->get('/admin/dashboard', 'AdminController@dashboard');
+$router->get('/admin/municipalities', 'AdminController@municipalities');
+$router->post('/admin/municipalities/store', 'AdminController@storeMunicipality');
+$router->get('/admin/municipalities/{id}', 'AdminController@showMunicipality');
+$router->post('/admin/municipalities/{id}/update', 'AdminController@updateMunicipality');
+$router->post('/admin/municipalities/{id}/toggle', 'AdminController@toggleMunicipality');
+$router->get('/admin/users', 'AdminController@users');
+$router->post('/admin/users/store', 'AdminController@storeUser');
+$router->post('/admin/users/{id}/update', 'AdminController@updateUser');
+$router->post('/admin/users/{id}/reset-password', 'AdminController@resetUserPassword');
+$router->post('/admin/users/{id}/toggle', 'AdminController@toggleUser');
+$router->post('/admin/impersonate/{id}', 'AdminController@impersonate');
+$router->post('/admin/stop-impersonation', 'AdminController@stopImpersonation');
+$router->get('/admin/settings', 'AdminController@settings');
+$router->post('/admin/settings', 'AdminController@saveSettings');
+
+/* Super admin: maintenance (cron) + self-update */
+$router->post('/admin/maintenance/cleanup', 'MaintenanceController@cleanup');
+$router->post('/admin/updates/backup',      'MaintenanceController@backup');
+$router->post('/admin/updates/check',       'MaintenanceController@checkUpdate');
+$router->post('/admin/updates/apply',       'MaintenanceController@applyUpdate');
+$router->post('/admin/migrations/run',      'MaintenanceController@runMigrations');
+$router->get('/admin/backups/download',      'MaintenanceController@downloadBackup');
+$router->post('/admin/backups/restore',      'MaintenanceController@restoreBackup');

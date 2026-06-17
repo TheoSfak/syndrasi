@@ -492,4 +492,241 @@ class NotificationService
         foreach (User::teamAdmins($team['id']) as $admin) {
             Notification::create([
                 'municipality_id' => $event['municipality_id'],
-                'user_id'     
+                'user_id'         => $admin['id'],
+                'team_id'         => $team['id'],
+                'event_id'        => $event['id'],
+                'title'           => $title,
+                'message'         => $msg,
+                'type'            => 'photo_request',
+                'email_sent'      => 0,
+            ]);
+            self::sendPush($admin['id'], $title, $msg);
+        }
+    }
+
+    /** Team uploaded a photo — notify municipality admins (in-app + push). */
+    public static function photoUploaded(array $event, int $teamId)
+    {
+        $team  = VolunteerTeam::find($teamId);
+        $tname = $team['name'] ?? ('#' . $teamId);
+        $title = 'Νέα φωτογραφία ομάδας';
+        $msg   = 'Η ομάδα «' . $tname . '» έστειλε φωτογραφία για τη δράση «' . $event['title'] . '».';
+        foreach (User::municipalityAdmins($event['municipality_id']) as $admin) {
+            Notification::create([
+                'municipality_id' => $event['municipality_id'],
+                'user_id'         => $admin['id'],
+                'event_id'        => $event['id'],
+                'title'           => $title,
+                'message'         => $msg,
+                'type'            => 'photo_uploaded',
+                'email_sent'      => 0,
+            ]);
+            self::sendPush($admin['id'], $title, $msg);
+        }
+    }
+
+    /* ── Active-event communications ─────────────────────────────────────── */
+
+    /**
+     * SOS / man-down raised by a team — FORCED push + SMS to all command staff
+     * (municipality admins + operators), regardless of notification-channel settings.
+     */
+    public static function sosRaised(array $alert, array $event, array $team)
+    {
+        $mid     = (int) $event['municipality_id'];
+        $tname   = $team['name'] ?? 'Ομάδα';
+        $title   = '🆘 SOS — ' . $tname;
+        $hasGeo  = !empty($alert['latitude']) && !empty($alert['longitude']);
+        $note    = !empty($alert['note']) ? ' Σημείωση: ' . $alert['note'] : '';
+        $msg     = 'Η ομάδα «' . $tname . '» εξέπεμψε SOS στη δράση «' . $event['title'] . '».' . $note;
+        $link    = self::absoluteUrl('/operations/events/' . $event['id']);
+        $geoTxt  = $hasGeo ? (' Θέση: ' . $alert['latitude'] . ',' . $alert['longitude'] . '.') : '';
+        $sms     = 'SOS! ' . $tname . ' — ' . $event['title'] . '.' . $geoTxt . ' ' . $link;
+
+        foreach (User::commandStaff($mid) as $u) {
+            try {
+                Notification::create([
+                    'municipality_id' => $mid,
+                    'user_id'         => $u['id'],
+                    'event_id'        => $event['id'],
+                    'title'           => $title,
+                    'message'         => $msg,
+                    'type'            => 'sos',
+                    'email_sent'      => 0,
+                ]);
+                self::sendPush($u['id'], $title, $msg);       // forced — always
+                if (!empty($u['phone'])) {
+                    SmsService::send($u['phone'], $sms, $mid); // forced — always
+                }
+            } catch (Throwable $e) {
+                error_log('[SOS] notify failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /** Command acknowledged a team's SOS — close the loop back to the team. */
+    public static function sosAcknowledged(array $alert, array $event)
+    {
+        $title = 'Το SOS σας ελήφθη';
+        $msg   = 'Ο δήμος έλαβε το SOS σας για τη δράση «' . $event['title'] . '» και ανταποκρίνεται.';
+        foreach (User::teamAdmins((int) $alert['team_id']) as $u) {
+            try {
+                Notification::create([
+                    'municipality_id' => (int) $event['municipality_id'],
+                    'user_id'         => $u['id'],
+                    'team_id'         => (int) $alert['team_id'],
+                    'event_id'        => (int) $event['id'],
+                    'title'           => $title,
+                    'message'         => $msg,
+                    'type'            => 'sos_ack',
+                    'email_sent'      => 0,
+                ]);
+                self::sendPush($u['id'], $title, $msg);
+            } catch (Throwable $e) {
+                error_log('[SOS] ack notify failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Command → team(s) message or order. $teamIds = list of team ids to deliver to
+     * (a broadcast resolves to all approved teams before calling this).
+     */
+    public static function commandMessage(array $event, array $teamIds, string $kind, string $body)
+    {
+        $mid   = (int) $event['municipality_id'];
+        $title = $kind === 'order' ? 'Εντολή δήμου' : 'Μήνυμα δήμου';
+        $msg   = mb_substr(trim($body), 0, 200);
+        foreach (array_unique(array_map('intval', $teamIds)) as $tid) {
+            foreach (User::teamAdmins($tid) as $u) {
+                try {
+                    Notification::create([
+                        'municipality_id' => $mid,
+                        'user_id'         => $u['id'],
+                        'team_id'         => $tid,
+                        'event_id'        => (int) $event['id'],
+                        'title'           => $title,
+                        'message'         => $msg,
+                        'type'            => 'ops_message',
+                        'email_sent'      => 0,
+                    ]);
+                    self::sendPush($u['id'], $title, $msg);
+                } catch (Throwable $e) {
+                    error_log('[Comms] command message failed: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Command → team(s) GEO point (move / incident / poi). For 'incident' the
+     * delivery is FORCED push + SMS (to team admins with a phone and the team's
+     * mission commander), including a Google Maps link.
+     */
+    public static function commandGeoMessage(array $event, array $teamIds, string $pointKind, string $body, $lat, $lng)
+    {
+        $mid    = (int) $event['municipality_id'];
+        $titles = ['move' => 'Εντολή μετάβασης', 'incident' => '⚠️ Περιστατικό', 'poi' => 'Σημείο δήμου'];
+        $title  = $titles[$pointKind] ?? 'Σημείο δήμου';
+        $msg    = mb_substr(trim($body), 0, 200);
+        $maps   = ($lat !== null && $lng !== null) ? ('https://www.google.com/maps?q=' . $lat . ',' . $lng) : '';
+        $forced = ($pointKind === 'incident');
+        $sms    = $title . ': ' . $msg . ($maps ? ' ' . $maps : '');
+
+        foreach (array_unique(array_map('intval', $teamIds)) as $tid) {
+            foreach (User::teamAdmins($tid) as $u) {
+                try {
+                    Notification::create([
+                        'municipality_id' => $mid,
+                        'user_id'         => $u['id'],
+                        'team_id'         => $tid,
+                        'event_id'        => (int) $event['id'],
+                        'title'           => $title,
+                        'message'         => $msg,
+                        'type'            => $forced ? 'ops_incident' : 'ops_geo',
+                        'email_sent'      => 0,
+                    ]);
+                    self::sendPush($u['id'], $title, $msg);
+                    if ($forced && !empty($u['phone'])) {
+                        SmsService::send($u['phone'], $sms, $mid);
+                    }
+                } catch (Throwable $e) {
+                    error_log('[Geo] team admin notify failed: ' . $e->getMessage());
+                }
+            }
+            // Forced: also SMS the mission commander operating in the field
+            if ($forced) {
+                try {
+                    $cmd = dbq(
+                        "SELECT tm.phone FROM event_applications ea
+                         JOIN team_members tm ON tm.id = ea.mission_commander_id
+                         WHERE ea.event_id = :eid AND ea.team_id = :tid AND ea.status = 'approved' LIMIT 1",
+                        ['eid' => $event['id'], 'tid' => $tid]
+                    )->fetch();
+                    if ($cmd && !empty($cmd['phone'])) {
+                        SmsService::send($cmd['phone'], $sms, $mid);
+                    }
+                } catch (Throwable $e) {
+                    error_log('[Geo] commander SMS failed: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
+    /** Team → command message / status ping — in-app + push to command staff. */
+    public static function teamMessage(array $event, array $team, string $title, string $body)
+    {
+        $mid = (int) $event['municipality_id'];
+        $msg = ($team['name'] ?? 'Ομάδα') . ': ' . mb_substr(trim($body), 0, 200);
+        foreach (User::commandStaff($mid) as $u) {
+            try {
+                Notification::create([
+                    'municipality_id' => $mid,
+                    'user_id'         => $u['id'],
+                    'event_id'        => (int) $event['id'],
+                    'title'           => $title,
+                    'message'         => $msg,
+                    'type'            => 'ops_message',
+                    'email_sent'      => 0,
+                ]);
+                self::sendPush($u['id'], $title, $msg);
+            } catch (Throwable $e) {
+                error_log('[Comms] team message failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /** Shortage acknowledged/resolved by command — notify the reporting team. */
+    public static function shortageHandled(array $shortage, array $event, string $action)
+    {
+        $verb  = $action === 'resolved' ? 'επιλύθηκε' : 'ελήφθη';
+        $title = 'Η έλλειψη ' . $verb;
+        $msg   = 'Η αναφορά έλλειψης «' . $shortage['title'] . '» ' . $verb
+               . ' από τον δήμο (δράση «' . $event['title'] . '»).';
+        foreach (User::teamAdmins((int) $shortage['team_id']) as $u) {
+            try {
+                Notification::create([
+                    'municipality_id' => (int) $event['municipality_id'],
+                    'user_id'         => $u['id'],
+                    'team_id'         => (int) $shortage['team_id'],
+                    'event_id'        => (int) $event['id'],
+                    'title'           => $title,
+                    'message'         => $msg,
+                    'type'            => 'shortage_update',
+                    'email_sent'      => 0,
+                ]);
+                self::sendPush($u['id'], $title, $msg);
+            } catch (Throwable $e) {
+                error_log('[Comms] shortage update failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /** Build an absolute URL (scheme+host) for links sent off-site, e.g. email. */
+    private static function absoluteUrl(string $path): string
+    {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        return $scheme . '://' . $host . url($path);
+    }
+}

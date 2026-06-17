@@ -423,4 +423,12 @@ class UpdateService
         );
     }
 
-    private static function
+    private static function log(string $msg): void
+    {
+        @file_put_contents(
+            BASE_PATH . '/storage/logs/update.log',
+            '[' . date('Y-m-d H:i:s') . '] ' . $msg . "\n",
+            FILE_APPEND | LOCK_EX
+        );
+    }
+}

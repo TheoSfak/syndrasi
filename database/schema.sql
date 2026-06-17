@@ -285,4 +285,22 @@ CREATE TABLE municipality_settings (
   updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY unique_mun_key (municipality_id, setting_key),
   INDEX idx_msettings_mid (municipality_id)
-) ENGINE=InnoDB DEFAULT CHAR
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Simple key/value settings managed by the super admin
+CREATE TABLE app_settings (
+  setting_key VARCHAR(100) PRIMARY KEY,
+  setting_value TEXT NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Default categories
+INSERT INTO event_categories (name) VALUES
+('Πολιτιστική εκδήλωση'),
+('Συναυλία'),
+('Αθλητική δράση'),
+('Κοινωνική δράση'),
+('Εορταστική δράση'),
+('Άλλη δράση');

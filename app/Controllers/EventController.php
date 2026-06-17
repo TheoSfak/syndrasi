@@ -605,4 +605,66 @@ class EventController
             'requested_vehicle'           => (int) $event['requested_vehicle'],
             'requested_medical_equipment' => (int) $event['requested_medical_equipment'],
             'instructions'                => $event['instructions'],
-            'shifts_json'                 => json_encode($shifts, JSON_UNESCAPED_UNICODE
+            'shifts_json'                 => json_encode($shifts, JSON_UNESCAPED_UNICODE),
+            'created_by'                  => $_SESSION['user_id'],
+        ]);
+        audit('event_template_created', 'event', $event['id'], $name);
+        flash_set('success', 'Το πρότυπο «' . $name . '» αποθηκεύτηκε.');
+        redirect('/events/' . $event['id']);
+    }
+
+    /** POST /event-templates/{id}/delete */
+    public function deleteTemplate($id)
+    {
+        requireRole(['municipality_admin']);
+        EventTemplate::delete((int) $id, current_municipality_id());
+        audit('event_template_deleted', 'event_template', (int) $id);
+        flash_set('success', 'Το πρότυπο διαγράφηκε.');
+        redirect('/events');
+    }
+
+    private function validated()
+    {
+        $title = post_str('title');
+        $start = post_str('start_datetime');
+        $end   = post_str('end_datetime');
+
+        $errors = [];
+        if ($title === '') {
+            $errors[] = 'Ο τίτλος είναι υποχρεωτικός.';
+        }
+        if ($start === '' || strtotime($start) === false) {
+            $errors[] = 'Η ημερομηνία έναρξης δεν είναι έγκυρη.';
+        }
+        if ($end === '' || strtotime($end) === false) {
+            $errors[] = 'Η ημερομηνία λήξης δεν είναι έγκυρη.';
+        }
+        if (empty($errors) && strtotime($end) <= strtotime($start)) {
+            $errors[] = 'Η λήξη πρέπει να είναι μετά την έναρξη.';
+        }
+
+        if ($errors) {
+            remember_old();
+            foreach ($errors as $err) {
+                flash_set('danger', $err);
+            }
+            return null;
+        }
+
+        return [
+            'category_id'                 => post_int('category_id') ?: null,
+            'title'                       => $title,
+            'description'                 => post_str('description') ?: null,
+            'location_name'               => post_str('location_name') ?: null,
+            'address'                     => post_str('address') ?: null,
+            'latitude'                    => post_float_or_null('latitude'),
+            'longitude'                   => post_float_or_null('longitude'),
+            'start_datetime'              => date('Y-m-d H:i:s', strtotime($start)),
+            'end_datetime'                => date('Y-m-d H:i:s', strtotime($end)),
+            'requested_people'            => max(0, post_int('requested_people')),
+            'requested_vehicle'           => post_bool('requested_vehicle'),
+            'requested_medical_equipment' => post_bool('requested_medical_equipment'),
+            'instructions'                => post_str('instructions') ?: null,
+        ];
+    }
+}

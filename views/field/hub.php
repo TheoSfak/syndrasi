@@ -231,4 +231,61 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   window.ackOrder=function(id){postJSON('/ack-order',{message_id:id}).then(pollComms);};
 
   /* Comms polling */
-  var msgList=document.getElementBy
+  var msgList=document.getElementById('msgList'),orderBanner=document.getElementById('orderBanner');
+  function renderOrders(msgs){
+    var p=(msgs||[]).filter(function(m){return m.kind==='order'&&!m.acknowledged_at;});
+    if(!p.length){orderBanner.innerHTML='';orderBanner.style.display='none';return;}
+    orderBanner.style.display='';
+    orderBanner.innerHTML=p.map(function(m){var t=(m.created_at||'').substr(11,5);
+      var head=m.point_kind==='incident'?'⚠️ ΠΕΡΙΣΤΑΤΙΚΟ':(m.point_kind==='move'?'➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ':'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var dir=(m.latitude!=null&&m.longitude!=null)?'<a href="https://www.google.com/maps?q='+m.latitude+','+m.longitude+'" target="_blank" rel="noopener" class="order-pin-btn" style="display:block;text-align:center;text-decoration:none;background:#2563eb;color:#fff;margin-bottom:8px"><i class="bi bi-geo-alt-fill"></i> Οδηγίες (Google Maps)</a>':'';
+      return '<div class="order-pin"><div class="order-pin-h"><i class="bi bi-megaphone-fill"></i> '+head+'</div><div class="order-pin-b">'+esc(m.body||'')+'</div>'+dir+'<button class="order-pin-btn" onclick="ackOrder('+m.id+')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button><div style="font-size:11px;color:#fde68a;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
+    }).join('');
+  }
+  function renderGeoPoints(msgs){
+    var map=window.__teamMap,grp=window.__teamGeo; if(!map||!grp)return; grp.clearLayers();
+    (msgs||[]).forEach(function(m){
+      if(m.latitude==null||m.longitude==null||!m.point_kind)return;
+      var color=m.point_kind==='incident'?'#dc2626':(m.point_kind==='move'?'#2563eb':'#0d9488');
+      var lbl=m.point_kind==='incident'?'⚠️ Περιστατικό':(m.point_kind==='move'?'➡️ Μετάβαση':'📍 Σημείο');
+      L.circleMarker([m.latitude,m.longitude],{radius:10,color:color,fillColor:color,fillOpacity:.7}).addTo(grp)
+        .bindPopup('<b>'+lbl+'</b><br>'+esc(m.body||'')+'<br><a href="https://www.google.com/maps?q='+m.latitude+','+m.longitude+'" target="_blank" rel="noopener">Οδηγίες</a>');
+    });
+  }
+  function renderMsgs(msgs){
+    if(!msgs||!msgs.length){msgList.innerHTML='<div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Καμία επικοινωνία ακόμη.</div>';return;}
+    msgList.innerHTML=msgs.map(function(m){
+      var cls=m.kind==='order'?'msg-order':(m.kind==='status'?'msg-status':(m.sender_role==='command'?'msg-cmd':'msg-team'));
+      var who=m.sender_role==='command'?'Δήμος':(m.sender_name||'Ομάδα');var t=(m.created_at||'').substr(11,5);
+      var h='<div class="msg '+cls+'"><div>'+(m.kind==='order'?'📋 <strong>ΕΝΤΟΛΗ:</strong> ':'')+esc(m.body||'')+'</div>';
+      if(m.kind==='order'){h+=m.acknowledged_at?'<div style="font-size:11px;color:#4ade80;margin-top:4px"><i class="bi bi-check2-all"></i> Επιβεβαιώθηκε</div>':'<button class="order-pin-btn" style="margin-top:6px;padding:8px" onclick="ackOrder('+m.id+')">Επιβεβαίωση λήψης</button>';}
+      h+='<div class="msg-t">'+who+' · '+t+'</div></div>';return h;
+    }).join('');msgList.scrollTop=msgList.scrollHeight;
+  }
+  function renderSos(sos){
+    if(!sos){sosBanner.style.display='none';if(sosBtn){sosBtn.classList.remove('sos-pulse');sosBtn.disabled=!IS_ACTIVE;if(IS_ACTIVE)sosBtn.querySelector('.sos-sub').textContent='Άμεση κλήση βοήθειας στον δήμο';}return;}
+    sosBanner.style.display='flex';
+    if(sos.status==='acknowledged'){sosBanner.className='sos-banner ack';sosBanner.innerHTML='<i class="bi bi-check2-all"></i> Το SOS ελήφθη από τον δήμο'+(sos.ack_name?' ('+esc(sos.ack_name)+')':'')+' — έρχεται βοήθεια.';sosBtn.classList.remove('sos-pulse');}
+    else{sosBanner.className='sos-banner';sosBanner.innerHTML='<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης…';sosBtn.classList.add('sos-pulse');}
+    sosBtn.disabled=true;sosBtn.querySelector('.sos-sub').textContent='SOS ενεργό';
+  }
+  /* Δωμάτιο Επιχείρησης */
+  var roomList=document.getElementById('roomList');
+  function renderRoom(msgs){
+    if(!roomList)return;
+    if(!msgs||!msgs.length){roomList.innerHTML='<div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Κανένα μήνυμα ακόμη.</div>';return;}
+    roomList.innerHTML=msgs.map(function(m){
+      var cmd=m.sender_role==='command';var who=cmd?'Δήμος':(m.sender_label||m.team_name||m.sender_name||'Ομάδα');var t=(m.created_at||'').substr(11,5);
+      return '<div class="msg '+(cmd?'msg-cmd':'msg-team')+'"><div>'+esc(m.body||'')+'</div><div class="msg-t">'+esc(who)+' · '+t+'</div></div>';
+    }).join('');roomList.scrollTop=roomList.scrollHeight;
+  }
+  (function(){var s=document.getElementById('roomSend'),i=document.getElementById('roomInput');
+    function send(){var b=(i.value||'').trim();if(!b)return;i.value='';postJSON('/room',{body:b}).then(pollComms);}
+    if(s)s.addEventListener('click',send);if(i)i.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();send();}});})();
+
+  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderGeoPoints(d.messages);renderSos(d.sos);renderRoom(d.room);var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=d.photo_request?'block':'none';}}).catch(function(){});}
+  pollComms();setInterval(pollComms,5000);
+})();
+</script>
+</body>
+</html>
