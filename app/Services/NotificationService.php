@@ -618,6 +618,61 @@ class NotificationService
         }
     }
 
+    /**
+     * Command → team(s) GEO point (move / incident / poi). For 'incident' the
+     * delivery is FORCED push + SMS (to team admins with a phone and the team's
+     * mission commander), including a Google Maps link.
+     */
+    public static function commandGeoMessage(array $event, array $teamIds, string $pointKind, string $body, $lat, $lng)
+    {
+        $mid    = (int) $event['municipality_id'];
+        $titles = ['move' => 'Εντολή μετάβασης', 'incident' => '⚠️ Περιστατικό', 'poi' => 'Σημείο δήμου'];
+        $title  = $titles[$pointKind] ?? 'Σημείο δήμου';
+        $msg    = mb_substr(trim($body), 0, 200);
+        $maps   = ($lat !== null && $lng !== null) ? ('https://www.google.com/maps?q=' . $lat . ',' . $lng) : '';
+        $forced = ($pointKind === 'incident');
+        $sms    = $title . ': ' . $msg . ($maps ? ' ' . $maps : '');
+
+        foreach (array_unique(array_map('intval', $teamIds)) as $tid) {
+            foreach (User::teamAdmins($tid) as $u) {
+                try {
+                    Notification::create([
+                        'municipality_id' => $mid,
+                        'user_id'         => $u['id'],
+                        'team_id'         => $tid,
+                        'event_id'        => (int) $event['id'],
+                        'title'           => $title,
+                        'message'         => $msg,
+                        'type'            => $forced ? 'ops_incident' : 'ops_geo',
+                        'email_sent'      => 0,
+                    ]);
+                    self::sendPush($u['id'], $title, $msg);
+                    if ($forced && !empty($u['phone'])) {
+                        SmsService::send($u['phone'], $sms, $mid);
+                    }
+                } catch (Throwable $e) {
+                    error_log('[Geo] team admin notify failed: ' . $e->getMessage());
+                }
+            }
+            // Forced: also SMS the mission commander operating in the field
+            if ($forced) {
+                try {
+                    $cmd = dbq(
+                        "SELECT tm.phone FROM event_applications ea
+                         JOIN team_members tm ON tm.id = ea.mission_commander_id
+                         WHERE ea.event_id = :eid AND ea.team_id = :tid AND ea.status = 'approved' LIMIT 1",
+                        ['eid' => $event['id'], 'tid' => $tid]
+                    )->fetch();
+                    if ($cmd && !empty($cmd['phone'])) {
+                        SmsService::send($cmd['phone'], $sms, $mid);
+                    }
+                } catch (Throwable $e) {
+                    error_log('[Geo] commander SMS failed: ' . $e->getMessage());
+                }
+            }
+        }
+    }
+
     /** Team → command message / status ping — in-app + push to command staff. */
     public static function teamMessage(array $event, array $team, string $title, string $body)
     {

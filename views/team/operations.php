@@ -99,6 +99,8 @@ window.addEventListener('load', function () {
     b.push([tLat, tLng]);
   }
   if (b.length > 1) { try { map.fitBounds(b, { padding: [40, 40], maxZoom: 16 }); } catch (e) {} }
+  window.__teamMap = map;
+  window.__teamGeo = L.layerGroup().addTo(map);
   setTimeout(function () { map.invalidateSize(); }, 200);
 });
 </script>
@@ -414,19 +416,38 @@ window.addEventListener('load', function () {
     orderBannerEl.innerHTML = pending.map(function (m) {
       var who = m.sender_name || 'Δήμος';
       var t = (m.created_at || '').substr(11, 5);
-      return '<div class="alert alert-warning border-warning border-2 shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2" role="alert">' +
-        '<div><div class="fw-bold"><i class="bi bi-megaphone-fill me-1"></i>ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ</div>' +
+      var isInc = m.point_kind === 'incident';
+      var head = isInc ? '⚠️ ΠΕΡΙΣΤΑΤΙΚΟ' : (m.point_kind === 'move' ? '➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ' : 'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var cls  = isInc ? 'alert-danger border-danger' : 'alert-warning border-warning';
+      var dir  = (m.latitude != null && m.longitude != null)
+        ? '<a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener" class="btn btn-primary"><i class="bi bi-geo-alt-fill me-1"></i>Οδηγίες</a>' : '';
+      return '<div class="alert ' + cls + ' border-2 shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2" role="alert">' +
+        '<div><div class="fw-bold"><i class="bi bi-megaphone-fill me-1"></i>' + head + '</div>' +
         '<div class="fs-6">' + esc(m.body || '') + '</div>' +
         '<div class="small text-muted">' + esc(who) + ' · ' + t + '</div></div>' +
+        '<div class="d-flex gap-2">' + dir +
         '<button type="button" class="btn btn-warning fw-bold" onclick="ackOrder(' + m.id + ')"><i class="bi bi-check2-all me-1"></i>Επιβεβαίωση λήψης</button>' +
-        '</div>';
+        '</div></div>';
     }).join('');
+  }
+
+  function renderGeoPoints(msgs) {
+    var map = window.__teamMap, grp = window.__teamGeo;
+    if (!map || !grp) return;
+    grp.clearLayers();
+    (msgs || []).forEach(function (m) {
+      if (m.latitude == null || m.longitude == null || !m.point_kind) return;
+      var color = m.point_kind === 'incident' ? '#dc2626' : (m.point_kind === 'move' ? '#2563eb' : '#0d9488');
+      var lbl   = m.point_kind === 'incident' ? '⚠️ Περιστατικό' : (m.point_kind === 'move' ? '➡️ Μετάβαση' : '📍 Σημείο');
+      L.circleMarker([m.latitude, m.longitude], { radius: 10, color: color, fillColor: color, fillOpacity: .7 }).addTo(grp)
+        .bindPopup('<b>' + lbl + '</b><br>' + esc(m.body || '') + '<br><a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener">Οδηγίες</a>');
+    });
   }
 
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); } })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); } })
       .catch(function () {});
   }
   pollComms();

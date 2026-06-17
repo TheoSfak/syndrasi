@@ -8,6 +8,12 @@ $eid      = (int) $event['id'];
 $approved = (int) $application['approved_people'];
 $isActive = ($event['status'] === 'active');
 
+/* Map coordinates: event location + team's last GPS ping */
+$evLat = (isset($event['latitude'])  && $event['latitude']  !== null && $event['latitude']  !== '') ? (float) $event['latitude']  : null;
+$evLng = (isset($event['longitude']) && $event['longitude'] !== null && $event['longitude'] !== '') ? (float) $event['longitude'] : null;
+$tLat  = ($lastPing && $lastPing['latitude']  !== null) ? (float) $lastPing['latitude']  : null;
+$tLng  = ($lastPing && $lastPing['longitude'] !== null) ? (float) $lastPing['longitude'] : null;
+
 /* Current check-in state helpers */
 $checkinStatus = $lastCheckin ? $lastCheckin['status'] : null;
 $checkinPeople = $lastCheckin ? (int) $lastCheckin['present_people'] : 0;
@@ -41,6 +47,8 @@ if ($isPresent) {
 <title><?= e($pageTitle) ?></title>
 <link rel="icon" href="<?= e(url('/assets/img/icons/icon-192.png')) ?>">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>window.csrfToken = '<?= e(csrf_token()) ?>'; window.baseUrl = '<?= e(base_uri()) ?>';</script>
 <style>
 /* ── Reset & base ───────────────────────────────────────────────────────── */
@@ -475,6 +483,14 @@ if ($flash):
     <div id="locResult"></div>
   </div>
 
+  <!-- ── Χάρτης ──────────────────────────────────────────────────────── -->
+  <div class="action-card">
+    <div class="presence-header"><i class="bi bi-map"></i> Χάρτης Δράσης
+      <?php if ($lastPing): ?><span style="font-size:12px;font-weight:400;color:#7ab5ae;margin-left:auto">Στίγμα: <?= e(gr_time($lastPing['created_at'])) ?></span><?php endif; ?>
+    </div>
+    <div id="teamMap" style="height:240px;background:#0a1414"></div>
+  </div>
+
   <!-- ── 2. Δήλωση Παρουσίας ────────────────────────────────────────── -->
   <div class="action-card">
     <div class="presence-header">
@@ -657,6 +673,24 @@ if ($flash):
     }).then(function (r) { return r.json(); });
   }
   function escapeHtml(s) { var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+
+  /* ── Map (event point + our last ping) ── */
+  (function initMap(){
+    var el = document.getElementById('teamMap');
+    if (!el || typeof L === 'undefined') return;
+    var evLat = <?= $evLat !== null ? $evLat : 'null' ?>, evLng = <?= $evLng !== null ? $evLng : 'null' ?>;
+    var tLat  = <?= $tLat  !== null ? $tLat  : 'null' ?>, tLng  = <?= $tLng  !== null ? $tLng  : 'null' ?>;
+    var center = (tLat !== null) ? [tLat, tLng] : ((evLat !== null) ? [evLat, evLng] : [35.3387, 25.1442]);
+    var map = L.map('teamMap').setView(center, 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+    var b = [];
+    if (evLat !== null) { L.marker([evLat, evLng]).addTo(map).bindPopup('Σημείο δράσης'); b.push([evLat, evLng]); }
+    if (tLat  !== null) { L.circleMarker([tLat, tLng], { radius: 9, color: '#22d3ee', fillColor: '#22d3ee', fillOpacity: .85 }).addTo(map).bindPopup('Η θέση μας'); b.push([tLat, tLng]); }
+    if (b.length > 1) { try { map.fitBounds(b, { padding: [30, 30], maxZoom: 16 }); } catch (e) {} }
+    window.__teamMap = map;
+    window.__teamGeo = L.layerGroup().addTo(map);
+    setTimeout(function () { map.invalidateSize(); }, 250);
+  })();
 
   /* ── Wake Lock (keep screen on) ─────────────────────────────────── */
   var wakeLock = null;
@@ -897,18 +931,34 @@ if ($flash):
     orderBannerEl.style.display = '';
     orderBannerEl.innerHTML = pending.map(function (m) {
       var t = (m.created_at || '').substr(11, 5);
+      var head = m.point_kind === 'incident' ? '⚠️ ΠΕΡΙΣΤΑΤΙΚΟ' : (m.point_kind === 'move' ? '➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ' : 'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var dir = (m.latitude != null && m.longitude != null)
+        ? '<a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener" class="order-pin-btn" style="display:block;text-align:center;text-decoration:none;background:#2563eb;color:#fff;margin-bottom:8px"><i class="bi bi-geo-alt-fill"></i> Οδηγίες (Google Maps)</a>' : '';
       return '<div class="order-pin">' +
-        '<div class="order-pin-head"><i class="bi bi-megaphone-fill"></i> ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ</div>' +
-        '<div class="order-pin-body">' + escapeHtml(m.body || '') + '</div>' +
+        '<div class="order-pin-head"><i class="bi bi-megaphone-fill"></i> ' + head + '</div>' +
+        '<div class="order-pin-body">' + escapeHtml(m.body || '') + '</div>' + dir +
         '<button type="button" class="order-pin-btn" onclick="ackOrder(' + m.id + ')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button>' +
         '<div class="order-pin-time">' + t + '</div></div>';
     }).join('');
   }
 
+  function renderGeoPoints(msgs) {
+    var map = window.__teamMap, grp = window.__teamGeo;
+    if (!map || !grp) return;
+    grp.clearLayers();
+    (msgs || []).forEach(function (m) {
+      if (m.latitude == null || m.longitude == null || !m.point_kind) return;
+      var color = m.point_kind === 'incident' ? '#dc2626' : (m.point_kind === 'move' ? '#2563eb' : '#0d9488');
+      var lbl   = m.point_kind === 'incident' ? '⚠️ Περιστατικό' : (m.point_kind === 'move' ? '➡️ Μετάβαση' : '📍 Σημείο');
+      L.circleMarker([m.latitude, m.longitude], { radius: 10, color: color, fillColor: color, fillOpacity: .7 }).addTo(grp)
+        .bindPopup('<b>' + lbl + '</b><br>' + escapeHtml(m.body || '') + '<br><a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener">Οδηγίες</a>');
+    });
+  }
+
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); } })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); } })
       .catch(function () {});
   }
   pollComms();

@@ -28,17 +28,28 @@ class EventMessage
 
     public static function create(array $d): int
     {
-        dbq(
-            'INSERT INTO event_messages
-               (municipality_id, event_id, team_id, sender_role, sender_user_id, kind, status_code, body)
-             VALUES
-               (:mid, :eid, :tid, :role, :uid, :kind, :code, :body)',
-            [
-                'mid'  => $d['mid'],  'eid'  => $d['eid'],  'tid'  => $d['tid'] ?? null,
-                'role' => $d['role'], 'uid'  => $d['uid'],  'kind' => $d['kind'] ?? 'message',
-                'code' => $d['code'] ?? null, 'body' => $d['body'] ?? null,
-            ]
-        );
+        $common = [
+            'mid'  => $d['mid'],  'eid'  => $d['eid'],  'tid'  => $d['tid'] ?? null,
+            'role' => $d['role'], 'uid'  => $d['uid'],  'kind' => $d['kind'] ?? 'message',
+            'code' => $d['code'] ?? null, 'body' => $d['body'] ?? null,
+        ];
+        try {
+            dbq(
+                'INSERT INTO event_messages
+                   (municipality_id, event_id, team_id, sender_role, sender_user_id, kind, status_code, body, latitude, longitude, point_kind)
+                 VALUES
+                   (:mid, :eid, :tid, :role, :uid, :kind, :code, :body, :lat, :lng, :pkind)',
+                $common + ['lat' => $d['lat'] ?? null, 'lng' => $d['lng'] ?? null, 'pkind' => $d['pkind'] ?? null]
+            );
+        } catch (Throwable $e) {
+            // Migration 014 (geo columns) not applied yet — fall back so comms keep working.
+            dbq(
+                'INSERT INTO event_messages
+                   (municipality_id, event_id, team_id, sender_role, sender_user_id, kind, status_code, body)
+                 VALUES (:mid, :eid, :tid, :role, :uid, :kind, :code, :body)',
+                $common
+            );
+        }
         return (int) db()->lastInsertId();
     }
 

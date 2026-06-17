@@ -75,6 +75,37 @@ $completionRate = $approvedCount > 0
     </div>
   </div>
 
+  <!-- Municipality after-action report -->
+  <div class="card shadow-sm mb-4 border-start border-4 border-primary">
+    <div class="card-header bg-white fw-semibold">
+      <i class="bi bi-clipboard-check me-1"></i> Απολογισμός Δήμου (After-Action)
+      <?php if (!empty($muniReport)): ?><span class="badge text-bg-success ms-1">Αποθηκευμένος</span><?php endif; ?>
+    </div>
+    <div class="card-body">
+      <form method="post" action="<?= e(url('/events/' . $event['id'] . '/municipality-debrief')) ?>">
+        <?= csrf_field() ?>
+        <div class="d-flex flex-wrap gap-3 mb-3 small text-muted">
+          <span>Σύνολα από αναφορές ομάδων:</span>
+          <span><strong><?= (int) ($teamAgg['i'] ?? 0) ?></strong> περιστατικά</span>
+          <span><strong><?= (int) ($teamAgg['t'] ?? 0) ?></strong> διακομιδές</span>
+          <span><strong><?= (int) ($teamAgg['f'] ?? 0) ?></strong> πρώτες βοήθειες</span>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Συνολική αξιολόγηση / Σύνοψη</label>
+          <textarea name="summary" class="form-control" rows="3" placeholder="Πώς πήγε η δράση συνολικά, συντονισμός, ανταπόκριση ομάδων…"><?= e($muniReport['summary'] ?? '') ?></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Συμπεράσματα &amp; βελτιώσεις (lessons learned)</label>
+          <textarea name="notes" class="form-control" rows="3" placeholder="Τι να βελτιωθεί, ενέργειες για την επόμενη φορά…"><?= e($muniReport['notes'] ?? '') ?></textarea>
+        </div>
+        <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Αποθήκευση Απολογισμού</button>
+        <?php if (!empty($muniReport)): ?>
+          <span class="small text-muted ms-2">Τελευταία ενημέρωση: <?= e(gr_datetime($muniReport['updated_at'] ?? $muniReport['created_at'])) ?></span>
+        <?php endif; ?>
+      </form>
+    </div>
+  </div>
+
   <!-- Debriefs list -->
   <?php if (empty($debriefs)): ?>
     <div class="alert alert-info d-flex align-items-center gap-2">

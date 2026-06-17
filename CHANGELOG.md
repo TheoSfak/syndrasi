@@ -23,6 +23,29 @@ versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 - **Καρφιτσωμένο banner ΕΝΤΟΛΗΣ** στην κορυφή των σελίδων της ομάδας (& field hub) για
   κάθε ανεπιβεβαίωτη εντολή — παραμένει μέχρι «Επιβεβαίωση λήψης».
 
+- **Απολογισμός Δήμου (After-Action)** — στη σελίδα Debriefs της δράσης ο διαχειριστής
+  γράφει δική του σύνοψη + συμπεράσματα/βελτιώσεις (`municipality_report`), με
+  συγκεντρωτικά τα σύνολα από τις αναφορές ομάδων. Χωρίς migration.
+
+- **Χάρτης και στο Mobile Action Hub (Live) και στο field hub** του Mission Υπευθύνου
+  (σημείο δράσης + θέση ομάδας).
+- **Background web push** — προστέθηκαν `push` + `notificationclick` handlers στον service
+  worker (έλειπαν), ώστε να εμφανίζονται popup ειδοποιήσεις και με κλειστή/background
+  εφαρμογή. Τα VAPID keys δημιουργούνται αυτόματα· ο χρήστης ενεργοποιεί push με το 🔔.
+  Cache → `syndrasi-v4`.
+- **Αίτημα φωτογραφίας στον Mission Υπεύθυνο** — banner στο field hub (live polling),
+  ώστε το αίτημα να φτάνει στον υπεύθυνο πεδίου, όχι μόνο στον αρχηγό.
+- **Geo-εντολές / σημεία δήμου→ομάδα** — ο δήμος στέλνει **σημείο στον χάρτη**
+  (κλικ στον χάρτη ή συντεταγμένες) σε μία ομάδα ή σε όλες, με τύπο **Μετάβαση /
+  Περιστατικό / Σημείο ενδιαφέροντος**. Η ομάδα το βλέπει ως **pin στον χάρτη** (Live +
+  field hub + ops page) και καρφιτσωμένο banner με κουμπί **«Οδηγίες (Google Maps)»** +
+  ACK (για Μετάβαση/Περιστατικό). Το **Περιστατικό** φεύγει με **forced push + SMS**
+  (team admins + Mission Υπεύθυνος). Migration `014_event_message_geo.sql`.
+
+### Fixed
+- Η σελίδα λεπτομερειών δράσης ομάδας (`/team/events/{id}`) δεν «έσκαγε» (500) όταν
+  έλειπε η migration του field link — ο έλεγχος είναι πλέον σε try/catch.
+
 ### Notes
 - Χρειάζεται εκτέλεση της migration `013_field_token.sql` (Platform Settings → Updates
   → run pending, ή import). Οι υπόλοιπες αλλαγές δεν χρειάζονται migration.

@@ -262,6 +262,30 @@ body.ops-dark main             { background:transparent!important; }
         <button type="button" class="btn btn-sm btn-warning flex-fill fw-bold" id="cmsgSendOrder" title="Στέλνεται ως εντολή — ζητά επιβεβαίωση λήψης από την ομάδα"><i class="bi bi-megaphone me-1"></i>Εντολή</button>
       </div>
     </div>
+    <!-- Geo point sender -->
+    <div class="row g-2 align-items-end mb-3 pt-2 border-top">
+      <div class="col-12"><span class="small text-muted"><i class="bi bi-geo-alt me-1"></i>Αποστολή <strong>σημείου</strong> στην ομάδα (παραλήπτης από πάνω)</span></div>
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Τύπος</label>
+        <select class="form-select form-select-sm" id="geoKind">
+          <option value="move">➡️ Μετάβαση εδώ</option>
+          <option value="incident">⚠️ Περιστατικό</option>
+          <option value="poi">📍 Σημείο ενδιαφέροντος</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Συντεταγμένες</label>
+        <input type="text" class="form-control form-control-sm" id="geoCoords" placeholder="lat, lng">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Σχόλιο</label>
+        <input type="text" class="form-control form-control-sm" id="geoNote" maxlength="200" placeholder="προαιρετικό">
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="geoPickBtn" title="Κλικ στον χάρτη"><i class="bi bi-crosshair me-1"></i>Χάρτη</button>
+        <button type="button" class="btn btn-sm btn-success flex-fill" id="geoSendBtn"><i class="bi bi-send-fill me-1"></i>Σημείο</button>
+      </div>
+    </div>
     <div class="msg-thread" id="msgThread"><div class="text-muted small text-center">Καμία επικοινωνία ακόμη.</div></div>
   </div>
 </div>
@@ -770,6 +794,50 @@ body.ops-dark main             { background:transparent!important; }
   document.getElementById('cmsgSendMsg').addEventListener('click', function(){ sendCmsg('message'); });
   document.getElementById('cmsgSendOrder').addEventListener('click', function(){ sendCmsg('order'); });
   document.getElementById('cmsgBody').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); sendCmsg('message'); } });
+
+  /* ─── Geo point sender ─── */
+  var geoPick = false, geoTempMarker = null;
+  var geoPickBtn = document.getElementById('geoPickBtn');
+  var geoCoords  = document.getElementById('geoCoords');
+  function geoBtnReset() { if (geoPickBtn) { geoPickBtn.classList.remove('btn-warning'); geoPickBtn.classList.add('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Χάρτη'; } }
+  function setGeoPoint(lat, lng) {
+    geoCoords.value = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    if (geoTempMarker) { map.removeLayer(geoTempMarker); }
+    geoTempMarker = L.marker([lat, lng]).addTo(map).bindPopup('Επιλεγμένο σημείο').openPopup();
+  }
+  if (geoPickBtn) {
+    geoPickBtn.addEventListener('click', function () {
+      geoPick = !geoPick;
+      if (geoPick) { geoPickBtn.classList.add('btn-warning'); geoPickBtn.classList.remove('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Κλικ στον χάρτη…'; }
+      else { geoBtnReset(); }
+    });
+  }
+  map.on('click', function (e) {
+    if (!geoPick) return;
+    setGeoPoint(e.latlng.lat, e.latlng.lng);
+    geoPick = false; geoBtnReset();
+  });
+  var geoSendBtn = document.getElementById('geoSendBtn');
+  if (geoSendBtn) {
+    geoSendBtn.addEventListener('click', function () {
+      var raw = (geoCoords.value || '').trim();
+      var mm = raw.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);
+      if (!mm) { alert('Δώστε συντεταγμένες (lat, lng) ή πατήστε «Χάρτη» και κλικ στον χάρτη.'); return; }
+      var lat = parseFloat(mm[1]), lng = parseFloat(mm[2]);
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) { alert('Μη έγκυρες συντεταγμένες.'); return; }
+      var pkind = document.getElementById('geoKind').value;
+      if (pkind === 'incident' && !confirm('Αποστολή ΠΕΡΙΣΤΑΤΙΚΟΥ;\nΘα σταλεί forced push + SMS στην ομάδα.')) return;
+      postForm('/operations/events/' + EID + '/message', {
+        point_kind: pkind, latitude: lat, longitude: lng,
+        team_id: document.getElementById('cmsgTeam').value,
+        body: document.getElementById('geoNote').value
+      }).then(function () {
+        document.getElementById('geoNote').value = ''; geoCoords.value = '';
+        if (geoTempMarker) { map.removeLayer(geoTempMarker); geoTempMarker = null; }
+        pollStatus();
+      });
+    });
+  }
 
   /* ─── SOS / shortage action buttons (delegated) ─── */
   document.addEventListener('click', function(e){

@@ -500,11 +500,30 @@ class OperationController
         $body   = trim(post_str('body'));
         $kind   = post_str('kind') === 'order' ? 'order' : 'message';
         $teamId = post_int('team_id') ?: null;   // null = broadcast to all approved teams
-        if ($body === '') { json_out(['ok' => false, 'error' => 'Κενό μήνυμα.']); return; }
+
+        // Optional geo point (move / incident / poi)
+        $pkind = post_str('point_kind');
+        $lat   = post_float_or_null('latitude');
+        $lng   = post_float_or_null('longitude');
+        $hasPoint = in_array($pkind, ['move', 'incident', 'poi'], true)
+                 && $lat !== null && $lng !== null
+                 && $lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180;
+
+        if ($hasPoint) {
+            if ($body === '') {
+                $auto = ['move' => 'Μετάβαση στο σημείο', 'incident' => 'Περιστατικό στο σημείο', 'poi' => 'Σημείο ενδιαφέροντος'];
+                $body = $auto[$pkind];
+            }
+            $kind = in_array($pkind, ['move', 'incident'], true) ? 'order' : 'message';
+        } else {
+            $pkind = null; $lat = null; $lng = null;
+            if ($body === '') { json_out(['ok' => false, 'error' => 'Κενό μήνυμα.']); return; }
+        }
 
         EventMessage::create([
             'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $teamId,
             'role' => 'command', 'uid' => current_user_id(), 'kind' => $kind, 'body' => $body,
+            'lat' => $lat, 'lng' => $lng, 'pkind' => $pkind,
         ]);
 
         if ($teamId) {
@@ -515,8 +534,14 @@ class OperationController
                 ['eid' => $event['id']]
             )->fetchAll(PDO::FETCH_COLUMN) ?: []);
         }
-        try { NotificationService::commandMessage($event, $teamIds, $kind, $body); } catch (Throwable $e) {}
-        audit('ops_message_sent', 'event', (int) $event['id'], $kind . ($teamId ? ' team ' . $teamId : ' broadcast'));
+        try {
+            if ($hasPoint) {
+                NotificationService::commandGeoMessage($event, $teamIds, $pkind, $body, $lat, $lng);
+            } else {
+                NotificationService::commandMessage($event, $teamIds, $kind, $body);
+            }
+        } catch (Throwable $e) {}
+        audit('ops_message_sent', 'event', (int) $event['id'], ($pkind ?: $kind) . ($teamId ? ' team ' . $teamId : ' broadcast'));
         json_out(['ok' => true]);
     }
 

@@ -59,11 +59,20 @@ class FieldController
     {
         $ctx = $this->resolve($token);
         $app = $ctx['app'];
+        $lastPing = dbq(
+            'SELECT latitude, longitude, created_at FROM location_pings
+             WHERE event_id = :eid AND team_id = :tid ORDER BY id DESC LIMIT 1',
+            ['eid' => $app['event_id'], 'tid' => $app['team_id']]
+        )->fetch() ?: null;
+        // Pending photo request for this team (so the commander sees it)
+        $photoRequest = PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         render('field/hub', [
-            'pageTitle' => 'Πεδίο — ' . $app['event_title'],
-            'app'       => $app,
-            'commander' => $ctx['commander'],
-            'token'     => $app['field_token'],
+            'pageTitle'    => 'Πεδίο — ' . $app['event_title'],
+            'app'          => $app,
+            'commander'    => $ctx['commander'],
+            'token'        => $app['field_token'],
+            'lastPing'     => $lastPing,
+            'photoRequest' => $photoRequest,
         ], false); // standalone, no app layout / no login chrome
     }
 
@@ -150,10 +159,11 @@ class FieldController
     {
         $ctx = $this->resolve($token); $app = $ctx['app'];
         json_out([
-            'success'  => true,
-            'messages' => EventMessage::forTeamEvent((int) $app['event_id'], (int) $app['team_id'], 0),
-            'sos'      => SosAlert::latestForTeamEvent((int) $app['event_id'], (int) $app['team_id']),
-            'now'      => date('H:i:s'),
+            'success'       => true,
+            'messages'      => EventMessage::forTeamEvent((int) $app['event_id'], (int) $app['team_id'], 0),
+            'sos'           => SosAlert::latestForTeamEvent((int) $app['event_id'], (int) $app['team_id']),
+            'photo_request' => (bool) PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']),
+            'now'           => date('H:i:s'),
         ]);
     }
 

@@ -168,6 +168,7 @@ $router->post('/team/events/{id}/debrief', 'TeamPortalController@saveDebrief');
 
 /* Municipality admin: event debriefs overview */
 $router->get('/events/{id}/debriefs', 'EventController@debriefs');
+$router->post('/events/{id}/municipality-debrief', 'EventController@saveMunicipalityDebrief');
 $router->post('/team/operations/events/{id}/shortage', 'TeamPortalController@reportShortage');
 $router->post('/team/events/{id}/report', 'TeamPortalController@submitReport');
 $router->get('/team/statistics', 'TeamPortalController@statistics');

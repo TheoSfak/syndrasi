@@ -5,6 +5,10 @@
  */
 $isActive = ($app['event_status'] === 'active');
 $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
+$evLat = (isset($app['latitude'])  && $app['latitude']  !== null && $app['latitude']  !== '') ? (float) $app['latitude']  : null;
+$evLng = (isset($app['longitude']) && $app['longitude'] !== null && $app['longitude'] !== '') ? (float) $app['longitude'] : null;
+$tLat  = (!empty($lastPing) && $lastPing['latitude']  !== null) ? (float) $lastPing['latitude']  : null;
+$tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastPing['longitude'] : null;
 ?>
 <!DOCTYPE html>
 <html lang="el">
@@ -16,6 +20,8 @@ $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
 <title><?= e($pageTitle) ?></title>
 <link rel="icon" href="<?= e(url('/assets/img/icons/icon-192.png')) ?>">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>window.csrfToken = '<?= e(csrf_token()) ?>'; window.baseUrl = '<?= e(base_uri()) ?>';</script>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -107,6 +113,12 @@ $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
     <div id="locRes" style="padding:10px 18px 14px"></div>
   </div>
 
+  <!-- Map -->
+  <div class="card">
+    <div class="hdr"><i class="bi bi-map"></i> Χάρτης Δράσης</div>
+    <div id="teamMap" style="height:240px;background:#0a1414"></div>
+  </div>
+
   <!-- Status pings -->
   <div class="card">
     <div class="hdr"><i class="bi bi-lightning-charge"></i> Γρήγορη ενημέρωση</div>
@@ -122,6 +134,9 @@ $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
   <!-- Photo -->
   <div class="card">
     <div class="hdr"><i class="bi bi-camera"></i> Αποστολή φωτογραφίας</div>
+    <div id="photoReqBanner" style="margin:0 14px 8px;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($photoRequest) ? 'block' : 'none' ?>">
+      <i class="bi bi-camera-fill me-1"></i> Ο δήμος ζήτησε φωτογραφία — τραβήξτε/ανεβάστε μία παρακάτω.
+    </div>
     <form method="post" action="<?= e(url('/f/' . $token . '/photo')) ?>" enctype="multipart/form-data" id="photoForm">
       <?= csrf_field() ?>
       <input type="hidden" name="latitude" id="phLat"><input type="hidden" name="longitude" id="phLng">
@@ -146,6 +161,22 @@ $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
   var TOKEN = '<?= e($token) ?>', IS_ACTIVE = <?= $isActive ? 'true' : 'false' ?>;
   function esc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;}
   function postJSON(p,b){return fetch(BASE+'/f/'+TOKEN+p,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CSRF,'X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(b||{})}).then(function(r){return r.json();});}
+
+  /* Map */
+  (function(){
+    var el=document.getElementById('teamMap'); if(!el||typeof L==='undefined')return;
+    var evLat=<?= $evLat!==null?$evLat:'null' ?>,evLng=<?= $evLng!==null?$evLng:'null' ?>;
+    var tLat=<?= $tLat!==null?$tLat:'null' ?>,tLng=<?= $tLng!==null?$tLng:'null' ?>;
+    var center=(tLat!==null)?[tLat,tLng]:((evLat!==null)?[evLat,evLng]:[35.3387,25.1442]);
+    var map=L.map('teamMap').setView(center,14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+    var b=[];
+    if(evLat!==null){L.marker([evLat,evLng]).addTo(map).bindPopup('Σημείο δράσης');b.push([evLat,evLng]);}
+    if(tLat!==null){L.circleMarker([tLat,tLng],{radius:9,color:'#22d3ee',fillColor:'#22d3ee',fillOpacity:.85}).addTo(map).bindPopup('Η θέση μας');b.push([tLat,tLng]);}
+    if(b.length>1){try{map.fitBounds(b,{padding:[30,30],maxZoom:16});}catch(e){}}
+    window.__teamMap=map; window.__teamGeo=L.layerGroup().addTo(map);
+    setTimeout(function(){map.invalidateSize();},250);
+  })();
 
   /* SOS */
   var sosBtn=document.getElementById('sosBtn'),sosBanner=document.getElementById('sosBanner');
@@ -196,8 +227,20 @@ $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
     if(!p.length){orderBanner.innerHTML='';orderBanner.style.display='none';return;}
     orderBanner.style.display='';
     orderBanner.innerHTML=p.map(function(m){var t=(m.created_at||'').substr(11,5);
-      return '<div class="order-pin"><div class="order-pin-h"><i class="bi bi-megaphone-fill"></i> ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ</div><div class="order-pin-b">'+esc(m.body||'')+'</div><button class="order-pin-btn" onclick="ackOrder('+m.id+')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button><div style="font-size:11px;color:#fde68a;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
+      var head=m.point_kind==='incident'?'⚠️ ΠΕΡΙΣΤΑΤΙΚΟ':(m.point_kind==='move'?'➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ':'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var dir=(m.latitude!=null&&m.longitude!=null)?'<a href="https://www.google.com/maps?q='+m.latitude+','+m.longitude+'" target="_blank" rel="noopener" class="order-pin-btn" style="display:block;text-align:center;text-decoration:none;background:#2563eb;color:#fff;margin-bottom:8px"><i class="bi bi-geo-alt-fill"></i> Οδηγίες (Google Maps)</a>':'';
+      return '<div class="order-pin"><div class="order-pin-h"><i class="bi bi-megaphone-fill"></i> '+head+'</div><div class="order-pin-b">'+esc(m.body||'')+'</div>'+dir+'<button class="order-pin-btn" onclick="ackOrder('+m.id+')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button><div style="font-size:11px;color:#fde68a;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
     }).join('');
+  }
+  function renderGeoPoints(msgs){
+    var map=window.__teamMap,grp=window.__teamGeo; if(!map||!grp)return; grp.clearLayers();
+    (msgs||[]).forEach(function(m){
+      if(m.latitude==null||m.longitude==null||!m.point_kind)return;
+      var color=m.point_kind==='incident'?'#dc2626':(m.point_kind==='move'?'#2563eb':'#0d9488');
+      var lbl=m.point_kind==='incident'?'⚠️ Περιστατικό':(m.point_kind==='move'?'➡️ Μετάβαση':'📍 Σημείο');
+      L.circleMarker([m.latitude,m.longitude],{radius:10,color:color,fillColor:color,fillOpacity:.7}).addTo(grp)
+        .bindPopup('<b>'+lbl+'</b><br>'+esc(m.body||'')+'<br><a href="https://www.google.com/maps?q='+m.latitude+','+m.longitude+'" target="_blank" rel="noopener">Οδηγίες</a>');
+    });
   }
   function renderMsgs(msgs){
     if(!msgs||!msgs.length){msgList.innerHTML='<div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Καμία επικοινωνία ακόμη.</div>';return;}
@@ -216,7 +259,7 @@ $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
     else{sosBanner.className='sos-banner';sosBanner.innerHTML='<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης…';sosBtn.classList.add('sos-pulse');}
     sosBtn.disabled=true;sosBtn.querySelector('.sos-sub').textContent='SOS ενεργό';
   }
-  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderSos(d.sos);}}).catch(function(){});}
+  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderGeoPoints(d.messages);renderSos(d.sos);var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=d.photo_request?'block':'none';}}).catch(function(){});}
   pollComms();setInterval(pollComms,5000);
 })();
 </script>

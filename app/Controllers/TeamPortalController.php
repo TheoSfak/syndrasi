@@ -121,12 +121,18 @@ class TeamPortalController
         // Shifts for this event (with team's application status per shift)
         $shifts = EventShift::forTeamOnEvent($event['id'], $tid);
 
-        // Mission Commander field link (no-login) — only for approved apps with a commander
+        // Mission Commander field link (no-login) — only for approved apps with a commander.
+        // Guarded so a missing migration (field_token column) never 500s the page.
         $fieldToken = null;
         $commander  = null;
         if ($application && $application['status'] === 'approved' && !empty($application['mission_commander_id'])) {
-            $fieldToken = EventApplication::ensureFieldToken((int) $application['id']);
-            $commander  = TeamMember::find((int) $application['mission_commander_id']);
+            try {
+                $fieldToken = EventApplication::ensureFieldToken((int) $application['id']);
+                $commander  = TeamMember::find((int) $application['mission_commander_id']);
+            } catch (Throwable $e) {
+                error_log('[FieldLink] ' . $e->getMessage());
+                $fieldToken = null;
+            }
         }
 
         render('team/event_show', [

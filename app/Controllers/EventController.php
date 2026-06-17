@@ -282,6 +282,21 @@ class EventController
     }
 
     /** Manual early-end OR scheduled close */
+    /** Operational close: active/live event → 'closed' (then reconciliation). */
+    public function close($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent((int)$id);
+        if (!Event::canTransition($event['status'], 'closed')) {
+            flash_set('error', 'Η δράση δεν μπορεί να κλείσει από αυτή την κατάσταση.');
+            redirect('/events/' . $event['id']);
+        }
+        Event::setStatus($event['id'], 'closed');
+        audit('event_closed', 'event', $event['id'], $event['title']);
+        flash_set('success', 'Η δράση έκλεισε. Μπορείτε να την αρχειοθετήσετε (συμπλήρωση πραγματικών στοιχείων) από τις «Κλειστές».');
+        redirect('/operations');
+    }
+
     public function complete($id)
     {
         requireRole(['municipality_admin', 'event_operator']);
@@ -484,13 +499,70 @@ class EventController
             ['eid' => $event['id']]
         )->fetchColumn();
 
+        // Municipality after-action report (one per event) + aggregated team totals
+        $muniReport = dbq(
+            "SELECT * FROM event_reports WHERE event_id = :eid AND report_type = 'municipality_report' LIMIT 1",
+            ['eid' => $event['id']]
+        )->fetch() ?: null;
+        $teamAgg = dbq(
+            "SELECT COALESCE(SUM(incidents_count),0) AS i, COALESCE(SUM(transfers_count),0) AS t,
+                    COALESCE(SUM(first_aid_count),0) AS f
+             FROM event_reports WHERE event_id = :eid AND report_type = 'team_report'",
+            ['eid' => $event['id']]
+        )->fetch();
+
         render('events/debriefs', [
             'pageTitle'     => 'Debriefs: ' . $event['title'],
             'event'         => $event,
             'debriefs'      => $debriefs,
             'stats'         => $stats,
             'approvedCount' => $approvedCount,
+            'muniReport'    => $muniReport,
+            'teamAgg'       => $teamAgg,
         ]);
+    }
+
+    /** POST /events/{id}/municipality-debrief — δήμος after-action report (upsert). */
+    public function saveMunicipalityDebrief($id)
+    {
+        requireRole(['municipality_admin']);
+        $event = Event::findForCurrent($id);
+
+        $summary = post_str('summary') ?: null;
+        $notes   = post_str('notes') ?: null;
+
+        $agg = dbq(
+            "SELECT COALESCE(SUM(incidents_count),0) AS i, COALESCE(SUM(transfers_count),0) AS t,
+                    COALESCE(SUM(first_aid_count),0) AS f
+             FROM event_reports WHERE event_id = :eid AND report_type = 'team_report'",
+            ['eid' => $event['id']]
+        )->fetch();
+
+        $existing = dbq(
+            "SELECT id FROM event_reports WHERE event_id = :eid AND report_type = 'municipality_report' LIMIT 1",
+            ['eid' => $event['id']]
+        )->fetch();
+
+        if ($existing) {
+            dbq(
+                "UPDATE event_reports
+                 SET incidents_count = :i, transfers_count = :t, first_aid_count = :f, summary = :s, notes = :n
+                 WHERE id = :id",
+                ['i' => $agg['i'], 't' => $agg['t'], 'f' => $agg['f'], 's' => $summary, 'n' => $notes, 'id' => $existing['id']]
+            );
+        } else {
+            dbq(
+                "INSERT INTO event_reports
+                   (municipality_id, event_id, team_id, report_type, incidents_count, transfers_count, first_aid_count, summary, notes, created_by)
+                 VALUES (:mid, :eid, NULL, 'municipality_report', :i, :t, :f, :s, :n, :uid)",
+                ['mid' => $event['municipality_id'], 'eid' => $event['id'],
+                 'i' => $agg['i'], 't' => $agg['t'], 'f' => $agg['f'],
+                 's' => $summary, 'n' => $notes, 'uid' => current_user_id()]
+            );
+        }
+        audit('municipality_debrief_saved', 'event', (int) $event['id']);
+        flash_set('success', 'Ο απολογισμός του δήμου αποθηκεύτηκε.');
+        redirect('/events/' . $event['id'] . '/debriefs');
     }
 
     // ------------------------------------------------------------ Helpers
