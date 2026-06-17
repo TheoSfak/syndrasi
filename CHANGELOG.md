@@ -4,6 +4,11 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.11-beta] — 2026-06-17
+
+### Fixed — Δήλωση συμμετοχής σε ενεργή δράση
+- Ομάδες δεν μπορούσαν να υποβάλουν δήλωση όταν η δράση ήταν ήδη `active` (π.χ. ενεργοποιήθηκε χωρίς να περάσει από φάση `open`). Προστέθηκε το `active` στους επιτρεπτούς statuses τόσο στη φόρμα (`event_show.php`) όσο και στον controller (`TeamPortalController::apply()`).
+
 ## [0.9.10-beta] — 2026-06-17
 
 ### Added — Field Hub: αποστολή μηνύματος & αναφορά έλλειψης
