@@ -2,13 +2,15 @@
 
 > Standing workflow for shipping SynDrasi. Follow every step. **Do not skip the Release.**
 
-## ⚠️ Git: how the owner wants it done (preference)
+## ✅ Git: Claude runs everything via the Bash tool
 
-For **commit / tag / release**, do **NOT** automate git through GUI tools or
-computer-use (Git GUI / Explorer / .bat). That is slow and unreliable on this
-machine. Instead, **provide the exact commands and the owner runs them in Git Bash
-himself.** Ready-to-paste block:
+For **commit / tag / release**, Claude runs all git commands directly via the
+**Bash tool** (same as VS Code). No need for the owner to run anything manually.
 
+Do **NOT** use computer-use GUI tools (Git GUI / Explorer / .bat) — those are
+unreliable. The Bash tool is fine.
+
+Typical release sequence Claude runs:
 ```bash
 cd /c/Users/user/Desktop/Syndrasi/syndrasi
 git add -A
@@ -16,19 +18,15 @@ git commit -m "vX.Y.Z: short summary"
 git push origin main
 git tag vX.Y.Z
 git push origin vX.Y.Z
-# then create the GitHub Release (or: gh release create vX.Y.Z --repo TheoSfak/syndrasi --title "..." --notes "...")
+gh release create vX.Y.Z --repo TheoSfak/syndrasi --title "vX.Y.Z" --notes "..."
 ```
-
-You may still draft the commit message / release notes and (if asked) create the
-GitHub Release via the browser — but the local git commands are run by the owner.
 
 ## How we work
 
-1. **Develop on the Desktop working folder** (`C:\Users\user\Desktop\Syndrasi\syndrasi`) — this is the git repo.
-2. **Sync** the changes into the XAMPP web root: `C:\xampp\htdocs\syndrasi`
-   (this is the live/served copy used for local testing).
-3. **Commit** the changes to git.
-4. **Tag** a new version (bump `VERSION`, e.g. `v0.8.4`).
+1. **Edit in the Desktop git repo** (`C:\Users\user\Desktop\Syndrasi\syndrasi`) — this is the source of truth and the git repo.
+2. **Write the same file to htdocs** (`C:\xampp\htdocs\syndrasi`) for local XAMPP testing — always dual-write both locations at the same time using the Write/Edit tools. **Never rely on bash `cp`/rsync to sync** (bash mount truncates files written by the Write/Edit tools).
+3. **Commit** the changes to git from the Desktop folder.
+4. **Tag** a new version (bump `VERSION`, e.g. `v0.9.7`).
 5. **Create the actual GitHub _Release_** for that tag — ⚠️ **NEVER FORGET THIS.**
 
 ## Why the Release matters
@@ -59,22 +57,21 @@ tag → publish Release**, in that order.
 
 ## 🔧 Assistant working notes (Cowork / Claude) — IMPORTANT for new sessions
 
-Two connected folders are usually mounted: the **htdocs** live copy
-(`C:\xampp\htdocs\syndrasi`) and the **Desktop** git repo
-(`C:\Users\user\Desktop\Syndrasi\syndrasi`). Edit the feature in htdocs, then mirror
-the same files to Desktop, then the owner commits/releases from Desktop.
+**Source of truth: Desktop git repo** (`C:\Users\user\Desktop\Syndrasi\syndrasi`).
+**Live test copy: htdocs** (`C:\xampp\htdocs\syndrasi`).
 
-**Mount staleness gotcha (cost us real time):** the sandbox bash mount serves
-**stale/truncated reads** of files right after they are edited with the Write/Edit
-tools. As a result:
+**Correct workflow:**
+1. Write/Edit every file to the **Desktop path first** (source of truth).
+2. Immediately write the **same content** to the **htdocs path** using the Write tool (for XAMPP testing).
+3. Run git from Desktop.
 
-- `cp` / `cat` / `wc` in bash can copy or report a **truncated** version — this
-  silently corrupted the Desktop copies once. **Do NOT sync with bash `cp`.**
-- `git checkout` on the mount fails with "unable to unlink ... Operation not permitted".
-- **Reliable path:** use the **Read tool** (host-authoritative) to read the full
-  htdocs file, then the **Write tool** to write it to the Desktop path. Verify by
-  reading at a high offset (e.g. offset 9000) and comparing the reported line counts
-  on both sides.
+**Mount staleness gotcha — why bash `cp` is banned:** the bash mount serves
+**stale/truncated reads** of ANY file recently written by the Write/Edit tools,
+regardless of whether it's in Desktop or htdocs. So:
+
+- **Do NOT use bash `cp` or `rsync` to sync the two folders** — it silently copies truncated content. This is what caused v0.9.4/v0.9.5 packaging failures.
+- **Always dual-write** both paths in the same session using the Write/Edit tools.
+- `git add/commit/push/tag` via Bash is fine — git reads directly from disk.
 
 **PHP is NOT available in the sandbox** (`php -l` can't run, no root to install). So
 PHP syntax must be eye-checked, and the **owner should smoke-test in XAMPP** before

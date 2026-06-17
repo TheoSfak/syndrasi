@@ -64,8 +64,9 @@ class FieldController
              WHERE event_id = :eid AND team_id = :tid ORDER BY id DESC LIMIT 1',
             ['eid' => $app['event_id'], 'tid' => $app['team_id']]
         )->fetch() ?: null;
-        // Pending photo request for this team (so the commander sees it)
+        // Pending photo / GPS requests for this team (so the field device shows the prompt)
         $photoRequest = PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
+        $gpsRequest   = GpsRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         render('field/hub', [
             'pageTitle'    => 'Πεδίο — ' . $app['event_title'],
             'app'          => $app,
@@ -73,6 +74,7 @@ class FieldController
             'token'        => $app['field_token'],
             'lastPing'     => $lastPing,
             'photoRequest' => $photoRequest,
+            'gpsRequest'   => $gpsRequest,
         ], false); // standalone, no app layout / no login chrome
     }
 
@@ -97,6 +99,8 @@ class FieldController
                 'msg' => $ctx['commander'] ? ('Υπεύθυνος: ' . $ctx['commander']['full_name']) : null,
             ]
         );
+        // A live location closes any pending GPS request from the commander.
+        GpsRequest::fulfillForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         json_out(['success' => true, 'message' => 'Το στίγμα στάλθηκε.']);
     }
 
@@ -163,6 +167,7 @@ class FieldController
             'messages'      => EventMessage::forTeamEvent((int) $app['event_id'], (int) $app['team_id'], 0),
             'sos'           => SosAlert::latestForTeamEvent((int) $app['event_id'], (int) $app['team_id']),
             'photo_request' => (bool) PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']),
+            'gps_request'   => (bool) GpsRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']),
             'room'          => EventRoomMessage::forEvent((int) $app['event_id']),
             'now'           => date('H:i:s'),
         ]);

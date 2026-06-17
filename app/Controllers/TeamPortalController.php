@@ -458,6 +458,7 @@ class TeamPortalController
             'lastPing'     => $lastPing,
             'shortages'    => $shortages,
             'photoRequest' => PhotoRequest::pendingForEventTeam((int) $event['id'], (int) current_team_id()),
+            'gpsRequest'   => GpsRequest::pendingForEventTeam((int) $event['id'], (int) current_team_id()),
             'teamPhotos'   => EventPhoto::forTeamEvent((int) $event['id'], (int) current_team_id()),
         ]);
     }
@@ -604,6 +605,8 @@ class TeamPortalController
                 'uid' => $_SESSION['user_id'], 'lat' => $lat, 'lng' => $lng, 'acc' => $accuracy,
             ]
         );
+        // A live location closes any pending GPS request from the commander.
+        GpsRequest::fulfillForEventTeam((int) $event['id'], (int) current_team_id());
 
         json_out(['success' => true, 'message' => 'Η τοποθεσία στάλθηκε.']);
     }

@@ -192,6 +192,21 @@ body.ops-dark main             { background:transparent!important; }
         <span><i class="bi bi-people me-1 text-primary"></i>Ομάδες</span>
         <span class="badge bg-primary" id="teamBadge">--</span>
       </div>
+      <!-- Bulk request toolbar: pick a target (all / a specific team) then request photo or GPS -->
+      <div class="card-body p-2 pb-2 border-bottom">
+        <div class="row g-1 align-items-end">
+          <div class="col-12 col-sm-5">
+            <label class="form-label small mb-1">Ζήτησε από</label>
+            <select class="form-select form-select-sm" id="reqTargetTeam">
+              <option value="">📢 Όλες οι ομάδες</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-7 d-flex gap-1">
+            <button type="button" class="btn btn-outline-info btn-sm flex-fill" id="bulkReqPhoto"><i class="bi bi-camera me-1"></i>Ζήτησε φωτό</button>
+            <button type="button" class="btn btn-outline-success btn-sm flex-fill" id="bulkReqGps"><i class="bi bi-geo-alt me-1"></i>Ζήτησε στίγμα</button>
+          </div>
+        </div>
+      </div>
       <div class="card-body p-2" id="teamsBox">
         <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-clockwise spin me-1"></i>Φόρτωση…</div>
       </div>
@@ -465,6 +480,7 @@ body.ops-dark main             { background:transparent!important; }
   }
 
   function renderTeams(teams) {
+    lastTeams = teams || [];
     var box = document.getElementById('teamsBox');
     if (!teams || !teams.length) {
       box.innerHTML = '<div class="text-muted small py-3 text-center">Δεν υπάρχουν εγκεκριμένες ομάδες.</div>';
@@ -487,7 +503,10 @@ body.ops-dark main             { background:transparent!important; }
               '<span class="fw-bold" style="font-size:1.1rem">' + (t.present_people||0) + '/' + t.approved_people + '</span>' +
               '<div class="small text-muted">άτομα</div></div></div>' +
               (t.ping_lat ? '<div class="mt-1 small"><span class="ping-dot ' + pingCls + '"></span>' + (t.ping_age || '') + '</div>' : '') +
-              '<button type="button" class="btn btn-outline-info btn-sm w-100 mt-1 py-0 req-photo-btn" data-team="' + t.team_id + '"' + (t.photo_pending ? ' disabled' : '') + '><i class="bi bi-camera me-1"></i>' + (t.photo_pending ? 'Ζητήθηκε φωτό' : 'Ζήτησε φωτό') + '</button>' +
+              '<div class="d-flex gap-1 mt-1">' +
+              '<button type="button" class="btn btn-outline-info btn-sm flex-fill py-0 req-photo-btn" data-team="' + t.team_id + '"' + (t.photo_pending ? ' disabled' : '') + '><i class="bi bi-camera me-1"></i>' + (t.photo_pending ? 'Ζητήθηκε' : 'Φωτό') + '</button>' +
+              '<button type="button" class="btn btn-outline-success btn-sm flex-fill py-0 req-gps-btn" data-team="' + t.team_id + '"' + (t.gps_pending ? ' disabled' : '') + '><i class="bi bi-geo-alt me-1"></i>' + (t.gps_pending ? 'Ζητήθηκε' : 'Στίγμα') + '</button>' +
+              '</div>' +
               '</div></div>';
     });
     html += '</div>';
@@ -607,15 +626,18 @@ body.ops-dark main             { background:transparent!important; }
     if (inp) inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
   })();
 
-  /* ─── Recipient select (preserve current selection) ─── */
+  /* ─── Recipient + request-target selects (preserve current selection) ─── */
   function populateTeamSelect(teams) {
-    var sel = document.getElementById('cmsgTeam');
-    if (!sel || !teams) return;
-    var cur = sel.value;
-    var opts = '<option value="">📢 Όλες οι ομάδες (broadcast)</option>';
-    teams.forEach(function(t) { opts += '<option value="' + t.team_id + '">' + esc(t.team_name) + '</option>'; });
-    sel.innerHTML = opts;
-    sel.value = cur;
+    if (!teams) return;
+    [['cmsgTeam', '📢 Όλες οι ομάδες (broadcast)'], ['reqTargetTeam', '📢 Όλες οι ομάδες']].forEach(function(pair){
+      var sel = document.getElementById(pair[0]);
+      if (!sel) return;
+      var cur = sel.value;
+      var opts = '<option value="">' + pair[1] + '</option>';
+      teams.forEach(function(t) { opts += '<option value="' + t.team_id + '">' + esc(t.team_name) + '</option>'; });
+      sel.innerHTML = opts;
+      sel.value = cur;
+    });
   }
 
   /* ─── POST helper (form-encoded, JSON response) ─── */
@@ -750,15 +772,42 @@ body.ops-dark main             { background:transparent!important; }
 
   /* ─── Photos: request, map markers, list, modal ─── */
   var photoMarkers = {};
+  var lastTeams = [];   /* latest team list, for bulk photo/GPS requests */
 
   function requestPhoto(teamId, btn) {
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Αποστολή…'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>…'; }
     var fd = new FormData(); fd.append('_token', CSRF); fd.append('team_id', teamId);
-    fetch(BASE + '/operations/events/' + EID + '/request-photo', { method:'POST', body: fd, headers:{ 'Accept':'application/json' } })
+    return fetch(BASE + '/operations/events/' + EID + '/request-photo', { method:'POST', body: fd, headers:{ 'Accept':'application/json' } })
       .then(function(r){ return r.json(); })
-      .then(function(){ if (btn) { btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Ζητήθηκε φωτό'; } })
-      .catch(function(){ if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-camera me-1"></i>Ζήτησε φωτό'; } });
+      .then(function(){ if (btn) { btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Ζητήθηκε'; } })
+      .catch(function(){ if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-camera me-1"></i>Φωτό'; } });
   }
+
+  function requestGps(teamId, btn) {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>…'; }
+    var fd = new FormData(); fd.append('_token', CSRF); fd.append('team_id', teamId);
+    return fetch(BASE + '/operations/events/' + EID + '/request-gps', { method:'POST', body: fd, headers:{ 'Accept':'application/json' } })
+      .then(function(r){ return r.json(); })
+      .then(function(){ if (btn) { btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Ζητήθηκε'; } })
+      .catch(function(){ if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-geo-alt me-1"></i>Στίγμα'; } });
+  }
+
+  /* Bulk request: target = selected team in #reqTargetTeam, or all current teams when blank. */
+  function bulkRequest(kind, btn) {
+    var sel = document.getElementById('reqTargetTeam');
+    var target = sel ? sel.value : '';
+    var fn = kind === 'gps' ? requestGps : requestPhoto;
+    var label = kind === 'gps' ? 'στίγμα GPS' : 'φωτογραφία';
+    var ids = target ? [target] : lastTeams.map(function(t){ return t.team_id; });
+    if (!ids.length) return;
+    if (!target && !confirm('Αποστολή αιτήματος (' + label + ') σε ΟΛΕΣ τις ομάδες (' + ids.length + ');')) return;
+    if (btn) { btn.disabled = true; }
+    Promise.all(ids.map(function(id){ return fn(id, null); }))
+      .then(function(){ pollStatus(); })
+      .finally(function(){ if (btn) { btn.disabled = false; } });
+  }
+  document.getElementById('bulkReqPhoto').addEventListener('click', function(){ bulkRequest('photo', this); });
+  document.getElementById('bulkReqGps').addEventListener('click', function(){ bulkRequest('gps', this); });
 
   function openPhoto(url, team, at) {
     document.getElementById('photoModalImg').src = url;
@@ -808,7 +857,9 @@ body.ops-dark main             { background:transparent!important; }
     var thumb = e.target.closest ? e.target.closest('.photo-thumb') : null;
     if (thumb) { openPhoto(thumb.getAttribute('data-url'), thumb.getAttribute('data-label'), thumb.getAttribute('data-at')); return; }
     var rb = e.target.closest ? e.target.closest('.req-photo-btn') : null;
-    if (rb && !rb.disabled) { requestPhoto(rb.getAttribute('data-team'), rb); }
+    if (rb && !rb.disabled) { requestPhoto(rb.getAttribute('data-team'), rb); return; }
+    var gb = e.target.closest ? e.target.closest('.req-gps-btn') : null;
+    if (gb && !gb.disabled) { requestGps(gb.getAttribute('data-team'), gb); }
   });
 
   /* ─── SSE connection ─── */

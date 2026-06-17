@@ -118,6 +118,7 @@ $router->get('/operations/events/{id}/stream', 'OperationController@stream');
 $router->get('/operations/events/{id}/locations', 'OperationController@locations');
 $router->post('/operations/events/{id}/note', 'OperationController@addNote');
 $router->post('/operations/events/{id}/request-photo', 'OperationController@requestPhoto');
+$router->post('/operations/events/{id}/request-gps', 'OperationController@requestGps');
 $router->post('/operations/events/{id}/message', 'OperationController@sendMessage');
 $router->post('/operations/events/{id}/room', 'OperationController@sendRoom');
 $router->get('/operations/photos/{id}', 'OperationController@servePhoto');

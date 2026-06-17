@@ -138,6 +138,7 @@ class OperationController
         $activity = $this->buildActivityFeed($eid);
 
         $pendingPhoto = array_flip(array_map('intval', PhotoRequest::pendingTeamIds($eid)));
+        $pendingGps   = array_flip(array_map('intval', GpsRequest::pendingTeamIds($eid)));
         $teamsPayload = [];
         foreach ($teams as $t) {
             $pingAge    = null;
@@ -162,6 +163,7 @@ class OperationController
                 'ping_lat'       => $t['last_lat'] ? (float)$t['last_lat'] : null,
                 'ping_lng'       => $t['last_lng'] ? (float)$t['last_lng'] : null,
                 'photo_pending'  => isset($pendingPhoto[(int) $t['team_id']]),
+                'gps_pending'    => isset($pendingGps[(int) $t['team_id']]),
             ];
         }
 
@@ -259,6 +261,27 @@ class OperationController
             json_out(['ok' => true]);
         }
         flash_set('success', 'Ζητήθηκε φωτογραφία από την ομάδα «' . $team['name'] . '».');
+        redirect('/operations/events/' . $event['id']);
+    }
+
+    /** POST /operations/events/{id}/request-gps — ask a team for a live GPS fix. */
+    public function requestGps($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent($id);
+        $tid   = post_int('team_id');
+        $team  = VolunteerTeam::find($tid);
+        if (!$team || (int) $team['municipality_id'] !== (int) $event['municipality_id']) {
+            abort(404, 'Η ομάδα δεν βρέθηκε.');
+        }
+        GpsRequest::create((int) $event['municipality_id'], (int) $event['id'], $tid, current_user_id());
+        try { NotificationService::gpsRequested($event, $team); } catch (Throwable $e) {}
+        audit('gps_requested', 'event', $event['id'], 'team ' . $tid);
+
+        if (wants_json()) {
+            json_out(['ok' => true]);
+        }
+        flash_set('success', 'Ζητήθηκε στίγμα GPS από την ομάδα «' . $team['name'] . '».');
         redirect('/operations/events/' . $event['id']);
     }
 
@@ -387,6 +410,7 @@ class OperationController
         }
 
         $pendingPhoto = array_flip(array_map('intval', PhotoRequest::pendingTeamIds($eid)));
+        $pendingGps   = array_flip(array_map('intval', GpsRequest::pendingTeamIds($eid)));
         $teamsPayload = [];
         foreach ($teams as $t) {
             $pingAge = $pingAgeMin = null;
@@ -410,6 +434,7 @@ class OperationController
                 'ping_lat'        => $t['last_lat'] ? (float) $t['last_lat'] : null,
                 'ping_lng'        => $t['last_lng'] ? (float) $t['last_lng'] : null,
                 'photo_pending'   => isset($pendingPhoto[(int) $t['team_id']]),
+                'gps_pending'     => isset($pendingGps[(int) $t['team_id']]),
             ];
         }
 

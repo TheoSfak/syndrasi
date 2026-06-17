@@ -195,10 +195,13 @@ window.addEventListener('load', function () {
 
 <div class="row g-3 mb-4">
   <div class="col-md-6">
-    <div class="card shadow-sm h-100">
+    <div class="card shadow-sm h-100 <?= !empty($gpsRequest) ? 'border-info border-2' : '' ?>">
       <div class="card-body text-center">
         <i class="bi bi-geo-alt display-6 text-primary"></i>
         <h2 class="h5 mt-2">Αποστολή Στίγματος</h2>
+        <?php if (!empty($gpsRequest)): ?>
+          <div class="alert alert-info py-2 small mb-2"><i class="bi bi-geo-alt-fill me-1"></i>Ο δήμος ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».</div>
+        <?php endif; ?>
         <p class="small text-muted">
           Στείλτε τη θέση της ομάδας σας στον δήμο. Το στίγμα στέλνεται μόνο όταν πατήσετε το κουμπί.
         </p>

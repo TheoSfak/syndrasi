@@ -105,6 +105,9 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 
   <!-- Στίγμα -->
   <div class="card">
+    <div id="gpsReqBanner" style="margin:14px 14px 0;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($gpsRequest) ? 'block' : 'none' ?>">
+      <i class="bi bi-geo-alt-fill me-1"></i> Ο δήμος ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».
+    </div>
     <button class="big-btn" id="locBtn" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-geo-alt-fill big-ico"></i>
       <div style="flex:1"><div class="big-lbl">Αποστολή Στίγματος</div><div class="big-sub">Στείλτε τη θέση σας στον δήμο</div></div>
@@ -283,7 +286,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     function send(){var b=(i.value||'').trim();if(!b)return;i.value='';postJSON('/room',{body:b}).then(pollComms);}
     if(s)s.addEventListener('click',send);if(i)i.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();send();}});})();
 
-  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderGeoPoints(d.messages);renderSos(d.sos);renderRoom(d.room);var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=d.photo_request?'block':'none';}}).catch(function(){});}
+  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderGeoPoints(d.messages);renderSos(d.sos);renderRoom(d.room);var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=d.photo_request?'block':'none';var gb=document.getElementById('gpsReqBanner');if(gb)gb.style.display=d.gps_request?'block':'none';}}).catch(function(){});}
   pollComms();setInterval(pollComms,5000);
 })();
 </script>

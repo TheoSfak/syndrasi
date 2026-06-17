@@ -4,6 +4,28 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.7-beta] — 2026-06-17
+
+### Added — Αίτημα στίγματος GPS (command → ομάδα)
+- **«Ζήτησε στίγμα GPS»** — νέο κουμπί δίπλα στο «Φωτό» σε κάθε κάρτα ομάδας στο
+  Επιχειρησιακό Κέντρο. Στέλνει αίτημα στην ομάδα (όπως το αίτημα φωτογραφίας)· η κάρτα
+  δείχνει «Ζητήθηκε» μέχρι να σταλεί τοποθεσία. Στο πεδίο (field hub) και στο team portal
+  εμφανίζεται banner· μόλις η ομάδα στείλει στίγμα, το αίτημα **κλείνει αυτόματα**.
+- **Dropdown στόχου + μαζικά αιτήματα** — πάνω από τη λίστα ομάδων, ο διαχειριστής
+  επιλέγει «📢 Όλες οι ομάδες» ή συγκεκριμένη ομάδα και ζητά **φωτό** ή **στίγμα** με μία
+  κίνηση. Τα ανά-ομάδα κουμπιά παραμένουν.
+
+### Technical
+- Migration `016_gps_requests.sql`: νέος πίνακας `gps_requests` (mirror του
+  `photo_requests`). Νέο model `GpsRequest`. Endpoint `OperationController::requestGps`
+  + route `POST /operations/events/{id}/request-gps`. Flag `gps_pending` στο `status()`
+  και στο SSE snapshot. Ειδοποίηση `NotificationService::gpsRequested`. Το
+  `FieldController::location` και το `TeamPortalController::sendLocation` εκπληρώνουν
+  (`fulfill`) τυχόν εκκρεμές αίτημα GPS· το `comms`/hub εκθέτουν `gps_request`.
+- **Χρειάζεται εκτέλεση migration** — σε update μέσω GitHub Release τρέχει **αυτόματα**
+  μέσω του `schema_migrations` / `MigrationRunner` (ή Platform Settings → Updates → run
+  pending, ή import του `016_gps_requests.sql`).
+
 ## [0.9.6-beta] — 2026-06-17
 
 ### Fixed

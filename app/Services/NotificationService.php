@@ -504,6 +504,26 @@ class NotificationService
         }
     }
 
+    /** Commander asks a team for a live GPS fix — notify the team (in-app + push). */
+    public static function gpsRequested(array $event, array $team)
+    {
+        $title = 'Αίτημα στίγματος GPS';
+        $msg   = 'Ο δήμος ζητά το στίγμα GPS σας για τη δράση «' . $event['title'] . '».';
+        foreach (User::teamAdmins($team['id']) as $admin) {
+            Notification::create([
+                'municipality_id' => $event['municipality_id'],
+                'user_id'         => $admin['id'],
+                'team_id'         => $team['id'],
+                'event_id'        => $event['id'],
+                'title'           => $title,
+                'message'         => $msg,
+                'type'            => 'gps_request',
+                'email_sent'      => 0,
+            ]);
+            self::sendPush($admin['id'], $title, $msg);
+        }
+    }
+
     /** Team uploaded a photo — notify municipality admins (in-app + push). */
     public static function photoUploaded(array $event, int $teamId)
     {
