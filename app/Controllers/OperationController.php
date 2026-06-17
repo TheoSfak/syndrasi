@@ -850,7 +850,15 @@ class OperationController
         return dbq(
             "SELECT type, ts, actor, title, severity FROM (
                 SELECT 'checkin' AS type, oc.checked_in_at AS ts,
-                       t.name AS actor, oc.status AS title, '' AS severity
+                       t.name AS actor,
+                       CASE oc.status
+                           WHEN 'present_full'    THEN 'Παρόντες (πλήρης)'
+                           WHEN 'present_partial' THEN 'Μερική παρουσία'
+                           WHEN 'not_present'     THEN 'Απόντες'
+                           WHEN 'departed'        THEN 'Αποχώρησαν'
+                           ELSE oc.status
+                       END AS title,
+                       '' AS severity
                 FROM operational_checkins oc
                 JOIN volunteer_teams t ON t.id = oc.team_id
                 WHERE oc.event_id = :eid

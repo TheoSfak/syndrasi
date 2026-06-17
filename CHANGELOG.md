@@ -4,6 +4,11 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.14-beta] — 2026-06-17
+
+### Fixed — Δραστηριότητα: raw κωδικοί check-in στα ελληνικά
+- Η λίστα Δραστηριότητας έδειχνε ωμούς κωδικούς (`present_full`, `present_partial`, κτλ.) αντί για ελληνικές ετικέτες. Διορθώθηκε με `CASE WHEN` στο SQL του `buildActivityFeed()`.
+
 ## [0.9.13-beta] — 2026-06-17
 
 ### Fixed — Επιχειρησιακό Κέντρο: διπλό όνομα ομάδας στο chat
