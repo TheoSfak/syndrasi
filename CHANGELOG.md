@@ -4,6 +4,11 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.13-beta] — 2026-06-17
+
+### Fixed — Επιχειρησιακό Κέντρο: διπλό όνομα ομάδας στο chat
+- Τα μηνύματα ομάδας εμφάνιζαν `Ομάδα Α → Ομάδα Α · 20:38` γιατί το `tag` (που προοριζόταν να δείχνει την *αποδέκτρια* ομάδα σε εντολή δήμου) εφαρμοζόταν και στα εισερχόμενα μηνύματα ομάδας. Τώρα το `tag` εμφανίζεται μόνο για μηνύματα `sender_role === 'command'`.
+
 ## [0.9.12-beta] — 2026-06-17
 
 ### Fixed — War Room: χάρτης έδειχνε Αθήνα με μία δράση

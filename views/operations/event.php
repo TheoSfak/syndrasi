@@ -590,7 +590,7 @@ body.ops-dark main             { background:transparent!important; }
               : (m.sender_role === 'command' ? 'cmsg-command' : 'cmsg-team'));
       var who = m.sender_role === 'command' ? 'Δήμος' : (m.team_name || m.sender_name || 'Ομάδα');
       var t = (m.created_at || '').substring(11,16);
-      var tag = m.team_id ? esc(m.team_name || '') : (m.sender_role === 'command' ? '📢 Όλες' : '');
+      var tag = m.sender_role === 'command' ? (m.team_id ? esc(m.team_name || '') : '📢 Όλες') : '';
       var ackTxt = '';
       if (m.kind === 'order') {
         ackTxt = m.acknowledged_at ? ' · <span style="color:#16a34a">✓ Επιβεβαιώθηκε</span>' : ' · <span style="opacity:.7">αναμονή ACK</span>';
