@@ -8,6 +8,6 @@ return [
     // production so a deployment never leaks errors if the var is unset.
     'env'         => env('APP_ENV', 'production'),
     'timezone'    => 'Europe/Athens',
-    'footer_text' => 'Πρόταση από Σφακιανάκη Θεόδωρο | email: theodore.sfakianakis@gmail.com | κιν. 6945139015',
+    'footer_text' => ' Σφακιανάκης Θεόδωρος | email: theodore.sfakianakis@gmail.com | κιν. 6945139015',
     'map_refresh_seconds' => 45,
 ];
