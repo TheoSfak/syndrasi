@@ -230,6 +230,8 @@ class FieldController
             'uid' => $ctx['owner'] ?: null, 'rid' => null, 'file' => $name,
             'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
         ]);
+        // Close any pending photo request for this team (mirrors TeamPortalController::uploadPhoto).
+        PhotoRequest::fulfillForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         try { NotificationService::photoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) {}
 
         flash_set('success', 'Η φωτογραφία στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));

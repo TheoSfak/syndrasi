@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.9-beta] — 2026-06-17
+
+### Fixed — Field Hub: upload φωτό δεν έκλεινε το αίτημα
+- **`FieldController::photo()` δεν καλούσε `PhotoRequest::fulfillForEventTeam()`** —
+  μετά από upload φωτό μέσω του Field Hub (`/f/{token}`), το εκκρεμές αίτημα έμενε για πάντα
+  `pending`. Αποτέλεσμα: banner φωτό δεν εξαφανιζόταν και το Επιχειρησιακό Κέντρο
+  έδειχνε «Ζητήθηκε φωτό» ακόμη κι αφού ο υπεύθυνος είχε στείλει. Τώρα το αίτημα
+  κλείνει αυτόματα, ακριβώς όπως στο `TeamPortalController::uploadPhoto`.
+
 ## [0.9.8-beta] — 2026-06-17
 
 ### Fixed — Mobile Hub: αιτήματα φωτό & GPS δεν εμφανίζονταν
