@@ -4,6 +4,11 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.12-beta] — 2026-06-17
+
+### Fixed — War Room: χάρτης έδειχνε Αθήνα με μία δράση
+- Ο χάρτης έκανε auto-fit μόνο όταν υπήρχαν **2+ δράσεις** (`bounds.length > 1`). Με μία μόνο δράση έμενε στις default συντεταγμένες (Αθήνα). Πλέον με 1 δράση κάνει `setView` στις συντεταγμένες της με zoom 13.
+
 ## [0.9.11-beta] — 2026-06-17
 
 ### Fixed — Δήλωση συμμετοχής σε ενεργή δράση

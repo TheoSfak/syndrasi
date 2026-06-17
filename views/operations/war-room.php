@@ -188,7 +188,8 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
           .addTo(teamLayer);
       });
     });
-    if (bounds.length > 1 && !map.__fitted){ try{ map.fitBounds(bounds, { padding:[40,40], maxZoom:14 }); map.__fitted=true; }catch(e){} }
+    if (bounds.length === 1 && !map.__fitted){ map.setView(bounds[0], 13); map.__fitted=true; }
+    else if (bounds.length > 1 && !map.__fitted){ try{ map.fitBounds(bounds, { padding:[40,40], maxZoom:14 }); map.__fitted=true; }catch(e){} }
   }
 
   function applySnapshot(d){
