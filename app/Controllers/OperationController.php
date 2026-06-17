@@ -238,6 +238,7 @@ class OperationController
                 'age_min'   => (int) $p['age_min'],
                 'caption'   => $p['caption'],
                 'at'        => gr_datetime($p['created_at']),
+                'time'      => substr($p['created_at'], 11, 5),
             ];
         }
         return $out;

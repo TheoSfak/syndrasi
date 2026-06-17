@@ -4,6 +4,12 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.16-beta] — 2026-06-18
+
+### Added — Φωτογραφίες: ετικέτα ομάδας + ώρα · φωτό στο GPS popup
+- Κάτω από κάθε thumbnail στην ενότητα «Φωτογραφίες ομάδων» εμφανίζεται τώρα το όνομα της ομάδας και η ώρα αποστολής.
+- Κλικ στο GPS σήμα ομάδας (έγχρωμη κουκκίδα στον χάρτη) ανοίγει popup με το τελευταίο φωτό που έστειλε η ομάδα (αν υπάρχει) — κλικ στο φωτό ανοίγει το πλήρες modal.
+
 ## [0.9.15-beta] — 2026-06-17
 
 ### Fixed — Επιχειρήσεις: Ομάδες παρούσες πάντα 0

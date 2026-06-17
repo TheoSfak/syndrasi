@@ -438,14 +438,21 @@ body.ops-dark main             { background:transparent!important; }
       var html = '<div style="background:' + (cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444') +
                  ';width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.3)"></div>';
       var icon = L.divIcon({ className:'', html:html, iconSize:[12,12], iconAnchor:[6,6] });
+      var ph = lastPhotosByTeam[p.team_id];
+      var photoSnippet = ph
+        ? '<br><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) + '"' +
+          ' style="max-width:160px;max-height:120px;border-radius:6px;cursor:pointer;margin-top:5px;display:block">' +
+          '<div style="font-size:.65rem;color:#555;margin-top:2px">' + esc(ph.time || '') + ' · κλικ για μεγέθυνση</div>'
+        : '';
+      var popup = '<b>' + esc(p.team_name) + '</b><br>' + p.age_min + ' λεπτά πριν' + photoSnippet;
       if (markers[key]) {
         markers[key].setLatLng([p.latitude, p.longitude]);
         markers[key].setIcon(icon);
-        markers[key].setPopupContent('<b>' + p.team_name + '</b><br>' + p.age_min + ' λεπτά πριν');
+        markers[key].setPopupContent(popup);
       } else {
         markers[key] = L.marker([p.latitude, p.longitude], { icon: icon })
           .addTo(map)
-          .bindPopup('<b>' + p.team_name + '</b><br>' + p.age_min + ' λεπτά πριν');
+          .bindPopup(popup);
       }
       bounds.push([p.latitude, p.longitude]);
     });
@@ -705,9 +712,9 @@ body.ops-dark main             { background:transparent!important; }
     renderSos(d.sos);
     renderMessages(d.messages);
     renderRoom(d.room);
-    /* map pings included in SSE snapshot */
-    if (d.pings) updateMap(d.pings);
+    /* map pings included in SSE snapshot — photos first so GPS popup can show them */
     if (d.photos) updatePhotos(d.photos);
+    if (d.pings) updateMap(d.pings);
     /* flash sections where count increased */
     if (!isNaN(prevCi) && (d.stats.checked_in || 0) > prevCi) flashEl('teamsBox');
     if (!isNaN(prevSh) && (d.stats.open_shortages || 0) > prevSh) flashEl('shortagesBox');
@@ -733,7 +740,7 @@ body.ops-dark main             { background:transparent!important; }
   function pollLocations() {
     fetch(BASE + '/operations/events/' + EID + '/locations')
       .then(function(r){ return r.json(); })
-      .then(function(d) { if (d.ok) { updateMap(d.pings); updatePhotos(d.photos); } })
+      .then(function(d) { if (d.ok) { updatePhotos(d.photos); updateMap(d.pings); } })
       .catch(function(){});
   }
 
@@ -771,7 +778,8 @@ body.ops-dark main             { background:transparent!important; }
   }
 
   /* ─── Photos: request, map markers, list, modal ─── */
-  var photoMarkers = {};
+  var photoMarkers     = {};
+  var lastPhotosByTeam = {};   /* team_id → latest photo, for GPS popup */
   var lastTeams = [];   /* latest team list, for bulk photo/GPS requests */
 
   function requestPhoto(teamId, btn) {
@@ -830,6 +838,7 @@ body.ops-dark main             { background:transparent!important; }
     photos = photos || [];
     Object.keys(photoMarkers).forEach(function(k){ map.removeLayer(photoMarkers[k]); });
     photoMarkers = {};
+    lastPhotosByTeam = {};
     var card = document.getElementById('photosCard');
     var box  = document.getElementById('photosBox');
     if (!card || !box) return;
@@ -837,10 +846,15 @@ body.ops-dark main             { background:transparent!important; }
     card.style.display = photos.length ? '' : 'none';
     var html = '';
     photos.forEach(function(ph){
+      lastPhotosByTeam[ph.team_id] = ph;
       var border = ph.lat !== null && ph.lng !== null ? '#0ea5e9' : '#94a3b8';
-      html += '<img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) +
+      html += '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">' +
+              '<img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) +
               '" title="' + esc(ph.team_name) + ' · ' + esc(ph.at) + (ph.lat === null ? ' · χωρίς τοποθεσία' : '') +
-              '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ' + border + '">';
+              '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ' + border + '">' +
+              '<div style="font-size:.62rem;text-align:center;max-width:78px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">' + esc(ph.team_name) + '</div>' +
+              '<div style="font-size:.6rem;color:#94a3b8">' + esc(ph.time || '') + '</div>' +
+              '</div>';
       if (ph.lat !== null && ph.lng !== null) {
         var icon = L.divIcon({ className:'', html:'<div style="background:#0ea5e9;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><i class="bi bi-camera-fill" style="color:#fff;font-size:11px;transform:rotate(45deg)"></i></div>', iconSize:[24,24], iconAnchor:[12,22] });
         var m = L.marker([ph.lat, ph.lng], { icon: icon });
