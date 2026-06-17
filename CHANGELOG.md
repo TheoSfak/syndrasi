@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.10-beta] — 2026-06-17
+
+### Added — Field Hub: αποστολή μηνύματος & αναφορά έλλειψης
+- **Σύνθεση μηνύματος στο Field Hub** — ο υπεύθυνος αποστολής μπορεί πλέον να στέλνει
+  ιδιωτικά μηνύματα προς τον δήμο απευθείας από το `/f/{token}` (νέο compose input στην
+  κάρτα «Επικοινωνία με τον δήμο»). Νέο endpoint `POST /f/{token}/message`.
+- **Αναφορά Έλλειψης από πεδίο** — νέα κάρτα «Αναφορά Έλλειψης» με επιλογή τύπου
+  (άτομα/εξοπλισμός/ιατρικό/όχημα/άλλο), σοβαρότητα (χαμηλή/μεσαία/υψηλή/κρίσιμη),
+  τίτλο και περιγραφή. Αποστέλλει στον πίνακα `shortage_reports` και ειδοποιεί τον δήμο.
+  Νέο endpoint `POST /f/{token}/shortage`.
+
 ## [0.9.9-beta] — 2026-06-17
 
 ### Fixed — Field Hub: upload φωτό δεν έκλεινε το αίτημα

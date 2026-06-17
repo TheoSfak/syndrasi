@@ -20,6 +20,8 @@ $router->post('/f/{token}/sos',      'FieldController@sos');
 $router->post('/f/{token}/ack-order','FieldController@ackOrder');
 $router->post('/f/{token}/photo',    'FieldController@photo');
 $router->post('/f/{token}/room',     'FieldController@room');
+$router->post('/f/{token}/message',  'FieldController@message');
+$router->post('/f/{token}/shortage', 'FieldController@shortage');
 
 /* Home: redirect by role */
 $router->get('/', 'AuthController@home');

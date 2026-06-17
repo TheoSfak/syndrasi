@@ -173,6 +173,60 @@ class FieldController
         ]);
     }
 
+    /** POST /f/{token}/message (JSON) — send a private message to the command center. */
+    public function message($token)
+    {
+        $ctx  = $this->resolve($token); $app = $ctx['app'];
+        $body = trim((string) (json_input()['body'] ?? ''));
+        if ($body === '') { json_out(['success' => false, 'message' => 'Κενό μήνυμα.'], 422); }
+        EventMessage::create([
+            'mid'  => $app['municipality_id'], 'eid' => $app['event_id'], 'tid' => $app['team_id'],
+            'role' => 'team', 'uid' => $ctx['owner'], 'kind' => 'message', 'body' => $body,
+        ]);
+        try { NotificationService::teamMessage($this->eventArr($app), ['name' => $app['team_name']], 'Μήνυμα πεδίου', $body); } catch (Throwable $e) {}
+        json_out(['success' => true, 'message' => 'Το μήνυμα στάλθηκε.']);
+    }
+
+    /** POST /f/{token}/shortage (form) — report a resource shortage. */
+    public function shortage($token)
+    {
+        $ctx  = $this->resolve($token); $app = $ctx['app'];
+        $back = '/f/' . $app['field_token'];
+
+        $type = post_str('shortage_type');
+        if (!in_array($type, ['people', 'equipment', 'medical_supplies', 'vehicle', 'other'], true)) {
+            flash_set('danger', 'Μη έγκυρος τύπος έλλειψης.');
+            redirect($back);
+        }
+        $severity = post_str('severity');
+        if (!in_array($severity, ['low', 'medium', 'high', 'critical'], true)) { $severity = 'medium'; }
+        $title = trim(post_str('title'));
+        if ($title === '') {
+            flash_set('danger', 'Συμπληρώστε τίτλο έλλειψης.');
+            redirect($back);
+        }
+        dbq(
+            "INSERT INTO shortage_reports
+             (municipality_id, event_id, team_id, reported_by, shortage_type, severity, title, description, status)
+             VALUES (:mid, :eid, :tid, :uid, :type, :sev, :title, :descr, 'open')",
+            [
+                'mid' => $app['municipality_id'], 'eid' => $app['event_id'], 'tid' => $app['team_id'],
+                'uid' => $ctx['owner'], 'type' => $type, 'sev' => $severity,
+                'title' => $title, 'descr' => post_str('description') ?: null,
+            ]
+        );
+        try {
+            NotificationService::notifyMunicipality(
+                (int) $app['municipality_id'], (int) $app['event_id'],
+                'Νέα έλλειψη: ' . $title,
+                ($app['team_name']) . ' ανέφερε έλλειψη (' . $severity . ') — ' . $app['event_title'],
+                url('/operations/events/' . $app['event_id'])
+            );
+        } catch (Throwable $e) {}
+        flash_set('success', 'Η αναφορά έλλειψης στάλθηκε στον δήμο.');
+        redirect($back);
+    }
+
     /** POST /f/{token}/room — post to the shared operations room (no login). */
     public function room($token)
     {

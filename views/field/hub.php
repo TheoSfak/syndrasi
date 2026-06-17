@@ -149,10 +149,65 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     </form>
   </div>
 
-  <!-- Comms (read + ack) -->
+  <!-- Comms (read + ack + compose) -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-chat-dots"></i> Μηνύματα δήμου</div>
+    <div class="hdr"><i class="bi bi-chat-dots"></i> Επικοινωνία με τον δήμο</div>
     <div class="msg-list" id="msgList"><div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Φόρτωση…</div></div>
+    <div style="display:flex;gap:8px;padding:0 14px 14px">
+      <input type="text" id="msgInput" maxlength="500" placeholder="Μήνυμα προς τον δήμο…"
+             style="flex:1;background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:14px;padding:12px;outline:none">
+      <button type="button" id="msgSend" style="background:#0e7490;color:#fff;border:none;border-radius:10px;padding:0 16px;font-size:18px;cursor:pointer"><i class="bi bi-send"></i></button>
+    </div>
+  </div>
+
+  <!-- Αναφορά Έλλειψης -->
+  <div class="card">
+    <button type="button" id="shortageToggle" onclick="toggleShortage()"
+            style="width:100%;padding:22px 20px;background:#1a1111;border:none;border-radius:18px;color:#f87171;cursor:pointer;display:flex;align-items:center;gap:16px;text-align:left" <?= !$isActive ? 'disabled' : '' ?>>
+      <i class="bi bi-exclamation-triangle" style="font-size:34px;flex-shrink:0"></i>
+      <div style="flex:1"><div style="font-size:18px;font-weight:800;color:#e8f5f4">Αναφορά Έλλειψης</div>
+        <div style="font-size:12px;color:#f87171;margin-top:2px">Ειδοποιήστε άμεσα τον δήμο</div></div>
+      <i class="bi bi-chevron-right" id="shortageArrow" style="opacity:.5;transition:transform .2s"></i>
+    </button>
+    <div id="shortageForm" style="display:none;border-top:1px solid #2a1818">
+      <form method="post" action="<?= e(url('/f/' . $token . '/shortage')) ?>" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+        <?= csrf_field() ?>
+        <input type="hidden" name="severity" id="shSeverityInput" value="medium">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600">Τύπος έλλειψης</label>
+          <select name="shortage_type" required style="background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:15px;padding:12px 14px;outline:none;width:100%">
+            <option value="people">👥 Άτομα</option>
+            <option value="equipment">🔧 Εξοπλισμός</option>
+            <option value="medical_supplies">🏥 Υγειονομικό υλικό</option>
+            <option value="vehicle">🚗 Όχημα</option>
+            <option value="other">📋 Άλλο</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600">Σοβαρότητα</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+            <button type="button" class="sh-sev" data-val="low"      onclick="setShSev('low')"      style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#1a2e1a;color:#86efac">Χαμηλή</button>
+            <button type="button" class="sh-sev" data-val="medium"   onclick="setShSev('medium')"   style="padding:10px 4px;border-radius:8px;border:2px solid #fde047;font-size:11px;font-weight:700;cursor:pointer;background:#2a2a0d;color:#fde047">Μεσαία</button>
+            <button type="button" class="sh-sev" data-val="high"     onclick="setShSev('high')"     style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#2a1a0d;color:#fb923c">Υψηλή</button>
+            <button type="button" class="sh-sev" data-val="critical" onclick="setShSev('critical')" style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#2a0d0d;color:#f87171">Κρίσιμη</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600">Σύντομος τίτλος *</label>
+          <input type="text" name="title" required placeholder="π.χ. Λείπουν 2 άτομα"
+                 style="background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:15px;padding:12px 14px;outline:none;width:100%">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600">Περιγραφή (προαιρετικό)</label>
+          <textarea name="description" rows="2" placeholder="Επιπλέον λεπτομέρειες…"
+                    style="background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:15px;padding:12px 14px;outline:none;width:100%;resize:none"></textarea>
+        </div>
+        <button type="submit" onclick="return confirm('Αποστολή αναφοράς έλλειψης στον δήμο;')"
+                style="background:#b91c1c;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;padding:16px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="bi bi-send-fill"></i> Αποστολή Αναφοράς
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- Δωμάτιο Επιχείρησης (κοινό κανάλι) -->
@@ -229,6 +284,31 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     function go(){submitted=true;photoForm.submit();}
     if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){document.getElementById('phLat').value=p.coords.latitude;document.getElementById('phLng').value=p.coords.longitude;go();},function(){go();},{enableHighAccuracy:true,timeout:8000,maximumAge:30000});}else{go();}
   });
+
+  /* Private message to command */
+  (function(){
+    var inp=document.getElementById('msgInput'),btn=document.getElementById('msgSend');
+    if(!inp||!btn)return;
+    function send(){var b=(inp.value||'').trim();if(!b)return;inp.value='';
+      postJSON('/message',{body:b}).then(function(d){if(d&&d.success)pollComms();else alert((d&&d.message)||'Αποτυχία αποστολής.');})
+      .catch(function(){alert('Σφάλμα σύνδεσης.');});}
+    btn.addEventListener('click',send);
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();send();}});
+  })();
+
+  /* Shortage form toggle + severity */
+  window.toggleShortage=function(){
+    var f=document.getElementById('shortageForm'),a=document.getElementById('shortageArrow');
+    var open=f.style.display==='block';
+    f.style.display=open?'none':'block';
+    a.style.transform=open?'':'rotate(90deg)';
+  };
+  window.setShSev=function(val){
+    document.getElementById('shSeverityInput').value=val;
+    document.querySelectorAll('.sh-sev').forEach(function(b){
+      b.style.borderColor=b.dataset.val===val?'currentColor':'transparent';
+    });
+  };
 
   /* Ack order */
   window.ackOrder=function(id){postJSON('/ack-order',{message_id:id}).then(pollComms);};
