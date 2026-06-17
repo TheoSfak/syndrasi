@@ -72,6 +72,8 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
 .spin { animation:spin .6s linear infinite;display:inline-block; }
 @keyframes sseFlash { 0%,100%{box-shadow:none} 35%{box-shadow:0 0 0 4px rgba(34,197,94,.65),0 0 16px rgba(34,197,94,.3)} }
 .sse-flash { animation:sseFlash .75s ease; }
+@keyframes camPulse { 0%,100%{box-shadow:0 0 0 0 rgba(14,165,233,.75)} 60%{box-shadow:0 0 0 5px rgba(14,165,233,0)} }
+.cam-badge { animation:camPulse 1.8s ease-in-out infinite; }
 
 .shift-bar-wrap { position:relative;height:32px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.1); }
 .shift-bar { position:absolute;top:4px;height:24px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:.68rem;font-weight:700;white-space:nowrap;overflow:hidden;transition:all .3s; }
@@ -444,11 +446,11 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
       var cls = p.age_min < 5 ? 'fresh' : p.age_min < 20 ? 'stale' : 'old';
       var teamColor     = teamColors[p.team_id] || '#94a3b8';
       var freshnessClr  = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
-      var html = '<div style="display:flex;flex-direction:column;align-items:center">' +
-                 '<div style="background:' + teamColor + ';width:14px;height:14px;border-radius:50%;border:2.5px solid ' + freshnessClr + ';box-shadow:0 0 8px rgba(0,0,0,.3)"></div>' +
-                 (ph ? '<div style="background:#0ea5e9;width:13px;height:13px;border-radius:50%;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;margin-top:2px"><i class="bi bi-camera-fill" style="font-size:7px;color:#fff"></i></div>' : '') +
+      var html = '<div style="display:flex;flex-direction:row;align-items:center;gap:3px">' +
+                 '<div style="background:' + teamColor + ';width:14px;height:14px;border-radius:50%;border:2.5px solid ' + freshnessClr + ';box-shadow:0 0 8px rgba(0,0,0,.3);flex-shrink:0"></div>' +
+                 (ph ? '<div class="cam-badge" style="background:#0ea5e9;width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-camera-fill" style="font-size:6px;color:#fff"></i></div>' : '') +
                  '</div>';
-      var icon = L.divIcon({ className:'', html:html, iconSize:[14, ph ? 29 : 14], iconAnchor:[7,7] });
+      var icon = L.divIcon({ className:'', html:html, iconSize:[ph ? 29 : 14, 14], iconAnchor:[7,7] });
       var ph = lastPhotosByTeam[p.team_id];
       var photoSnippet = ph
         ? '<br><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) + '"' +

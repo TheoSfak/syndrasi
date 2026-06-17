@@ -4,6 +4,12 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.19-beta] — 2026-06-18
+
+### Fixed — Εικονίδιο κάμερας στο GPS σήμα: από κάτω → δίπλα + pulse
+- Το μπλε badge κάμερας εμφανίζεται πλέον **δίπλα** (οριζόντια) στην κουκκίδα GPS αντί κάτω της, ώστε να μην καλύπτει το χρώμα ομάδας.
+- Προστέθηκε pulse animation (μπλε glow) στο badge κάμερας.
+
 ## [0.9.18-beta] — 2026-06-18
 
 ### Added — Χρωματική κωδικοποίηση ομάδων στον χάρτη
