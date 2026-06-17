@@ -360,6 +360,7 @@ class AdminController
             'updateCheck'    => $updateCheck,
             'migApplied'     => MigrationRunner::appliedFiles(),
             'migPending'     => MigrationRunner::pendingFiles(),
+            'backups'        => UpdateService::listBackups(),
         ]);
     }
 

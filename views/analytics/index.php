@@ -38,30 +38,18 @@ $kpis = [
 ];
 ?>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
-  <div>
-    <h1 class="h3 mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Αναλύσεις &amp; Τάσεις</h1>
-    <p class="text-muted small mb-0">Διαχρονική εικόνα (<?= (int)$years[0] ?>–<?= (int)end($years) ?>) · εστίαση έτους <?= (int)$focus ?>.</p>
-  </div>
-  <div class="d-flex gap-2 flex-wrap align-items-center">
-    <form method="get" class="d-flex align-items-center gap-2">
-      <label class="small text-muted mb-0">Έτος:</label>
-      <select name="year" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
-        <?php for ($y = $thisYear; $y >= $thisYear - 6; $y--): ?>
-          <option value="<?= $y ?>" <?= $y === (int)$focus ? 'selected' : '' ?>><?= $y ?></option>
-        <?php endfor; ?>
-      </select>
-    </form>
-    <div class="dropdown">
-      <button class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-        <i class="bi bi-file-earmark-arrow-down me-1"></i>Εξαγωγή CSV
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=yearly&year='.$focus)) ?>">Ετήσιες τάσεις</a></li>
-        <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=category&year='.$focus)) ?>">Ανά κατηγορία</a></li>
-        <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=teams&year='.$focus)) ?>">Ανά ομάδα</a></li>
-      </ul>
-    </div>
+<!-- Used as the "Τάσεις" tab inside the Statistics page (header/year-selector live there). -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <p class="text-muted small mb-0">Διαχρονική εικόνα <?= (int)$years[0] ?>–<?= (int)end($years) ?> · εστίαση έτους <?= (int)$focus ?>.</p>
+  <div class="dropdown">
+    <button class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+      <i class="bi bi-file-earmark-arrow-down me-1"></i>Εξαγωγή CSV
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=yearly&year='.$focus)) ?>">Ετήσιες τάσεις</a></li>
+      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=category&year='.$focus)) ?>">Ανά κατηγορία</a></li>
+      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=teams&year='.$focus)) ?>">Ανά ομάδα</a></li>
+    </ul>
   </div>
 </div>
 

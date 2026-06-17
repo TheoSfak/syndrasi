@@ -184,6 +184,7 @@ class OperationController
             'activity'  => $activity,
             'sos'       => SosAlert::activeForEvent((int) $eid),
             'messages'  => EventMessage::forEvent((int) $eid),
+            'room'      => EventRoomMessage::forEvent((int) $eid),
         ]);
     }
 
@@ -433,6 +434,7 @@ class OperationController
             'photos'    => self::photoMarkers($eid),
             'sos'       => SosAlert::activeForEvent($eid),
             'messages'  => EventMessage::forEvent($eid),
+            'room'      => EventRoomMessage::forEvent($eid),
         ];
     }
 
@@ -542,6 +544,20 @@ class OperationController
             }
         } catch (Throwable $e) {}
         audit('ops_message_sent', 'event', (int) $event['id'], ($pkind ?: $kind) . ($teamId ? ' team ' . $teamId : ' broadcast'));
+        json_out(['ok' => true]);
+    }
+
+    /** POST /operations/events/{id}/room — post to the shared operations room. */
+    public function sendRoom($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent($id);
+        $body  = trim(post_str('body'));
+        if ($body === '') { json_out(['ok' => false, 'error' => 'Κενό μήνυμα.']); return; }
+        EventRoomMessage::create([
+            'mid' => $event['municipality_id'], 'eid' => $event['id'],
+            'role' => 'command', 'uid' => current_user_id(), 'tid' => null, 'body' => $body,
+        ]);
         json_out(['ok' => true]);
     }
 
@@ -658,175 +674,4 @@ class OperationController
     }
 
     /**
-     * Aggregate snapshot of every active/live event for a municipality.
-     * Per event: status, location, coverage stats, open shortages, latest team pings.
-     * Coverage is computed via teamStatusList() so figures match the single-event
-     * command centre exactly. Active events are few, so per-event queries are cheap.
-     */
-    private function buildWarRoomSnapshot(int $mid): array
-    {
-        $events = dbq(
-            "SELECT e.*, c.name AS category_name
-             FROM events e LEFT JOIN event_categories c ON c.id = e.category_id
-             WHERE e.municipality_id = :mid
-               AND (
-                 e.status = 'active'
-                 OR (e.status IN ('open','confirmed','review')
-                     AND NOW() >= e.start_datetime
-                     AND NOW() <= DATE_ADD(e.end_datetime, INTERVAL 4 HOUR))
-               )
-             ORDER BY e.start_datetime ASC",
-            ['mid' => $mid]
-        )->fetchAll();
-
-        $out          = [];
-        $totShortages = 0;
-        $totPresent   = 0;
-        $totApproved  = 0;
-
-        foreach ($events as $event) {
-            $eid   = (int) $event['id'];
-            $teams = $this->teamStatusList($eid);
-
-            $approved = $present = $checkedIn = 0;
-            foreach ($teams as $t) {
-                $approved += (int) $t['approved_people'];
-                if ($t['present_people'] !== null) {
-                    $present += (int) $t['present_people'];
-                }
-                if ($t['checkin_status'] && $t['checkin_status'] !== 'pending') {
-                    $checkedIn++;
-                }
-            }
-            $coverage = $approved > 0 ? (int) round($present / $approved * 100) : 0;
-
-            $openShort = (int) dbq(
-                "SELECT COUNT(*) FROM shortage_reports
-                 WHERE event_id = :eid AND status = 'open'",
-                ['eid' => $eid]
-            )->fetchColumn();
-
-            $pingRows = dbq(
-                "SELECT lp.team_id, t.name AS team_name, lp.latitude, lp.longitude,
-                        TIMESTAMPDIFF(MINUTE, lp.created_at, NOW()) AS age_min
-                 FROM location_pings lp
-                 JOIN volunteer_teams t ON t.id = lp.team_id
-                 WHERE lp.event_id = :eid
-                   AND lp.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
-                 ORDER BY lp.created_at DESC",
-                ['eid' => $eid]
-            )->fetchAll();
-            $latest = [];
-            foreach ($pingRows as $p) {
-                if (!isset($latest[$p['team_id']])) {
-                    $latest[$p['team_id']] = [
-                        'team_id'   => (int) $p['team_id'],
-                        'team_name' => $p['team_name'],
-                        'latitude'  => (float) $p['latitude'],
-                        'longitude' => (float) $p['longitude'],
-                        'age_min'   => (int) $p['age_min'],
-                    ];
-                }
-            }
-
-            $totShortages += $openShort;
-            $totPresent   += $present;
-            $totApproved  += $approved;
-
-            $out[] = [
-                'id'            => $eid,
-                'title'         => $event['title'],
-                'status'        => $event['status'],
-                'category'      => $event['category_name'],
-                'location_name' => $event['location_name'],
-                'lat'           => $event['latitude']  ? (float) $event['latitude']  : null,
-                'lng'           => $event['longitude'] ? (float) $event['longitude'] : null,
-                'start_ts'      => strtotime($event['start_datetime']) * 1000,
-                'end_ts'        => strtotime($event['end_datetime']) * 1000,
-                'stats'         => [
-                    'teams_total'     => count($teams),
-                    'teams_present'   => $checkedIn,
-                    'people_approved' => $approved,
-                    'people_present'  => $present,
-                    'coverage'        => $coverage,
-                    'open_shortages'  => $openShort,
-                ],
-                'pings'         => array_values($latest),
-                'photos'        => self::photoMarkers($eid),
-            ];
-        }
-
-        $globalCoverage = $totApproved > 0 ? (int) round($totPresent / $totApproved * 100) : 0;
-
-        return [
-            'ok'     => true,
-            'ts'     => date('H:i:s'),
-            'totals' => [
-                'events'         => count($out),
-                'people_present' => $totPresent,
-                'people_approved'=> $totApproved,
-                'coverage'       => $globalCoverage,
-                'open_shortages' => $totShortages,
-            ],
-            'events' => $out,
-        ];
-    }
-
-    // ----------------------------------------------------------- Private helpers
-
-    private function teamStatusList(int $eid): array
-    {
-        return dbq(
-            "SELECT ea.team_id, t.name AS team_name, t.phone AS team_phone,
-                    ea.approved_people,
-                    oc.status AS checkin_status,
-                    oc.present_people, oc.message AS checkin_msg,
-                    lp.latitude  AS last_lat,
-                    lp.longitude AS last_lng,
-                    lp.created_at AS last_ping_at
-             FROM event_applications ea
-             JOIN volunteer_teams t ON t.id = ea.team_id
-             LEFT JOIN operational_checkins oc
-               ON oc.event_id = ea.event_id AND oc.team_id = ea.team_id
-             LEFT JOIN (
-                 SELECT lp1.team_id, lp1.latitude, lp1.longitude, lp1.created_at
-                 FROM location_pings lp1
-                 JOIN (
-                     SELECT team_id, MAX(id) AS max_id
-                     FROM location_pings
-                     WHERE event_id = :eid2
-                     GROUP BY team_id
-                 ) latest ON latest.team_id = lp1.team_id AND latest.max_id = lp1.id
-             ) lp ON lp.team_id = ea.team_id
-             WHERE ea.event_id = :eid AND ea.status = 'approved'
-             ORDER BY t.name ASC",
-            ['eid' => $eid, 'eid2' => $eid]
-        )->fetchAll();
-    }
-
-    private function buildActivityFeed(int $eid): array
-    {
-        return dbq(
-            "SELECT type, ts, actor, title, severity FROM (
-                SELECT 'checkin' AS type, oc.checked_in_at AS ts,
-                       t.name AS actor, oc.status AS title, '' AS severity
-                FROM operational_checkins oc
-                JOIN volunteer_teams t ON t.id = oc.team_id
-                WHERE oc.event_id = :eid
-                UNION ALL
-                SELECT 'shortage', sr.created_at, t.name, sr.title, sr.severity
-                FROM shortage_reports sr
-                JOIN volunteer_teams t ON t.id = sr.team_id
-                WHERE sr.event_id = :eid2
-                UNION ALL
-                SELECT 'note', n.created_at, u.name, n.note, ''
-                FROM operational_notes n
-                JOIN users u ON u.id = n.user_id
-                WHERE n.event_id = :eid3
-             ) feed
-             ORDER BY ts DESC
-             LIMIT 25",
-            ['eid' => $eid, 'eid2' => $eid, 'eid3' => $eid]
-        )->fetchAll();
-    }
-}
+     * Aggregate snapshot of e

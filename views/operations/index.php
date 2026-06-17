@@ -146,12 +146,12 @@ $hasConfirmed    = !empty($confirmed);
           <i class="bi bi-broadcast me-2"></i>Άνοιγμα Επιχειρησιακής Σελίδας
         </a>
 
-        <!-- Secondary: complete (manual close) -->
-        <form method="post" action="<?= e(url('/events/' . $ev['id'] . '/complete')) ?>"
-              onsubmit="return confirm('Ολοκλήρωση δράσης τώρα;')">
+        <!-- Secondary: close (manual). Goes to 'closed' → reconciliation. -->
+        <form method="post" action="<?= e(url('/events/' . $ev['id'] . '/close')) ?>"
+              onsubmit="return confirm('Κλείσιμο δράσης τώρα;')">
           <?= csrf_field() ?>
           <button class="btn btn-outline-secondary btn-sm w-100">
-            <i class="bi bi-check2-circle me-1"></i>Ολοκλήρωση / Κλείσιμο
+            <i class="bi bi-door-closed me-1"></i>Κλείσιμο δράσης
           </button>
         </form>
       </div>

@@ -85,22 +85,4 @@ class EventMessage
         return dbq(
             "SELECT m.*, u.name AS sender_name
              FROM event_messages m
-             LEFT JOIN users u ON u.id = m.sender_user_id
-             WHERE m.event_id = :eid AND m.id > :since
-               AND (m.team_id = :tid OR m.team_id IS NULL)
-             ORDER BY m.id ASC",
-            ['eid' => $eid, 'tid' => $tid, 'since' => $sinceId]
-        )->fetchAll();
-    }
-
-    /** Team acknowledges a command order. */
-    public static function acknowledge(int $id, int $userId): void
-    {
-        dbq(
-            "UPDATE event_messages
-             SET acknowledged_at = NOW(), acknowledged_by = :uid
-             WHERE id = :id AND kind = 'order' AND acknowledged_at IS NULL",
-            ['uid' => $userId, 'id' => $id]
-        );
-    }
-}
+             LEFT JOIN users u ON u.id = m.sen

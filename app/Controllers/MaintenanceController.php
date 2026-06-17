@@ -55,6 +55,33 @@ class MaintenanceController
         redirect('/admin/settings#updates');
     }
 
+    public function downloadBackup()
+    {
+        requireRole(['super_admin']);
+        $path = UpdateService::backupFile((string) ($_GET['file'] ?? ''));
+        if ($path === null) {
+            abort(404, 'Το backup δεν βρέθηκε.');
+        }
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . basename($path) . '"');
+        header('Content-Length: ' . filesize($path));
+        readfile($path);
+        exit;
+    }
+
+    public function restoreBackup()
+    {
+        requireRole(['super_admin']);
+        $r = UpdateService::restoreBackup(post_str('file'));
+        if ($r['ok']) {
+            flash_set('success', 'Επαναφορά από backup «' . $r['name']
+                . '». Δημιουργήθηκε αυτόματα και νέο backup της προηγούμενης κατάστασης.');
+        } else {
+            flash_set('danger', 'Αποτυχία επαναφοράς: ' . $r['error']);
+        }
+        redirect('/admin/settings#updates');
+    }
+
     public function runMigrations()
     {
         requireRole(['super_admin']);

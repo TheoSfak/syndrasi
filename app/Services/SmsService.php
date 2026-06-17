@@ -36,6 +36,7 @@ class SmsService
                 'sms_sender'   => 'sender',
                 'sms_endpoint' => 'endpoint',
                 'sms_api_key'  => 'api_key',
+                'sms_username' => 'username',
             ];
             foreach ($map as $key => $cfgKey) {
                 if (isset($s[$key]) && $s[$key] !== '') {
@@ -59,6 +60,8 @@ class SmsService
         $cfg = self::resolveConfig($municipalityId);
         try {
             switch ($cfg['driver']) {
+                case 'smsbox':
+                    return self::sendSmsbox($cfg, $phone, $message);
                 case 'http':
                     return self::sendHttp($cfg, $phone, $message);
                 case 'none':
@@ -99,35 +102,4 @@ class SmsService
 
     /**
      * Generic HTTP gateway. Adapt the payload to your provider's API.
-     * Left intentionally simple — most Greek gateways accept a POST like this.
-     */
-    private static function sendHttp(array $cfg, string $phone, string $message): bool
-    {
-        if (empty($cfg['endpoint']) || empty($cfg['api_key'])) {
-            self::$lastError = 'SMS gateway δεν έχει ρυθμιστεί (SMS_ENDPOINT / SMS_API_KEY).';
-            return false;
-        }
-        $payload = http_build_query([
-            'key'     => $cfg['api_key'],
-            'sender'  => $cfg['sender'],
-            'to'      => $phone,
-            'message' => $message,
-        ]);
-        $ch = curl_init($cfg['endpoint']);
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $payload,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 10,
-        ]);
-        $resp = curl_exec($ch);
-        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err  = curl_error($ch);
-        curl_close($ch);
-        if ($resp === false || $code >= 400) {
-            self::$lastError = 'Gateway error: ' . ($err !== '' ? $err : ('HTTP ' . $code));
-            return false;
-        }
-        return true;
-    }
-}
+     * Left intentionally simple — most Greek gateways accept a POST lik

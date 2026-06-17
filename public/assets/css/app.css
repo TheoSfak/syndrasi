@@ -53,7 +53,11 @@ body {
   background-attachment: fixed !important;
 }
 
-main { animation: fadeInUp .4s var(--ease) both; }
+/* Use `backwards` (not `both`): keeps the entrance animation but does NOT
+   retain a transform afterwards. A lingering transform on <main> creates a
+   stacking context that traps Bootstrap modals behind their backdrop
+   (modal greys out and becomes unclickable). */
+main { animation: fadeInUp .4s var(--ease) backwards; }
 @keyframes fadeInUp {
   from { opacity:0; transform:translateY(20px); }
   to   { opacity:1; transform:translateY(0);    }

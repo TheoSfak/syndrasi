@@ -295,28 +295,35 @@ $tzOptions = [
             <div class="col-12">
               <label class="form-label">Τρόπος αποστολής SMS</label>
               <select name="sms_driver" class="form-select">
-                <option value=""     <?= $smsDriver === ''     ? 'selected' : '' ?>>Προεπιλογή πλατφόρμας (<?= e(config('sms')['driver']) ?>)</option>
-                <option value="http" <?= $smsDriver === 'http' ? 'selected' : '' ?>>HTTP gateway (πραγματική αποστολή)</option>
-                <option value="log"  <?= $smsDriver === 'log'  ? 'selected' : '' ?>>Μόνο καταγραφή (log, για δοκιμές)</option>
-                <option value="none" <?= $smsDriver === 'none' ? 'selected' : '' ?>>Απενεργοποιημένο</option>
+                <option value=""       <?= $smsDriver === ''       ? 'selected' : '' ?>>Προεπιλογή πλατφόρμας (<?= e(config('sms')['driver']) ?>)</option>
+                <option value="smsbox" <?= $smsDriver === 'smsbox' ? 'selected' : '' ?>>smsbox.gr</option>
+                <option value="http"   <?= $smsDriver === 'http'   ? 'selected' : '' ?>>Γενικό HTTP gateway</option>
+                <option value="log"    <?= $smsDriver === 'log'    ? 'selected' : '' ?>>Μόνο καταγραφή (log, για δοκιμές)</option>
+                <option value="none"   <?= $smsDriver === 'none'   ? 'selected' : '' ?>>Απενεργοποιημένο</option>
               </select>
-              <div class="form-text">Για πραγματική αποστολή, ζητήστε API key & endpoint από τον πάροχό σας (π.χ. Yuboto, AppText, Vonage).</div>
+              <div class="form-text">Για το <strong>smsbox.gr</strong> συμπληρώστε username + password (συνιστάται) ή επικολλήστε ένα ενεργό sesskey στο πεδίο «API Key / Password».</div>
             </div>
             <div class="col-md-5">
-              <label class="form-label">Όνομα αποστολέα (Sender)</label>
+              <label class="form-label">Όνομα αποστολέα (Sender / from)</label>
               <input type="text" name="sms_sender" class="form-control" value="<?= e($v('sms_sender')) ?>" placeholder="SynDrasi" maxlength="11">
-              <div class="form-text">Έως 11 χαρακτήρες (alphanumeric sender ID).</div>
+              <div class="form-text">Έως 11 χαρακτήρες (εγκεκριμένο alphanumeric sender ID).</div>
             </div>
-            <div class="col-12"><hr class="my-1"><strong class="small text-muted">ΣΥΝΔΕΣΗ ΜΕ ΠΑΡΟΧΟ (HTTP)</strong></div>
-            <div class="col-12">
-              <label class="form-label">Endpoint (URL του gateway)</label>
-              <input type="url" name="sms_endpoint" class="form-control" value="<?= e($v('sms_endpoint')) ?>" placeholder="https://api.provider.gr/send">
+            <div class="col-md-7">
+              <label class="form-label">Username (smsbox)</label>
+              <input type="text" name="sms_username" class="form-control" value="<?= e($v('sms_username')) ?>" autocomplete="off" placeholder="username λογαριασμού smsbox">
+              <div class="form-text">Αφήστε κενό αν θα χρησιμοποιήσετε απευθείας sesskey.</div>
             </div>
-            <div class="col-12">
-              <label class="form-label">API Key</label>
+            <div class="col-12"><hr class="my-1"><strong class="small text-muted">ΔΙΑΠΙΣΤΕΥΤΗΡΙΑ</strong></div>
+            <div class="col-md-6">
+              <label class="form-label">API Key / Password / sesskey</label>
               <input type="password" name="sms_api_key" class="form-control" autocomplete="new-password"
-                     placeholder="<?= $smsKeySet ? '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)' : 'Επικολλήστε το κλειδί του παρόχου' ?>">
-              <div class="form-text"><?= $smsKeySet ? 'Υπάρχει ήδη αποθηκευμένο κλειδί. Συμπληρώστε μόνο αν θέλετε να το αλλάξετε.' : 'Το κλειδί αποθηκεύεται με ασφάλεια και δεν εμφανίζεται ξανά.' ?></div>
+                     placeholder="<?= $smsKeySet ? '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)' : 'password (με username) ή sesskey' ?>">
+              <div class="form-text"><?= $smsKeySet ? 'Υπάρχει ήδη αποθηκευμένο. Συμπληρώστε μόνο για αλλαγή.' : 'Με username → βάλτε password. Χωρίς username → βάλτε sesskey (λήγει σε 2 ώρες).' ?></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Endpoint (μόνο για γενικό HTTP gateway)</label>
+              <input type="url" name="sms_endpoint" class="form-control" value="<?= e($v('sms_endpoint')) ?>" placeholder="https://api.provider.gr/send">
+              <div class="form-text">Το smsbox.gr δεν χρειάζεται endpoint.</div>
             </div>
           </div>
           <div class="card-footer bg-white">
@@ -331,6 +338,17 @@ $tzOptions = [
             <p>Τα <strong>credits SMS</strong> τα αγοράζετε απευθείας από τον πάροχο. Εδώ καταχωρείτε μόνο το κλειδί σύνδεσης ώστε η εφαρμογή να στέλνει μέσω του λογαριασμού σας.</p>
             <p>Στην καρτέλα <strong>Ειδοποιήσεις</strong> επιλέγετε ανά τύπο αν θα φεύγει Email, SMS ή και τα δύο.</p>
             <p>Σε λειτουργία <em>log</em>, τα μηνύματα γράφονται στο <code>storage/logs/sms.log</code> για δοκιμές χωρίς χρέωση.</p>
+          </div>
+        </div>
+        <div class="card shadow-sm mt-3">
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> Δοκιμαστικό SMS</div>
+          <div class="card-body">
+            <p class="small text-muted mb-2">Αποθηκεύστε πρώτα τις ρυθμίσεις, μετά στείλτε ένα δοκιμαστικό SMS.</p>
+            <form method="post" action="<?= e(url('/settings/sms/test')) ?>" class="d-flex gap-2">
+              <?= csrf_field() ?>
+              <input type="text" name="test_to" class="form-control" placeholder="π.χ. 69XXXXXXXX" required>
+              <button class="btn btn-outline-primary" type="submit"><i class="bi bi-send me-1"></i>Αποστολή</button>
+            </form>
           </div>
         </div>
       </div>
@@ -540,136 +558,4 @@ $tzOptions = [
                            value="<?= e($stored['subject']) ?>">
                   </div>
 
-                  <!-- Body -->
-                  <div class="mb-3">
-                    <label class="form-label fw-semibold small">Σώμα email (Body)</label>
-                    <textarea class="form-control font-monospace small"
-                              name="tpl[<?= e($type) ?>][body]"
-                              id="body_<?= e($type) ?>"
-                              rows="8"><?= e($stored['body']) ?></textarea>
-                    <div class="form-text">Κλικ σε placeholder για εισαγωγή στο σημείο του cursor.</div>
-                  </div>
-
-                  <!-- Placeholder badges -->
-                  <div class="mb-3">
-                    <span class="small fw-semibold text-muted me-2">Μεταβλητές:</span>
-                    <?php foreach ($tplDef['vars'] as $varKey => $varLabel): ?>
-                      <span class="badge text-bg-secondary me-1 mb-1 cursor-pointer tpl-var-badge"
-                            style="font-size:.78rem;cursor:pointer;"
-                            data-var="{<?= e($varKey) ?>}"
-                            data-target="body_<?= e($type) ?>"
-                            title="<?= e($varLabel) ?>">
-                        {<?= e($varKey) ?>}
-                      </span>
-                    <?php endforeach; ?>
-                  </div>
-
-                  <!-- Actions -->
-                  <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary tpl-reset-btn"
-                            data-type="<?= e($type) ?>"
-                            data-default-subject="<?= e($tplDef['subject']) ?>"
-                            data-default-body="<?= e($tplDef['body']) ?>">
-                      <i class="bi bi-arrow-counterclockwise me-1"></i>Επαναφορά αρχικών
-                    </button>
-                    <span class="small text-muted align-self-center">
-                      <i class="bi bi-people me-1"></i>Παραλήπτης: <?= e($tplDef['recipient']) ?>
-                    </span>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-            <?php endforeach; ?>
-          </div><!-- /accordion -->
-
-          <div class="mt-3 text-end">
-            <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Αποθήκευση όλων</button>
-          </div>
-        </form>
-      </div>
-
-      <div class="col-xl-4">
-        <div class="card shadow-sm mb-3">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Πώς λειτουργεί</div>
-          <div class="card-body small text-muted">
-            <p>Κάθε τύπος email έχει ένα <strong>Θέμα</strong> (Subject) και ένα <strong>Σώμα</strong> (Body).</p>
-            <p>Χρησιμοποιήστε τα <strong>{placeholders}</strong> για να εισάγετε δυναμικές τιμές που αντικαθίστανται αυτόματα κατά την αποστολή (π.χ. <code>{event_title}</code>).</p>
-            <p>Κάντε κλικ σε ένα badge placeholder για εισαγωγή στο cursor του textarea.</p>
-            <p>Τα emails στέλνονται ως <strong>HTML</strong> με αυτόματο wrapper που περιλαμβάνει το λογότυπο του δήμου (από την καρτέλα Εμφάνιση).</p>
-            <hr>
-            <p class="mb-0">Το κουμπί <strong>Επαναφορά αρχικών</strong> επαναφέρει το default κείμενο — η αλλαγή γίνεται μόνιμη μετά την Αποθήκευση.</p>
-          </div>
-        </div>
-        <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-palette me-1"></i> Branding</div>
-          <div class="card-body small text-muted">
-            <p class="mb-1">Το λογότυπο και το όνομα του δήμου εμφανίζονται αυτόματα στην κεφαλίδα κάθε email.</p>
-            <a href="#tab-branding" class="tpl-switch-tab">Ρύθμιση λογότυπου →</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /tab-content -->
-
-<script>
-// Auto-uncheck "required" when "visible" is unchecked
-document.querySelectorAll('.member-visible-cb').forEach(function (cb) {
-  cb.addEventListener('change', function () {
-    var field = this.dataset.field;
-    var reqCb = document.querySelector('.member-required-cb[data-field="' + field + '"]');
-    if (reqCb) {
-      reqCb.disabled = !this.checked;
-      if (!this.checked) reqCb.checked = false;
-    }
-  });
-});
-</script>
-<script>
-(function () {
-  var hash = window.location.hash;
-  if (hash) {
-    var tab = document.querySelector('#settingsTabs a[href="' + hash + '"]');
-    if (tab) { new bootstrap.Tab(tab).show(); return; }
-  }
-  var first = document.querySelector('#settingsTabs .nav-link');
-  if (first) { new bootstrap.Tab(first).show(); }
-})();
-
-// Email template: click placeholder badge → insert {var} at textarea cursor
-document.querySelectorAll('.tpl-var-badge').forEach(function (badge) {
-  badge.addEventListener('click', function () {
-    var targetId = this.dataset.target;
-    var varText  = this.dataset.var;
-    var ta = document.getElementById(targetId);
-    if (!ta) { return; }
-    ta.focus();
-    var start = ta.selectionStart;
-    var end   = ta.selectionEnd;
-    ta.value  = ta.value.substring(0, start) + varText + ta.value.substring(end);
-    ta.selectionStart = ta.selectionEnd = start + varText.length;
-  });
-});
-
-// Email template: reset to default values
-document.querySelectorAll('.tpl-reset-btn').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    var type    = this.dataset.type;
-    var subjEl  = document.getElementById('subj_' + type);
-    var bodyEl  = document.getElementById('body_' + type);
-    if (subjEl) { subjEl.value = this.dataset.defaultSubject; }
-    if (bodyEl) { bodyEl.value = this.dataset.defaultBody; }
-  });
-});
-
-// "Ρύθμιση λογότυπου →" link inside the templates tab
-document.querySelectorAll('.tpl-switch-tab').forEach(function (a) {
-  a.addEventListener('click', function (e) {
-    e.preventDefault();
-    var target = document.querySelector('#settingsTabs a[href="#tab-branding"]');
-    if (target) { new bootstrap.Tab(target).show(); }
-  });
-});
-</script>
+  

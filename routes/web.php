@@ -19,6 +19,7 @@ $router->post('/f/{token}/status',   'FieldController@status');
 $router->post('/f/{token}/sos',      'FieldController@sos');
 $router->post('/f/{token}/ack-order','FieldController@ackOrder');
 $router->post('/f/{token}/photo',    'FieldController@photo');
+$router->post('/f/{token}/room',     'FieldController@room');
 
 /* Home: redirect by role */
 $router->get('/', 'AuthController@home');
@@ -113,10 +114,12 @@ $router->get('/operations/war-room/stream', 'OperationController@warRoomStream')
 $router->get('/operations/events/{id}', 'OperationController@show');
 $router->get('/operations/events/{id}/gate-qr', 'OperationController@gateQr');
 $router->get('/operations/events/{id}/status', 'OperationController@status');
+$router->get('/operations/events/{id}/stream', 'OperationController@stream');
 $router->get('/operations/events/{id}/locations', 'OperationController@locations');
 $router->post('/operations/events/{id}/note', 'OperationController@addNote');
 $router->post('/operations/events/{id}/request-photo', 'OperationController@requestPhoto');
 $router->post('/operations/events/{id}/message', 'OperationController@sendMessage');
+$router->post('/operations/events/{id}/room', 'OperationController@sendRoom');
 $router->get('/operations/photos/{id}', 'OperationController@servePhoto');
 $router->post('/shortages/{id}/acknowledge', 'OperationController@acknowledgeShortage');
 $router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage');
@@ -161,6 +164,7 @@ $router->post('/team/operations/events/{id}/message', 'TeamPortalController@send
 $router->post('/team/operations/events/{id}/status-ping', 'TeamPortalController@statusPing');
 $router->post('/team/operations/events/{id}/ack-order', 'TeamPortalController@ackOrder');
 $router->get('/team/operations/events/{id}/comms', 'TeamPortalController@commsFeed');
+$router->post('/team/operations/events/{id}/room', 'TeamPortalController@sendRoomMessage');
 
 /* Team debrief */
 $router->get('/team/events/{id}/debrief',  'TeamPortalController@debrief');
@@ -191,6 +195,7 @@ $router->post('/settings/map', 'SettingsController@saveMap');
 $router->post('/settings/awards', 'SettingsController@saveAwards');
 $router->post('/settings/notifications', 'SettingsController@saveNotifications');
 $router->post('/settings/sms', 'SettingsController@saveSms');
+$router->post('/settings/sms/test', 'SettingsController@testSms');
 $router->post('/settings/event-defaults', 'SettingsController@saveEventDefaults');
 $router->post('/settings/branding', 'SettingsController@saveBranding');
 $router->post('/settings/member-fields', 'SettingsController@saveMemberFields');
@@ -202,31 +207,4 @@ $router->post('/push/subscribe', 'PushController@subscribe');
 $router->post('/push/unsubscribe', 'PushController@unsubscribe');
 
 /* Cron endpoints (token-protected, no session required) */
-$router->get('/cron/shift-reminders', 'CronController@shiftReminders');
-$router->get('/cron/cleanup', 'CronController@cleanup');
-
-/* Super admin */
-$router->get('/admin/dashboard', 'AdminController@dashboard');
-$router->get('/admin/municipalities', 'AdminController@municipalities');
-$router->post('/admin/municipalities/store', 'AdminController@storeMunicipality');
-$router->get('/admin/municipalities/{id}', 'AdminController@showMunicipality');
-$router->post('/admin/municipalities/{id}/update', 'AdminController@updateMunicipality');
-$router->post('/admin/municipalities/{id}/toggle', 'AdminController@toggleMunicipality');
-$router->get('/admin/users', 'AdminController@users');
-$router->post('/admin/users/store', 'AdminController@storeUser');
-$router->post('/admin/users/{id}/update', 'AdminController@updateUser');
-$router->post('/admin/users/{id}/reset-password', 'AdminController@resetUserPassword');
-$router->post('/admin/users/{id}/toggle', 'AdminController@toggleUser');
-$router->post('/admin/impersonate/{id}', 'AdminController@impersonate');
-$router->post('/admin/stop-impersonation', 'AdminController@stopImpersonation');
-$router->get('/admin/settings', 'AdminController@settings');
-$router->post('/admin/settings', 'AdminController@saveSettings');
-
-/* Super admin: maintenance (cron) + self-update */
-$router->post('/admin/maintenance/cleanup', 'MaintenanceController@cleanup');
-$router->post('/admin/updates/backup',      'MaintenanceController@backup');
-$router->post('/admin/updates/check',       'MaintenanceController@checkUpdate');
-$router->post('/admin/updates/apply',       'MaintenanceController@applyUpdate');
-$router->post('/admin/migrations/run',      'MaintenanceController@runMigrations');
-$router->get('/admin/backups/download',      'MaintenanceController@downloadBackup');
-$router->post('/admin/backups/restore',      'MaintenanceController@restoreBackup');
+$router->ge

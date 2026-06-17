@@ -8,41 +8,14 @@
  */
 class AnalyticsController
 {
-    private const SPAN = 5; // number of years shown (current + 4 previous)
+    public const SPAN = 5; // number of years shown (current + 4 previous)
 
-    /** GET /analytics */
+    /** GET /analytics — merged into the Statistics page (tabs); redirect there. */
     public function index()
     {
         requireRole(['municipality_admin']);
-        $mid = current_municipality_id();
-
-        $focus = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
-        $y1    = $focus;
-        $y0    = $focus - (self::SPAN - 1);
-        $years = range($y0, $y1);
-
-        $yearly        = $this->yearlySeries($mid, $y0, $y1);
-        $teamTrends    = $this->teamTrends($mid, $y0, $y1, $years);
-        $byCategory    = $this->categoryBreakdown($mid, $y0, $y1);
-        $monthlyCur    = StatsService::eventsByMonth($mid, $focus);
-        $monthlyPrev   = StatsService::eventsByMonth($mid, $focus - 1);
-
-        // YoY deltas vs previous year for the focus year
-        $cur  = $yearly[$focus]      ?? ['events' => 0, 'participations' => 0, 'hours' => 0, 'avg_resp' => null];
-        $prev = $yearly[$focus - 1]  ?? ['events' => 0, 'participations' => 0, 'hours' => 0, 'avg_resp' => null];
-
-        render('analytics/index', [
-            'pageTitle'    => 'Αναλύσεις & Τάσεις',
-            'focus'        => $focus,
-            'years'        => $years,
-            'yearly'       => $yearly,
-            'teamTrends'   => $teamTrends,
-            'byCategory'   => $byCategory,
-            'monthlyCur'   => array_values($monthlyCur),
-            'monthlyPrev'  => array_values($monthlyPrev),
-            'cur'          => $cur,
-            'prev'         => $prev,
-        ]);
+        $q = isset($_GET['year']) ? ('?year=' . (int) $_GET['year']) : '';
+        redirect('/statistics' . $q);
     }
 
     /** GET /analytics/export?type=yearly|category|teams */
@@ -57,7 +30,7 @@ class AnalyticsController
 
         if ($type === 'category') {
             $rows = [];
-            foreach ($this->categoryBreakdown($mid, $y0, $y1) as $c) {
+            foreach (self::categoryBreakdown($mid, $y0, $y1) as $c) {
                 $rows[] = [$c['category'], (int) $c['events'], round((float) $c['hours'], 1)];
             }
             audit('export', 'analytics_category', null);
@@ -71,7 +44,7 @@ class AnalyticsController
 
         if ($type === 'teams') {
             $years  = range($y0, $y1);
-            $trends = $this->teamTrends($mid, $y0, $y1, $years);
+            $trends = self::teamTrends($mid, $y0, $y1, $years);
             $header = array_merge(['Ομάδα'], array_map(fn($y) => "Ώρες $y", $years), ['Σύνολο ωρών']);
             $rows   = [];
             foreach ($trends as $t) {
@@ -88,7 +61,7 @@ class AnalyticsController
         }
 
         // default: yearly trends
-        $yearly = $this->yearlySeries($mid, $y0, $y1);
+        $yearly = self::yearlySeries($mid, $y0, $y1);
         $rows   = [];
         for ($y = $y0; $y <= $y1; $y++) {
             $r = $yearly[$y] ?? ['events' => 0, 'participations' => 0, 'hours' => 0, 'avg_resp' => null];
@@ -111,7 +84,7 @@ class AnalyticsController
     // ----------------------------------------------------------- private
 
     /** Per-year totals keyed by year. */
-    private function yearlySeries(int $mid, int $y0, int $y1): array
+    public static function yearlySeries(int $mid, int $y0, int $y1): array
     {
         $agg = dbq(
             "SELECT YEAR(e.start_datetime) AS yr,
@@ -166,7 +139,7 @@ class AnalyticsController
     }
 
     /** Category breakdown (events + hours) across the whole range. */
-    private function categoryBreakdown(int $mid, int $y0, int $y1): array
+    public static function categoryBreakdown(int $mid, int $y0, int $y1): array
     {
         return dbq(
             "SELECT COALESCE(c.name, 'Χωρίς κατηγορία') AS category,
@@ -192,7 +165,7 @@ class AnalyticsController
     }
 
     /** Top teams by total hours, with per-year hours for the range. */
-    private function teamTrends(int $mid, int $y0, int $y1, array $years): array
+    public static function teamTrends(int $mid, int $y0, int $y1, array $years): array
     {
         $rows = dbq(
             "SELECT ea.team_id, t.name AS team_name,

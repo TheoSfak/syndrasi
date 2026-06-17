@@ -1,6 +1,17 @@
 -- ============================================================
 -- SynDrasi - Database schema (MySQL 8 / MariaDB 10.5+)
 -- Run:  mysql -u root -p < schema.sql
+--
+-- ⚠️ FRESH INSTALL — IMPORTANT:
+-- This file is the BASE schema. Newer features live in database/migrations/.
+-- After importing this file you MUST run ALL migration files in order, e.g.:
+--     for f in database/migrations/0*.sql; do mysql -u root syndrasi < "$f"; done
+-- (The in-app self-updater auto-runs pending migrations on EXISTING installs;
+--  a brand-new DB created from this file still needs the migrations applied once.)
+-- Tables added by migrations include: team_members, event_application_members,
+-- team_debriefs, event_templates, mobilizations, photo_requests, event_photos,
+-- sos_alerts, event_messages, event_room_messages (013–015 add field_token /
+-- geo columns). See DEPLOY.md → "Fresh install".
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS syndrasi
@@ -274,22 +285,4 @@ CREATE TABLE municipality_settings (
   updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY unique_mun_key (municipality_id, setting_key),
   INDEX idx_msettings_mid (municipality_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ------------------------------------------------------------
--- Simple key/value settings managed by the super admin
-CREATE TABLE app_settings (
-  setting_key VARCHAR(100) PRIMARY KEY,
-  setting_value TEXT NULL,
-  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ------------------------------------------------------------
--- Default categories
-INSERT INTO event_categories (name) VALUES
-('Πολιτιστική εκδήλωση'),
-('Συναυλία'),
-('Αθλητική δράση'),
-('Κοινωνική δράση'),
-('Εορταστική δράση'),
-('Άλλη δράση');
+) ENGINE=InnoDB DEFAULT CHAR

@@ -230,7 +230,7 @@ class SettingsController
         $mid = current_municipality_id();
 
         $driver = post_str('sms_driver');
-        if (!in_array($driver, ['', 'log', 'http', 'none'], true)) {
+        if (!in_array($driver, ['', 'log', 'http', 'smsbox', 'none'], true)) {
             flash_set('danger', 'Μη έγκυρος τρόπος αποστολής SMS.');
             redirect('/settings#tab-sms');
         }
@@ -250,9 +250,10 @@ class SettingsController
             'sms_driver'   => $driver,
             'sms_sender'   => post_str('sms_sender'),
             'sms_endpoint' => $endpoint,
+            'sms_username' => post_str('sms_username'),
         ];
 
-        // Keep the stored API key when the field is left empty
+        // Keep the stored API key / password when the field is left empty
         $key = isset($_POST['sms_api_key']) ? trim((string) $_POST['sms_api_key']) : '';
         if ($key !== '') {
             $settings['sms_api_key'] = $key;
@@ -262,6 +263,32 @@ class SettingsController
         audit('municipality_sms_settings_updated', 'municipality', $mid, 'driver: ' . ($driver !== '' ? $driver : 'default'));
 
         flash_set('success', 'Οι ρυθμίσεις SMS αποθηκεύτηκαν.');
+        redirect('/settings#tab-sms');
+    }
+
+    /** POST /settings/sms/test — send a test SMS to a number, using saved settings. */
+    public function testSms()
+    {
+        set_time_limit(60);
+        requireRole(['municipality_admin']);
+        $mid = current_municipality_id();
+
+        $to = preg_replace('/[^\d+]/', '', (string) post_str('test_to'));
+        if ($to === '') {
+            flash_set('danger', 'Δώστε αριθμό κινητού για τη δοκιμή.');
+            redirect('/settings#tab-sms');
+        }
+        $ok = SmsService::send($to, 'SynDrasi: δοκιμαστικό SMS — η σύνδεση λειτουργεί.', $mid);
+        audit('municipality_sms_test', 'municipality', $mid, $ok ? 'success' : 'failed: ' . SmsService::lastError());
+
+        if ($ok) {
+            $drv = SmsService::resolveConfig($mid)['driver'] ?? '';
+            flash_set('success', $drv === 'log'
+                ? 'Το δοκιμαστικό SMS καταγράφηκε στο storage/logs/sms.log (driver: log).'
+                : 'Το δοκιμαστικό SMS στάλθηκε στο ' . $to . '.');
+        } else {
+            flash_set('danger', 'Αποτυχία αποστολής SMS: ' . (SmsService::lastError() ?: 'άγνωστο σφάλμα'));
+        }
         redirect('/settings#tab-sms');
     }
 
@@ -293,84 +320,4 @@ class SettingsController
         $mid = current_municipality_id();
 
         $optionalFields = ['blood_type', 'driving_license', 'certifications', 'id_number', 'amka'];
-        $visibleFields  = isset($_POST['mf_visible'])  && is_array($_POST['mf_visible'])  ? $_POST['mf_visible']  : [];
-        $requiredFields = isset($_POST['mf_required']) && is_array($_POST['mf_required']) ? $_POST['mf_required'] : [];
-
-        $config = [];
-        foreach ($optionalFields as $f) {
-            $visible  = in_array($f, $visibleFields, true);
-            $required = $visible && in_array($f, $requiredFields, true);
-            $config[$f] = ['visible' => $visible, 'required' => $required];
-        }
-
-        MunicipalitySetting::setMany($mid, ['member_fields_config' => json_encode($config)]);
-        audit('municipality_member_fields_updated', 'municipality', $mid);
-
-        flash_set('success', 'Η διαμόρφωση πεδίων μελών αποθηκεύτηκε.');
-        redirect('/settings#tab-members');
-    }
-
-    /* ── Email templates ─────────────────────────────────────────────────── */
-
-    public function saveEmailTemplates()
-    {
-        requireRole(['municipality_admin']);
-        $mid  = current_municipality_id();
-        $defs = EmailTemplate::definitions();
-
-        $tplPost = isset($_POST['tpl']) && is_array($_POST['tpl']) ? $_POST['tpl'] : [];
-        $toSave  = [];
-
-        foreach ($defs as $type => $def) {
-            if (!isset($tplPost[$type])) {
-                continue;
-            }
-            $subject = trim((string) ($tplPost[$type]['subject'] ?? ''));
-            $body    = trim((string) ($tplPost[$type]['body']    ?? ''));
-
-            // If both match the defaults exactly, clear the override so default is used
-            if ($subject === $def['subject'] && $body === $def['body']) {
-                $toSave['email_tpl_' . $type] = '';
-            } else {
-                $toSave['email_tpl_' . $type] = json_encode([
-                    'subject' => $subject !== '' ? $subject : $def['subject'],
-                    'body'    => $body    !== '' ? $body    : $def['body'],
-                ]);
-            }
-        }
-
-        MunicipalitySetting::setMany($mid, $toSave);
-        audit('municipality_email_templates_updated', 'municipality', $mid);
-
-        flash_set('success', 'Τα πρότυπα email αποθηκεύτηκαν.');
-        redirect('/settings#tab-email-templates');
-    }
-
-    /* ── Branding & timezone ──────────────────────────────────────────── */
-
-    public function saveBranding()
-    {
-        requireRole(['municipality_admin']);
-        $mid = current_municipality_id();
-
-        $logoUrl = post_str('branding_logo_url');
-        if ($logoUrl !== '' && !filter_var($logoUrl, FILTER_VALIDATE_URL)) {
-            flash_set('danger', 'Μη έγκυρο URL λογότυπου. Χρησιμοποιήστε πλήρες URL (https://...).');
-            redirect('/settings');
-        }
-
-        $tz = post_str('timezone');
-        if (!in_array($tz, timezone_identifiers_list(), true)) {
-            $tz = 'Europe/Athens';
-        }
-
-        MunicipalitySetting::setMany($mid, [
-            'branding_logo_url' => $logoUrl,
-            'timezone'          => $tz,
-        ]);
-        audit('municipality_branding_updated', 'municipality', $mid, 'tz:' . $tz);
-
-        flash_set('success', 'Οι ρυθμίσεις εμφάνισης αποθηκεύτηκαν.');
-        redirect('/settings');
-    }
-}
+        $visibleFields  = i

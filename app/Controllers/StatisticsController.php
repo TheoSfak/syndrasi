@@ -10,18 +10,42 @@ class StatisticsController
         $mid = current_municipality_id();
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
 
+        // ── Tab 1: single-year overview ──────────────────────────────────────
         $overview = StatsService::municipalityOverview($mid, $year);
-        $byCategory = StatsService::eventsByCategory($mid, $year);
-        $byMonth = StatsService::eventsByMonth($mid, $year);
-        $ranking = StatsService::teamRanking($mid, $year);
+        $catYear  = StatsService::eventsByCategory($mid, $year); // single-year category pie
+        $byMonth  = StatsService::eventsByMonth($mid, $year);
+        $ranking  = StatsService::teamRanking($mid, $year);
+
+        // ── Tab 2: multi-year trends (formerly the Analytics page) ───────────
+        $focus = $year;
+        $y1    = $focus;
+        $y0    = $focus - (AnalyticsController::SPAN - 1);
+        $years = range($y0, $y1);
+
+        $yearly      = AnalyticsController::yearlySeries($mid, $y0, $y1);
+        $teamTrends  = AnalyticsController::teamTrends($mid, $y0, $y1, $years);
+        $byCategory  = AnalyticsController::categoryBreakdown($mid, $y0, $y1); // multi-year breakdown
+        $monthlyCur  = StatsService::eventsByMonth($mid, $focus);
+        $monthlyPrev = StatsService::eventsByMonth($mid, $focus - 1);
+        $cur  = $yearly[$focus]     ?? ['events' => 0, 'participations' => 0, 'hours' => 0, 'avg_resp' => null];
+        $prev = $yearly[$focus - 1] ?? ['events' => 0, 'participations' => 0, 'hours' => 0, 'avg_resp' => null];
 
         render('statistics/index', [
-            'pageTitle'  => 'Στατιστικά',
-            'year'       => $year,
-            'overview'   => $overview,
-            'byCategory' => $byCategory,
-            'byMonth'    => $byMonth,
-            'ranking'    => $ranking,
+            'pageTitle'   => 'Στατιστικά & Τάσεις',
+            'year'        => $year,
+            'overview'    => $overview,
+            'catYear'     => $catYear,
+            'byMonth'     => $byMonth,
+            'ranking'     => $ranking,
+            'focus'       => $focus,
+            'years'       => array_values($years),
+            'yearly'      => $yearly,
+            'teamTrends'  => $teamTrends,
+            'byCategory'  => $byCategory,
+            'monthlyCur'  => array_values($monthlyCur),
+            'monthlyPrev' => array_values($monthlyPrev),
+            'cur'         => $cur,
+            'prev'        => $prev,
         ]);
     }
 

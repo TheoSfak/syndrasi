@@ -164,15 +164,56 @@
       </div>
     </div>
 
+    <!-- Backups -->
+    <div class="card shadow-sm mt-3" style="max-width:820px">
+      <div class="card-body">
+        <h2 class="h6 mb-2"><i class="bi bi-archive me-1"></i>Αντίγραφα ασφαλείας</h2>
+        <?php if (empty($backups)): ?>
+          <p class="small text-muted mb-0">Δεν υπάρχουν backups ακόμη. Πάτησε «Δημιουργία Backup» παραπάνω.</p>
+        <?php else: ?>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light"><tr><th>Αρχείο</th><th>Ημερομηνία</th><th class="text-end">Μέγεθος</th><th></th></tr></thead>
+              <tbody>
+                <?php foreach ($backups as $b): ?>
+                  <tr>
+                    <td class="small"><?= e($b['name']) ?></td>
+                    <td class="small text-muted"><?= e(gr_datetime(date('Y-m-d H:i:s', $b['mtime']))) ?></td>
+                    <td class="small text-end"><?= gr_number(round($b['size'] / 1024)) ?> KB</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-primary py-0" title="Λήψη"
+                         href="<?= e(url('/admin/backups/download') . '?file=' . urlencode($b['name'])) ?>">
+                        <i class="bi bi-download"></i>
+                      </a>
+                      <form method="post" action="<?= e(url('/admin/backups/restore')) ?>" class="d-inline"
+                            onsubmit="return confirm('Επαναφορά από αυτό το backup; Θα αντικατασταθούν τα τρέχοντα αρχεία κώδικα (config/ συμπεριλαμβάνεται, storage/ όχι). Θα κρατηθεί αυτόματα backup της τωρινής κατάστασης.');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="file" value="<?= e($b['name']) ?>">
+                        <button class="btn btn-sm btn-outline-warning py-0"><i class="bi bi-arrow-counterclockwise me-1"></i>Επαναφορά</button>
+                      </form>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </div>
+      <div class="card-footer bg-white small text-muted">
+        <i class="bi bi-info-circle me-1"></i>Τα backups αποθηκεύονται στο <code>storage/backups/</code> (εκτός web root). Δημιουργούνται αυτόματα πριν από κάθε ενημέρωση/επαναφορά.
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
 // Activate the tab matching the URL hash (so redirects to #cron / #updates land right).
-(function () {
+// Runs on DOMContentLoaded so Bootstrap (loaded in the footer) is available.
+document.addEventListener('DOMContentLoaded', function () {
   var hash = window.location.hash;
   if (!hash) return;
-  var btn = document.querySelector('[data-bs-target="#tab-' + hash.replace('#','') + '"]');
+  var btn = document.querySelector('[data-bs-target="#tab-' + hash.replace('#', '') + '"]');
   if (btn && window.bootstrap) { new bootstrap.Tab(btn).show(); }
-})();
+});
 </script>

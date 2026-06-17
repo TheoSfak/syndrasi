@@ -180,6 +180,13 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
           .bindPopup('<b>'+esc(p.team_name)+'</b><br>'+esc(ev.title)+'<br>'+p.age_min+' λεπτά πριν')
           .addTo(teamLayer);
       });
+      (ev.photos||[]).forEach(function(ph){
+        if (ph.lat === null || ph.lng === null) return;
+        L.marker([ph.lat, ph.lng], { icon: L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11,20],
+          html:'<div style="background:#0ea5e9;width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><i class="bi bi-camera-fill" style="color:#fff;font-size:10px;transform:rotate(45deg)"></i></div>' }) })
+          .bindPopup('<div style="text-align:center"><img class="wr-photo-thumb" src="'+ph.url+'" data-url="'+ph.url+'" data-label="'+esc(ph.team_name)+'" style="max-width:170px;max-height:130px;border-radius:6px;cursor:pointer"><br><b>'+esc(ph.team_name)+'</b><br><span class="text-muted" style="font-size:.72rem">'+esc(ev.title)+' · '+esc(ph.at)+'</span></div>')
+          .addTo(teamLayer);
+      });
     });
     if (bounds.length > 1 && !map.__fitted){ try{ map.fitBounds(bounds, { padding:[40,40], maxZoom:14 }); map.__fitted=true; }catch(e){} }
   }
@@ -239,4 +246,32 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
   applySnapshot(INIT);
   connectSSE();
 })();
+</script>
+
+<!-- Photo viewer modal -->
+<div class="modal fade" id="photoModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title" id="photoModalLabel">Φωτογραφία</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-1" style="background:#111">
+        <img id="photoModalImg" src="" alt="" style="max-width:100%;max-height:75vh">
+      </div>
+      <div class="modal-footer py-2">
+        <a id="photoModalDl" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>Άνοιγμα σε νέα καρτέλα</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('click', function (e) {
+  var t = e.target.closest ? e.target.closest('.wr-photo-thumb') : null;
+  if (!t || !window.bootstrap) return;
+  document.getElementById('photoModalImg').src = t.getAttribute('data-url');
+  document.getElementById('photoModalLabel').textContent = t.getAttribute('data-label') || 'Φωτογραφία';
+  document.getElementById('photoModalDl').href = t.getAttribute('data-url');
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('photoModal')).show();
+});
 </script>

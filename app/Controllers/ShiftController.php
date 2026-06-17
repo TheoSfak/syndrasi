@@ -128,7 +128,7 @@ class ShiftController
         requireRole(['team_admin']);
 
         $event = Event::find($eventId);
-        if (!$event || !in_array($event['status'], ['published', 'active'])) {
+        if (!$event || !in_array($event['status'], ['open', 'review', 'confirmed', 'active'], true)) {
             abort(403, 'Η δράση δεν είναι διαθέσιμη για δήλωση.');
         }
         $shift  = EventShift::findForCurrent($shiftId);
@@ -162,6 +162,4 @@ class ShiftController
         EventShift::cancelApplication($app['shift_id'], $app['team_id']);
         audit('shift_cancelled', 'shift_application', $id);
         flash_set('success', 'Η δήλωση ακυρώθηκε.');
-        redirect('/team/events/' . $app['event_id'] . '#tab-shifts');
-    }
-}
+        redirect('/team/events/' . $app['event_id'] . 
