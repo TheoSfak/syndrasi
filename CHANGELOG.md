@@ -4,6 +4,11 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.15-beta] — 2026-06-17
+
+### Fixed — Επιχειρήσεις: Ομάδες παρούσες πάντα 0
+- Η σελίδα `/operations` έδειχνε πάντα `0/N Ομάδες παρούσες` γιατί ψάχνε `status='present'` που δεν υπάρχει — οι πραγματικές τιμές είναι `present_full` και `present_partial`. Διορθώθηκε με `IN ('present_full','present_partial')`.
+
 ## [0.9.14-beta] — 2026-06-17
 
 ### Fixed — Δραστηριότητα: raw κωδικοί check-in στα ελληνικά

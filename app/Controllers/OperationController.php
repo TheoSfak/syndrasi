@@ -14,7 +14,7 @@ class OperationController
         $live = dbq(
             "SELECT e.*, c.name AS category_name,
                     (SELECT COUNT(*) FROM event_applications ea WHERE ea.event_id=e.id AND ea.status='approved') AS teams_approved,
-                    (SELECT COUNT(*) FROM operational_checkins oc WHERE oc.event_id=e.id AND oc.status='present') AS teams_present,
+                    (SELECT COUNT(*) FROM operational_checkins oc WHERE oc.event_id=e.id AND oc.status IN ('present_full','present_partial')) AS teams_present,
                     (SELECT COUNT(*) FROM shortage_reports sr WHERE sr.event_id=e.id AND sr.status='open') AS open_shortages
              FROM events e LEFT JOIN event_categories c ON c.id=e.category_id
              WHERE e.municipality_id = :mid
