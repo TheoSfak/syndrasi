@@ -4,6 +4,24 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.6-beta] — 2026-06-17
+
+### Fixed
+- **Το badge «↺ Επανασύνδεση…» στο Επιχειρησιακό Κέντρο.** Το live stream στέλνει
+  ένα snapshot και κλείνει (φιλικό σε shared hosting), οπότε ο browser
+  επανασυνδέεται κάθε λίγα δευτερόλεπτα· αυτό το φυσιολογικό κλείσιμο εμφανιζόταν
+  λανθασμένα ως «Επανασύνδεση». Πλέον το badge δείχνει **◉ LIVE** όσο φτάνουν
+  snapshots (έλεγχος φρεσκάδας), και «Επανασύνδεση» μόνο αν δεν έρθει δεδομένο για
+  >12s. Προστέθηκε και **polling fallback** (κάθε 10s) ώστε ο πίνακας να ανανεώνεται
+  ακόμη κι αν κάποιος host μπλοκάρει το streaming.
+
+## [0.9.5-beta] — 2026-06-17
+
+### Fixed
+- **Site-wide 500 από κατεστραμμένο release.** Το v0.9.4 zip περιείχε truncated
+  `routes/web.php` (αστοχία συγχρονισμού). Το release ξαναχτίστηκε από ακέραιη πηγή
+  (lint σε όλα τα PHP πριν τη δημοσίευση). Χωρίς αλλαγές κώδικα πέρα από αυτό.
+
 ## [0.9.4-beta] — 2026-06-17
 
 ### Fixed

@@ -35,3 +35,4 @@ Thumbs.db
 
 # Local pre-edit backups (safety snapshots, never committed)
 /_backups/
+_backups/

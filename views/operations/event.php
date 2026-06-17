@@ -703,7 +703,7 @@ body.ops-dark main             { background:transparent!important; }
   function pollStatus() {
     fetch(BASE + '/operations/events/' + EID + '/status')
       .then(function(r){ return r.json(); })
-      .then(function(d) { applySnapshot(d); })
+      .then(function(d) { applySnapshot(d); lastSnapshotTs = Date.now(); })
       .catch(function(){});
   }
 
@@ -802,12 +802,13 @@ body.ops-dark main             { background:transparent!important; }
 
   /* ─── SSE connection ─── */
   var sseEs = null;
+  var lastSnapshotTs = 0;   /* when we last received fresh data (SSE or poll) */
 
   function setSseBadge(state) {
     var b = document.getElementById('liveBadge');
     if (!b) return;
     if (state === 'live') {
-      b.textContent = '◉ LIVE SSE';
+      b.textContent = '◉ LIVE';
       b.className   = 'badge bg-success';
     } else {
       b.textContent = '↺ Επανασύνδεση…';
@@ -820,10 +821,28 @@ body.ops-dark main             { background:transparent!important; }
     sseEs = new EventSource(BASE + '/operations/events/' + EID + '/stream');
     sseEs.onopen = function() { setSseBadge('live'); };
     sseEs.addEventListener('update', function(evt) {
-      try { applySnapshot(JSON.parse(evt.data)); } catch(e){}
+      try { applySnapshot(JSON.parse(evt.data)); lastSnapshotTs = Date.now(); setSseBadge('live'); } catch(e){}
     });
-    sseEs.onerror = function() { setSseBadge('reconnecting'); };
+    /* The stream sends ONE snapshot then closes (shared-hosting friendly), so the
+       browser reconnects every few seconds. That normal close must NOT look like an
+       error — only flag "reconnecting" if no snapshot has arrived for a while. */
+    sseEs.onerror = function() {
+      if (Date.now() - lastSnapshotTs > 12000) { setSseBadge('reconnecting'); }
+    };
   }
+
+  /* Keep the badge honest based on data freshness, not the per-cycle reconnect. */
+  setInterval(function () {
+    if (lastSnapshotTs) {
+      setSseBadge(Date.now() - lastSnapshotTs <= 12000 ? 'live' : 'reconnecting');
+    }
+  }, 4000);
+
+  /* Safety net: if SSE ever stops delivering (some hosts block streaming), poll so
+     the board still refreshes. pollStatus() updates lastSnapshotTs on success. */
+  setInterval(function () {
+    if (!lastSnapshotTs || Date.now() - lastSnapshotTs > 15000) { pollStatus(); }
+  }, 10000);
 
   /* ─── Comms composer ─── */
   function sendCmsg(kind) {
