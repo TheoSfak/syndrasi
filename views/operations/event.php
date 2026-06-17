@@ -396,7 +396,11 @@ body.ops-dark main             { background:transparent!important; }
   setInterval(tick, 1000);
 
   /* ─── Map ─── */
-  var map      = L.map('operationalMap').setView([DEF_LAT, DEF_LNG], DEF_ZOOM);
+  /* Defensive: if anything (e.g. legacy maps.js) already bound a Leaflet map to
+     this container, clear it so re-init can't throw and abort the page script. */
+  var opMapEl = document.getElementById('operationalMap');
+  if (opMapEl && opMapEl._leaflet_id) { opMapEl._leaflet_id = undefined; opMapEl.innerHTML = ''; }
+  var map      = L.map(opMapEl).setView([DEF_LAT, DEF_LNG], DEF_ZOOM);
   var markers  = {};
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
@@ -559,9 +563,4 @@ body.ops-dark main             { background:transparent!important; }
     if (!box) return;
     msgs = msgs || [];
     document.getElementById('msgBadge').textContent = msgs.length;
-    if (!msgs.length) { box.innerHTML = '<div class="text-muted small text-center">Καμία επικοινωνία ακόμη.</div>'; return; }
-    box.innerHTML = msgs.map(function(m) {
-      var cls = m.kind === 'order' ? 'cmsg-order'
-              : (m.kind === 'status' ? 'cmsg-status'
-              : (m.sender_role === 'command' ? 'cmsg-command' : 'cmsg-team'));
-      var who = m.sender_role === 'command' ? 'Δήμος'
+    if (!msgs.length) { box.innerHTML = '<div class="text-muted small text-center">Καμία επικοινωνία 

@@ -10,7 +10,7 @@
  * NOTE: bump CACHE_NAME whenever the caching logic changes so old caches are purged.
  */
 
-var CACHE_NAME = 'syndrasi-v4';
+var CACHE_NAME = 'syndrasi-v5';
 
 // Scope directory of this service worker, e.g. '' (root) or '/syndrasi/public'
 var BASE = self.location.pathname.replace(/\/service-worker\.js$/, '');
@@ -74,60 +74,4 @@ self.addEventListener('fetch', function (event) {
         return cache.match(request).then(function (cached) {
           var network = fetch(request).then(function (response) {
             if (response && response.status === 200 && response.type !== 'opaque') {
-              cache.put(request, response.clone());
-            }
-            return response;
-          }).catch(function () { return cached; });
-          // Serve cached copy first if we have one, otherwise wait for network.
-          return cached || network;
-        });
-      })
-    );
-    return;
-  }
-
-  // Network-first for pages (authenticated, dynamic) — do not cache them
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(function () {
-        return caches.match(OFFLINE_URL);
-      })
-    );
-  }
-});
-
-/* ── Web Push: show notification when the app is closed/background ──────────── */
-self.addEventListener('push', function (event) {
-  var data = {};
-  try { data = event.data ? event.data.json() : {}; }
-  catch (e) { data = { title: 'SynDrasi', body: event.data ? event.data.text() : '' }; }
-
-  var title = data.title || 'SynDrasi';
-  var options = {
-    body:  data.body || '',
-    icon:  BASE + '/assets/img/icons/icon-192.png',
-    badge: BASE + '/assets/img/icons/icon-192.png',
-    tag:   data.tag || undefined,
-    renotify: !!data.tag,
-    vibrate: [80, 40, 80],
-    data: { url: data.url || '/notifications' }
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
-});
-
-self.addEventListener('notificationclick', function (event) {
-  event.notification.close();
-  var rel  = (event.notification.data && event.notification.data.url) || '/notifications';
-  var full = BASE + rel;
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (cl) {
-      for (var i = 0; i < cl.length; i++) {
-        if ('focus' in cl[i]) {
-          if (cl[i].navigate) { try { cl[i].navigate(full); } catch (e) {} }
-          return cl[i].focus();
-        }
-      }
-      if (self.clients.openWindow) { return self.clients.openWindow(full); }
-    })
-  );
-});
+              cache.

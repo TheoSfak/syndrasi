@@ -6,7 +6,11 @@ var syndrasiOpEventId = null;
 
 document.addEventListener('DOMContentLoaded', function () {
   initSimpleEventMap();
-  initOperationalMap();
+  // NOTE: the operational command-center map (#operationalMap) is now fully
+  // managed by the inline script in views/operations/event.php. Running it here
+  // too caused a double-init ("Map container is already initialized") that threw
+  // and aborted the page script, leaving every panel stuck on "Φόρτωση…".
+  // Left disabled on purpose — do NOT call initOperationalMap() globally.
 });
 
 /** Static map with one marker (event detail pages). */
@@ -29,6 +33,7 @@ function initSimpleEventMap() {
 function initOperationalMap() {
   var el = document.getElementById('operationalMap');
   if (!el || typeof L === 'undefined') { return; }
+  if (el._leaflet_id) { return; } // already initialized (command-center inline script owns it)
 
   syndrasiOpEventId = el.dataset.eventId;
   var lat = parseFloat(el.dataset.lat);
@@ -77,14 +82,4 @@ function refreshOperationalMap() {
       data.teams.forEach(function (t) {
         if (t.latitude === null || t.longitude === null) { return; }
         var marker = L.marker([t.latitude, t.longitude], { title: t.team_name });
-        var html = '<strong>' + t.team_name + '</strong><br>' +
-          t.status_label + '<br>' +
-          'Άτομα: ' + (t.present_people !== null ? t.present_people : '—') + ' / ' + t.approved_people + '<br>' +
-          '<span class="text-muted">Στίγμα: ' + (t.last_ping_at || '—') + '</span>';
-        marker.bindPopup(html);
-        marker.addTo(syndrasiOpMap);
-        syndrasiOpMarkers.push(marker);
-      });
-    })
-    .catch(function () { /* silent */ });
-}
+        var
