@@ -316,14 +316,15 @@ body.ops-dark main             { background:transparent!important; }
 
 <!-- Photo viewer modal -->
 <div class="modal fade" id="photoModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header py-2">
-        <h6 class="modal-title" id="photoModalLabel">Φωτογραφία</h6>
+        <h6 class="modal-title" id="photoModalLabel"><i class="bi bi-people-fill me-1"></i>Φωτογραφία</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body text-center p-1" style="background:#111">
-        <img id="photoModalImg" src="" alt="" style="max-width:100%;max-height:75vh">
+        <img id="photoModalImg" src="" alt="" style="max-width:100%;max-height:68vh;object-fit:contain">
+        <div id="photoModalMeta" class="text-light small mt-2 mb-1" style="opacity:.85"></div>
       </div>
       <div class="modal-footer py-2">
         <a id="photoModalDl" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>Άνοιγμα σε νέα καρτέλα</a>
@@ -759,11 +760,21 @@ body.ops-dark main             { background:transparent!important; }
       .catch(function(){ if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-camera me-1"></i>Ζήτησε φωτό'; } });
   }
 
-  function openPhoto(url, label) {
+  function openPhoto(url, team, at) {
     document.getElementById('photoModalImg').src = url;
-    document.getElementById('photoModalLabel').textContent = label || 'Φωτογραφία';
+    document.getElementById('photoModalLabel').innerHTML =
+      '<i class="bi bi-people-fill me-1"></i>' + esc(team || 'Άγνωστη ομάδα');
+    var meta = document.getElementById('photoModalMeta');
+    if (meta) { meta.textContent = (team ? 'Ομάδα: ' + team : 'Ομάδα: —') + (at ? '   ·   ' + at : ''); }
     document.getElementById('photoModalDl').href = url;
-    if (window.bootstrap) { bootstrap.Modal.getOrCreateInstance(document.getElementById('photoModal')).show(); }
+    if (window.bootstrap) {
+      var modalEl = document.getElementById('photoModal');
+      /* Escape any CSS-transformed ancestor (transforms break position:fixed, which
+         makes the modal/backdrop drift off-screen). Re-parent to <body> so it
+         positions correctly and is centered/scrollable within the viewport. */
+      if (modalEl.parentNode !== document.body) { document.body.appendChild(modalEl); }
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
   }
 
   function updatePhotos(photos) {
@@ -778,13 +789,13 @@ body.ops-dark main             { background:transparent!important; }
     var html = '';
     photos.forEach(function(ph){
       var border = ph.lat !== null && ph.lng !== null ? '#0ea5e9' : '#94a3b8';
-      html += '<img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) +
+      html += '<img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) +
               '" title="' + esc(ph.team_name) + ' · ' + esc(ph.at) + (ph.lat === null ? ' · χωρίς τοποθεσία' : '') +
               '" style="width:70px;height:70px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid ' + border + '">';
       if (ph.lat !== null && ph.lng !== null) {
         var icon = L.divIcon({ className:'', html:'<div style="background:#0ea5e9;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid #fff;box-shadow:0 0 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><i class="bi bi-camera-fill" style="color:#fff;font-size:11px;transform:rotate(45deg)"></i></div>', iconSize:[24,24], iconAnchor:[12,22] });
         var m = L.marker([ph.lat, ph.lng], { icon: icon });
-        m.bindPopup('<div style="text-align:center"><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" style="max-width:170px;max-height:130px;border-radius:6px;cursor:pointer"><br><b>' + esc(ph.team_name) + '</b><br><span class="text-muted" style="font-size:.72rem">' + esc(ph.at) + '</span></div>');
+        m.bindPopup('<div style="text-align:center"><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) + '" style="max-width:170px;max-height:130px;border-radius:6px;cursor:pointer"><br><b>' + esc(ph.team_name) + '</b><br><span class="text-muted" style="font-size:.72rem">' + esc(ph.at) + '</span></div>');
         m.addTo(map);
         photoMarkers[ph.id] = m;
       }
@@ -795,7 +806,7 @@ body.ops-dark main             { background:transparent!important; }
   /* delegated clicks: request button + photo thumbnails */
   document.addEventListener('click', function(e){
     var thumb = e.target.closest ? e.target.closest('.photo-thumb') : null;
-    if (thumb) { openPhoto(thumb.getAttribute('data-url'), thumb.getAttribute('data-label')); return; }
+    if (thumb) { openPhoto(thumb.getAttribute('data-url'), thumb.getAttribute('data-label'), thumb.getAttribute('data-at')); return; }
     var rb = e.target.closest ? e.target.closest('.req-photo-btn') : null;
     if (rb && !rb.disabled) { requestPhoto(rb.getAttribute('data-team'), rb); }
   });
