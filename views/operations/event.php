@@ -17,20 +17,20 @@ body.ops-dark .form-control    { background:rgba(255,255,255,.08)!important; bor
 body.ops-dark .list-group-item { background:transparent!important; border-color:rgba(255,255,255,.1)!important; color:#e2e8f0!important; }
 body.ops-dark main             { background:transparent!important; }
 
-.ops-stat { display:flex;flex-direction:column;align-items:center;padding:.55rem 1rem;border-radius:14px;background:rgba(255,255,255,.13);backdrop-filter:blur(8px);min-width:100px;border:1px solid rgba(255,255,255,.2);transition:transform .2s; }
-.ops-stat:hover { transform:translateY(-2px); }
-.ops-stat .val { font-size:1.75rem;font-weight:900;line-height:1; }
-.ops-stat .lbl { font-size:.65rem;text-transform:uppercase;letter-spacing:.8px;opacity:.8;margin-top:2px;white-space:nowrap; }
+.ops-stat { display:inline-flex;flex-direction:row;align-items:baseline;gap:.4rem;padding:.3rem .75rem;border-radius:20px;background:rgba(255,255,255,.12);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);transition:transform .2s; }
+.ops-stat:hover { transform:translateY(-1px); }
+.ops-stat .val { font-size:1.1rem;font-weight:900;line-height:1; }
+.ops-stat .lbl { font-size:.58rem;text-transform:uppercase;letter-spacing:.7px;opacity:.75;white-space:nowrap; }
 .ops-stat.has-alert { border-color:rgba(239,68,68,.6)!important;background:rgba(239,68,68,.2)!important; }
 .ops-stat.has-alert .val { color:#fca5a5!important; }
 
-.ops-countdown-wrap { background:rgba(0,0,0,.35);border:1.5px solid rgba(255,255,255,.18);border-radius:16px;padding:.55rem 1.4rem .45rem;text-align:center;min-width:180px;backdrop-filter:blur(8px); }
-.ops-countdown { font-size:3rem;font-weight:900;letter-spacing:.06em;line-height:1;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 18px rgba(255,255,255,.5);transition:color .3s,text-shadow .3s; }
-.ops-countdown.warning { color:#fbbf24;text-shadow:0 0 24px rgba(251,191,36,.7),0 0 8px rgba(251,191,36,.4);animation:cdFlash 1.2s ease-in-out infinite; }
-.ops-countdown.urgent  { color:#ef4444;text-shadow:0 0 30px rgba(239,68,68,.9),0 0 10px rgba(239,68,68,.5);animation:cdFlash .55s ease-in-out infinite; }
+.ops-countdown-wrap { background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:.3rem .9rem .2rem;text-align:center;backdrop-filter:blur(8px); }
+.ops-countdown { font-size:1.85rem;font-weight:900;letter-spacing:.06em;line-height:1;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 12px rgba(255,255,255,.4);transition:color .3s,text-shadow .3s; }
+.ops-countdown.warning { color:#fbbf24;text-shadow:0 0 20px rgba(251,191,36,.7),0 0 6px rgba(251,191,36,.4);animation:cdFlash 1.2s ease-in-out infinite; }
+.ops-countdown.urgent  { color:#ef4444;text-shadow:0 0 24px rgba(239,68,68,.9),0 0 8px rgba(239,68,68,.5);animation:cdFlash .55s ease-in-out infinite; }
 @keyframes cdFlash { 0%,100%{opacity:1;letter-spacing:.06em;} 50%{opacity:.25;letter-spacing:.12em;} }
 
-.ops-header { background:linear-gradient(135deg,#0b1120 0%,#0c3a35 60%,#0d4a44 100%);color:#fff;padding:1.1rem 1.4rem;border-radius:20px;margin-bottom:1rem;box-shadow:0 8px 40px rgba(0,0,0,.3); }
+.ops-header { background:linear-gradient(135deg,#0b1120 0%,#0c3a35 60%,#0d4a44 100%);color:#fff;padding:.65rem 1.2rem;border-radius:20px;margin-bottom:1rem;box-shadow:0 8px 40px rgba(0,0,0,.3); }
 
 .team-card { border-radius:14px!important;border-left:4px solid #94a3b8!important;transition:transform .2s,box-shadow .2s; }
 .team-card.s-present_full    { border-left-color:#22c55e!important; }
@@ -129,52 +129,43 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
 
 <!-- ═══════════ COMMAND HEADER ═══════════ -->
 <div class="ops-header">
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-    <div>
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <span class="ldot"></span>
-        <h1 class="h4 mb-0 fw-bold text-white">Επιχειρησιακό Κέντρο</h1>
-        <span class="badge bg-success" id="liveBadge">◉ LIVE SSE</span>
-      </div>
-      <div class="text-white fw-semibold fs-6"><?= e($event['title']) ?></div>
-      <div class="small mt-1" style="opacity:.75">
-        <i class="bi bi-clock me-1"></i><?= e(gr_datetime($event['start_datetime'])) ?> &rarr; <?= e(gr_datetime($event['end_datetime'])) ?>
-        <?php if ($event['location_name']): ?>
-          &nbsp;&middot;&nbsp;<i class="bi bi-geo-alt me-1"></i><?= e($event['location_name']) ?>
-        <?php endif; ?>
-      </div>
-    </div>
-    <div class="d-flex align-items-center gap-2">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <span class="ldot"></span>
+    <span class="fw-bold text-white" style="font-size:1rem;white-space:nowrap">Επιχειρησιακό Κέντρο</span>
+    <span class="badge bg-success" id="liveBadge">◉ LIVE SSE</span>
+    <span style="opacity:.35">·</span>
+    <span class="fw-semibold text-white" style="font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px"><?= e($event['title']) ?></span>
+    <span style="opacity:.6;font-size:.72rem;white-space:nowrap">
+      <i class="bi bi-clock me-1"></i><?= e(gr_datetime($event['start_datetime'])) ?> &rarr; <?= e(gr_datetime($event['end_datetime'])) ?><?php if ($event['location_name']): ?>&nbsp;&middot;&nbsp;<i class="bi bi-geo-alt me-1"></i><?= e($event['location_name']) ?><?php endif; ?>
+    </span>
+    <div class="ms-auto d-flex align-items-center gap-2">
       <div class="ops-countdown-wrap text-white">
         <div class="ops-countdown" id="countdown">--</div>
-        <div style="font-size:.6rem;opacity:.65;text-transform:uppercase;letter-spacing:1px;margin-top:.2rem" id="cdLabel">Υπολειπόμενος χρόνος</div>
+        <div style="font-size:.5rem;opacity:.6;text-transform:uppercase;letter-spacing:1px;margin-top:.15rem" id="cdLabel">Υπολειπόμενος χρόνος</div>
       </div>
-      <div class="d-flex flex-column gap-1">
+      <div class="d-flex gap-1 align-items-center">
         <button class="btn btn-sm btn-outline-light" id="btnDark" title="Mission Control Mode"><i class="bi bi-moon-stars-fill"></i></button>
         <button class="btn btn-sm btn-outline-light" id="btnFull" title="Fullscreen χάρτης"><i class="bi bi-fullscreen"></i></button>
         <button class="btn btn-sm btn-outline-light" id="btnRefresh"><i class="bi bi-arrow-clockwise"></i></button>
         <a class="btn btn-sm btn-outline-light" href="<?= e(url('/operations/events/' . $eid . '/gate-qr')) ?>" target="_blank" title="QR Πύλης — δήλωση παρουσίας"><i class="bi bi-qr-code"></i></a>
         <a class="btn btn-sm btn-outline-light" href="<?= e(url('/events/' . $eid)) ?>"><i class="bi bi-arrow-left"></i></a>
-        <!-- Κλείσιμο δράσης (→ closed, για αρχειοθέτηση) -->
         <form method="post" action="<?= e(url('/events/' . $eid . '/close')) ?>"
               onsubmit="return confirm('Κλείσιμο δράσης;\nΗ δράση θα κλείσει και θα πάει για αρχειοθέτηση.')">
           <input type="hidden" name="_token" value="<?= e($csrfToken) ?>">
-          <button class="btn btn-sm btn-danger w-100" title="Κλείσιμο Δράσης">
-            <i class="bi bi-door-closed-fill"></i>
-          </button>
+          <button class="btn btn-sm btn-danger" title="Κλείσιμο Δράσης"><i class="bi bi-door-closed-fill"></i></button>
         </form>
       </div>
     </div>
   </div>
 
   <!-- Stats strip -->
-  <div class="d-flex flex-wrap gap-2 mt-3">
+  <div class="d-flex flex-wrap gap-2 mt-2">
     <div class="ops-stat text-white" id="ss-teams"><div class="val" id="sv-teams">--</div><div class="lbl">Ομάδες</div></div>
     <div class="ops-stat text-white" id="ss-ci"><div class="val" id="sv-ci">--</div><div class="lbl">Check-in</div></div>
     <div class="ops-stat text-white" id="ss-pers"><div class="val" id="sv-pers">--</div><div class="lbl">Προσωπικό</div></div>
     <div class="ops-stat text-white" id="ss-cov"><div class="val" id="sv-cov">--%</div><div class="lbl">Κάλυψη</div></div>
     <div class="ops-stat text-white" id="ss-sh"><div class="val" id="sv-sh">--</div><div class="lbl">Ελλείψεις</div></div>
-    <div class="ops-stat text-white ms-auto" style="opacity:.7"><div class="val" style="font-size:1.1rem" id="sv-clk">--</div><div class="lbl">Ενημέρωση</div></div>
+    <div class="ops-stat text-white ms-auto" style="opacity:.7"><div class="val" id="sv-clk">--</div><div class="lbl">Ενημέρωση</div></div>
   </div>
 </div>
 
@@ -206,7 +197,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
       </div>
       <div class="card-body p-0">
         <div class="map-wrap" id="mapWrap">
-          <div id="operationalMap" style="height:320px;border-radius:0 0 12px 12px"></div>
+          <div id="operationalMap" style="height:480px;border-radius:0 0 12px 12px"></div>
           <div class="map-overlay">
             <button class="btn btn-sm btn-dark" id="mapFullBtn" title="Fullscreen"><i class="bi bi-fullscreen"></i></button>
           </div>
