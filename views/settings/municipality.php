@@ -738,7 +738,7 @@ document.querySelectorAll('.member-visible-cb').forEach(function (cb) {
 });
 </script>
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   var hash = window.location.hash;
   if (hash) {
     var tab = document.querySelector('#settingsTabs a[href="' + hash + '"]');
@@ -746,7 +746,7 @@ document.querySelectorAll('.member-visible-cb').forEach(function (cb) {
   }
   var first = document.querySelector('#settingsTabs .nav-link');
   if (first) { new bootstrap.Tab(first).show(); }
-})();
+});
 
 /* ── Οργανισμός tab: preset buttons + live preview ───────────────────── */
 (function () {

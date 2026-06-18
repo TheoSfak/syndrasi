@@ -4,6 +4,12 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.23-beta] — 2026-06-18
+
+### Fixed — Settings: bootstrap is not defined / preset buttons broken
+- Το hash routing script στις ρυθμίσεις έτρεχε πριν φορτωθεί το Bootstrap JS, προκαλώντας `ReferenceError: bootstrap is not defined` που τερμάτιζε ολόκληρο το script block — με αποτέλεσμα τα preset buttons Οργανισμού να μην λειτουργούν.
+- Λύση: μετακίνηση σε `document.addEventListener('DOMContentLoaded', ...)` που τρέχει αφού φορτωθούν όλα τα scripts της σελίδας.
+
 ## [0.9.22-beta] — 2026-06-18
 
 ### Fixed — Οργανισμός: preset buttons auto-save
