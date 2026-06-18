@@ -375,6 +375,8 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
   var DEF_ZOOM   = <?= $defZoom ?>;
   var POLL_MS    = <?= (int)($config['map_refresh_seconds'] ?? 20) * 1000 ?>;
   var BASE       = <?= json_encode(url('')) ?>;
+  var ORG_LABEL  = <?= json_encode($orgLabel ?? 'Δήμος') ?>;
+  var ORG_ICON   = <?= json_encode($orgIcon  ?? '🏛️') ?>;
 
   /* ─── Countdown ─── */
   var cdEl    = document.getElementById('countdown');
@@ -632,7 +634,7 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
       var cls = m.kind === 'order' ? 'cmsg-order'
               : (m.kind === 'status' ? 'cmsg-status'
               : (m.sender_role === 'command' ? 'cmsg-command' : 'cmsg-team'));
-      var who = m.sender_role === 'command' ? 'Δήμος' : (m.team_name || m.sender_name || 'Ομάδα');
+      var who = m.sender_role === 'command' ? ORG_LABEL : (m.team_name || m.sender_name || 'Ομάδα');
       var t = (m.created_at || '').substring(11,16);
       var tag = m.sender_role === 'command' ? (m.team_id ? esc(m.team_name || '') : '📢 Όλες') : '';
       var ackTxt = '';
@@ -655,7 +657,7 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
     if (!msgs.length) { box.innerHTML = '<div class="text-muted small text-center">Κανένα μήνυμα ακόμη.</div>'; return; }
     box.innerHTML = msgs.map(function (m) {
       var cmd = m.sender_role === 'command';
-      var who = cmd ? 'Δήμος' : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
+      var who = cmd ? ORG_LABEL : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
       var t = (m.created_at || '').substring(11, 16);
       return '<div class="cmsg ' + (cmd ? 'cmsg-command' : 'cmsg-team') + '"><div>' + esc(m.body || '') +
              '</div><div class="cmsg-meta">' + esc(who) + ' · ' + t + '</div></div>';

@@ -32,6 +32,30 @@ class MunicipalitySetting
         return $cache[$cacheKey] ?? $default;
     }
 
+    /** Short display label for the organisation (used in chat, ops map, etc.). */
+    public static function orgLabelShort(array $settings): string
+    {
+        if (!empty($settings['org_name_short'])) return $settings['org_name_short'];
+        $map = ['municipality'=>'Δήμος','civil_protection'=>'Πολ.Προστ.','fire_service'=>'Πυρ/κή','coast_guard'=>'Λιμενικό'];
+        return $map[$settings['org_type'] ?? 'municipality'] ?? 'Δήμος';
+    }
+
+    /** Full organisation name, optionally built from type + municipality name. */
+    public static function orgName(array $settings, string $munName = ''): string
+    {
+        if (!empty($settings['org_name'])) return $settings['org_name'];
+        $prefixes = ['municipality'=>'Δήμος','civil_protection'=>'Πολιτική Προστασία','fire_service'=>'Πυροσβεστική','coast_guard'=>'Λιμενικό'];
+        $prefix = $prefixes[$settings['org_type'] ?? 'municipality'] ?? 'Δήμος';
+        return $munName !== '' ? $prefix . ' ' . $munName : $prefix;
+    }
+
+    /** Emoji icon for the organisation type. */
+    public static function orgIcon(array $settings): string
+    {
+        $map = ['municipality'=>'🏛️','civil_protection'=>'🛡️','fire_service'=>'🚒','coast_guard'=>'⚓','custom'=>'🏢'];
+        return $map[$settings['org_type'] ?? 'municipality'] ?? '🏛️';
+    }
+
     /** Upsert many settings at once. */
     public static function setMany($municipalityId, array $settings)
     {

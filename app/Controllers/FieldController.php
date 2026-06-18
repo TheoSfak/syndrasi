@@ -67,6 +67,7 @@ class FieldController
         // Pending photo / GPS requests for this team (so the field device shows the prompt)
         $photoRequest = PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         $gpsRequest   = GpsRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
+        $munSettings  = MunicipalitySetting::all((int) $app['municipality_id']);
         render('field/hub', [
             'pageTitle'    => 'Πεδίο — ' . $app['event_title'],
             'app'          => $app,
@@ -75,6 +76,8 @@ class FieldController
             'lastPing'     => $lastPing,
             'photoRequest' => $photoRequest,
             'gpsRequest'   => $gpsRequest,
+            'orgLabel'     => MunicipalitySetting::orgLabelShort($munSettings),
+            'orgIcon'      => MunicipalitySetting::orgIcon($munSettings),
         ], false); // standalone, no app layout / no login chrome
     }
 

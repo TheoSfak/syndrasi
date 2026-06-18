@@ -1,3 +1,12 @@
+<style>
+.org-preset-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 16px;border:2px solid #dee2e6;border-radius:12px;background:#fff;cursor:pointer;transition:all .15s;min-width:90px;color:inherit;}
+.org-preset-btn:hover{border-color:#0d6efd;background:#f0f5ff;}
+.org-preset-btn.active{border-color:#0d6efd;background:#dbeafe;color:#1d4ed8;}
+.org-preset-icon{font-size:1.6rem;line-height:1;}
+.org-preset-label{font-size:.75rem;font-weight:600;white-space:nowrap;}
+.org-preview-box{background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:12px 14px;}
+</style>
+
 <h1 class="h3 mb-1">Ρυθμίσεις Δήμου</h1>
 <p class="text-muted mb-3"><?= e($municipality['name']) ?></p>
 
@@ -24,6 +33,7 @@ $tzOptions = [
 ?>
 
 <ul class="nav nav-tabs mb-4" id="settingsTabs">
+  <li class="nav-item"><a class="nav-link" href="#tab-organisation"   data-bs-toggle="tab"><i class="bi bi-building me-1"></i>Οργανισμός</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-mail"           data-bs-toggle="tab"><i class="bi bi-envelope me-1"></i>Email</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-map"            data-bs-toggle="tab"><i class="bi bi-map me-1"></i>Χάρτης</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-awards"         data-bs-toggle="tab"><i class="bi bi-trophy me-1"></i>Βραβεία</a></li>
@@ -630,6 +640,88 @@ $tzOptions = [
     </div>
   </div>
 
+  <!-- ══ Οργανισμός ══════════════════════════════════════════════════════ -->
+  <div class="tab-pane fade" id="tab-organisation">
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <form method="post" action="<?= e(url('/settings/organisation')) ?>" class="card shadow-sm">
+          <?= csrf_field() ?>
+          <input type="hidden" name="org_type" id="orgType" value="<?= e($v('org_type', 'municipality')) ?>">
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-building me-1"></i> Προφίλ Οργανισμού</div>
+          <div class="card-body row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold mb-2">Τύπος οργανισμού</label>
+              <div class="d-flex flex-wrap gap-2" id="orgPresets">
+                <button type="button" class="org-preset-btn" data-type="municipality"
+                        data-name="Δήμος <?= e($municipality['name']) ?>" data-short="Δήμος">
+                  <span class="org-preset-icon">🏛️</span><span class="org-preset-label">Δήμος</span>
+                </button>
+                <button type="button" class="org-preset-btn" data-type="civil_protection"
+                        data-name="Πολιτική Προστασία <?= e($municipality['name']) ?>" data-short="Πολ.Προστ.">
+                  <span class="org-preset-icon">🛡️</span><span class="org-preset-label">Πολ. Προστασία</span>
+                </button>
+                <button type="button" class="org-preset-btn" data-type="fire_service"
+                        data-name="Πυροσβεστική <?= e($municipality['name']) ?>" data-short="Πυρ/κή">
+                  <span class="org-preset-icon">🚒</span><span class="org-preset-label">Πυροσβεστική</span>
+                </button>
+                <button type="button" class="org-preset-btn" data-type="coast_guard"
+                        data-name="Λιμενικό <?= e($municipality['name']) ?>" data-short="Λιμενικό">
+                  <span class="org-preset-icon">⚓</span><span class="org-preset-label">Λιμενικό</span>
+                </button>
+                <button type="button" class="org-preset-btn" data-type="custom" data-name="" data-short="">
+                  <span class="org-preset-icon">🏢</span><span class="org-preset-label">Άλλο</span>
+                </button>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Πλήρες όνομα</label>
+              <input type="text" name="org_name" id="orgName" class="form-control"
+                     value="<?= e($v('org_name', 'Δήμος ' . $municipality['name'])) ?>"
+                     placeholder="π.χ. Πυροσβεστική Χανίων" maxlength="120">
+              <div class="form-text">Εμφανίζεται στη σελίδα σύνδεσης και στις επίσημες αναφορές.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Σύντομο όνομα <span class="text-muted fw-normal">(για μηνύματα)</span></label>
+              <input type="text" name="org_name_short" id="orgNameShort" class="form-control"
+                     value="<?= e($v('org_name_short', 'Δήμος')) ?>"
+                     placeholder="π.χ. Πυρ/κή" maxlength="40">
+              <div class="form-text">Εμφανίζεται ως αποστολέας στα μηνύματα επιχείρησης.</div>
+            </div>
+            <div class="col-12">
+              <div class="org-preview-box">
+                <div class="small text-muted mb-2"><i class="bi bi-eye me-1"></i>Προεπισκόπηση εμφάνισης</div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span id="orgPreviewIcon" style="font-size:1.2rem">🏛️</span>
+                  <strong id="orgPreviewName"><?= e($v('org_name', 'Δήμος ' . $municipality['name'])) ?></strong>
+                </div>
+                <div class="small text-muted">
+                  Μήνυμα επιχείρησης: <strong id="orgPreviewShort"><?= e($v('org_name_short', 'Δήμος')) ?></strong>
+                  <span class="text-muted"> → ΕΟΔ Χανίων · 14:30</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer bg-white">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+          </div>
+        </form>
+      </div>
+      <div class="col-lg-5">
+        <div class="card shadow-sm border-info">
+          <div class="card-header bg-white fw-semibold text-info"><i class="bi bi-info-circle me-1"></i>Πού αλλάζει αυτό;</div>
+          <div class="card-body small">
+            <ul class="mb-0 ps-3">
+              <li class="mb-1">Αποστολέας μηνυμάτων στο <strong>Επιχειρησιακό Κέντρο</strong> (π.χ. «Πυρ/κή → ΕΟΔ»)</li>
+              <li class="mb-1">Αποστολέας στο <strong>Field Hub</strong> (η σελίδα πεδίου ομάδων)</li>
+              <li class="mb-1">Κεφαλίδα επικοινωνίας στη <strong>Mobile Εφαρμογή ομάδας</strong></li>
+              <li>Εμφανιζόμενο όνομα στις <strong>αναφορές PDF</strong> (σε επόμενη έκδοση)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /tab-content -->
 
 <script>
@@ -654,6 +746,47 @@ document.querySelectorAll('.member-visible-cb').forEach(function (cb) {
   }
   var first = document.querySelector('#settingsTabs .nav-link');
   if (first) { new bootstrap.Tab(first).show(); }
+})();
+
+/* ── Οργανισμός tab: preset buttons + live preview ───────────────────── */
+(function () {
+  var ICONS = { municipality:'🏛️', civil_protection:'🛡️', fire_service:'🚒', coast_guard:'⚓', custom:'🏢' };
+  var typeInput   = document.getElementById('orgType');
+  var nameInput   = document.getElementById('orgName');
+  var shortInput  = document.getElementById('orgNameShort');
+  var prevName    = document.getElementById('orgPreviewName');
+  var prevShort   = document.getElementById('orgPreviewShort');
+  var prevIcon    = document.getElementById('orgPreviewIcon');
+  var presets     = document.querySelectorAll('.org-preset-btn');
+
+  if (!typeInput) return;
+
+  function markActive() {
+    var cur = typeInput.value;
+    presets.forEach(function (b) { b.classList.toggle('active', b.dataset.type === cur); });
+    if (prevIcon) prevIcon.textContent = ICONS[cur] || '🏢';
+  }
+
+  function updatePreview() {
+    if (prevName)  prevName.textContent  = (nameInput  && nameInput.value.trim())  || '—';
+    if (prevShort) prevShort.textContent = (shortInput && shortInput.value.trim()) || '—';
+  }
+
+  presets.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      typeInput.value = btn.dataset.type;
+      if (btn.dataset.name  && nameInput)  nameInput.value  = btn.dataset.name;
+      if (btn.dataset.short && shortInput) shortInput.value = btn.dataset.short;
+      markActive();
+      updatePreview();
+    });
+  });
+
+  if (nameInput)  nameInput.addEventListener('input',  updatePreview);
+  if (shortInput) shortInput.addEventListener('input', updatePreview);
+
+  markActive();
+  updatePreview();
 })();
 
 // Email template: click placeholder badge → insert {var} at textarea cursor

@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.20-beta] — 2026-06-18
+
+### Added — Προφίλ Οργανισμού (Ρυθμίσεις → Οργανισμός)
+- Νέα καρτέλα **Οργανισμός** στις ρυθμίσεις δήμου — ο super admin επιλέγει τον τύπο οργανισμού με preset κουμπιά: 🏛️ Δήμος / 🛡️ Πολ. Προστασία / 🚒 Πυροσβεστική / ⚓ Λιμενικό / 🏢 Άλλο.
+- Ζωντανή προεπισκόπηση του πλήρους ονόματος και του σύντομου ονόματος (που εμφανίζεται στα μηνύματα επιχείρησης).
+- Το σύντομο όνομα οργανισμού (`ORG_LABEL`) αντικαθιστά όλες τις hardcoded αναφορές σε «Δήμος» στο Επιχειρησιακό Κέντρο και το Field Hub.
+- Νέα settings keys: `org_type`, `org_name`, `org_name_short` στον πίνακα `municipality_settings`.
+
 ## [0.9.19-beta] — 2026-06-18
 
 ### Fixed — Εικονίδιο κάμερας στο GPS σήμα: από κάτω → δίπλα + pulse

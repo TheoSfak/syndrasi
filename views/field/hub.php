@@ -151,10 +151,10 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 
   <!-- Comms (read + ack + compose) -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-chat-dots"></i> Επικοινωνία με τον δήμο</div>
+    <div class="hdr"><i class="bi bi-chat-dots"></i> Επικοινωνία · <?= e($orgLabel ?? 'Δήμος') ?></div>
     <div class="msg-list" id="msgList"><div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Φόρτωση…</div></div>
     <div style="display:flex;gap:8px;padding:0 14px 14px">
-      <input type="text" id="msgInput" maxlength="500" placeholder="Μήνυμα προς τον δήμο…"
+      <input type="text" id="msgInput" maxlength="500" placeholder="Μήνυμα προς <?= e($orgLabel ?? 'τον Δήμο') ?>…"
              style="flex:1;background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:14px;padding:12px;outline:none">
       <button type="button" id="msgSend" style="background:#0e7490;color:#fff;border:none;border-radius:10px;padding:0 16px;font-size:18px;cursor:pointer"><i class="bi bi-send"></i></button>
     </div>
@@ -227,6 +227,8 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   'use strict';
   var BASE = window.baseUrl || '', CSRF = window.csrfToken || '';
   var TOKEN = '<?= e($token) ?>', IS_ACTIVE = <?= $isActive ? 'true' : 'false' ?>;
+  var ORG_LABEL = <?= json_encode($orgLabel ?? 'Δήμος') ?>;
+  var ORG_ICON  = <?= json_encode($orgIcon  ?? '🏛️') ?>;
   function esc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;}
   function postJSON(p,b){return fetch(BASE+'/f/'+TOKEN+p,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CSRF,'X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(b||{})}).then(function(r){return r.json();});}
 
@@ -339,7 +341,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     if(!msgs||!msgs.length){msgList.innerHTML='<div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Καμία επικοινωνία ακόμη.</div>';return;}
     msgList.innerHTML=msgs.map(function(m){
       var cls=m.kind==='order'?'msg-order':(m.kind==='status'?'msg-status':(m.sender_role==='command'?'msg-cmd':'msg-team'));
-      var who=m.sender_role==='command'?'Δήμος':(m.sender_name||'Ομάδα');var t=(m.created_at||'').substr(11,5);
+      var who=m.sender_role==='command'?ORG_LABEL:(m.sender_name||'Ομάδα');var t=(m.created_at||'').substr(11,5);
       var h='<div class="msg '+cls+'"><div>'+(m.kind==='order'?'📋 <strong>ΕΝΤΟΛΗ:</strong> ':'')+esc(m.body||'')+'</div>';
       if(m.kind==='order'){h+=m.acknowledged_at?'<div style="font-size:11px;color:#4ade80;margin-top:4px"><i class="bi bi-check2-all"></i> Επιβεβαιώθηκε</div>':'<button class="order-pin-btn" style="margin-top:6px;padding:8px" onclick="ackOrder('+m.id+')">Επιβεβαίωση λήψης</button>';}
       h+='<div class="msg-t">'+who+' · '+t+'</div></div>';return h;
@@ -358,7 +360,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     if(!roomList)return;
     if(!msgs||!msgs.length){roomList.innerHTML='<div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Κανένα μήνυμα ακόμη.</div>';return;}
     roomList.innerHTML=msgs.map(function(m){
-      var cmd=m.sender_role==='command';var who=cmd?'Δήμος':(m.sender_label||m.team_name||m.sender_name||'Ομάδα');var t=(m.created_at||'').substr(11,5);
+      var cmd=m.sender_role==='command';var who=cmd?ORG_LABEL:(m.sender_label||m.team_name||m.sender_name||'Ομάδα');var t=(m.created_at||'').substr(11,5);
       return '<div class="msg '+(cmd?'msg-cmd':'msg-team')+'"><div>'+esc(m.body||'')+'</div><div class="msg-t">'+esc(who)+' · '+t+'</div></div>';
     }).join('');roomList.scrollTop=roomList.scrollHeight;
   }

@@ -400,4 +400,45 @@ class SettingsController
         flash_set('success', 'Οι ρυθμίσεις εμφάνισης αποθηκεύτηκαν.');
         redirect('/settings');
     }
+
+    /* ── Organisation profile ─────────────────────────────────────────── */
+
+    public function saveOrganisation()
+    {
+        requireRole(['municipality_admin']);
+        $mid          = current_municipality_id();
+        $municipality = Municipality::find($mid);
+
+        $validTypes = ['municipality', 'civil_protection', 'fire_service', 'coast_guard', 'custom'];
+        $type = post_str('org_type');
+        if (!in_array($type, $validTypes, true)) {
+            $type = 'municipality';
+        }
+
+        $name      = post_str('org_name');
+        $nameShort = post_str('org_name_short');
+        $cityName  = $municipality['name'] ?? '';
+
+        if ($name === '') {
+            $prefixes = ['municipality'=>'Δήμος','civil_protection'=>'Πολιτική Προστασία',
+                         'fire_service'=>'Πυροσβεστική','coast_guard'=>'Λιμενικό','custom'=>''];
+            $prefix = $prefixes[$type] ?? 'Δήμος';
+            $name   = $cityName !== '' ? $prefix . ' ' . $cityName : $prefix;
+        }
+        if ($nameShort === '') {
+            $shorts = ['municipality'=>'Δήμος','civil_protection'=>'Πολ.Προστ.',
+                       'fire_service'=>'Πυρ/κή','coast_guard'=>'Λιμενικό','custom'=>$name];
+            $nameShort = $shorts[$type] ?? 'Δήμος';
+        }
+
+        MunicipalitySetting::setMany($mid, [
+            'org_type'       => $type,
+            'org_name'       => $name,
+            'org_name_short' => $nameShort,
+        ]);
+        audit('municipality_org_updated', 'municipality', $mid, 'type:' . $type);
+
+        flash_set('success', 'Το προφίλ οργανισμού αποθηκεύτηκε.');
+        redirect('/settings#tab-organisation');
+    }
 }

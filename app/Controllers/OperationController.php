@@ -75,6 +75,8 @@ class OperationController
             'mapDefLng'  => $munSettings['map_lng']  ?? '',
             'mapDefZoom' => $munSettings['map_zoom'] ?? '13',
             'config'     => ['map_refresh_seconds' => 20],
+            'orgLabel'   => MunicipalitySetting::orgLabelShort($munSettings),
+            'orgIcon'    => MunicipalitySetting::orgIcon($munSettings),
         ]);
     }
 

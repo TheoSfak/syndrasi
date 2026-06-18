@@ -203,6 +203,7 @@ $router->post('/settings/event-defaults', 'SettingsController@saveEventDefaults'
 $router->post('/settings/branding', 'SettingsController@saveBranding');
 $router->post('/settings/member-fields', 'SettingsController@saveMemberFields');
 $router->post('/settings/email-templates', 'SettingsController@saveEmailTemplates');
+$router->post('/settings/organisation',   'SettingsController@saveOrganisation');
 
 /* Web Push subscription management */
 $router->get('/push/vapid-key', 'PushController@vapidKey');
