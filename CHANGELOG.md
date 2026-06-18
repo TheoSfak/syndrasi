@@ -4,6 +4,12 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.38-beta] — 2026-06-18
+
+### Fixed — map auto-pan on SSE update
+
+`fitBounds` was called on every SSE update (~3 s), snapping the map back to the teams' current GPS coordinates whenever the user had manually panned (e.g. to pick a geo-order target in Heraklion while teams were elsewhere). Map now auto-fits **once** on the first ping update, then never again. Picking mode (`Χάρτη` button) also disables auto-fit immediately so the SSE cannot interrupt mid-selection.
+
 ## [0.9.37-beta] — 2026-06-18
 
 ### Feature — Geo-order markers on operational map
