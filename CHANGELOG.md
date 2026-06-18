@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.27-beta] — 2026-06-18
+
+### Fixed — Team Live Hub: blank green page
+
+**🔴 Critical:** `/team/live/{id}` εμφάνιζε κενή πράσινη σελίδα λόγω PHP fatal error.
+
+**Bug 1 (Critical):** `get_flash()` → `flash_get()` (η `get_flash()` δεν υπάρχει) — ίδιο bug που είχε διορθωθεί στο `hub.php` (v0.9.24). Το fatal error εκτελούνταν αφού το CSS είχε ήδη σταλεί στον browser (πράσινο background), κόβοντας όλο το body content.
+
+**Bug 2:** `$isActive` έλεγχε μόνο `status = 'active'` — ίδιο root cause με Field Hub + Team Dashboard. Χρησιμοποιεί πλέον την κοινή λογική (open/confirmed/review past start_datetime).
+
 ## [0.9.26-beta] — 2026-06-18
 
 ### Fixed — Ops Centre: GPS/χάρτης 2 bugs

@@ -6,7 +6,9 @@
  */
 $eid      = (int) $event['id'];
 $approved = (int) $application['approved_people'];
-$isActive = ($event['status'] === 'active');
+$evStatus  = $event['status'];
+$evStarted = !empty($event['start_datetime']) && strtotime($event['start_datetime']) <= time();
+$isActive  = $evStatus === 'active' || ($evStarted && in_array($evStatus, ['open', 'confirmed', 'review']));
 
 /* Map coordinates: event location + team's last GPS ping */
 $evLat = (isset($event['latitude'])  && $event['latitude']  !== null && $event['latitude']  !== '') ? (float) $event['latitude']  : null;
@@ -470,8 +472,7 @@ body { min-height: 100dvh; }
 
 <?php
 /* Flash messages */
-$flash = get_flash();
-if ($flash):
+foreach (flash_get() as $flash):
   $ftype = $flash['type'] ?? 'success';
   $ficon = match($ftype) { 'success' => 'bi-check-circle-fill', 'danger' => 'bi-x-circle-fill', default => 'bi-exclamation-triangle-fill' };
 ?>
@@ -479,7 +480,7 @@ if ($flash):
   <i class="bi <?= e($ficon) ?>"></i>
   <?= e($flash['message']) ?>
 </div>
-<?php endif; ?>
+<?php endforeach; ?>
 
 <!-- ── Inactive notice ─────────────────────────────────────────────────── -->
 <?php if (!$isActive): ?>
