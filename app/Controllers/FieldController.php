@@ -144,7 +144,8 @@ class FieldController
             'uid' => $ctx['owner'], 'lat' => $lat, 'lng' => $lng, 'acc' => $acc, 'note' => $note,
         ]);
         try {
-            NotificationService::sosRaised(SosAlert::find($alertId), $this->eventArr($app), ['name' => $app['team_name']]);
+            $sosAlert = SosAlert::find($alertId);
+            if ($sosAlert) { NotificationService::sosRaised($sosAlert, $this->eventArr($app), ['name' => $app['team_name']]); }
         } catch (Throwable $e) { error_log('[Field SOS] ' . $e->getMessage()); }
         json_out(['success' => true, 'id' => $alertId, 'message' => 'SOS στάλθηκε — ο δήμος ειδοποιήθηκε.']);
     }
@@ -225,7 +226,7 @@ class FieldController
                 (int) $app['municipality_id'], (int) $app['event_id'],
                 'Νέα έλλειψη: ' . $title,
                 ($app['team_name']) . ' ανέφερε έλλειψη (' . $severity . ') — ' . $app['event_title'],
-                url('/operations/events/' . $app['event_id'])
+                'shortage'
             );
         } catch (Throwable $e) { error_log('[Field::shortage] ' . $e->getMessage()); }
         flash_set('success', 'Η αναφορά έλλειψης στάλθηκε στον δήμο.');

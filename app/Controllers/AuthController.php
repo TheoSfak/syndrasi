@@ -161,7 +161,6 @@ class AuthController
                  <p><a href=\"{$resetUrl}\">{$resetUrl}</a></p>
                  <p>Ο σύνδεσμος ισχύει για <strong>1 ώρα</strong>.</p>
                  <p>Αν δεν ζητήσατε αυτήν την αλλαγή, αγνοήστε αυτό το email.</p>",
-                $munName,
                 $user['municipality_id']
             );
             audit('password_reset_requested', 'user', $user['id']);

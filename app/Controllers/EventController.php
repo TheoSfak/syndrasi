@@ -255,7 +255,7 @@ class EventController
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent((int)$id);
         if ($event['status'] !== 'draft') {
-            flash_set('error', 'Μόνο πρόχειρες δράσεις μπορούν να δημοσιευθούν.');
+            flash_set('danger', 'Μόνο πρόχειρες δράσεις μπορούν να δημοσιευθούν.');
             redirect('/events/' . $event['id']);
         }
         Event::markPublished($event['id']);
@@ -272,7 +272,7 @@ class EventController
         requireRole(['municipality_admin', 'event_operator']);
         $event = Event::findForCurrent((int)$id);
         if (!Event::canTransition($event['status'], 'active')) {
-            flash_set('error', 'Η δράση δεν μπορεί να ενεργοποιηθεί από αυτή την κατάσταση.');
+            flash_set('danger', 'Η δράση δεν μπορεί να ενεργοποιηθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'active');
@@ -288,7 +288,7 @@ class EventController
         requireRole(['municipality_admin', 'event_operator']);
         $event = Event::findForCurrent((int)$id);
         if (!Event::canTransition($event['status'], 'closed')) {
-            flash_set('error', 'Η δράση δεν μπορεί να κλείσει από αυτή την κατάσταση.');
+            flash_set('danger', 'Η δράση δεν μπορεί να κλείσει από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'closed');
@@ -302,7 +302,7 @@ class EventController
         requireRole(['municipality_admin', 'event_operator']);
         $event = Event::findForCurrent((int)$id);
         if (!Event::canTransition($event['status'], 'completed')) {
-            flash_set('error', 'Η δράση δεν μπορεί να ολοκληρωθεί από αυτή την κατάσταση.');
+            flash_set('danger', 'Η δράση δεν μπορεί να ολοκληρωθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'completed');
@@ -317,7 +317,7 @@ class EventController
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent((int)$id);
         if (!Event::canTransition($event['status'], 'cancelled')) {
-            flash_set('error', 'Η δράση δεν μπορεί να αρχειοθετηθεί από αυτή την κατάσταση.');
+            flash_set('danger', 'Η δράση δεν μπορεί να αρχειοθετηθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'cancelled');

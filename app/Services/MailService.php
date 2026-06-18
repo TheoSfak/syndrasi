@@ -116,8 +116,10 @@ class MailService
             } catch (Exception $e) { /* ignore */ }
         }
 
-        // Convert plain text to safe HTML
-        $htmlBody = nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));
+        // If body already contains HTML tags, use as-is; otherwise escape plain text
+        $htmlBody = strip_tags($body) !== $body
+            ? $body
+            : nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));
 
         $logoHtml = $logoUrl
             ? '<img src="' . $logoUrl . '" alt="' . $orgName . '" style="max-height:50px;max-width:160px;object-fit:contain;display:block;margin:0 auto 8px;">'

@@ -83,11 +83,12 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 
 <div class="body">
 
-  <?php $flash = flash_get(); if ($flash): $ft = $flash['type'] ?? 'success'; ?>
-  <div class="flash flash-<?= e($ft === 'danger' ? 'danger' : 'success') ?>">
-    <i class="bi <?= $ft === 'danger' ? 'bi-x-circle-fill' : 'bi-check-circle-fill' ?>"></i><?= e($flash['message']) ?>
+  <?php foreach (flash_get() as $flash): $ftype = $flash['type'] ?? 'success';
+    $ficon = match($ftype) { 'success' => 'bi-check-circle-fill', 'danger' => 'bi-x-circle-fill', default => 'bi-exclamation-triangle-fill' }; ?>
+  <div class="flash flash-<?= e($ftype) ?>">
+    <i class="bi <?= e($ficon) ?>"></i><?= e($flash['message']) ?>
   </div>
-  <?php endif; ?>
+  <?php endforeach; ?>
 
   <?php if (!$isActive): ?>
   <div class="inactive"><i class="bi bi-hourglass-split"></i> Η δράση δεν είναι ενεργή αυτή τη στιγμή.</div>
