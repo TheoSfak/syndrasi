@@ -4,6 +4,22 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.37-beta] — 2026-06-18
+
+### Feature — Geo-order markers on operational map
+
+When command sends a move / incident / poi order with a GPS point, the target now appears on the map as a distinct shape (never a circle):
+
+- **Μετάβαση** → orange downward triangle ▼
+- **Περιστατικό** → red rotated diamond ◆
+- **Σημείο ενδιαφέροντος** → purple rounded square ★
+
+A dashed coloured line connects the team's current GPS dot to the target. The marker and line disappear automatically once the team's next ping arrives within 100 m (no manual "arrived" step). Broadcast and targeted orders both supported; newest order per team wins. Works across SSE stream, status poll, and manual map refresh.
+
+### Feature — Collapsible symbol legend
+
+A small **"ⓘ Υπόμνημα συμβόλων χάρτη"** toggle sits below the operational map — collapsed by default, zero JS, native `<details>`/`<summary>`. Expands to show all 5 map symbols (GPS circle, move triangle, incident diamond, POI star, dashed connector) with their exact colours.
+
 ## [0.9.35-beta] — 2026-06-18
 
 ### Security
