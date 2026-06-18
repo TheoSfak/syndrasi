@@ -779,6 +779,7 @@ document.querySelectorAll('.member-visible-cb').forEach(function (cb) {
       if (btn.dataset.short && shortInput) shortInput.value = btn.dataset.short;
       markActive();
       updatePreview();
+      typeInput.form.submit();
     });
   });
 

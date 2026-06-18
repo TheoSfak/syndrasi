@@ -4,6 +4,11 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.22-beta] — 2026-06-18
+
+### Fixed — Οργανισμός: preset buttons auto-save
+- Κλικ σε preset button (Δήμος / Πολ.Προστ. / Πυροσβεστική / Λιμενικό / Άλλο) κάνει πλέον αυτόματο submit της φόρμας — δεν χρειάζεται χωριστό κλικ στο «Αποθήκευση».
+
 ## [0.9.21-beta] — 2026-06-18
 
 ### Fixed — Security & reliability hardening (code smell pass)
