@@ -95,6 +95,18 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
 .sos-alarm-item .sa-meta { font-size:.78rem;opacity:.9; }
 .sos-alarm-item .btn { --bs-btn-padding-y:.15rem; }
 
+/* ── Photo Wall ────────────────────────────────────────────────────────── */
+.wall-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:3px; }
+.wall-cell { position:relative;aspect-ratio:1;overflow:hidden;border-radius:6px;cursor:pointer;background:#111; }
+.wall-cell img { width:100%;height:100%;object-fit:cover;transition:transform .2s; display:block; }
+.wall-cell:hover img { transform:scale(1.06); }
+.wall-ovr { position:absolute;bottom:0;left:0;right:0;padding:3px 5px 3px;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,transparent 100%); pointer-events:none; }
+.wall-team { font-size:.6rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.wall-time { font-size:.54rem;color:rgba(255,255,255,.65); }
+.wall-cap  { font-size:.57rem;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic; }
+@keyframes wallIn { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
+.wall-new { animation:wallIn .38s ease; }
+
 /* ── Teams Board ───────────────────────────────────────────────────────── */
 .board-dot { width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0; }
 .board-row { transition:background .15s;border-bottom:1px solid rgba(0,0,0,.06); }
@@ -263,6 +275,15 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
       <div id="boardList" style="max-height:290px;overflow-y:auto">
         <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-clockwise spin me-1"></i>Φόρτωση…</div>
       </div>
+    </div>
+
+    <!-- Photo Wall -->
+    <div class="card" id="photoWallCard" style="display:none">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-images me-1 text-warning"></i>Φωτογραφίες Live</span>
+        <span class="badge bg-warning text-dark" id="wallBadge">0</span>
+      </div>
+      <div class="card-body p-2" id="wallGrid"></div>
     </div>
 
     <!-- Shortage reports -->
@@ -647,6 +668,38 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     if (Object.keys(sosTeamIds).length > 0) flashEl('boardList');
   }
 
+  /* ─── Photo Wall ─── */
+  var wallKnown = {};
+  function renderPhotoWall(photos) {
+    photos = photos || [];
+    var card = document.getElementById('photoWallCard');
+    if (!card) return;
+    card.style.display = photos.length ? '' : 'none';
+    document.getElementById('wallBadge').textContent = photos.length;
+    if (!photos.length) { document.getElementById('wallGrid').innerHTML = ''; return; }
+
+    /* newest 9 first — server typically returns oldest-first so we reverse */
+    var shown = photos.slice(-9).reverse();
+    var html = '<div class="wall-grid">';
+    shown.forEach(function(ph) {
+      var isNew = !wallKnown[ph.id];
+      wallKnown[ph.id] = true;
+      var cap = (ph.caption && ph.caption.trim())
+        ? '<div class="wall-cap">' + esc(ph.caption) + '</div>' : '';
+      html += '<div class="wall-cell photo-thumb' + (isNew ? ' wall-new' : '') + '"' +
+              ' data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at || '') + '">' +
+              '<img src="' + ph.url + '" alt="' + esc(ph.team_name) + '" loading="lazy">' +
+              '<div class="wall-ovr">' +
+                '<div class="wall-team">' + esc(ph.team_name) + '</div>' +
+                (ph.time ? '<div class="wall-time">' + esc(ph.time) + '</div>' : '') +
+                cap +
+              '</div>' +
+              '</div>';
+    });
+    html += '</div>';
+    document.getElementById('wallGrid').innerHTML = html;
+  }
+
   function renderLegend() {
     var box = document.getElementById('mapLegend');
     if (!box) return;
@@ -857,7 +910,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     renderMessages(d.messages);
     renderRoom(d.room);
     /* map pings included in SSE snapshot — photos first so GPS popup can show them */
-    if (d.photos) updatePhotos(d.photos);
+    if (d.photos) { updatePhotos(d.photos); renderPhotoWall(d.photos); }
     if (d.pings) updateMap(d.pings);
     /* flash sections where count increased */
     if (!isNaN(prevCi) && (d.stats.checked_in || 0) > prevCi) flashEl('teamsBox');

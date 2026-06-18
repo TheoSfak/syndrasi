@@ -4,6 +4,19 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.29-beta] — 2026-06-18
+
+### Feature — Επιχειρησιακό Κέντρο: Live Photo Wall
+
+Νέα κάρτα «Φωτογραφίες Live» στη δεξιά στήλη (μεταξύ Πίνακα Ομάδων και Ελλείψεων):
+
+- Grid 3×3 με τις τελευταίες 9 φωτογραφίες (newest first), κρυμμένο αν δεν υπάρχουν φωτό
+- Overlay σε κάθε thumbnail: όνομα ομάδας, ώρα αποστολής, λεζάντα (αν υπάρχει)
+- Κλικ → άνοιγμα στο υπάρχον fullscreen modal (`#photoModal`)
+- Νέες φωτό εμφανίζονται με scale-in animation (`.wall-new`)
+- Χρησιμοποιεί τον υπάρχοντα delegated click handler (`.photo-thumb`)
+- Ενημερώνεται μαζί με `updatePhotos()` από το SSE/polling
+
 ## [0.9.28-beta] — 2026-06-18
 
 ### Feature — Επιχειρησιακό Κέντρο: Live Teams Board
