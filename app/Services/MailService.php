@@ -16,6 +16,48 @@ class MailService
     /** Last error message of the most recent send() call (for the UI). */
     public static $lastError = '';
 
+    /** Queue of emails waiting to be sent after the HTTP response is flushed. */
+    private static $queue = [];
+    /** Whether the shutdown function has already been registered. */
+    private static $shutdownRegistered = false;
+
+    /**
+     * Queue an email to send AFTER the browser receives the HTTP response.
+     * Uses fastcgi_finish_request() so the redirect is instant for the user.
+     * Falls back to synchronous send on servers without FPM.
+     */
+    public static function sendDeferred($toEmail, $toName, $subject, $body, $municipalityId = null)
+    {
+        self::$queue[] = [
+            'toEmail'        => $toEmail,
+            'toName'         => $toName,
+            'subject'        => $subject,
+            'body'           => $body,
+            'municipalityId' => $municipalityId,
+        ];
+        if (!self::$shutdownRegistered) {
+            self::$shutdownRegistered = true;
+            register_shutdown_function(['MailService', 'flushQueue']);
+        }
+    }
+
+    /**
+     * Send all queued emails. Called automatically by the shutdown handler.
+     * Flushes the HTTP response to the browser first, then sends via SMTP.
+     */
+    public static function flushQueue()
+    {
+        if (empty(self::$queue)) { return; }
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();   // browser gets the redirect NOW
+        }
+        @set_time_limit(120);           // give SMTP enough time, no page timeout
+        foreach (self::$queue as $m) {
+            self::send($m['toEmail'], $m['toName'], $m['subject'], $m['body'], $m['municipalityId']);
+        }
+        self::$queue = [];
+    }
+
     /**
      * Send an email.
      *

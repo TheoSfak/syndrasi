@@ -59,9 +59,11 @@ class NotificationService
         foreach ($admins as $admin) {
             $eSubject = $emailSubject ?? $title;
             $eBody    = $emailBody    ?? $message;
-            $sent = self::shouldSendEmail($municipalityId, $type)
-                ? MailService::send($admin['email'], $admin['name'], $eSubject, $eBody, $municipalityId)
-                : false;
+            $shouldEmail = self::shouldSendEmail($municipalityId, $type);
+            if ($shouldEmail) {
+                MailService::sendDeferred($admin['email'], $admin['name'], $eSubject, $eBody, $municipalityId);
+            }
+            $sent = $shouldEmail;
             Notification::create([
                 'municipality_id' => $municipalityId,
                 'user_id'         => $admin['id'],
@@ -89,9 +91,11 @@ class NotificationService
         foreach ($admins as $admin) {
             $eSubject = $emailSubject ?? $title;
             $eBody    = $emailBody    ?? $message;
-            $sent = self::shouldSendEmail($municipalityId, $type)
-                ? MailService::send($admin['email'], $admin['name'], $eSubject, $eBody, $municipalityId)
-                : false;
+            $shouldEmail = self::shouldSendEmail($municipalityId, $type);
+            if ($shouldEmail) {
+                MailService::sendDeferred($admin['email'], $admin['name'], $eSubject, $eBody, $municipalityId);
+            }
+            $sent = $shouldEmail;
             Notification::create([
                 'municipality_id' => $municipalityId,
                 'user_id'         => $admin['id'],
@@ -382,7 +386,7 @@ class NotificationService
                 'commander_note' => $commanderNote,
             ]);
 
-            MailService::send($member['email'], $member['full_name'], $tpl['subject'], $tpl['body'], $mid);
+            MailService::sendDeferred($member['email'], $member['full_name'], $tpl['subject'], $tpl['body'], $mid);
         }
     }
 
@@ -442,7 +446,7 @@ class NotificationService
                           . (!empty($mob['location_name']) ? '<p>Τοποθεσία: ' . e($mob['location_name']) . '</p>' : '')
                           . '<p>Παρακαλούμε δηλώστε αν μπορείτε να ανταποκριθείτε:</p>'
                           . '<p><a href="' . $link . '">' . $link . '</a></p>';
-                    MailService::send($t['email'], $t['full_name'] ?? '', $title, $body, $mid);
+                    MailService::sendDeferred($t['email'], $t['full_name'] ?? '', $title, $body, $mid);
                 } catch (Throwable $e) {
                     error_log('[Mobilize] email failed: ' . $e->getMessage());
                 }
