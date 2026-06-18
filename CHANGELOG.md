@@ -4,6 +4,19 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.28-beta] — 2026-06-18
+
+### Feature — Επιχειρησιακό Κέντρο: Live Teams Board
+
+Νέο panel «Πίνακας Ομάδων» στη δεξιά στήλη του Επιχειρησιακού Κέντρου:
+
+- **3 summary counters** πάνω: Παρόντες / Αδήλωτοι / Εγκεκριμένοι (από server stats)
+- **Compact rows** για κάθε ομάδα: χρωματιστή κουκκίδα status, όνομα, άτομα (παρόντες/εγκεκριμένοι), ηλικία τελευταίου GPS ping
+- **Αυτόματο sorting**: SOS πρώτοι (με badge + animation), μετά παρόντες (πλήρεις → μερικοί), μετά αδήλωτοι, τελευταίοι αποχωρήσαντες
+- **Ping age color**: πράσινο <5λ / πορτοκαλί <20λ / κόκκινο >20λ
+- **SOS flash**: το boardList κάνει flash όταν υπάρχει ενεργό SOS
+- Ενημερώνεται από την ήδη υπάρχουσα SSE/polling ροή — χωρίς νέο endpoint
+
 ## [0.9.27-beta] — 2026-06-18
 
 ### Fixed — Team Live Hub: blank green page

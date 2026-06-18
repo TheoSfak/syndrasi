@@ -95,6 +95,16 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
 .sos-alarm-item .sa-meta { font-size:.78rem;opacity:.9; }
 .sos-alarm-item .btn { --bs-btn-padding-y:.15rem; }
 
+/* ── Teams Board ───────────────────────────────────────────────────────── */
+.board-dot { width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0; }
+.board-row { transition:background .15s;border-bottom:1px solid rgba(0,0,0,.06); }
+.board-row:last-child { border-bottom:none!important; }
+.board-row:hover { background:rgba(0,0,0,.025); }
+body.ops-dark .board-row { border-bottom-color:rgba(255,255,255,.07); }
+body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
+.board-num { font-size:1.4rem;line-height:1;font-weight:700; }
+.board-lbl { font-size:.62rem;text-transform:uppercase;letter-spacing:.5px;margin-top:1px; }
+
 /* ── Comms thread ──────────────────────────────────────────────────────── */
 .msg-thread { max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:.4rem; }
 .cmsg { padding:.42rem .6rem;border-radius:10px;font-size:.82rem;line-height:1.35;max-width:90%; }
@@ -222,8 +232,38 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
     </div>
   </div>
 
-  <!-- RIGHT: Activity + Shortages + Notes -->
+  <!-- RIGHT: Teams Board + Shortages + Activity + Notes -->
   <div class="col-xl-5 d-flex flex-column gap-3">
+
+    <!-- Teams Board -->
+    <div class="card" id="teamBoardCard">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-layout-three-columns me-1 text-info"></i>Πίνακας Ομάδων</span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="ldot" style="width:7px;height:7px" title="LIVE"></span>
+          <span class="small text-muted">LIVE</span>
+        </div>
+      </div>
+      <!-- Summary strip -->
+      <div class="row g-0 border-bottom text-center" id="boardSummary">
+        <div class="col-4 py-2 border-end">
+          <div class="board-num text-success" id="board-present">--</div>
+          <div class="text-muted board-lbl">Παρόντες</div>
+        </div>
+        <div class="col-4 py-2 border-end">
+          <div class="board-num text-warning" id="board-transit">--</div>
+          <div class="text-muted board-lbl">Αδήλωτοι</div>
+        </div>
+        <div class="col-4 py-2">
+          <div class="board-num" id="board-approved">--</div>
+          <div class="text-muted board-lbl">Εγκεκριμένοι</div>
+        </div>
+      </div>
+      <!-- Team rows -->
+      <div id="boardList" style="max-height:290px;overflow-y:auto">
+        <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-clockwise spin me-1"></i>Φόρτωση…</div>
+      </div>
+    </div>
 
     <!-- Shortage reports -->
     <div class="card">
@@ -543,6 +583,70 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
     renderLegend();
   }
 
+  /* ─── Teams Board ─── */
+  function renderTeamBoard(teams, sos, stats) {
+    var sosTeamIds = {};
+    (sos || []).forEach(function(s) { if (s.status !== 'resolved') sosTeamIds[s.team_id] = true; });
+
+    var present  = (stats && stats.total_present)  || 0;
+    var approved = (stats && stats.total_approved) || 0;
+    document.getElementById('board-present').textContent  = present;
+    document.getElementById('board-transit').textContent  = Math.max(0, approved - present);
+    document.getElementById('board-approved').textContent = approved;
+
+    if (!teams || !teams.length) {
+      document.getElementById('boardList').innerHTML =
+        '<div class="text-muted small py-3 text-center">Δεν υπάρχουν ομάδες.</div>';
+      return;
+    }
+
+    var statusOrder = { 'present_full':1, 'present_partial':2, 'not_present':3, 'none':3, 'departed':4 };
+    var sorted = teams.slice().sort(function(a, b) {
+      var ao = sosTeamIds[a.team_id] ? 0 : (statusOrder[a.checkin_status||'none'] || 3);
+      var bo = sosTeamIds[b.team_id] ? 0 : (statusOrder[b.checkin_status||'none'] || 3);
+      return ao - bo;
+    });
+
+    var html = '';
+    sorted.forEach(function(t) {
+      var cs      = t.checkin_status || 'not_present';
+      var hasSos  = !!sosTeamIds[t.team_id];
+      var dotClr  = hasSos            ? '#ef4444'
+                  : cs === 'present_full'    ? '#22c55e'
+                  : cs === 'present_partial' ? '#f59e0b'
+                  : cs === 'departed'        ? '#94a3b8' : '#cbd5e1';
+      var dotAnim = (hasSos || cs === 'present_full') ? ';animation:pp 1.8s infinite' : '';
+
+      var pingHtml = '';
+      if (t.ping_age_min !== null && t.ping_age_min !== undefined) {
+        var pc = t.ping_age_min < 5 ? '#22c55e' : t.ping_age_min < 20 ? '#f59e0b' : '#ef4444';
+        pingHtml = '<span style="font-size:.7rem;color:' + pc + ';flex-shrink:0">' + t.ping_age_min + 'λ</span>';
+      } else {
+        pingHtml = '<span style="font-size:.7rem;color:#cbd5e1;flex-shrink:0">—</span>';
+      }
+
+      var sosBadge = hasSos
+        ? ' <span class="badge text-bg-danger" style="font-size:.58rem;animation:sosAlarmPulse 1s infinite;vertical-align:middle">SOS</span>'
+        : '';
+
+      var ppl = (cs === 'present_full' || cs === 'present_partial')
+        ? (t.present_people || 0) + '/' + t.approved_people
+        : '—/' + t.approved_people;
+
+      html += '<div class="board-row d-flex align-items-center gap-2 px-3 py-2">' +
+        '<span class="board-dot" style="background:' + dotClr + dotAnim + '"></span>' +
+        '<span class="small fw-semibold flex-fill" style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+          esc(t.team_name) + sosBadge +
+        '</span>' +
+        '<span class="small text-muted" style="white-space:nowrap">' + ppl + '</span>' +
+        pingHtml +
+        '</div>';
+    });
+
+    document.getElementById('boardList').innerHTML = html;
+    if (Object.keys(sosTeamIds).length > 0) flashEl('boardList');
+  }
+
   function renderLegend() {
     var box = document.getElementById('mapLegend');
     if (!box) return;
@@ -744,6 +848,7 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
     document.getElementById('sv-clk').textContent  = d.ts;
     /* sections */
     renderTeams(d.teams);
+    renderTeamBoard(d.teams, d.sos, d.stats);
     renderShortages(d.shortages);
     renderActivity(d.activity);
     renderNotes(d.notes);
