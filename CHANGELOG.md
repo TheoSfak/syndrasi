@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.21-beta] — 2026-06-18
+
+### Fixed — Security & reliability hardening (code smell pass)
+- **🔴 XSS** `hub.php`: `sender_name` στο `renderMsgs` wrapped με `esc()` · `m.id` σε onclick cast με `parseInt` · coordinates σε Google Maps URLs με `parseFloat`
+- **🔴 Fatal error** `hub.php`: `get_flash()` → `flash_get()` (λάθος function name προκαλούσε fatal error σε flash messages στο field hub)
+- **🔴 PHP-in-JS injection** `hub.php`: coordinates (`evLat`/`evLng`/`tLat`/`tLng`) πλέον εξάγονται μέσω `json_encode()` αντί raw PHP output
+- **🟠 Silent failures** `FieldController` & `OperationController`: όλα τα `catch (Throwable $e) {}` πλέον κάνουν `error_log()` ώστε να εντοπίζονται αποτυχίες notification service
+- **🟠 Shortage state machine** `OperationController`: το resolve επιτρέπεται μόνο από `open` ή `acknowledged`, όχι από οποιοδήποτε state · προστέθηκε `else { abort(422) }` για invalid actions
+- **🟡 Duplicate stats logic** `OperationController`: εξαγωγή σε `calcTeamStats()` helper — `status()` και `buildStreamSnapshot()` χρησιμοποιούν πλέον κοινή μέθοδο
+
 ## [0.9.20-beta] — 2026-06-18
 
 ### Added — Προφίλ Οργανισμού (Ρυθμίσεις → Οργανισμός)

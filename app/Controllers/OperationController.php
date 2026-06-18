@@ -102,20 +102,9 @@ class OperationController
         $eid   = $event['id'];
 
         $teams = $this->teamStatusList($eid);
-
-        $totalApproved  = 0;
-        $totalPresent   = 0;
-        $checkedInCount = 0;
-        foreach ($teams as $t) {
-            $totalApproved += (int) $t['approved_people'];
-            if ($t['present_people'] !== null) {
-                $totalPresent += (int) $t['present_people'];
-            }
-            if ($t['checkin_status'] && $t['checkin_status'] !== 'pending') {
-                $checkedInCount++;
-            }
-        }
-        $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0;
+        $stats = $this->calcTeamStats($teams);
+        ['totalApproved' => $totalApproved, 'totalPresent' => $totalPresent,
+         'checkedInCount' => $checkedInCount, 'coverage' => $coverage] = $stats;
 
         $shortages = dbq(
             "SELECT sr.*, t.name AS team_name, ua.name AS ack_name, ur.name AS res_name
@@ -278,7 +267,7 @@ class OperationController
             abort(404, 'Η ομάδα δεν βρέθηκε.');
         }
         GpsRequest::create((int) $event['municipality_id'], (int) $event['id'], $tid, current_user_id());
-        try { NotificationService::gpsRequested($event, $team); } catch (Throwable $e) {}
+        try { NotificationService::gpsRequested($event, $team); } catch (Throwable $e) { error_log('[Ops::requestGps] ' . $e->getMessage()); }
         audit('gps_requested', 'event', $event['id'], 'team ' . $tid);
 
         if (wants_json()) {
@@ -362,18 +351,9 @@ class OperationController
     private function buildStreamSnapshot(int $eid, array $event): array
     {
         $teams = $this->teamStatusList($eid);
-
-        $totalApproved = $totalPresent = $checkedInCount = 0;
-        foreach ($teams as $t) {
-            $totalApproved += (int) $t['approved_people'];
-            if ($t['present_people'] !== null) {
-                $totalPresent += (int) $t['present_people'];
-            }
-            if ($t['checkin_status'] && $t['checkin_status'] !== 'pending') {
-                $checkedInCount++;
-            }
-        }
-        $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0;
+        $stats = $this->calcTeamStats($teams);
+        ['totalApproved' => $totalApproved, 'totalPresent' => $totalPresent,
+         'checkedInCount' => $checkedInCount, 'coverage' => $coverage] = $stats;
 
         $shortages = dbq(
             "SELECT sr.*, t.name AS team_name
@@ -499,7 +479,7 @@ class OperationController
         SosAlert::acknowledge((int) $id, current_user_id());
         $event = Event::find($alert['event_id']);
         if ($event) {
-            try { NotificationService::sosAcknowledged($alert, $event); } catch (Throwable $e) {}
+            try { NotificationService::sosAcknowledged($alert, $event); } catch (Throwable $e) { error_log('[Ops::sosAck] ' . $e->getMessage()); }
         }
         audit('sos_acknowledged', 'event', (int) $alert['event_id'], 'sos ' . $id);
         if (wants_json()) { json_out(['ok' => true]); }
@@ -570,7 +550,7 @@ class OperationController
             } else {
                 NotificationService::commandMessage($event, $teamIds, $kind, $body);
             }
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) { error_log('[Ops::sendMessage] ' . $e->getMessage()); }
         audit('ops_message_sent', 'event', (int) $event['id'], ($pkind ?: $kind) . ($teamId ? ' team ' . $teamId : ' broadcast'));
         json_out(['ok' => true]);
     }
@@ -614,13 +594,15 @@ class OperationController
         if ($action === 'acknowledged') {
             dbq("UPDATE shortage_reports SET status='acknowledged', acknowledged_by=:uid, acknowledged_at=NOW()
                  WHERE id=:id AND status='open'", ['uid' => $uid, 'id' => $id]);
-        } else {
+        } elseif ($action === 'resolved') {
             dbq("UPDATE shortage_reports SET status='resolved', resolved_by=:uid, resolved_at=NOW()
-                 WHERE id=:id AND status<>'resolved'", ['uid' => $uid, 'id' => $id]);
+                 WHERE id=:id AND status IN ('open','acknowledged')", ['uid' => $uid, 'id' => $id]);
+        } else {
+            abort(422, 'Μη έγκυρη ενέργεια.');
         }
         $event = Event::find($sh['event_id']);
         if ($event) {
-            try { NotificationService::shortageHandled($sh, $event, $action); } catch (Throwable $e) {}
+            try { NotificationService::shortageHandled($sh, $event, $action); } catch (Throwable $e) { error_log('[Ops::shortage] ' . $e->getMessage()); }
         }
         audit('shortage_' . $action, 'event', (int) $sh['event_id'], 'shortage ' . $id);
         if (wants_json()) { json_out(['ok' => true]); }
@@ -817,6 +799,26 @@ class OperationController
     }
 
     // ----------------------------------------------------------- Private helpers
+
+    private function calcTeamStats(array $teams): array
+    {
+        $totalApproved = $totalPresent = $checkedInCount = 0;
+        foreach ($teams as $t) {
+            $totalApproved += (int) $t['approved_people'];
+            if ($t['present_people'] !== null) {
+                $totalPresent += (int) $t['present_people'];
+            }
+            if ($t['checkin_status'] && $t['checkin_status'] !== 'pending') {
+                $checkedInCount++;
+            }
+        }
+        return [
+            'totalApproved'  => $totalApproved,
+            'totalPresent'   => $totalPresent,
+            'checkedInCount' => $checkedInCount,
+            'coverage'       => $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0,
+        ];
+    }
 
     private function teamStatusList(int $eid): array
     {

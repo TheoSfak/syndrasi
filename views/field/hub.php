@@ -81,7 +81,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 
 <div class="body">
 
-  <?php $flash = get_flash(); if ($flash): $ft = $flash['type'] ?? 'success'; ?>
+  <?php $flash = flash_get(); if ($flash): $ft = $flash['type'] ?? 'success'; ?>
   <div class="flash flash-<?= e($ft === 'danger' ? 'danger' : 'success') ?>">
     <i class="bi <?= $ft === 'danger' ? 'bi-x-circle-fill' : 'bi-check-circle-fill' ?>"></i><?= e($flash['message']) ?>
   </div>
@@ -235,8 +235,8 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   /* Map */
   (function(){
     var el=document.getElementById('teamMap'); if(!el||typeof L==='undefined')return;
-    var evLat=<?= $evLat!==null?$evLat:'null' ?>,evLng=<?= $evLng!==null?$evLng:'null' ?>;
-    var tLat=<?= $tLat!==null?$tLat:'null' ?>,tLng=<?= $tLng!==null?$tLng:'null' ?>;
+    var evLat=<?= json_encode($evLat) ?>,evLng=<?= json_encode($evLng) ?>;
+    var tLat=<?= json_encode($tLat) ?>,tLng=<?= json_encode($tLng) ?>;
     var center=(tLat!==null)?[tLat,tLng]:((evLat!==null)?[evLat,evLng]:[35.3387,25.1442]);
     var map=L.map('teamMap').setView(center,14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
@@ -323,8 +323,8 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     orderBanner.style.display='';
     orderBanner.innerHTML=p.map(function(m){var t=(m.created_at||'').substr(11,5);
       var head=m.point_kind==='incident'?'⚠️ ΠΕΡΙΣΤΑΤΙΚΟ':(m.point_kind==='move'?'➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ':'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
-      var dir=(m.latitude!=null&&m.longitude!=null)?'<a href="https://www.google.com/maps?q='+m.latitude+','+m.longitude+'" target="_blank" rel="noopener" class="order-pin-btn" style="display:block;text-align:center;text-decoration:none;background:#2563eb;color:#fff;margin-bottom:8px"><i class="bi bi-geo-alt-fill"></i> Οδηγίες (Google Maps)</a>':'';
-      return '<div class="order-pin"><div class="order-pin-h"><i class="bi bi-megaphone-fill"></i> '+head+'</div><div class="order-pin-b">'+esc(m.body||'')+'</div>'+dir+'<button class="order-pin-btn" onclick="ackOrder('+m.id+')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button><div style="font-size:11px;color:#fde68a;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
+      var dir=(m.latitude!=null&&m.longitude!=null)?'<a href="https://www.google.com/maps?q='+parseFloat(m.latitude)+','+parseFloat(m.longitude)+'" target="_blank" rel="noopener" class="order-pin-btn" style="display:block;text-align:center;text-decoration:none;background:#2563eb;color:#fff;margin-bottom:8px"><i class="bi bi-geo-alt-fill"></i> Οδηγίες (Google Maps)</a>':'';
+      return '<div class="order-pin"><div class="order-pin-h"><i class="bi bi-megaphone-fill"></i> '+head+'</div><div class="order-pin-b">'+esc(m.body||'')+'</div>'+dir+'<button class="order-pin-btn" onclick="ackOrder('+parseInt(m.id,10)+')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button><div style="font-size:11px;color:#fde68a;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
     }).join('');
   }
   function renderGeoPoints(msgs){
@@ -334,7 +334,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
       var color=m.point_kind==='incident'?'#dc2626':(m.point_kind==='move'?'#2563eb':'#0d9488');
       var lbl=m.point_kind==='incident'?'⚠️ Περιστατικό':(m.point_kind==='move'?'➡️ Μετάβαση':'📍 Σημείο');
       L.circleMarker([m.latitude,m.longitude],{radius:10,color:color,fillColor:color,fillOpacity:.7}).addTo(grp)
-        .bindPopup('<b>'+lbl+'</b><br>'+esc(m.body||'')+'<br><a href="https://www.google.com/maps?q='+m.latitude+','+m.longitude+'" target="_blank" rel="noopener">Οδηγίες</a>');
+        .bindPopup('<b>'+lbl+'</b><br>'+esc(m.body||'')+'<br><a href="https://www.google.com/maps?q='+parseFloat(m.latitude)+','+parseFloat(m.longitude)+'" target="_blank" rel="noopener">Οδηγίες</a>');
     });
   }
   function renderMsgs(msgs){
@@ -344,7 +344,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
       var who=m.sender_role==='command'?ORG_LABEL:(m.sender_name||'Ομάδα');var t=(m.created_at||'').substr(11,5);
       var h='<div class="msg '+cls+'"><div>'+(m.kind==='order'?'📋 <strong>ΕΝΤΟΛΗ:</strong> ':'')+esc(m.body||'')+'</div>';
       if(m.kind==='order'){h+=m.acknowledged_at?'<div style="font-size:11px;color:#4ade80;margin-top:4px"><i class="bi bi-check2-all"></i> Επιβεβαιώθηκε</div>':'<button class="order-pin-btn" style="margin-top:6px;padding:8px" onclick="ackOrder('+m.id+')">Επιβεβαίωση λήψης</button>';}
-      h+='<div class="msg-t">'+who+' · '+t+'</div></div>';return h;
+      h+='<div class="msg-t">'+esc(who)+' · '+t+'</div></div>';return h;
     }).join('');msgList.scrollTop=msgList.scrollHeight;
   }
   function renderSos(sos){

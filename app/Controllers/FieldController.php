@@ -121,7 +121,7 @@ class FieldController
             'mid' => $app['municipality_id'], 'eid' => $app['event_id'], 'tid' => $app['team_id'],
             'role' => 'team', 'uid' => $ctx['owner'], 'kind' => 'status', 'code' => $code, 'body' => $label,
         ]);
-        try { NotificationService::teamMessage($this->eventArr($app), ['name' => $app['team_name']], 'Ενημέρωση κατάστασης', $label); } catch (Throwable $e) {}
+        try { NotificationService::teamMessage($this->eventArr($app), ['name' => $app['team_name']], 'Ενημέρωση κατάστασης', $label); } catch (Throwable $e) { error_log('[Field::status] ' . $e->getMessage()); }
         json_out(['success' => true, 'message' => 'Στάλθηκε: ' . $label]);
     }
 
@@ -186,7 +186,7 @@ class FieldController
             'mid'  => $app['municipality_id'], 'eid' => $app['event_id'], 'tid' => $app['team_id'],
             'role' => 'team', 'uid' => $ctx['owner'], 'kind' => 'message', 'body' => $body,
         ]);
-        try { NotificationService::teamMessage($this->eventArr($app), ['name' => $app['team_name']], 'Μήνυμα πεδίου', $body); } catch (Throwable $e) {}
+        try { NotificationService::teamMessage($this->eventArr($app), ['name' => $app['team_name']], 'Μήνυμα πεδίου', $body); } catch (Throwable $e) { error_log('[Field::message] ' . $e->getMessage()); }
         json_out(['success' => true, 'message' => 'Το μήνυμα στάλθηκε.']);
     }
 
@@ -225,7 +225,7 @@ class FieldController
                 ($app['team_name']) . ' ανέφερε έλλειψη (' . $severity . ') — ' . $app['event_title'],
                 url('/operations/events/' . $app['event_id'])
             );
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) { error_log('[Field::shortage] ' . $e->getMessage()); }
         flash_set('success', 'Η αναφορά έλλειψης στάλθηκε στον δήμο.');
         redirect($back);
     }
