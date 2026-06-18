@@ -20,6 +20,11 @@
       <?php endif; ?>
     </button>
   </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link text-danger" data-bs-toggle="tab" data-bs-target="#tab-danger" type="button">
+      <i class="bi bi-exclamation-triangle-fill me-1"></i>Επικίνδυνη Ζώνη
+    </button>
+  </li>
 </ul>
 
 <div class="tab-content">
@@ -205,10 +210,62 @@
     </div>
 
   </div>
+
+  <!-- ── Danger Zone ──────────────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-danger">
+    <div class="card border-danger shadow-sm" style="max-width:680px">
+      <div class="card-header bg-danger text-white">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Διαγραφή δεδομένων λειτουργίας</strong>
+      </div>
+      <div class="card-body">
+        <p class="mb-2">Διαγράφει <strong>μόνιμα και αμετάκλητα</strong> όλα τα δεδομένα δράσεων, εκτάκτων και στατιστικών:</p>
+        <ul class="small mb-3">
+          <li>Δράσεις (events) και αιτήσεις συμμετοχής</li>
+          <li>Μηνύματα επιχειρησιακού κέντρου, εντολές, GPS στίγματα</li>
+          <li>SOS, ελλείψεις, παρουσίες, σημειώσεις</li>
+          <li>Κινητοποιήσεις, στατιστικά, φωτογραφίες, αναφορές</li>
+          <li>Ειδοποιήσεις, audit logs, tokens επαναφοράς κωδικού</li>
+        </ul>
+        <p class="mb-3"><strong class="text-success">Παραμένουν:</strong> χρήστες, ομάδες, μέλη ομάδων, δήμοι, ρυθμίσεις, κατηγορίες δράσεων, πρότυπα.</p>
+
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetDataModal">
+          <i class="bi bi-trash3-fill me-1"></i>Διαγραφή όλων των δεδομένων…
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.tab-content -->
+
+<!-- Reset data confirmation modal -->
+<div class="modal fade" id="resetDataModal" tabindex="-1" aria-labelledby="resetDataModalLabel" aria-modal="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="resetDataModalLabel"><i class="bi bi-exclamation-octagon-fill me-2"></i>Επιβεβαίωση διαγραφής</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Κλείσιμο"></button>
+      </div>
+      <form method="post" action="<?= e(url('/admin/maintenance/reset-data')) ?>">
+        <?= csrf_field() ?>
+        <div class="modal-body">
+          <div class="alert alert-danger small mb-3">
+            <strong>Η ενέργεια αυτή είναι μη αναστρέψιμη.</strong> Όλα τα δεδομένα δράσεων θα διαγραφούν οριστικά.
+          </div>
+          <label class="form-label">Για επιβεβαίωση, πληκτρολογήστε <kbd>ΔΙΑΓΡΑΦΗ</kbd> παρακάτω:</label>
+          <input type="text" name="confirm" class="form-control" autocomplete="off"
+                 placeholder="ΔΙΑΓΡΑΦΗ" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ακύρωση</button>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash3-fill me-1"></i>Διαγραφή οριστικά</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>
-// Activate the tab matching the URL hash (so redirects to #cron / #updates land right).
+// Activate the tab matching the URL hash (so redirects to #cron / #updates / #danger land right).
 // Runs on DOMContentLoaded so Bootstrap (loaded in the footer) is available.
 document.addEventListener('DOMContentLoaded', function () {
   var hash = window.location.hash;

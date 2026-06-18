@@ -95,4 +95,60 @@ class MaintenanceController
         }
         redirect('/admin/settings#updates');
     }
+
+    /* ── Danger zone: reset all operational data ───────────────────────────── */
+
+    public function resetData()
+    {
+        requireRole(['super_admin']);
+        if (post_str('confirm') !== 'ΔΙΑΓΡΑΦΗ') {
+            flash_set('danger', 'Η διαγραφή ακυρώθηκε — η λέξη επιβεβαίωσης δεν ταίριαξε.');
+            redirect('/admin/settings#danger');
+            return;
+        }
+
+        /* Tables to wipe — all operational/event data, preserving users,
+           teams, categories, templates, municipalities and platform settings. */
+        $tables = [
+            'event_application_members',
+            'shift_applications',
+            'event_shifts',
+            'operational_checkins',
+            'operational_notes',
+            'shortage_reports',
+            'sos_alerts',
+            'location_pings',
+            'gps_requests',
+            'photo_requests',
+            'event_photos',
+            'event_messages',
+            'event_room_messages',
+            'event_reports',
+            'team_debriefs',
+            'volunteer_participations',
+            'mobilization_responses',
+            'mobilizations',
+            'event_applications',
+            'events',
+            'notifications',
+            'audit_logs',
+            'password_resets',
+        ];
+
+        try {
+            db()->exec('SET FOREIGN_KEY_CHECKS = 0');
+            foreach ($tables as $t) {
+                db()->exec('TRUNCATE TABLE `' . $t . '`');
+            }
+            db()->exec('SET FOREIGN_KEY_CHECKS = 1');
+        } catch (Throwable $e) {
+            db()->exec('SET FOREIGN_KEY_CHECKS = 1');
+            flash_set('danger', 'Σφάλμα κατά τη διαγραφή: ' . $e->getMessage());
+            redirect('/admin/settings#danger');
+            return;
+        }
+
+        flash_set('success', 'Όλα τα δεδομένα δράσεων, εκτάκτων και στατιστικών διαγράφηκαν. Χρήστες και ομάδες παρέμειναν άθικτοι.');
+        redirect('/admin/settings#danger');
+    }
 }

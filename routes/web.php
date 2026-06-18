@@ -232,7 +232,8 @@ $router->get('/admin/settings', 'AdminController@settings');
 $router->post('/admin/settings', 'AdminController@saveSettings');
 
 /* Super admin: maintenance (cron) + self-update */
-$router->post('/admin/maintenance/cleanup', 'MaintenanceController@cleanup');
+$router->post('/admin/maintenance/cleanup',    'MaintenanceController@cleanup');
+$router->post('/admin/maintenance/reset-data', 'MaintenanceController@resetData');
 $router->post('/admin/updates/backup',      'MaintenanceController@backup');
 $router->post('/admin/updates/check',       'MaintenanceController@checkUpdate');
 $router->post('/admin/updates/apply',       'MaintenanceController@applyUpdate');

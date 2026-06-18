@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.39-beta] — 2026-06-18
+
+### Feature — SuperAdmin danger zone: erase all operational data
+
+New **"Επικίνδυνη Ζώνη"** tab in SuperAdmin → Platform Settings. A red-bordered card lists exactly what will be deleted and what stays. Clicking the button opens a Bootstrap modal that requires typing `ΔΙΑΓΡΑΦΗ` before the form can be submitted — prevents accidental wipes.
+
+On confirm, 23 operational tables are truncated (`FOREIGN_KEY_CHECKS` disabled for the duration): events, applications, shifts, checkins, notes, shortages, SOS, GPS pings, geo-requests, photos, messages, room messages, reports, debriefs, participations, mobilisations, notifications, audit logs, password reset tokens. **Users, teams, team members, municipalities, categories, templates and platform settings are untouched.**
+
+---
+
 ## [0.9.38-beta] — 2026-06-18
 
 ### Fixed — map auto-pan on SSE update
