@@ -158,6 +158,10 @@ class OperationController
             ];
         }
 
+        $tids    = array_map(fn($t) => (int)$t['team_id'], $teams);
+        $nameMap = [];
+        foreach ($teams as $t) { $nameMap[(int)$t['team_id']] = $t['team_name']; }
+
         json_out([
             'ok'           => true,
             'ts'           => date('H:i:s'),
@@ -171,13 +175,14 @@ class OperationController
                 'coverage'       => $coverage,
                 'open_shortages' => $openShortages,
             ],
-            'teams'     => $teamsPayload,
-            'shortages' => $shortages,
-            'notes'     => $notes,
-            'activity'  => $activity,
-            'sos'       => SosAlert::activeForEvent((int) $eid),
-            'messages'  => EventMessage::forEvent((int) $eid),
-            'room'      => EventRoomMessage::forEvent((int) $eid),
+            'teams'      => $teamsPayload,
+            'shortages'  => $shortages,
+            'notes'      => $notes,
+            'activity'   => $activity,
+            'sos'        => SosAlert::activeForEvent((int) $eid),
+            'messages'   => EventMessage::forEvent((int) $eid),
+            'room'       => EventRoomMessage::forEvent((int) $eid),
+            'geo_orders' => $this->geoOrdersForEvent((int) $eid, $tids, $nameMap),
         ]);
     }
 
@@ -207,11 +212,64 @@ class OperationController
             }
         }
 
+        $approvedRows = dbq(
+            "SELECT ea.team_id, t.name AS team_name FROM event_applications ea
+             JOIN volunteer_teams t ON t.id = ea.team_id
+             WHERE ea.event_id = :eid AND ea.status = 'approved'",
+            ['eid' => $eid]
+        )->fetchAll();
+        $approvedIds = array_map(fn($r) => (int)$r['team_id'], $approvedRows);
+        $nameMap     = array_column($approvedRows, 'team_name', 'team_id');
+
         json_out([
-            'ok'     => true,
-            'pings'  => array_values($latest),
-            'photos' => self::photoMarkers($eid),
+            'ok'         => true,
+            'pings'      => array_values($latest),
+            'photos'     => self::photoMarkers($eid),
+            'geo_orders' => $this->geoOrdersForEvent($eid, $approvedIds, $nameMap),
         ]);
+    }
+
+    /**
+     * Latest move/incident/poi order per approved team.
+     * Returns one entry per team — the newest applicable order (targeted or broadcast).
+     */
+    private function geoOrdersForEvent(int $eid, array $approvedTeamIds, array $teamNameMap = []): array
+    {
+        if (empty($approvedTeamIds)) return [];
+        $in = implode(',', array_map('intval', $approvedTeamIds));
+        $orderRows = dbq(
+            "SELECT em.team_id, em.point_kind AS pkind,
+                    em.latitude AS lat, em.longitude AS lng,
+                    em.body, em.created_at
+             FROM event_messages em
+             WHERE em.event_id = :eid
+               AND em.point_kind IN ('move','incident','poi')
+               AND em.latitude IS NOT NULL
+               AND em.longitude IS NOT NULL
+               AND (em.team_id IS NULL OR em.team_id IN ($in))
+             ORDER BY em.created_at DESC",
+            ['eid' => $eid]
+        )->fetchAll();
+
+        $result = [];
+        foreach ($approvedTeamIds as $rawTid) {
+            $tid = (int) $rawTid;
+            foreach ($orderRows as $row) {
+                if ($row['team_id'] === null || (int) $row['team_id'] === $tid) {
+                    $result[] = [
+                        'team_id'   => $tid,
+                        'team_name' => $teamNameMap[$tid] ?? '',
+                        'pkind'     => $row['pkind'],
+                        'lat'       => (float) $row['lat'],
+                        'lng'       => (float) $row['lng'],
+                        'body'      => $row['body'],
+                        'sent_at'   => substr($row['created_at'], 11, 5),
+                    ];
+                    break;
+                }
+            }
+        }
+        return $result;
     }
 
     /** Map-ready photo list for an event. */
@@ -440,9 +498,12 @@ class OperationController
             'activity'  => $activity,
             'pings'     => array_values($latestPings),
             'photos'    => self::photoMarkers($eid),
-            'sos'       => SosAlert::activeForEvent($eid),
-            'messages'  => EventMessage::forEvent($eid),
-            'room'      => EventRoomMessage::forEvent($eid),
+            'sos'        => SosAlert::activeForEvent($eid),
+            'messages'   => EventMessage::forEvent($eid),
+            'room'       => EventRoomMessage::forEvent($eid),
+            'geo_orders' => $this->geoOrdersForEvent($eid,
+                                array_map(fn($t) => (int)$t['team_id'], $teams),
+                                array_column($teams, 'team_name', 'team_id')),
         ];
     }
 

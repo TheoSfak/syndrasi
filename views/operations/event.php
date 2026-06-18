@@ -479,8 +479,10 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
      this container, clear it so re-init can't throw and abort the page script. */
   var opMapEl = document.getElementById('operationalMap');
   if (opMapEl && opMapEl._leaflet_id) { opMapEl._leaflet_id = undefined; opMapEl.innerHTML = ''; }
-  var map      = L.map(opMapEl).setView([DEF_LAT, DEF_LNG], DEF_ZOOM);
-  var markers  = {};
+  var map          = L.map(opMapEl).setView([DEF_LAT, DEF_LNG], DEF_ZOOM);
+  var markers      = {};
+  var orderMarkers = {};  /* team_id → geo-order target marker */
+  var orderLines   = [];  /* dashed lines from ping to target */
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
     maxZoom: 19
@@ -493,13 +495,26 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   }).addTo(map).bindPopup('<b><?= e(addslashes($event['location_name'] ?: $event['title'])) ?></b>');
   <?php endif; ?>
 
-  function updateMap(pings) {
+  function haversineM(lat1, lng1, lat2, lng2) {
+    var R = 6371000, d2r = Math.PI / 180;
+    var dLat = (lat2 - lat1) * d2r, dLng = (lng2 - lng1) * d2r;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(lat1*d2r)*Math.cos(lat2*d2r)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function updateMap(pings, geoOrders) {
+    geoOrders = geoOrders || [];
+
+    /* ── Team GPS ping markers (circles) ── */
+    var pingByTeam = {};
     var bounds = [];
     pings.forEach(function(p) {
+      pingByTeam[p.team_id] = p;
       var key = 'team_' + p.team_id;
       var cls = p.age_min < 5 ? 'fresh' : p.age_min < 20 ? 'stale' : 'old';
-      var teamColor     = teamColors[p.team_id] || '#94a3b8';
-      var freshnessClr  = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
+      var teamColor    = teamColors[p.team_id] || '#94a3b8';
+      var freshnessClr = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
       var ph = lastPhotosByTeam[p.team_id];
       var html = '<div style="display:flex;flex-direction:row;align-items:center;gap:3px">' +
                  '<div style="background:' + teamColor + ';width:14px;height:14px;border-radius:50%;border:2.5px solid ' + freshnessClr + ';box-shadow:0 0 8px rgba(0,0,0,.3);flex-shrink:0"></div>' +
@@ -523,6 +538,48 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
       }
       bounds.push([p.latitude, p.longitude]);
     });
+
+    /* ── Geo-order target markers (different shape per type) ── */
+    /* Clear previous order markers and connector lines */
+    Object.keys(orderMarkers).forEach(function(k) { map.removeLayer(orderMarkers[k]); });
+    orderMarkers = {};
+    orderLines.forEach(function(l) { map.removeLayer(l); });
+    orderLines = [];
+
+    var ORDER_CFG = {
+      move:     { color:'#f97316', label:'ΜΕΤΑΒΑΣΗ',    icon: function(c) {
+        return '<div style="width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid ' + c + ';filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))"></div>';
+      }, size:[22,22], anchor:[11,22] },
+      incident: { color:'#ef4444', label:'ΠΕΡΙΣΤΑΤΙΚΟ', icon: function(c) {
+        return '<div style="width:18px;height:18px;background:' + c + ';transform:rotate(45deg);border:2.5px solid #fff;box-shadow:0 0 10px rgba(239,68,68,.7)"></div>';
+      }, size:[22,22], anchor:[11,11] },
+      poi:      { color:'#8b5cf6', label:'ΣΕΙ',         icon: function(c) {
+        return '<div style="background:' + c + ';color:#fff;font-size:12px;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 0 8px rgba(139,92,246,.7);line-height:1">★</div>';
+      }, size:[20,20], anchor:[10,10] },
+    };
+
+    geoOrders.forEach(function(o) {
+      var cfg = ORDER_CFG[o.pkind] || ORDER_CFG.move;
+      var ping = pingByTeam[o.team_id];
+      /* If team's GPS ping is already within 100 m of target, they've arrived — hide marker */
+      if (ping && haversineM(ping.latitude, ping.longitude, o.lat, o.lng) < 100) return;
+
+      var icon = L.divIcon({ className:'', html:cfg.icon(cfg.color), iconSize:cfg.size, iconAnchor:cfg.anchor });
+      var popup = '<b style="color:' + cfg.color + '">' + cfg.label + '</b> → <b>' + esc(o.team_name) + '</b><br>' +
+                  esc(o.body) + '<br><span style="font-size:.72rem;opacity:.65">Εστάλη ' + esc(o.sent_at) + '</span>';
+      orderMarkers['o_' + o.team_id] = L.marker([o.lat, o.lng], { icon:icon })
+        .addTo(map).bindPopup(popup);
+
+      /* Dashed connector from team's current position to target */
+      if (ping) {
+        orderLines.push(
+          L.polyline([[ping.latitude, ping.longitude], [o.lat, o.lng]], {
+            color:cfg.color, weight:2, dashArray:'8 6', opacity:0.72
+          }).addTo(map)
+        );
+      }
+    });
+
     document.getElementById('mapBadge').textContent = pings.length + ' ομάδες';
     if (bounds.length > 1) { try { map.fitBounds(bounds, { padding:[30,30], maxZoom:16 }); } catch(e){} }
   }
@@ -902,7 +959,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     renderRoom(d.room);
     /* map pings included in SSE snapshot — photos first so GPS popup can show them */
     if (d.photos) { updatePhotos(d.photos); renderPhotoWall(d.photos); }
-    if (d.pings) updateMap(d.pings);
+    if (d.pings) updateMap(d.pings, d.geo_orders || []);
     /* flash sections where count increased */
     if (!isNaN(prevCi) && (d.stats.checked_in || 0) > prevCi) flashEl('teamsBox');
     if (!isNaN(prevSh) && (d.stats.open_shortages || 0) > prevSh) flashEl('shortagesBox');
@@ -928,7 +985,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   function pollLocations() {
     fetch(BASE + '/operations/events/' + EID + '/locations')
       .then(function(r){ return r.json(); })
-      .then(function(d) { if (d.ok) { updatePhotos(d.photos); updateMap(d.pings); } })
+      .then(function(d) { if (d.ok) { updatePhotos(d.photos); updateMap(d.pings, d.geo_orders || []); } })
       .catch(function(){});
   }
 
