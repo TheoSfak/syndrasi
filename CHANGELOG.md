@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.41-beta] — 2026-06-18
+
+### Feature — Automatic debrief flow on event close
+
+**Admin side:** When a municipality admin closes an event from the operational page, the system now:
+1. Sends an in-app notification (+ email if configured) to every approved team: "Debrief δράσης: … — Συμπληρώστε το Post-Event Debrief".
+2. Redirects the admin directly to `/events/{id}/debriefs` instead of back to operations, so they can immediately fill in the Municipality After-Action report.
+
+**Team side:** When a team admin visits `/team/events/{id}` for a closed or completed event they participated in, a prominent indigo call-to-action card appears at the top of the page prompting them to fill the debrief. Once submitted, the card turns into a success banner with a link to edit the submission.
+
+---
+
 ## [0.9.40-beta] — 2026-06-18
 
 ### Feature — Silent team warning on operational map

@@ -282,6 +282,29 @@ class NotificationService
         return count($applications);
     }
 
+    /** Event closed by admin: notify approved teams to fill the post-event debrief. */
+    public static function eventClosed(array $event): void
+    {
+        $applications = EventApplication::approvedForEvent($event['id']);
+        $mid          = $event['municipality_id'];
+
+        $inAppTitle   = 'Debrief δράσης: ' . $event['title'];
+        $inAppMessage = 'Η δράση ολοκληρώθηκε. Συμπληρώστε το Post-Event Debrief της ομάδας σας.';
+
+        $tpl = EmailTemplate::resolve($mid, 'event_closed', [
+            'event_title' => $event['title'],
+        ]);
+
+        foreach ($applications as $app) {
+            self::notifyTeam(
+                $app['team_id'], $event['id'],
+                $inAppTitle, $inAppMessage,
+                'event_completed', $mid,
+                $tpl['subject'], $tpl['body']
+            );
+        }
+    }
+
     /** Event completed/closed: notify approved teams to submit reports. */
     public static function eventCompleted(array $event)
     {

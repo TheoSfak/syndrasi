@@ -97,6 +97,33 @@
 
   <div class="col-lg-5">
 
+    <?php if (in_array($event['status'], ['closed', 'completed'], true) && ($application['status'] ?? '') === 'approved'): ?>
+      <?php if (!$myDebrief): ?>
+        <div class="card border-0 shadow-sm mb-4" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff">
+          <div class="card-body d-flex align-items-start gap-3 p-4">
+            <i class="bi bi-clipboard2-check fs-2 flex-shrink-0" style="opacity:.85"></i>
+            <div class="flex-grow-1">
+              <div class="fw-bold fs-5 mb-1">Post-Event Debrief</div>
+              <p class="mb-3 small" style="opacity:.9">Η δράση ολοκληρώθηκε. Αφιερώστε 2 λεπτά να καταγράψετε τι πήγε καλά, τι μπορεί να βελτιωθεί και τα αριθμητικά στοιχεία της ομάδας.</p>
+              <a href="<?= e(url('/team/events/' . $event['id'] . '/debrief')) ?>"
+                 class="btn btn-light fw-semibold" style="color:#6366f1">
+                <i class="bi bi-pencil-square me-1"></i>Συμπλήρωση Debrief
+              </a>
+            </div>
+          </div>
+        </div>
+      <?php else: ?>
+        <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+          <i class="bi bi-clipboard2-check-fill fs-5"></i>
+          <div class="flex-grow-1">
+            <strong>Debrief υποβλήθηκε</strong>
+            <div class="small">από <?= e($myDebrief['submitted_by_name']) ?> · <?= e(gr_datetime($myDebrief['submitted_at'])) ?></div>
+          </div>
+          <a href="<?= e(url('/team/events/' . $event['id'] . '/debrief')) ?>" class="btn btn-sm btn-outline-success ms-auto">Επεξεργασία</a>
+        </div>
+      <?php endif; ?>
+    <?php endif; ?>
+
     <?php if (!$application): ?>
 
       <?php if (in_array($event['status'], ['open', 'review', 'active'], true)): ?>

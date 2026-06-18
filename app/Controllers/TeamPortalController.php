@@ -130,6 +130,7 @@ class TeamPortalController
             "SELECT * FROM event_reports WHERE event_id = :eid AND team_id = :tid AND report_type = 'team_report' LIMIT 1",
             ['eid' => $event['id'], 'tid' => $tid]
         )->fetch() ?: null;
+        $myDebrief   = TeamDebrief::findByEventTeam($event['id'], $tid);
 
         // Active members for selection
         $teamMembers = TeamMember::allByTeam($tid, true);
@@ -174,6 +175,7 @@ class TeamPortalController
             'team'                 => $team,
             'application'          => $application,
             'myReport'             => $myReport,
+            'myDebrief'            => $myDebrief,
             'teamMembers'          => $teamMembers,
             'conflictingMemberIds' => $conflictingMemberIds,
             'applicationMembers'   => $applicationMembers,

@@ -293,8 +293,9 @@ class EventController
         }
         Event::setStatus($event['id'], 'closed');
         audit('event_closed', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η δράση έκλεισε. Μπορείτε να την αρχειοθετήσετε (συμπλήρωση πραγματικών στοιχείων) από τις «Κλειστές».');
-        redirect('/operations');
+        try { NotificationService::eventClosed($event); } catch (Throwable $e) { error_log('[EventClosed] ' . $e->getMessage()); }
+        flash_set('success', 'Η δράση έκλεισε. Οι ομάδες ειδοποιήθηκαν για το debrief — συμπληρώστε και τον Απολογισμό Δήμου παρακάτω.');
+        redirect('/events/' . $event['id'] . '/debriefs');
     }
 
     public function complete($id)
