@@ -45,6 +45,7 @@ body.ops-dark main             { background:transparent!important; }
 .ping-dot.old   { background:#ef4444; }
 .ping-dot.none  { background:#cbd5e1; }
 @keyframes pp { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.6)} 70%{box-shadow:0 0 0 7px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
+@keyframes silentPulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.7)} 65%{box-shadow:0 0 0 9px rgba(239,68,68,0)} }
 
 .sc { border-radius:12px!important;transition:all .2s; }
 .sc.open         { border:1.5px solid #ef4444!important;background:rgba(239,68,68,.06)!important; }
@@ -545,18 +546,30 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
       var cls = p.age_min < 5 ? 'fresh' : p.age_min < 20 ? 'stale' : 'old';
       var teamColor    = teamColors[p.team_id] || '#94a3b8';
       var freshnessClr = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
-      var ph = lastPhotosByTeam[p.team_id];
+      var ph         = lastPhotosByTeam[p.team_id];
+      var isSilent   = cls === 'old';   /* no ping for 20+ min */
+      var dotBg      = isSilent ? '#94a3b8' : teamColor;
+      var dotStyle   = 'background:' + dotBg + ';width:14px;height:14px;border-radius:50%;border:2.5px solid ' + freshnessClr + ';flex-shrink:0;' +
+                       (isSilent ? 'animation:silentPulse 1.2s infinite' : 'box-shadow:0 0 8px rgba(0,0,0,.3)');
+      var warnBadge  = isSilent
+        ? '<div style="background:#ef4444;color:#fff;font-size:8px;width:13px;height:13px;border-radius:50%;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:900;line-height:1">!</div>'
+        : '';
       var html = '<div style="display:flex;flex-direction:row;align-items:center;gap:3px">' +
-                 '<div style="background:' + teamColor + ';width:14px;height:14px;border-radius:50%;border:2.5px solid ' + freshnessClr + ';box-shadow:0 0 8px rgba(0,0,0,.3);flex-shrink:0"></div>' +
+                 warnBadge +
+                 '<div style="' + dotStyle + '"></div>' +
                  (ph ? '<div class="cam-badge" style="background:#0ea5e9;width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-camera-fill" style="font-size:6px;color:#fff"></i></div>' : '') +
                  '</div>';
-      var icon = L.divIcon({ className:'', html:html, iconSize:[ph ? 29 : 14, 14], iconAnchor:[7,7] });
+      var iconW = 14 + (isSilent ? 16 : 0) + (ph ? 15 : 0);
+      var icon = L.divIcon({ className:'', html:html, iconSize:[iconW, 14], iconAnchor:[7,7] });
       var photoSnippet = ph
         ? '<br><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) + '"' +
           ' style="max-width:160px;max-height:120px;border-radius:6px;cursor:pointer;margin-top:5px;display:block">' +
           '<div style="font-size:.65rem;color:#555;margin-top:2px">' + esc(ph.time || '') + ' · κλικ για μεγέθυνση</div>'
         : '';
-      var popup = '<b>' + esc(p.team_name) + '</b><br>' + p.age_min + ' λεπτά πριν' + photoSnippet;
+      var ageText = isSilent
+        ? '<span style="color:#ef4444;font-weight:700">⚠ Σε σίγη — τελευταίο στίγμα ' + p.age_min + ' λεπτά πριν</span>'
+        : p.age_min + ' λεπτά πριν';
+      var popup = '<b>' + esc(p.team_name) + '</b><br>' + ageText + photoSnippet;
       if (markers[key]) {
         markers[key].setLatLng([p.latitude, p.longitude]);
         markers[key].setIcon(icon);
@@ -860,6 +873,34 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     box.className = 'sos-alarm show';
   }
 
+  /* ─── SOS audio alert ─── */
+  function beepSos() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.38, 0.76].forEach(function(t) {
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine'; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.45, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.27);
+        o.start(ctx.currentTime + t);
+        o.stop(ctx.currentTime + t + 0.27);
+      });
+    } catch(e) {}
+  }
+
+  function checkNewSos(items) {
+    var hasNew = false;
+    (items || []).forEach(function(s) {
+      if (s.status !== 'resolved' && !knownSosIds[s.id]) {
+        knownSosIds[s.id] = true;
+        if (!sosFirstLoad) hasNew = true;
+      }
+    });
+    sosFirstLoad = false;
+    if (hasNew) beepSos();
+  }
+
   /* ─── Comms thread ─── */
   function renderMessages(msgs) {
     var box = document.getElementById('msgThread');
@@ -986,6 +1027,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     renderActivity(d.activity);
     renderNotes(d.notes);
     if (d.teams) populateTeamSelect(d.teams);
+    checkNewSos(d.sos);
     renderSos(d.sos);
     renderMessages(d.messages);
     renderRoom(d.room);
@@ -1062,7 +1104,9 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   /* ─── Photos: request, map markers, list, modal ─── */
   var photoMarkers     = {};
   var lastPhotosByTeam = {};   /* team_id → latest photo, for GPS popup */
-  var lastTeams = [];   /* latest team list, for bulk photo/GPS requests */
+  var lastTeams    = [];   /* latest team list, for bulk photo/GPS requests */
+  var knownSosIds  = {};   /* sos id → true, for new-alert detection */
+  var sosFirstLoad = true; /* suppress beep on initial page load */
 
   function requestPhoto(teamId, btn) {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>…'; }

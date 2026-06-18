@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.40-beta] — 2026-06-18
+
+### Feature — Silent team warning on operational map
+
+When a team's last GPS ping is 20+ minutes old, their map marker now visually signals silence: the dot turns **grey** (last known position, not current), a red **!** badge appears beside it, and the marker pulses with a red glow animation. Clicking the marker shows "⚠ Σε σίγη — τελευταίο στίγμα X λεπτά πριν" in the popup instead of the normal age text. Thresholds unchanged: < 5 min = green, 5–20 min = yellow, 20+ min = grey + alarm badge.
+
+### Feature — Audio SOS alert
+
+When a new SOS arrives via the SSE stream or status poll, the browser plays a triple-beep (880 Hz, 3 × 270 ms, 380 ms gap) using the Web Audio API — no audio file needed. The beep is suppressed on the initial page load so it doesn't fire when the operator first opens the page. Subsequent SOS events while the page is open trigger the sound immediately.
+
+---
+
 ## [0.9.39-beta] — 2026-06-18
 
 ### Feature — SuperAdmin danger zone: erase all operational data
