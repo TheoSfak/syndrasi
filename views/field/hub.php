@@ -3,7 +3,9 @@
  * Mission Commander field hub — /f/{token}  (NO LOGIN)
  * Standalone full-screen mobile page for the assigned commander.
  */
-$isActive = ($app['event_status'] === 'active');
+$evStatus  = $app['event_status'];
+$evStarted = !empty($app['start_datetime']) && strtotime($app['start_datetime']) <= time();
+$isActive  = $evStatus === 'active' || ($evStarted && in_array($evStatus, ['open', 'confirmed', 'review']));
 $cname    = $commander['full_name'] ?? 'Υπεύθυνος';
 $evLat = (isset($app['latitude'])  && $app['latitude']  !== null && $app['latitude']  !== '') ? (float) $app['latitude']  : null;
 $evLng = (isset($app['longitude']) && $app['longitude'] !== null && $app['longitude'] !== '') ? (float) $app['longitude'] : null;

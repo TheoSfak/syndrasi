@@ -49,7 +49,9 @@ class FieldController
 
     private function requireActive(array $app): void
     {
-        if (($app['event_status'] ?? '') !== 'active') {
+        $status  = $app['event_status'] ?? '';
+        $started = !empty($app['start_datetime']) && strtotime($app['start_datetime']) <= time();
+        if ($status !== 'active' && !($started && in_array($status, ['open', 'confirmed', 'review'], true))) {
             json_out(['success' => false, 'message' => 'Η δράση δεν είναι ενεργή αυτή τη στιγμή.'], 422);
         }
     }

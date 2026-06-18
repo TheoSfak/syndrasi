@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.24-beta] — 2026-06-18
+
+### Fixed — Field Hub: κουμπιά disabled παρόλο που η δράση τρέχει
+
+- Το Field Hub (`/f/{token}`) έδειχνε όλα τα κουμπιά (GPS, status pings, SOS, έλλειψη) ως greyed-out/disabled επειδή ελέγχε αυστηρά `event_status === 'active'`.
+- Πρόβλημα: το Operations Command Centre εμφανίζει/επιτρέπει δράσεις ακόμα και με status `'open'/'confirmed'/'review'` αν έχει παρέλθει η `start_datetime` — ο admin έβλεπε τη δράση ζωντανή στο dashboard αλλά ο mission commander είχε κλειδωμένα κουμπιά.
+- Λύση: `$isActive` και `requireActive()` ευθυγραμμίστηκαν με τη λογική του OperationController — ενεργό θεωρείται το event με `status = 'active'` Ή με `status IN (open, confirmed, review)` εφόσον `NOW() >= start_datetime`.
+
 ## [0.9.23-beta] — 2026-06-18
 
 ### Fixed — Settings: bootstrap is not defined / preset buttons broken
