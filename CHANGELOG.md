@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.26-beta] — 2026-06-18
+
+### Fixed — Ops Centre: GPS/χάρτης 2 bugs
+
+**Bug 1 (Visual — camera badge ποτέ δεν εμφανιζόταν):**  
+Στο `updateMap()` η μεταβλητή `ph` (τελευταία φωτογραφία της ομάδας) χρησιμοποιούνταν στο `html` και `iconSize` ΠΡΙΝ οριστεί (`var ph = lastPhotosByTeam[...]` ήταν από κάτω). Λόγω JS var hoisting, `ph` ήταν πάντα `undefined` → το camera badge badge στους δείκτες ομάδων δεν εμφανιζόταν ποτέ. Λύση: μετακίνηση `var ph` πριν το `html`.
+
+**Bug 2 (Functional — χάρτης παγώνει αν κολλήσει το SSE):**  
+Το 15s fallback timer (για shared hosting χωρίς SSE) καλούσε μόνο `pollStatus()`, το οποίο δεν επιστρέφει `pings`. Έτσι `updateMap()` δεν εκτελούνταν και ο χάρτης σταματούσε να ενημερώνεται. Λύση: προστέθηκε `pollLocations()` στο fallback timer.
+
 ## [0.9.25-beta] — 2026-06-18
 
 ### Fixed & Enhanced — Team Dashboard

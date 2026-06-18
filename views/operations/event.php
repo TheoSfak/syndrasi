@@ -448,12 +448,12 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
       var cls = p.age_min < 5 ? 'fresh' : p.age_min < 20 ? 'stale' : 'old';
       var teamColor     = teamColors[p.team_id] || '#94a3b8';
       var freshnessClr  = cls==='fresh'?'#22c55e':cls==='stale'?'#f59e0b':'#ef4444';
+      var ph = lastPhotosByTeam[p.team_id];
       var html = '<div style="display:flex;flex-direction:row;align-items:center;gap:3px">' +
                  '<div style="background:' + teamColor + ';width:14px;height:14px;border-radius:50%;border:2.5px solid ' + freshnessClr + ';box-shadow:0 0 8px rgba(0,0,0,.3);flex-shrink:0"></div>' +
                  (ph ? '<div class="cam-badge" style="background:#0ea5e9;width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-camera-fill" style="font-size:6px;color:#fff"></i></div>' : '') +
                  '</div>';
       var icon = L.divIcon({ className:'', html:html, iconSize:[ph ? 29 : 14, 14], iconAnchor:[7,7] });
-      var ph = lastPhotosByTeam[p.team_id];
       var photoSnippet = ph
         ? '<br><img class="photo-thumb" src="' + ph.url + '" data-url="' + ph.url + '" data-label="' + esc(ph.team_name) + '" data-at="' + esc(ph.at) + '"' +
           ' style="max-width:160px;max-height:120px;border-radius:6px;cursor:pointer;margin-top:5px;display:block">' +
@@ -961,7 +961,7 @@ body.ops-dark .map-legend-chip { background:rgba(255,255,255,.07);border-color:r
   /* Safety net: if SSE ever stops delivering (some hosts block streaming), poll so
      the board still refreshes. pollStatus() updates lastSnapshotTs on success. */
   setInterval(function () {
-    if (!lastSnapshotTs || Date.now() - lastSnapshotTs > 15000) { pollStatus(); }
+    if (!lastSnapshotTs || Date.now() - lastSnapshotTs > 15000) { pollStatus(); pollLocations(); }
   }, 10000);
 
   /* ─── Comms composer ─── */
