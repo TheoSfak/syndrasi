@@ -44,7 +44,7 @@
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/complete')) ?>"
               onsubmit="return confirm('Η δράση θα κλειστεί και οι ομάδες θα ειδοποιηθούν να υποβάλουν αναφορά. Συνέχεια;')">
           <?= csrf_field() ?>
-          <button class="btn btn-secondary"><i class="bi bi-lock me-1"></i>Κλείσιμο δράσης</button>
+          <button class="btn btn-danger"><i class="bi bi-lock me-1"></i>Κλείσιμο δράσης</button>
         </form>
       <?php endif; ?>
 
@@ -61,7 +61,7 @@
 
       <?php if ($event['status'] === 'completed'): ?>
         <a class="btn btn-outline-primary" href="<?= e(url('/events/' . $event['id'] . '/debriefs')) ?>">
-          <i class="bi bi-clipboard2-data me-1"></i>Post-Event Debriefs
+          <i class="bi bi-clipboard2-data me-1"></i>Απολογισμός Δράσης
         </a>
       <?php endif; ?>
 
@@ -69,7 +69,7 @@
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/cancel')) ?>"
               onsubmit="return confirm('Η δράση θα ακυρωθεί. Είστε σίγουροι;')">
           <?= csrf_field() ?>
-          <button class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i>Ακύρωση</button>
+          <button class="btn btn-outline-secondary"><i class="bi bi-x-circle me-1"></i>Ακύρωση</button>
         </form>
       <?php endif; ?>
 
@@ -246,14 +246,14 @@
               </div>
               <?php if (!in_array($event['status'], ['completed','cancelled'], true)): ?>
               <div class="d-flex gap-1 flex-shrink-0">
-                <button class="btn btn-xs btn-outline-secondary" type="button"
+                <button class="btn btn-sm py-0 px-1btn-outline-secondary" type="button"
                         data-bs-toggle="collapse" data-bs-target="#editShift<?= (int)$sh['id'] ?>">
                   <i class="bi bi-pencil"></i>
                 </button>
                 <form method="post" action="<?= e(url('/events/' . $event['id'] . '/shifts/' . $sh['id'] . '/delete')) ?>"
                       onsubmit="return confirm('Διαγραφή βάρδιας «<?= addslashes(e($sh['name'])) ?>»;')">
                   <?= csrf_field() ?>
-                  <button class="btn btn-xs btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                  <button class="btn btn-sm py-0 px-1btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
                 </form>
               </div>
               <?php endif; ?>
@@ -304,11 +304,11 @@
                       <form method="post" action="<?= e(url('/shift-applications/' . $sa['id'] . '/approve')) ?>" class="d-inline">
                         <?= csrf_field() ?>
                         <input type="hidden" name="approved_people" value="<?= (int)$sa['offered_people'] ?>">
-                        <button class="btn btn-xs btn-success">✓ Έγκριση</button>
+                        <button class="btn btn-sm py-0 px-1btn-success">✓ Έγκριση</button>
                       </form>
                       <form method="post" action="<?= e(url('/shift-applications/' . $sa['id'] . '/reject')) ?>" class="d-inline ms-1">
                         <?= csrf_field() ?>
-                        <button class="btn btn-xs btn-outline-danger">✗ Απόρριψη</button>
+                        <button class="btn btn-sm py-0 px-1btn-outline-danger">✗ Απόρριψη</button>
                       </form>
                       <?php endif; ?>
                     </td>

@@ -948,3 +948,29 @@ footer {
 @media (max-width: 575.98px) {
   .syndrasi-install-banner { right: 12px; left: 12px; bottom: 12px; width: auto; }
 }
+
+/* ── .btn-xs utility (Bootstrap 3 compat shim for BS5) ──────── */
+.btn-xs {
+  padding: .15rem .5rem !important;
+  font-size: .75rem !important;
+  line-height: 1.4 !important;
+  border-radius: .25rem !important;
+}
+
+/* ── Disable hover lift on cards that don't need the animation ── */
+.no-hover:hover {
+  transform: none !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ── Respect prefers-reduced-motion ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .row.g-3 > [class*='col'] { animation: none !important; }
+  .live-dot                  { animation: none !important; }
+  .card.shimmer              { animation: none !important; }
+  .dropdown-menu             { animation: none !important; }
+  .ds-card, .ds-card:hover  { transition: none !important; transform: none !important; }
+  .command-card, .command-card:hover { transition: none !important; transform: none !important; }
+  .cov-bar-fill              { transition: none !important; }
+  *, *::before, *::after    { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}

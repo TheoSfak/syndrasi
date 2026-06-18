@@ -155,16 +155,16 @@ $kpis = [
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof Chart === 'undefined') return;
 
-  var YEARS   = <?= json_encode($labels, JSON_UNESCAPED_UNICODE) ?>;
-  var EVENTS  = <?= json_encode($evSeries) ?>;
-  var HOURS   = <?= json_encode($hrSeries) ?>;
-  var PARTS   = <?= json_encode($ptSeries) ?>;
-  var RESP    = <?= json_encode($rsSeries) ?>;
-  var MLABELS = <?= json_encode($mLabels, JSON_UNESCAPED_UNICODE) ?>;
-  var MCUR    = <?= json_encode($monthlyCur) ?>;
-  var MPREV   = <?= json_encode($monthlyPrev) ?>;
-  var CATL    = <?= json_encode($catLabels, JSON_UNESCAPED_UNICODE) ?>;
-  var CATE    = <?= json_encode($catEvents) ?>;
+  var YEARS   = <?= json_encode($labels,     JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var EVENTS  = <?= json_encode($evSeries,   JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var HOURS   = <?= json_encode($hrSeries,   JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var PARTS   = <?= json_encode($ptSeries,   JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var RESP    = <?= json_encode($rsSeries,   JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var MLABELS = <?= json_encode($mLabels,    JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var MCUR    = <?= json_encode($monthlyCur, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var MPREV   = <?= json_encode($monthlyPrev, JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var CATL    = <?= json_encode($catLabels,  JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var CATE    = <?= json_encode($catEvents,  JSON_HEX_TAG | JSON_HEX_AMP) ?>;
   var CY      = <?= (int)$focus ?>;
 
   var teal='#0d9488', tealL='rgba(13,148,136,.15)', amber='#f59e0b', slate='#64748b', blue='#3b82f6';

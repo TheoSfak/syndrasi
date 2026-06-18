@@ -261,8 +261,6 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
 </div>
 <?php endif; ?>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 // Monthly bar chart
 (function(){

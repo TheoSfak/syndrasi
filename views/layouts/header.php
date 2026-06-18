@@ -22,7 +22,7 @@
 <body class="bg-light">
 
 <?php if (!empty($_SESSION['impersonating_user_id'])): ?>
-<div style="background:#b45309;color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:2000;display:flex;align-items:center;justify-content:center;gap:16px;">
+<div role="alert" aria-live="assertive" style="background:#b45309;color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:2000;display:flex;align-items:center;justify-content:center;gap:16px;">
   <i class="bi bi-person-fill-gear"></i>
   Λειτουργείτε ως <strong><?= e(current_user()['name'] ?? '–') ?></strong> (Impersonation από <?= e($_SESSION['impersonating_user_name'] ?? 'Super Admin') ?>)
   <form method="post" action="<?= e(url('/admin/stop-impersonation')) ?>" style="margin:0">

@@ -6,10 +6,10 @@
  * (key: cron_secret) or the global app_setting 'cron_secret'.
  *
  * Example cron line (Linux):
- *   * * * * *  curl -s "http://yoursite/cron/shift-reminders?secret=TOKEN" > /dev/null
+ *   * * * * *  curl -s -H "Authorization: Bearer TOKEN" "http://yoursite/cron/shift-reminders" > /dev/null
  *
  * Example Windows Task Scheduler:
- *   curl "http://localhost/syndrasi/public/cron/shift-reminders?secret=TOKEN"
+ *   curl -H "Authorization: Bearer TOKEN" "http://localhost/syndrasi/public/cron/shift-reminders"
  */
 class CronController
 {
@@ -85,10 +85,12 @@ class CronController
 
     private function authCron()
     {
-        $secret = $_GET['secret'] ?? '';
+        // Accept secret via Authorization: Bearer header only; never from GET (avoids access-log exposure)
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $secret = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
         if ($secret === '') {
             http_response_code(401);
-            exit(json_encode(['error' => 'Missing secret.']));
+            exit(json_encode(['error' => 'Missing secret. Use: Authorization: Bearer <secret>']));
         }
         $stored = dbq(
             "SELECT setting_value FROM app_settings WHERE setting_key = 'cron_secret' LIMIT 1"

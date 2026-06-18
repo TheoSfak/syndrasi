@@ -88,7 +88,7 @@
 </script>
 
 <!-- App-wide live notifications: bell badge + toast popups -->
-<div id="toastZone" style="position:fixed;top:70px;right:16px;z-index:3000;display:flex;flex-direction:column;gap:8px;max-width:340px"></div>
+<div id="toastZone" aria-live="polite" aria-atomic="false" style="position:fixed;top:70px;right:16px;z-index:3000;display:flex;flex-direction:column;gap:8px;max-width:340px"></div>
 <script>
 (function () {
   'use strict';
@@ -108,6 +108,7 @@
   }
 
   function showToast(n) {
+    if (n.type === 'sos') { zone.setAttribute('aria-live', 'assertive'); }
     var el = document.createElement('div');
     el.style.cssText = 'background:#0f766e;color:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);overflow:hidden;animation:none';
     if (n.type === 'sos') { el.style.background = '#b91c1c'; }
@@ -120,6 +121,7 @@
     el.addEventListener('click', function (e) { if (!e.target.closest('.btn-close')) { window.location.href = BASE + '/notifications'; } });
     el.style.cursor = 'pointer';
     zone.appendChild(el);
+    setTimeout(function () { zone.setAttribute('aria-live', 'polite'); }, 100);
     setTimeout(function () { el.remove(); }, 9000);
   }
 

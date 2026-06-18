@@ -252,6 +252,9 @@ class UpdateService
         }
 
         // 4. Copy files over the app (preserving config/ and storage/)
+        $lockFile = BASE_PATH . '/storage/maintenance.lock';
+        file_put_contents($lockFile, date('Y-m-d H:i:s'));
+        register_shutdown_function(function () use ($lockFile) { @unlink($lockFile); });
         $copied = self::copyTree($root, BASE_PATH);
         self::log("Copied {$copied} files from " . basename($root));
 

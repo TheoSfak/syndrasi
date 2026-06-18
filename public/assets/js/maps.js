@@ -74,7 +74,7 @@ function refreshOperationalMap() {
   })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      if (!data.success) { return; }
+      if (!data.ok) { return; }
 
       syndrasiOpMarkers.forEach(function (m) { syndrasiOpMap.removeLayer(m); });
       syndrasiOpMarkers = [];

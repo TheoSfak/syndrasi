@@ -73,6 +73,7 @@ class AdminController
 
     public function stopImpersonation()
     {
+        requireLogin();
         if (empty($_SESSION['impersonating_user_id'])) {
             redirect('/');
         }
@@ -80,6 +81,7 @@ class AdminController
         $orig   = User::find($origId);
         if (!$orig) { session_destroy(); redirect('/login'); }
         audit('impersonation_end', 'user', current_user_id());
+        session_regenerate_id(true);
         $_SESSION['user_id']         = $orig['id'];
         $_SESSION['role']            = $orig['role'];
         $_SESSION['municipality_id'] = $orig['municipality_id'];

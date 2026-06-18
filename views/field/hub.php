@@ -19,6 +19,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d1a1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title><?= e($pageTitle) ?></title>
 <link rel="icon" href="<?= e(url('/assets/img/icons/icon-192.png')) ?>">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -96,6 +97,11 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 
   <!-- Pinned orders -->
   <div id="orderBanner" style="display:none"></div>
+
+  <!-- Offline indicator (shown after 2 consecutive poll failures) -->
+  <div id="offlineBanner" role="alert" aria-live="assertive" style="display:none;background:#7c2d12;color:#fef2f2;border:1px solid #ef4444;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;gap:10px;align-items:center">
+    <i class="bi bi-wifi-off"></i> Δεν υπάρχει σύνδεση — εμφανίζονται τελευταία δεδομένα.
+  </div>
 
   <!-- SOS -->
   <div>
@@ -371,7 +377,14 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     function send(){var b=(i.value||'').trim();if(!b)return;i.value='';postJSON('/room',{body:b}).then(pollComms);}
     if(s)s.addEventListener('click',send);if(i)i.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();send();}});})();
 
-  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderGeoPoints(d.messages);renderSos(d.sos);renderRoom(d.room);var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=d.photo_request?'block':'none';var gb=document.getElementById('gpsReqBanner');if(gb)gb.style.display=d.gps_request?'block':'none';}}).catch(function(){});}
+  // Wake Lock: keep screen on while field hub is active
+  var wakeLock = null;
+  function requestWakeLock(){if('wakeLock' in navigator){navigator.wakeLock.request('screen').then(function(wl){wakeLock=wl;wl.addEventListener('release',function(){wakeLock=null;});}).catch(function(){});}}
+  requestWakeLock();
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&wakeLock===null){requestWakeLock();}});
+
+  var pollFails=0;
+  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){pollFails=0;var ob=document.getElementById('offlineBanner');if(ob)ob.style.display='none';if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderGeoPoints(d.messages);renderSos(d.sos);renderRoom(d.room);var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=d.photo_request?'block':'none';var gb=document.getElementById('gpsReqBanner');if(gb)gb.style.display=d.gps_request?'block':'none';}}).catch(function(){pollFails++;var ob=document.getElementById('offlineBanner');if(ob&&pollFails>=2)ob.style.display='flex';});}
   pollComms();setInterval(pollComms,5000);
 })();
 </script>

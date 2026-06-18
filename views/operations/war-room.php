@@ -70,7 +70,7 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
   'use strict';
   var BASE     = <?= json_encode(url('')) ?>;
   var DEF_LAT  = <?= $defLat ?>, DEF_LNG = <?= $defLng ?>, DEF_ZOOM = <?= $defZoom ?>;
-  var INIT     = <?= $initJson ?>;
+  var INIT     = <?= json_encode(json_decode($initJson, true), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
   var map = L.map('warMap').setView([DEF_LAT, DEF_LNG], DEF_ZOOM);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(map);

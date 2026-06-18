@@ -4,6 +4,38 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.35-beta] — 2026-06-18
+
+### Security
+- `AuthController`: rate-limit keys upgraded from MD5 → SHA256; password-reset tokens now stored as SHA256 hash (DB compromise cannot replay tokens)
+- `AdminController`: `stopImpersonation()` now enforces `requireLogin()` and calls `session_regenerate_id(true)`
+- `CronController`: cron secret moved from `?secret=` query-string (logged in web server access logs) to `Authorization: Bearer` header only
+- `storage/.htaccess`: new file — blocks direct HTTP access to the storage directory
+
+### Fixed
+- `maps.js`: critical live-map bug — `data.success` → `data.ok` (operational map was never updating)
+- `ApplicationController` / `EventController`: notification calls wrapped in `try/catch(Throwable)` — a mail failure no longer rolls back the approve/reject action
+- `ApplicationController` bulk-approve: replaced N+1 `EventApplication::find()` per loop with a single batch `SELECT … IN (…)` query
+- `public/index.php`: global exception handler, maintenance-mode 503 check, security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`)
+- `UpdateService`: writes `storage/maintenance.lock` before update; `register_shutdown_function` removes it on finish
+- `views/events/show.php`: "Κλείσιμο δράσης" button uses `btn-danger`; section label translated to "Απολογισμός Δράσης"; cancel button uses `btn-outline-secondary`; `btn-xs` replaced with `btn-sm py-0 px-1`
+- `views/dashboard/municipality.php`: duplicate chart.js script tag removed
+
+### Performance
+- `DashboardController`: 13+ DB queries → ~6 using `GROUP BY status` consolidation (monthly trend, per-status year counts, team counts, approval rate)
+- `MunicipalitySetting::all()`: per-municipality static cache; `setMany()` wrapped in DB transaction
+- `database/migrations/017_perf_indexes.sql`: composite indexes on `location_pings(event_id, created_at)` and `notifications(user_id, is_read)`
+
+### UI / Accessibility
+- `views/layouts/flash.php`: Bootstrap Icons per alert type; non-danger alerts auto-dismiss after 5 s
+- Toast zone (`footer.php`): `aria-live="polite"`, switches to `assertive` for SOS toasts
+- Impersonation banner (`header.php`): `role="alert" aria-live="assertive"`
+- Sidebar logo `alt` now shows dynamic org name from settings
+- `war-room.php` + `analytics/index.php`: inline `json_encode()` uses `JSON_HEX_TAG | JSON_HEX_AMP` (CSP-safe)
+- `service-worker.js`: local assets (`/assets/js/`, `/assets/css/`) switched to network-first → updated CSS/JS loads immediately after deploy without version strings
+- `field/hub.php`: Wake Lock API keeps screen on; offline banner appears after 2 consecutive poll failures
+- `public/assets/css/app.css`: `.btn-xs` utility, `.no-hover:hover`, `@media (prefers-reduced-motion: reduce)` block
+
 ## [0.9.29-beta] — 2026-06-18
 
 ### Feature — Επιχειρησιακό Κέντρο: Live Photo Wall

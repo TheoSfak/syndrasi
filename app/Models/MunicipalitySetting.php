@@ -7,15 +7,20 @@ class MunicipalitySetting
     /** All settings of a municipality as [key => value]. */
     public static function all($municipalityId)
     {
-        $rows = dbq(
-            'SELECT setting_key, setting_value FROM municipality_settings WHERE municipality_id = :mid',
-            ['mid' => $municipalityId]
-        )->fetchAll();
-        $out = [];
-        foreach ($rows as $row) {
-            $out[$row['setting_key']] = $row['setting_value'];
+        static $allCache = [];
+        $mid = (int) $municipalityId;
+        if (!array_key_exists($mid, $allCache)) {
+            $rows = dbq(
+                'SELECT setting_key, setting_value FROM municipality_settings WHERE municipality_id = :mid',
+                ['mid' => $mid]
+            )->fetchAll();
+            $out = [];
+            foreach ($rows as $row) {
+                $out[$row['setting_key']] = $row['setting_value'];
+            }
+            $allCache[$mid] = $out;
         }
-        return $out;
+        return $allCache[$mid];
     }
 
     public static function get($municipalityId, $key, $default = null)
@@ -59,13 +64,21 @@ class MunicipalitySetting
     /** Upsert many settings at once. */
     public static function setMany($municipalityId, array $settings)
     {
-        foreach ($settings as $key => $value) {
-            dbq(
-                'INSERT INTO municipality_settings (municipality_id, setting_key, setting_value)
-                 VALUES (:mid, :k, :v)
-                 ON DUPLICATE KEY UPDATE setting_value = :v2',
-                ['mid' => $municipalityId, 'k' => $key, 'v' => $value, 'v2' => $value]
-            );
+        $pdo = db();
+        $pdo->beginTransaction();
+        try {
+            foreach ($settings as $key => $value) {
+                dbq(
+                    'INSERT INTO municipality_settings (municipality_id, setting_key, setting_value)
+                     VALUES (:mid, :k, :v)
+                     ON DUPLICATE KEY UPDATE setting_value = :v2',
+                    ['mid' => $municipalityId, 'k' => $key, 'v' => $value, 'v2' => $value]
+                );
+            }
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
         }
     }
 }

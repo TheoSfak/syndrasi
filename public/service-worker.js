@@ -53,11 +53,17 @@ self.addEventListener('activate', function (event) {
   );
 });
 
-function isStaticAsset(url) {
-  return /\.(css|js|png|jpg|jpeg|svg|gif|woff2?|ttf|ico)(\?.*)?$/.test(url) ||
+// Local app JS/CSS must use network-first so deploys take effect immediately
+function isLocalAppAsset(url) {
+  return url.indexOf('/assets/js/') !== -1 || url.indexOf('/assets/css/') !== -1;
+}
+
+// CDN resources and binary assets: stale-while-revalidate (URLs are versioned or rarely change)
+function isCdnOrBinaryAsset(url) {
+  return /\.(png|jpg|jpeg|svg|gif|woff2?|ttf|ico)(\?.*)?$/.test(url) ||
     url.indexOf('cdn.jsdelivr.net') !== -1 ||
-    url.indexOf('unpkg.com') !== -1 ||
-    url.indexOf('tile.openstreetmap.org') !== -1;
+    url.indexOf('unpkg.com') !== -1;
+  // Note: tile.openstreetmap.org is intentionally excluded — map tiles should not be cached
 }
 
 self.addEventListener('fetch', function (event) {
@@ -66,9 +72,23 @@ self.addEventListener('fetch', function (event) {
   // Never cache POST or other non-GET requests
   if (request.method !== 'GET') { return; }
 
-  if (isStaticAsset(request.url)) {
-    // Stale-while-revalidate: return cache immediately, refresh it in the
-    // background so the next load always picks up updated CSS/JS.
+  // Local app assets: network-first, fall back to cache when offline
+  if (isLocalAppAsset(request.url)) {
+    event.respondWith(
+      fetch(request).then(function (response) {
+        if (response && response.status === 200) {
+          caches.open(CACHE_NAME).then(function (c) { c.put(request, response.clone()); });
+        }
+        return response;
+      }).catch(function () {
+        return caches.match(request);
+      })
+    );
+    return;
+  }
+
+  if (isCdnOrBinaryAsset(request.url)) {
+    // Stale-while-revalidate: return cache immediately, refresh it in the background
     event.respondWith(
       caches.open(CACHE_NAME).then(function (cache) {
         return cache.match(request).then(function (cached) {
@@ -78,7 +98,6 @@ self.addEventListener('fetch', function (event) {
             }
             return response;
           }).catch(function () { return cached; });
-          // Serve cached copy first if we have one, otherwise wait for network.
           return cached || network;
         });
       })

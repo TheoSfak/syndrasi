@@ -260,7 +260,7 @@ class EventController
         }
         Event::markPublished($event['id']);
         $event = Event::find($event['id']);
-        NotificationService::eventPublished($event);
+        try { NotificationService::eventPublished($event); } catch (Throwable $e) { error_log($e); }
         audit('event_published', 'event', $event['id'], $event['title']);
         flash_set('success', 'Η δράση δημοσιεύθηκε και οι ομάδες ειδοποιήθηκαν.');
         redirect('/events/' . $event['id']);

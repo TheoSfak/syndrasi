@@ -72,7 +72,7 @@ function sidebar_active($path, $currentPath, $base)
 
   <?php if (!empty($sidebarLogoUrl)): ?>
   <div class="text-center py-3 px-3">
-    <img src="<?= e($sidebarLogoUrl) ?>" alt="Logo" style="max-width:100%;max-height:64px;object-fit:contain;">
+    <img src="<?= e($sidebarLogoUrl) ?>" alt="<?= e(MunicipalitySetting::get($mid ?? 0, 'org_name', 'Λογότυπο Δήμου')) ?>" style="max-width:100%;max-height:64px;object-fit:contain;">
   </div>
   <?php endif; ?>
 

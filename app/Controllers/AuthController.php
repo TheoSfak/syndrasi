@@ -32,8 +32,8 @@ class AuthController
 
         // ── Rate limiting: max 5 failures per IP+email per 15 minutes ──────────
         $ip         = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        $ratKey     = 'login_fail_' . md5($ip . '|' . mb_strtolower($email));
-        $lockKey    = 'login_lock_' . md5($ip . '|' . mb_strtolower($email));
+        $ratKey     = 'login_fail_' . hash('sha256', $ip . '|' . mb_strtolower($email));
+        $lockKey    = 'login_lock_' . hash('sha256', $ip . '|' . mb_strtolower($email));
         $lockUntil  = $this->rateSetting($lockKey);
 
         if ($lockUntil && time() < (int) $lockUntil) {
@@ -143,7 +143,7 @@ class AuthController
             dbq("DELETE FROM password_resets WHERE email = :email", ['email' => $email]);
             $token = bin2hex(random_bytes(32));
             dbq("INSERT INTO password_resets (email, token) VALUES (:email, :token)",
-                ['email' => $email, 'token' => $token]);
+                ['email' => $email, 'token' => hash('sha256', $token)]);
 
             $resetUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
                 . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
@@ -205,7 +205,7 @@ class AuthController
         }
 
         User::updatePassword($user['id'], password_hash($password, PASSWORD_DEFAULT));
-        dbq("UPDATE password_resets SET used_at = NOW() WHERE token = :token", ['token' => $token]);
+        dbq("UPDATE password_resets SET used_at = NOW() WHERE token = :token", ['token' => hash('sha256', $token)]);
         audit('password_reset_completed', 'user', $user['id']);
         flash_set('success', 'Ο κωδικός σας άλλαξε επιτυχώς. Συνδεθείτε τώρα.');
         redirect('/login');
@@ -220,7 +220,7 @@ class AuthController
              WHERE token = :token AND used_at IS NULL
                AND created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
              LIMIT 1",
-            ['token' => $token]
+            ['token' => hash('sha256', $token)]
         )->fetch();
         return $row ?: false;
     }

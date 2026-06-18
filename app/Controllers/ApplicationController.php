@@ -51,7 +51,7 @@ class ApplicationController
 
         $event = Event::find($application['event_id']);
         $application['approved_people'] = $approvedPeople;
-        NotificationService::applicationApproved($event, $application);
+        try { NotificationService::applicationApproved($event, $application); } catch (Throwable $e) { error_log($e); }
 
         flash_set('success', 'Η συμμετοχή της ομάδας "' . $application['team_name'] . '" εγκρίθηκε.');
         redirect('/events/' . $application['event_id'] . '/applications');
@@ -67,7 +67,7 @@ class ApplicationController
         audit('application_rejected', 'event_application', $application['id']);
 
         $event = Event::find($application['event_id']);
-        NotificationService::applicationRejected($event, $application, (string) $comment);
+        try { NotificationService::applicationRejected($event, $application, (string) $comment); } catch (Throwable $e) { error_log($e); }
 
         flash_set('success', 'Η δήλωση της ομάδας "' . $application['team_name'] . '" απορρίφθηκε.');
         redirect('/events/' . $application['event_id'] . '/applications');
@@ -91,9 +91,16 @@ class ApplicationController
             redirect('/events/' . $event['id'] . '/applications');
         }
 
+        // Fetch all selected applications in one query to avoid N+1
+        $in = implode(',', array_fill(0, count($appIds), '?'));
+        $appsById = [];
+        foreach (dbq("SELECT * FROM event_applications WHERE id IN ($in)", $appIds)->fetchAll() as $a) {
+            $appsById[(int) $a['id']] = $a;
+        }
+
         $count = 0;
         foreach ($appIds as $appId) {
-            $app = EventApplication::find($appId);
+            $app = $appsById[$appId] ?? null;
             if (!$app
                 || (int) $app['event_id']        !== (int) $event['id']
                 || (int) $app['municipality_id']  !== (int) current_municipality_id()
@@ -108,11 +115,11 @@ class ApplicationController
                 if ($people < 1) $people = (int) $app['offered_people'];
                 EventApplication::approve($appId, $people, null, current_user_id());
                 $app['approved_people'] = $people;
-                NotificationService::applicationApproved($event, $app);
+                try { NotificationService::applicationApproved($event, $app); } catch (Throwable $e) { error_log($e); }
                 audit('application_approved', 'event_application', $appId, 'bulk, people: ' . $people);
             } else {
                 EventApplication::reject($appId, null, current_user_id());
-                NotificationService::applicationRejected($event, $app, '');
+                try { NotificationService::applicationRejected($event, $app, ''); } catch (Throwable $e) { error_log($e); }
                 audit('application_rejected', 'event_application', $appId, 'bulk');
             }
             $count++;
