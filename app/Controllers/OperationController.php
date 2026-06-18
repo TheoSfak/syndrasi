@@ -357,7 +357,12 @@ class OperationController
         if ($path === null) {
             abort(404, 'Το αρχείο δεν βρέθηκε.');
         }
-        header('Content-Type: ' . (function_exists('mime_content_type') ? (mime_content_type($path) ?: 'image/jpeg') : 'image/jpeg'));
+        $mime    = function_exists('mime_content_type') ? (mime_content_type($path) ?: 'image/jpeg') : 'image/jpeg';
+        $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
+        if (!in_array($mime, $allowed, true)) {
+            abort(415, 'Μη υποστηριζόμενος τύπος αρχείου.');
+        }
+        header('Content-Type: ' . $mime);
         header('Content-Length: ' . filesize($path));
         header('Cache-Control: private, max-age=3600');
         readfile($path);
@@ -731,6 +736,13 @@ class OperationController
      */
     private function autoCloseExpired(int $mid): void
     {
+        $key = 'auto_close_checked_' . $mid;
+        $now = time();
+        if (isset($_SESSION[$key]) && $now - $_SESSION[$key] < 60) {
+            return;
+        }
+        $_SESSION[$key] = $now;
+
         $n = dbq(
             "UPDATE events
              SET status = 'closed'

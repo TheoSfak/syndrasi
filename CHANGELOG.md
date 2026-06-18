@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.42-beta] — 2026-06-19
+
+### Security — photo serving MIME whitelist
+
+`servePhoto()` now validates the detected MIME type against an explicit allowlist (`image/jpeg`, `image/png`, `image/gif`, `image/webp`, `image/heic`, `image/heif`) before streaming the file. Any file whose MIME type doesn't match returns `HTTP 415 Unsupported Media Type` instead of being served blindly.
+
+### Fix — `autoCloseExpired` throttle to once per 60 seconds
+
+The auto-close check was firing a `UPDATE events …` query on every SSE reconnect (~every 3 s) and every war-room page load. It now uses a session timestamp to skip the DB write if it was already executed within the last 60 seconds per municipality — reducing unnecessary writes by ~95% during active monitoring sessions.
+
+---
+
 ## [0.9.41-beta] — 2026-06-18
 
 ### Feature — Automatic debrief flow on event close
