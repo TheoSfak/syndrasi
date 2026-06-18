@@ -172,15 +172,16 @@ body { min-height: 100dvh; }
   display: grid; grid-template-columns: 1fr 1fr 1fr;
   gap: 10px; padding: 0 14px 14px;
 }
+.presence-btns form { width: 100%; }
 .pres-btn {
-  padding: 16px 6px; border: none; border-radius: 14px;
-  font-size: 12px; font-weight: 700;
+  width: 100%; padding: 18px 8px; border: none; border-radius: 16px;
+  font-size: 13px; font-weight: 700;
   cursor: pointer; text-align: center; line-height: 1.3;
   transition: transform .1s, opacity .1s;
   -webkit-tap-highlight-color: transparent;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
-.pres-btn i { font-size: 26px; }
+.pres-btn i { font-size: 28px; }
 .pres-btn:active { transform: scale(.95); opacity: .8; }
 .pres-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
 .pres-btn-full     { background: #166534; color: #4ade80; }
@@ -339,15 +340,15 @@ body { min-height: 100dvh; }
 
 /* ── SOS ────────────────────────────────────────────────────────────────── */
 .sos-btn {
-  width: 100%; padding: 24px 20px; border: none; border-radius: 18px;
+  width: 100%; padding: 22px 20px; border: none; border-radius: 18px;
   background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%); color: #fff; cursor: pointer;
   display: flex; align-items: center; gap: 16px; text-align: left;
   transition: transform .1s;
 }
 .sos-btn:active { transform: scale(.98); }
 .sos-btn:disabled { opacity: .45; cursor: not-allowed; }
-.sos-btn-icon { font-size: 40px; flex-shrink: 0; }
-.sos-btn-label { font-size: 22px; font-weight: 900; letter-spacing: .04em; }
+.sos-btn-icon { font-size: 36px; flex-shrink: 0; }
+.sos-btn-label { font-size: 20px; font-weight: 900; letter-spacing: .04em; }
 .sos-btn-sub { font-size: 12px; opacity: .9; margin-top: 2px; }
 .sos-pulse { animation: sosPulse 1.2s infinite; }
 @keyframes sosPulse {
@@ -365,13 +366,13 @@ body { min-height: 100dvh; }
 /* ── Quick status pings ──────────────────────────────────────────────────── */
 .ping-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px 14px; }
 .ping-btn {
-  padding: 14px 10px; border: none; border-radius: 12px; cursor: pointer;
-  background: #13302e; color: #7fe6d8; font-size: 13px; font-weight: 700;
-  display: flex; align-items: center; gap: 8px; text-align: left; transition: transform .1s;
+  width: 100%; padding: 18px 12px; border: none; border-radius: 16px; cursor: pointer;
+  background: #13302e; color: #7fe6d8; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 10px; text-align: left; transition: transform .1s;
 }
 .ping-btn:active { transform: scale(.96); }
 .ping-btn:disabled { opacity: .35; cursor: not-allowed; }
-.ping-btn i { font-size: 20px; flex-shrink: 0; }
+.ping-btn i { font-size: 24px; flex-shrink: 0; }
 .ping-btn.full { grid-column: 1 / -1; background: #3a1414; color: #fca5a5; }
 
 /* ── Comms thread ────────────────────────────────────────────────────────── */
