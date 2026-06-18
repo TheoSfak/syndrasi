@@ -14,7 +14,7 @@ class TeamPortalController
         $mid = current_municipality_id();
         $team = VolunteerTeam::find($tid);
 
-        $availableEvents = dbq(
+        $availableEvents = (int) dbq(
             "SELECT COUNT(*) FROM events e
              WHERE e.municipality_id = :mid AND e.status = 'open'
                AND NOT EXISTS (SELECT 1 FROM event_applications ea WHERE ea.event_id = e.id AND ea.team_id = :tid)",
@@ -26,6 +26,7 @@ class TeamPortalController
             ['tid' => $tid]
         )->fetchColumn();
 
+        // Upcoming: approved, not yet ended, any pre-active or active status.
         $upcomingApproved = dbq(
             "SELECT e.*, ea.approved_people
              FROM event_applications ea JOIN events e ON e.id = ea.event_id
@@ -35,23 +36,55 @@ class TeamPortalController
             ['tid' => $tid]
         )->fetchAll();
 
+        // Operational = currently running: explicitly active OR started (past start_datetime) with a pre-active status.
         $todayOperational = dbq(
-            "SELECT e.*, ea.approved_people
+            "SELECT e.*, ea.approved_people, ea.id AS app_id, ea.field_token
              FROM event_applications ea JOIN events e ON e.id = ea.event_id
-             WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'active'
+             WHERE ea.team_id = :tid AND ea.status = 'approved'
+               AND (e.status = 'active' OR (e.status IN ('open','confirmed','review') AND NOW() >= e.start_datetime))
              ORDER BY e.start_datetime ASC",
             ['tid' => $tid]
         )->fetchAll();
+
+        $completedThisYear = (int) dbq(
+            "SELECT COUNT(*) FROM event_applications ea
+             JOIN events e ON e.id = ea.event_id
+             WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
+               AND YEAR(e.start_datetime) = :year",
+            ['tid' => $tid, 'year' => (int) date('Y')]
+        )->fetchColumn();
+
+        $recentCompleted = dbq(
+            "SELECT e.title, e.start_datetime, e.end_datetime, e.location_name, ea.approved_people
+             FROM event_applications ea JOIN events e ON e.id = ea.event_id
+             WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
+             ORDER BY e.start_datetime DESC LIMIT 4",
+            ['tid' => $tid]
+        )->fetchAll();
+
+        $memberCount = (int) dbq(
+            "SELECT COUNT(*) FROM team_members WHERE team_id = :tid",
+            ['tid' => $tid]
+        )->fetchColumn();
+
+        $activeMemberCount = (int) dbq(
+            "SELECT COUNT(*) FROM team_members WHERE team_id = :tid AND status = 'active'",
+            ['tid' => $tid]
+        )->fetchColumn();
 
         $stats = StatsService::teamStats($tid);
 
         render('dashboard/team', [
             'pageTitle'           => 'Πίνακας Ελέγχου Ομάδας',
             'team'                => $team,
-            'availableEvents'     => (int) $availableEvents,
+            'availableEvents'     => $availableEvents,
             'pendingApplications' => $pendingApplications,
             'upcomingApproved'    => $upcomingApproved,
             'todayOperational'    => $todayOperational,
+            'completedThisYear'   => $completedThisYear,
+            'recentCompleted'     => $recentCompleted,
+            'memberCount'         => $memberCount,
+            'activeMemberCount'   => $activeMemberCount,
             'stats'               => $stats,
         ]);
     }

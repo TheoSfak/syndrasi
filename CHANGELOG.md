@@ -4,6 +4,20 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.25-beta] — 2026-06-18
+
+### Fixed & Enhanced — Team Dashboard
+
+**Bug fix:** Ενεργή δράση (confirmed/open past start_datetime) εμφανιζόταν ως «0 Δράσεις σε Εξέλιξη» στο dashboard της ομάδας, γιατί το query έλεγχε μόνο `e.status = 'active'` — ίδιο root cause με το Field Hub (v0.9.24). Διορθώθηκε με την ίδια λογική.
+
+**Redesign dashboard** (`/team/dashboard`):
+- Νέα gradient stat cards (ds-card): Δράσεις σε Εξέλιξη / Ολοκληρωμένες φέτος / Ώρες Εθελοντισμού / Ενεργά Μέλη
+- LIVE banner με pulse animation όταν τρέχουν δράσεις (+ Field Hub link αν υπάρχει token)
+- Γρήγορες Ενέργειες με badges για νέες δράσεις / εκκρεμείς δηλώσεις
+- Κατάσταση Ομάδας: αξιοπιστία (progress bar), μέσος χρόνος δήλωσης, μέλη, alert για εκκρεμείς
+- Επερχόμενες εγκεκριμένες ως cards (με ημερομηνία, ώρα, τοποθεσία, άτομα)
+- Πρόσφατη Δραστηριότητα: τελευταίες 4 ολοκληρωμένες δράσεις με date badge
+
 ## [0.9.24-beta] — 2026-06-18
 
 ### Fixed — Field Hub: κουμπιά disabled παρόλο που η δράση τρέχει
