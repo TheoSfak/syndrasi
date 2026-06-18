@@ -512,6 +512,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   var markers      = {};
   var orderMarkers = {};  /* team_id → geo-order target marker */
   var orderLines   = [];  /* dashed lines from ping to target */
+  var mapAutoFit   = true; /* fit to team pings on first update only */
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap',
     maxZoom: 19
@@ -610,7 +611,9 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     });
 
     document.getElementById('mapBadge').textContent = pings.length + ' ομάδες';
-    if (bounds.length > 1) { try { map.fitBounds(bounds, { padding:[30,30], maxZoom:16 }); } catch(e){} }
+    if (mapAutoFit && bounds.length > 1) {
+      try { map.fitBounds(bounds, { padding:[30,30], maxZoom:16 }); mapAutoFit = false; } catch(e){}
+    }
   }
 
   /* ─── Map fullscreen ─── */
@@ -1226,8 +1229,10 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   if (geoPickBtn) {
     geoPickBtn.addEventListener('click', function () {
       geoPick = !geoPick;
-      if (geoPick) { geoPickBtn.classList.add('btn-warning'); geoPickBtn.classList.remove('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Κλικ στον χάρτη…'; }
-      else { geoBtnReset(); }
+      if (geoPick) {
+        mapAutoFit = false; /* user is about to interact with the map — never auto-fit again */
+        geoPickBtn.classList.add('btn-warning'); geoPickBtn.classList.remove('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Κλικ στον χάρτη…';
+      } else { geoBtnReset(); }
     });
   }
   map.on('click', function (e) {
