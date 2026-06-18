@@ -206,7 +206,36 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     </div>
 
     <!-- Team color legend -->
-    <div id="mapLegend" class="map-legend mb-2" style="display:none"></div>
+    <div id="mapLegend" class="map-legend mb-1" style="display:none"></div>
+
+    <!-- Map symbol legend (collapsed by default) -->
+    <details class="mb-3" style="font-size:.72rem;color:#6c757d">
+      <summary style="cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:4px;user-select:none">
+        <i class="bi bi-info-circle"></i> Υπόμνημα συμβόλων χάρτη
+      </summary>
+      <div class="d-flex flex-wrap gap-2 mt-2 ps-1">
+        <span class="d-inline-flex align-items-center gap-1">
+          <span style="width:12px;height:12px;border-radius:50%;background:#94a3b8;border:2px solid #22c55e;display:inline-block;flex-shrink:0"></span>
+          GPS στίγμα ομάδας
+        </span>
+        <span class="d-inline-flex align-items-center gap-1" style="color:#f97316">
+          <span style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:14px solid #f97316;display:inline-block;flex-shrink:0"></span>
+          Μετάβαση
+        </span>
+        <span class="d-inline-flex align-items-center gap-1" style="color:#ef4444">
+          <span style="width:11px;height:11px;background:#ef4444;transform:rotate(45deg);display:inline-block;flex-shrink:0"></span>
+          Περιστατικό
+        </span>
+        <span class="d-inline-flex align-items-center gap-1" style="color:#8b5cf6">
+          <span style="background:#8b5cf6;color:#fff;font-size:9px;width:14px;height:14px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">★</span>
+          Σημείο ενδιαφέροντος
+        </span>
+        <span class="d-inline-flex align-items-center gap-1">
+          <span style="width:20px;border-top:2px dashed #94a3b8;display:inline-block;flex-shrink:0"></span>
+          Διαδρομή προς στόχο
+        </span>
+      </div>
+    </details>
 
     <!-- Teams -->
     <div class="card">
