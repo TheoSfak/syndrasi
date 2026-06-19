@@ -4,6 +4,22 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.49-beta] — 2026-06-19
+
+### Fix — Αυτόματη δημιουργία cron_secret · βελτίωση Cron Jobs tab
+
+**Πρόβλημα:** Το async loopback dispatch (αποστολή emails χωρίς cron) δεν δούλευε αν δεν υπήρχε `cron_secret` στη βάση, κάτι που δεν ρυθμίζεται πουθενά αυτόματα.
+
+**Λύση:**
+- `dispatchAsync()` τώρα **auto-generates** το `cron_secret` αν δεν υπάρχει (πρώτη αποστολή email) — χωρίς καμία χειροκίνητη ρύθμιση
+- Το **Cron Jobs tab** στο `/admin/settings` εμφανίζει τώρα:
+  - Το τρέχον `cron_secret` με κουμπί αντιγραφής
+  - Κουμπί "Αναγέννηση κλειδιού"
+  - Έτοιμη εντολή curl για το `/cron/mail-queue` (με το κλειδί συμπληρωμένο)
+  - Έτοιμη εντολή curl για το `/cron/cleanup`
+
+---
+
 ## [0.9.48-beta] — 2026-06-19
 
 ### Fix — Αριθμός εθελοντών επαναφερόταν κατά το live refresh

@@ -52,6 +52,59 @@
 
   <!-- ── Cron Jobs ────────────────────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-cron">
+
+    <!-- Cron secret -->
+    <div class="card shadow-sm mb-3" style="max-width:720px">
+      <div class="card-body">
+        <h2 class="h5">Κλειδί ασφαλείας Cron (cron_secret)</h2>
+        <p class="text-muted small mb-3">
+          Χρησιμοποιείται αυτόματα από το σύστημα για την ασφαλή εκτέλεση cron endpoints
+          (αποστολή email, καθαρισμός κ.λπ.). Αν δεν έχει οριστεί, παράγεται αυτόματα
+          την πρώτη φορά που θα σταλεί email.
+        </p>
+        <?php $cs = $settings['cron_secret'] ?? ''; ?>
+        <?php if ($cs): ?>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Τρέχον κλειδί</label>
+            <div class="input-group input-group-sm" style="max-width:480px">
+              <input type="text" class="form-control font-monospace" value="<?= e($cs) ?>" readonly id="cronSecretField">
+              <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('cronSecretField').value)" title="Αντιγραφή"><i class="bi bi-clipboard"></i></button>
+            </div>
+          </div>
+        <?php else: ?>
+          <div class="alert alert-info small py-2 mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Δεν έχει οριστεί ακόμα. Θα παραχθεί αυτόματα την πρώτη φορά που θα σταλεί email.
+          </div>
+        <?php endif; ?>
+        <form method="post" action="<?= e(url('/admin/settings')) ?>">
+          <?= csrf_field() ?>
+          <input type="hidden" name="regenerate_cron_secret" value="1">
+          <button class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-repeat me-1"></i><?= $cs ? 'Αναγέννηση κλειδιού' : 'Παραγωγή κλειδιού τώρα' ?>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Mail queue -->
+    <div class="card shadow-sm mb-3" style="max-width:720px">
+      <div class="card-body">
+        <h2 class="h5">Ουρά email (mail queue)</h2>
+        <p class="text-muted small mb-3">
+          Τα emails αποθηκεύονται στη βάση και αποστέλλονται αυτόματα μέσω loopback HTTP
+          χωρίς να χρειάζεται cron job. Αν θέλετε εγγυημένη αποστολή ακόμα και χωρίς
+          εισερχόμενο traffic, προσθέστε αυτή την εντολή στο cron (κάθε λεπτό):
+        </p>
+        <?php if ($cs): ?>
+          <pre class="bg-light border rounded p-2 small">* * * * *  curl -s -H "Authorization: Bearer <?= e($cs) ?>" "<?= e(rtrim(url('/cron/mail-queue'), '/')) ?>" &gt; /dev/null</pre>
+        <?php else: ?>
+          <pre class="bg-light border rounded p-2 small">* * * * *  curl -s -H "Authorization: Bearer &lt;cron_secret&gt;" "<?= e(rtrim(url('/cron/mail-queue'), '/')) ?>" &gt; /dev/null</pre>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <!-- Cleanup -->
     <div class="card shadow-sm" style="max-width:720px">
       <div class="card-body">
         <h2 class="h5">Καθαρισμός συστήματος</h2>
@@ -65,11 +118,13 @@
           <button class="btn btn-warning"><i class="bi bi-trash3 me-1"></i>Εκτέλεση καθαρισμού τώρα</button>
         </form>
       </div>
+      <?php if ($cs): ?>
       <div class="card-footer bg-white small text-muted">
         <i class="bi bi-info-circle me-1"></i>
-        Σε παραγωγική εγκατάσταση μπορείτε εναλλακτικά να προγραμματίσετε το
-        <code>/cron/cleanup?secret=…</code> να τρέχει αυτόματα μία φορά την ημέρα.
+        Cron (μία φορά την ημέρα):
+        <code>curl -s -H "Authorization: Bearer <?= e($cs) ?>" "<?= e(rtrim(url('/cron/cleanup'), '/')) ?>"</code>
       </div>
+      <?php endif; ?>
     </div>
   </div>
 

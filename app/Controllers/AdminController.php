@@ -341,7 +341,7 @@ class AdminController
     {
         requireRole(['super_admin']);
         $settings = [];
-        foreach (['platform_announcement', 'support_email'] as $k) {
+        foreach (['platform_announcement', 'support_email', 'cron_secret'] as $k) {
             $settings[$k] = dbq(
                 'SELECT setting_value FROM app_settings WHERE setting_key = :k LIMIT 1',
                 ['k' => $k]
@@ -375,6 +375,15 @@ class AdminController
                 "INSERT INTO app_settings (setting_key, setting_value) VALUES (:k, :v)
                  ON DUPLICATE KEY UPDATE setting_value = :v2",
                 ['k' => $k, 'v' => $v, 'v2' => $v]
+            );
+        }
+        // Regenerate cron_secret if the button was pressed
+        if (!empty($_POST['regenerate_cron_secret'])) {
+            $newSecret = bin2hex(random_bytes(24));
+            dbq(
+                "INSERT INTO app_settings (setting_key, setting_value) VALUES ('cron_secret', :s)
+                 ON DUPLICATE KEY UPDATE setting_value = :s2",
+                ['s' => $newSecret, 's2' => $newSecret]
             );
         }
         audit('platform_settings_updated', 'app_settings', null);

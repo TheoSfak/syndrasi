@@ -134,7 +134,15 @@ class MailService
             $secret = dbq(
                 "SELECT setting_value FROM app_settings WHERE setting_key = 'cron_secret' LIMIT 1"
             )->fetchColumn();
-            if (!$secret) { return false; }
+            if (!$secret) {
+                // Auto-generate and persist a secret so the loopback works without manual setup.
+                $secret = bin2hex(random_bytes(24));
+                dbq(
+                    "INSERT INTO app_settings (setting_key, setting_value) VALUES ('cron_secret', :s)
+                     ON DUPLICATE KEY UPDATE setting_value = :s2",
+                    ['s' => $secret, 's2' => $secret]
+                );
+            }
 
             $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
             $host  = $_SERVER['HTTP_HOST'] ?? 'localhost';
