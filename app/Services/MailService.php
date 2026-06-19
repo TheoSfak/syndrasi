@@ -22,36 +22,60 @@ class MailService
     private static $shutdownRegistered = false;
 
     /**
-     * Queue an email to send AFTER the browser receives the HTTP response.
-     * Uses fastcgi_finish_request() so the redirect is instant for the user.
-     * Falls back to synchronous send on servers without FPM.
+     * Queue an email for delivery after the HTTP response is complete.
+     *
+     * Preferred path: INSERT into mail_queue table (instant DB write, ~0 ms).
+     * The /cron/mail-queue endpoint then delivers them asynchronously.
+     *
+     * Fallback (mail_queue table not yet created): uses the old PHP shutdown
+     * function approach, which blocks on Apache/mod_php but still works.
      */
     public static function sendDeferred($toEmail, $toName, $subject, $body, $municipalityId = null)
     {
-        self::$queue[] = [
-            'toEmail'        => $toEmail,
-            'toName'         => $toName,
-            'subject'        => $subject,
-            'body'           => $body,
-            'municipalityId' => $municipalityId,
-        ];
-        if (!self::$shutdownRegistered) {
-            self::$shutdownRegistered = true;
-            register_shutdown_function(['MailService', 'flushQueue']);
+        if (!$toEmail || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+        try {
+            dbq(
+                "INSERT INTO mail_queue (municipality_id, to_email, to_name, subject, body)
+                 VALUES (:mid, :email, :name, :subj, :body)",
+                [
+                    'mid'   => $municipalityId,
+                    'email' => $toEmail,
+                    'name'  => (string) $toName,
+                    'subj'  => (string) $subject,
+                    'body'  => (string) $body,
+                ]
+            );
+        } catch (Throwable $e) {
+            // Table not yet created (migration pending) — fall back to shutdown queue.
+            error_log('[MailService::sendDeferred] DB queue unavailable, using sync fallback: ' . $e->getMessage());
+            self::$queue[] = [
+                'toEmail'        => $toEmail,
+                'toName'         => $toName,
+                'subject'        => $subject,
+                'body'           => $body,
+                'municipalityId' => $municipalityId,
+            ];
+            if (!self::$shutdownRegistered) {
+                self::$shutdownRegistered = true;
+                register_shutdown_function(['MailService', 'flushQueue']);
+            }
         }
     }
 
     /**
-     * Send all queued emails. Called automatically by the shutdown handler.
-     * Flushes the HTTP response to the browser first, then sends via SMTP.
+     * Fallback shutdown handler — only runs when the mail_queue table is missing.
+     * On PHP-FPM hosts fastcgi_finish_request() lets the browser get the redirect first.
+     * On Apache/mod_php this still blocks, but it is the graceful-degradation path.
      */
     public static function flushQueue()
     {
         if (empty(self::$queue)) { return; }
         if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();   // browser gets the redirect NOW
+            fastcgi_finish_request();
         }
-        @set_time_limit(120);           // give SMTP enough time, no page timeout
+        @set_time_limit(120);
         foreach (self::$queue as $m) {
             self::send($m['toEmail'], $m['toName'], $m['subject'], $m['body'], $m['municipalityId']);
         }

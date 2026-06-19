@@ -4,6 +4,29 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.46-beta] — 2026-06-19
+
+### Fix — Email delays (10-15 s) on event publish / team participation
+
+`sendDeferred()` previously relied on `fastcgi_finish_request()` to send emails after the HTTP response — but this only works on PHP-FPM. On Apache/mod_php hosts (including the production server on 1stop.gr) every SMTP connection blocked the user's redirect for ~2-3 s per email. With member-assignment notifications, selecting 5 members produced up to 15 s of waiting.
+
+**Solution: DB-backed mail queue.** `sendDeferred()` now does an instant `INSERT INTO mail_queue` (~0 ms) and returns immediately. A new cron endpoint `/cron/mail-queue` sends the queued messages asynchronously (up to 50 per run, retries 3 times on failure).
+
+**To activate on production:**
+1. Run migration `database/migrations/018_mail_queue.sql` on the production database
+2. Add a cron job: `* * * * * curl -s -H "Authorization: Bearer <cron_secret>" "https://yoursite/cron/mail-queue" > /dev/null`
+
+Until the migration runs, the old shutdown-function approach stays as a fallback (no breakage).
+
+Technical:
+- New table `mail_queue` (id, municipality_id, to_email, to_name, subject, body, attempts, sent_at, error_msg)
+- `MailService::sendDeferred()` — INSERT to DB, catches exception and falls back to array
+- `MailService::flushQueue()` — now only the fallback path (kept for backward compat)
+- `CronController::processMailQueue()` — new `GET /cron/mail-queue` endpoint
+- Migration: `database/migrations/018_mail_queue.sql`
+
+---
+
 ## [0.9.45-beta] — 2026-06-19
 
 ### Feature — Inline team approval from operational command centre

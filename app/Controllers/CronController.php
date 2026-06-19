@@ -81,6 +81,69 @@ class CronController
         json_out(array_merge(['success' => true], MaintenanceService::cleanup()));
     }
 
+    /**
+     * GET /cron/mail-queue
+     * Sends up to 50 pending emails from the mail_queue table per run.
+     * Retries failed messages up to 3 times before giving up.
+     * Safe to run every minute via cron.
+     *
+     * Example cron line (Linux):
+     *   * * * * *  curl -s -H "Authorization: Bearer TOKEN" "http://yoursite/cron/mail-queue" > /dev/null
+     */
+    public function processMailQueue()
+    {
+        $this->authCron();
+        @set_time_limit(120);
+
+        $maxAttempts = 3;
+        $batchSize   = 50;
+
+        $pending = dbq(
+            "SELECT * FROM mail_queue
+             WHERE sent_at IS NULL AND attempts < :max
+             ORDER BY created_at ASC
+             LIMIT :lim",
+            ['max' => $maxAttempts, 'lim' => $batchSize]
+        )->fetchAll();
+
+        $sent   = 0;
+        $failed = 0;
+
+        foreach ($pending as $m) {
+            dbq(
+                "UPDATE mail_queue SET attempts = attempts + 1, last_attempt = NOW() WHERE id = :id",
+                ['id' => $m['id']]
+            );
+
+            $ok = MailService::send(
+                $m['to_email'],
+                $m['to_name'],
+                $m['subject'],
+                $m['body'],
+                $m['municipality_id'] ?: null
+            );
+
+            if ($ok) {
+                dbq("UPDATE mail_queue SET sent_at = NOW(), error_msg = NULL WHERE id = :id", ['id' => $m['id']]);
+                $sent++;
+            } else {
+                dbq(
+                    "UPDATE mail_queue SET error_msg = :err WHERE id = :id",
+                    ['err' => MailService::$lastError, 'id' => $m['id']]
+                );
+                $failed++;
+            }
+        }
+
+        json_out([
+            'success'  => true,
+            'sent'     => $sent,
+            'failed'   => $failed,
+            'pending'  => count($pending),
+            'at'       => date('Y-m-d H:i:s'),
+        ]);
+    }
+
     /* ── Private ─────────────────────────────────────────────────────────── */
 
     private function authCron()

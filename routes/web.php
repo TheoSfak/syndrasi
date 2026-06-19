@@ -215,6 +215,7 @@ $router->post('/push/unsubscribe', 'PushController@unsubscribe');
 /* Cron endpoints (token-protected, no session required) */
 $router->get('/cron/shift-reminders', 'CronController@shiftReminders');
 $router->get('/cron/cleanup', 'CronController@cleanup');
+$router->get('/cron/mail-queue', 'CronController@processMailQueue');
 
 /* Super admin */
 $router->get('/admin/dashboard', 'AdminController@dashboard');
