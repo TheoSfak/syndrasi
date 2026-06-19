@@ -324,6 +324,50 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   /* Ack order */
   window.ackOrder=function(id){postJSON('/ack-order',{message_id:id}).then(pollComms);};
 
+  /* ── Audio + vibration alerts ────────────────────────────────────────── */
+  function beepAlert(n, freq, dur) {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      for (var i = 0; i < n; i++) {
+        (function(beat) {
+          var o = ctx.createOscillator(), g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.type = 'sine'; o.frequency.value = freq;
+          var t0 = ctx.currentTime + beat * (dur + 0.07);
+          g.gain.setValueAtTime(0.5, t0);
+          g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+          o.start(t0); o.stop(t0 + dur);
+        })(i);
+      }
+    } catch(e) {}
+  }
+  function vibrateDevice(pattern) {
+    try { if (navigator.vibrate) { navigator.vibrate(pattern); } } catch(e) {}
+  }
+  /* 2 short beeps for new command order — hard to miss on a phone */
+  function alertNewOrder() { beepAlert(2, 660, 0.2); vibrateDevice([200, 100, 200]); }
+  /* 1 quick beep for GPS/photo request */
+  function alertNewRequest() { beepAlert(1, 880, 0.15); vibrateDevice([120]); }
+
+  /* Flash a banner at the top of the body to draw attention */
+  var newMsgFlash = null;
+  function showNewMsgFlash(text) {
+    if (!newMsgFlash) {
+      newMsgFlash = document.createElement('div');
+      newMsgFlash.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#f59e0b;color:#1c1400;font-weight:900;font-size:15px;padding:14px 20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.5)';
+      document.body.prepend(newMsgFlash);
+    }
+    newMsgFlash.innerHTML = '<i class="bi bi-megaphone-fill"></i> ' + text;
+    newMsgFlash.style.display = 'flex';
+    clearTimeout(newMsgFlash._timer);
+    newMsgFlash._timer = setTimeout(function(){ newMsgFlash.style.display='none'; }, 6000);
+  }
+
+  /* Track which message IDs and request states we've already seen */
+  var knownMsgIds = null;   /* null = first poll load (seed without alerting) */
+  var prevPhotoReq = false;
+  var prevGpsReq   = false;
+
   /* Comms polling */
   var msgList=document.getElementById('msgList'),orderBanner=document.getElementById('orderBanner');
   function renderOrders(msgs){
@@ -384,7 +428,67 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&wakeLock===null){requestWakeLock();}});
 
   var pollFails=0;
-  function pollComms(){fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}}).then(function(r){return r.json();}).then(function(d){pollFails=0;var ob=document.getElementById('offlineBanner');if(ob)ob.style.display='none';if(d&&d.success){renderMsgs(d.messages);renderOrders(d.messages);renderGeoPoints(d.messages);renderSos(d.sos);renderRoom(d.room);var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=d.photo_request?'block':'none';var gb=document.getElementById('gpsReqBanner');if(gb)gb.style.display=d.gps_request?'block':'none';}}).catch(function(){pollFails++;var ob=document.getElementById('offlineBanner');if(ob&&pollFails>=2)ob.style.display='flex';});}
+  function pollComms(){
+    fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      pollFails=0;
+      var ob=document.getElementById('offlineBanner');if(ob)ob.style.display='none';
+      if(!d||!d.success)return;
+
+      /* ── Detect new command messages / orders ── */
+      var msgs = d.messages || [];
+      if (knownMsgIds === null) {
+        /* First load: seed known IDs without alerting */
+        var seed = {};
+        msgs.forEach(function(m){ seed[m.id] = true; });
+        knownMsgIds = seed;
+      } else {
+        var hasNewOrder = false, hasNewMsg = false;
+        msgs.forEach(function(m){
+          if (!knownMsgIds[m.id] && m.sender_role === 'command') {
+            if (m.kind === 'order') { hasNewOrder = true; }
+            else                    { hasNewMsg   = true; }
+            knownMsgIds[m.id] = true;
+          }
+        });
+        if (hasNewOrder) {
+          alertNewOrder();
+          showNewMsgFlash('Νέα εντολή από τον ' + ORG_LABEL + ' — δείτε παρακάτω');
+        } else if (hasNewMsg) {
+          alertNewRequest();
+          showNewMsgFlash('Νέο μήνυμα από τον ' + ORG_LABEL);
+        }
+      }
+
+      /* ── Detect new GPS / photo requests ── */
+      var photoNow = !!d.photo_request;
+      var gpsNow   = !!d.gps_request;
+      if (photoNow && !prevPhotoReq) {
+        alertNewRequest();
+        showNewMsgFlash('Αίτημα φωτογραφίας από τον ' + ORG_LABEL + ' — τραβήξτε παρακάτω!');
+      }
+      if (gpsNow && !prevGpsReq) {
+        alertNewRequest();
+        showNewMsgFlash('Αίτημα στίγματος GPS από τον ' + ORG_LABEL + ' — πατήστε Αποστολή Στίγματος!');
+      }
+      prevPhotoReq = photoNow;
+      prevGpsReq   = gpsNow;
+
+      renderMsgs(msgs);
+      renderOrders(msgs);
+      renderGeoPoints(msgs);
+      renderSos(d.sos);
+      renderRoom(d.room);
+      var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=photoNow?'block':'none';
+      var gb=document.getElementById('gpsReqBanner');if(gb)gb.style.display=gpsNow?'block':'none';
+    })
+    .catch(function(){
+      pollFails++;
+      var ob=document.getElementById('offlineBanner');
+      if(ob&&pollFails>=2)ob.style.display='flex';
+    });
+  }
   pollComms();setInterval(pollComms,5000);
 })();
 </script>

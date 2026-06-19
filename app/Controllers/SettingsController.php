@@ -215,6 +215,9 @@ class SettingsController
             $settings['notify_email_' . $t] = in_array($ch, ['email', 'both'], true) ? '1' : '0';
         }
 
+        // Operational alert: configurable silence threshold (0 = disabled, max 120 min)
+        $settings['ops_silent_team_minutes'] = (string) max(0, min(120, (int) ($_POST['ops_silent_team_minutes'] ?? 20)));
+
         MunicipalitySetting::setMany($mid, $settings);
         audit('municipality_notification_settings_updated', 'municipality', $mid);
 

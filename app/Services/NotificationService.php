@@ -116,14 +116,17 @@ class NotificationService
      * Send a web push notification to all subscriptions of a user.
      * Silent failure — push is best-effort, never breaks the main flow.
      */
-    private static function sendPush(int $userId, string $title, string $body): void
+    /**
+     * $urgency: 'very-high' for SOS/incident, 'high' for ops alerts, 'normal' for the rest.
+     */
+    private static function sendPush(int $userId, string $title, string $body, string $urgency = 'normal'): void
     {
         try {
             $subs = dbq('SELECT * FROM push_subscriptions WHERE user_id = :uid', ['uid' => $userId])->fetchAll();
             if (!$subs) { return; }
             $payload = ['title' => $title, 'body' => $body, 'url' => '/notifications'];
             foreach ($subs as $sub) {
-                WebPushService::send($sub, $payload);
+                WebPushService::send($sub, $payload, 86400, $urgency);
             }
         } catch (Throwable $e) {
             error_log('[WebPush] sendPush error for user ' . $userId . ': ' . $e->getMessage());
@@ -601,9 +604,9 @@ class NotificationService
                     'type'            => 'sos',
                     'email_sent'      => 0,
                 ]);
-                self::sendPush($u['id'], $title, $msg);       // forced — always
+                self::sendPush($u['id'], $title, $msg, 'very-high'); // forced — always, max urgency
                 if (!empty($u['phone'])) {
-                    SmsService::send($u['phone'], $sms, $mid); // forced — always
+                    SmsService::send($u['phone'], $sms, $mid);        // forced — always
                 }
             } catch (Throwable $e) {
                 error_log('[SOS] notify failed: ' . $e->getMessage());
@@ -693,7 +696,7 @@ class NotificationService
                         'type'            => $forced ? 'ops_incident' : 'ops_geo',
                         'email_sent'      => 0,
                     ]);
-                    self::sendPush($u['id'], $title, $msg);
+                    self::sendPush($u['id'], $title, $msg, $forced ? 'very-high' : 'normal');
                     if ($forced && !empty($u['phone'])) {
                         SmsService::send($u['phone'], $sms, $mid);
                     }
@@ -765,6 +768,65 @@ class NotificationService
                 self::sendPush($u['id'], $title, $msg);
             } catch (Throwable $e) {
                 error_log('[Comms] shortage update failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * GPS fix arrived: a team fulfilled a GPS request — notify command staff (in-app + push).
+     * Only called when there was a pending GPS request at the time the fix was received.
+     */
+    public static function gpsArrived(array $event, array $team, float $lat, float $lng): void
+    {
+        $mid   = (int) $event['municipality_id'];
+        $tname = $team['name'] ?? 'Ομάδα';
+        $maps  = 'https://www.google.com/maps?q=' . round($lat, 6) . ',' . round($lng, 6);
+        $title = '📍 Στίγμα ελήφθη: ' . $tname;
+        $msg   = 'Η ομάδα «' . $tname . '» έστειλε GPS για τη δράση «' . $event['title'] . '». ' . $maps;
+        foreach (User::commandStaff($mid) as $u) {
+            try {
+                Notification::create([
+                    'municipality_id' => $mid,
+                    'user_id'         => $u['id'],
+                    'event_id'        => (int) $event['id'],
+                    'title'           => $title,
+                    'message'         => $msg,
+                    'type'            => 'gps_arrived',
+                    'email_sent'      => 0,
+                ]);
+                self::sendPush($u['id'], $title, $msg, 'high');
+            } catch (Throwable $e) {
+                error_log('[GPS] arrived notify failed: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Silent team: a team hasn't sent a GPS ping for $minutesSilent+ minutes — warn command.
+     * Deduplication is handled by the caller (OperationController::checkSilentTeams).
+     */
+    public static function silentTeam(array $event, array $team, int $minutesSilent): void
+    {
+        $mid   = (int) $event['municipality_id'];
+        $tname = $team['name'] ?? 'Ομάδα';
+        $title = '⚠ Ομάδα σε σίγη: ' . $tname;
+        $msg   = 'Η ομάδα «' . $tname . '» δεν έχει στείλει στίγμα για ' . $minutesSilent
+               . ' λεπτά (δράση «' . $event['title'] . '»).';
+        foreach (User::commandStaff($mid) as $u) {
+            try {
+                Notification::create([
+                    'municipality_id' => $mid,
+                    'user_id'         => $u['id'],
+                    'event_id'        => (int) $event['id'],
+                    'team_id'         => (int) $team['id'],
+                    'title'           => $title,
+                    'message'         => $msg,
+                    'type'            => 'team_silent',
+                    'email_sent'      => 0,
+                ]);
+                self::sendPush($u['id'], $title, $msg, 'high');
+            } catch (Throwable $e) {
+                error_log('[Silent] notify failed: ' . $e->getMessage());
             }
         }
     }

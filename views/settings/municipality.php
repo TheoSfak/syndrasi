@@ -276,6 +276,22 @@ $tzOptions = [
               <?php endforeach; ?>
             </div>
           </div>
+            <div class="border-top mt-1 pt-3 px-1 pb-2">
+              <div class="fw-semibold mb-1"><i class="bi bi-shield-exclamation text-warning me-1"></i>Ειδοποιήσεις Επιχείρησης (Ops)</div>
+              <p class="small text-muted mb-2">Εφαρμόζονται μόνο κατά τη διάρκεια ενεργών δράσεων και αποστέλλονται πάντα (δεν επηρεάζονται από τις ρυθμίσεις καναλιού παραπάνω).</p>
+              <div class="d-flex align-items-center gap-3 py-2">
+                <div class="flex-grow-1">
+                  <div class="fw-semibold small">Ειδοποίηση σίγης ομάδας</div>
+                  <div class="text-muted" style="font-size:12px">Αν ομάδα δεν στείλει GPS για τόσα λεπτά, ο αρχηγός λαμβάνει ειδοποίηση. <strong>0 = απενεργοποιημένο</strong>.</div>
+                </div>
+                <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                  <input type="number" name="ops_silent_team_minutes" min="0" max="120"
+                         value="<?= e($settings['ops_silent_team_minutes'] ?? '20') ?>"
+                         class="form-control form-control-sm text-center" style="width:72px">
+                  <span class="small text-muted">λεπτά</span>
+                </div>
+              </div>
+            </div>
           <div class="card-footer bg-white">
             <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
           </div>
@@ -287,6 +303,7 @@ $tzOptions = [
           <div class="card-body small text-muted">
             <p>Η απενεργοποίηση ενός τύπου δεν επηρεάζει τις in-app ειδοποιήσεις — αυτές εμφανίζονται πάντα στο κουδούνι.</p>
             <p>Χρήσιμο όταν ο SMTP δεν έχει ρυθμιστεί ακόμα ή σε περίοδο δοκιμών για να αποφύγετε spam.</p>
+            <p class="mb-0"><strong>Ops:</strong> SOS, GPS στίγμα, φωτογραφία, σίγη ομάδας και περιστατικά παρακάμπτουν πάντα τις ρυθμίσεις καναλιού — φτάνουν ανεξάρτητα από SMTP/SMS.</p>
           </div>
         </div>
       </div>

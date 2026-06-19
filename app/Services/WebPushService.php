@@ -81,9 +81,10 @@ class WebPushService
      * @param array  $subscription  ['endpoint'=>string,'p256dh'=>string,'auth_key'=>string]
      * @param array  $payload       ['title'=>string, 'body'=>string, 'url'=>string]
      * @param int    $ttl           Time-To-Live in seconds (default 24h)
+     * @param string $urgency       RFC 8030 urgency: very-high | high | normal | low
      * @return bool
      */
-    public static function send(array $subscription, array $payload, int $ttl = 86400): bool
+    public static function send(array $subscription, array $payload, int $ttl = 86400, string $urgency = 'normal'): bool
     {
         $endpoint = $subscription['endpoint'];
         $p256dh   = $subscription['p256dh'];
@@ -97,7 +98,7 @@ class WebPushService
             $vapidHeader = self::buildVapidHeader($endpoint, $ttl);
 
             return self::httpPost($endpoint, $encrypted['ciphertext'], $encrypted['salt'],
-                $encrypted['server_public_key'], $vapidHeader, $ttl);
+                $encrypted['server_public_key'], $vapidHeader, $ttl, $urgency);
         } catch (Throwable $e) {
             error_log('[WebPush] Send error: ' . $e->getMessage());
             return false;
@@ -234,7 +235,8 @@ class WebPushService
         string $salt,
         string $serverPubKey,
         string $vapidHeader,
-        int    $ttl
+        int    $ttl,
+        string $urgency = 'normal'
     ): bool {
         // Build Content-Encoding: aes128gcm record header (16-byte salt, 4-byte record size, 1-byte key len, 65-byte key)
         $recordSize = strlen($ciphertext);
@@ -245,11 +247,13 @@ class WebPushService
 
         $body = $header . $ciphertext;
 
+        $validUrgency = in_array($urgency, ['very-high', 'high', 'normal', 'low'], true) ? $urgency : 'normal';
         $headers = [
             'Content-Type: application/octet-stream',
             'Content-Encoding: aes128gcm',
             'TTL: ' . $ttl,
             'Authorization: ' . $vapidHeader,
+            'Urgency: ' . $validUrgency,
             'Content-Length: ' . strlen($body),
         ];
 

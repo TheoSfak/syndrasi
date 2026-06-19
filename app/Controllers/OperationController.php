@@ -486,6 +486,9 @@ class OperationController
 
         $openShortages = count(array_filter($shortages, fn($s) => $s['status'] === 'open'));
 
+        // Check for teams that have gone silent beyond the configured threshold.
+        $this->checkSilentTeams($eid, $event, $teamsPayload);
+
         return [
             'ok'           => true,
             'ts'           => date('H:i:s'),
@@ -726,6 +729,50 @@ class OperationController
 
         flush();
         exit;
+    }
+
+    /**
+     * Check approved teams for GPS silence beyond the configured threshold.
+     * Fires in-app + push to command staff once per silence window per team.
+     * Dedup uses the notifications table: if a 'team_silent' notification was
+     * already created for this team+event within the last $minutes minutes, skip.
+     */
+    private function checkSilentTeams(int $eid, array $event, array $teams): void
+    {
+        $mid     = (int) $event['municipality_id'];
+        $minutes = (int) (MunicipalitySetting::get($mid, 'ops_silent_team_minutes', '') ?: 20);
+        if ($minutes <= 0) { return; }
+
+        $candidates = [];
+        foreach ($teams as $t) {
+            $age = $t['ping_age_min'];
+            if ($age !== null && (int) $age >= $minutes) {
+                $candidates[(int) $t['team_id']] = $t;
+            }
+        }
+        if (!$candidates) { return; }
+
+        $in      = implode(',', array_keys($candidates));
+        $alerted = array_flip(array_map('intval', dbq(
+            "SELECT DISTINCT team_id FROM notifications
+             WHERE type = 'team_silent' AND event_id = :eid
+               AND team_id IN ($in)
+               AND created_at > NOW() - INTERVAL :mins MINUTE",
+            ['eid' => $eid, 'mins' => $minutes]
+        )->fetchAll(PDO::FETCH_COLUMN) ?: []));
+
+        foreach ($candidates as $tid => $t) {
+            if (isset($alerted[$tid])) { continue; }
+            try {
+                NotificationService::silentTeam(
+                    ['id' => $eid, 'title' => $event['title'], 'municipality_id' => $mid],
+                    ['id' => $tid, 'name'  => $t['team_name']],
+                    (int) $t['ping_age_min']
+                );
+            } catch (Throwable $e) {
+                error_log('[SilentTeam] ' . $e->getMessage());
+            }
+        }
     }
 
     /**

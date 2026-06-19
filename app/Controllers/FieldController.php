@@ -104,8 +104,20 @@ class FieldController
                 'msg' => $ctx['commander'] ? ('Υπεύθυνος: ' . $ctx['commander']['full_name']) : null,
             ]
         );
-        // A live location closes any pending GPS request from the commander.
+        // If command had an active GPS request, close it and notify them that the fix arrived.
+        $hadPendingGps = (bool) GpsRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         GpsRequest::fulfillForEventTeam((int) $app['event_id'], (int) $app['team_id']);
+        if ($hadPendingGps) {
+            try {
+                NotificationService::gpsArrived(
+                    $this->eventArr($app),
+                    ['id' => (int) $app['team_id'], 'name' => $app['team_name']],
+                    $lat, $lng
+                );
+            } catch (Throwable $e) {
+                error_log('[Field::location] gpsArrived: ' . $e->getMessage());
+            }
+        }
         json_out(['success' => true, 'message' => 'Το στίγμα στάλθηκε.']);
     }
 
