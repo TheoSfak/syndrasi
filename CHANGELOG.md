@@ -4,6 +4,23 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.47-beta] — 2026-06-19
+
+### Fix — Email dispatch: cron job no longer required
+
+Improved `MailService::flushQueue()` with a **fire-and-forget loopback HTTP dispatch** so emails are sent asynchronously on any server without needing a cron job.
+
+**How it works (shutdown handler, runs after the user's redirect is issued):**
+1. **PHP-FPM** (`fastcgi_finish_request` available): browser gets the redirect instantly; emails sent by the same worker in the background.
+2. **Apache/mod_php** (most shared hosting, incl. 1stop.gr): opens a TCP socket to the current server, writes `GET /cron/mail-queue` with the cron secret, and closes the socket immediately **without reading the response**. The server spawns a separate PHP worker to process and send the emails. The original request exits right away.
+3. **Loopback blocked** (rare): falls back to synchronous send — emails block the response (old behaviour) but still get delivered.
+
+**No cron job required.** The `/cron/mail-queue` route and `CronController::processMailQueue()` remain available for environments that want cron for extra reliability (guaranteed delivery even if no incoming HTTP traffic).
+
+**Prerequisite:** a `cron_secret` must be set in app_settings (Ρυθμίσεις → Συντήρηση). If missing, falls back to synchronous.
+
+---
+
 ## [0.9.46-beta] — 2026-06-19
 
 ### Fix — Email delays (10-15 s) on event publish / team participation

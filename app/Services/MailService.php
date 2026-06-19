@@ -16,19 +16,25 @@ class MailService
     /** Last error message of the most recent send() call (for the UI). */
     public static $lastError = '';
 
-    /** Queue of emails waiting to be sent after the HTTP response is flushed. */
+    /** Legacy PHP-array queue (used only when the mail_queue DB table is unavailable). */
     private static $queue = [];
-    /** Whether the shutdown function has already been registered. */
+    /** Whether the shutdown handler has already been registered this request. */
     private static $shutdownRegistered = false;
+    /** Whether any emails were successfully enqueued to the DB this request. */
+    private static $dbQueued = false;
 
     /**
-     * Queue an email for delivery after the HTTP response is complete.
+     * Queue an email for delivery without blocking the HTTP response.
      *
-     * Preferred path: INSERT into mail_queue table (instant DB write, ~0 ms).
-     * The /cron/mail-queue endpoint then delivers them asynchronously.
+     * Strategy (in order):
+     *  1. INSERT into mail_queue table (~0 ms) — always instant.
+     *  2. A single shutdown handler fires at the end of the request, AFTER
+     *     all sendDeferred() calls have completed and all rows are in the DB.
+     *     The handler tries dispatchAsync() first (loopback HTTP fire-and-forget),
+     *     then falls back to synchronous send if that fails.
      *
-     * Fallback (mail_queue table not yet created): uses the old PHP shutdown
-     * function approach, which blocks on Apache/mod_php but still works.
+     * If the mail_queue table does not exist yet (migration pending), falls back
+     * to the legacy PHP-array + shutdown-function approach.
      */
     public static function sendDeferred($toEmail, $toName, $subject, $body, $municipalityId = null)
     {
@@ -47,9 +53,10 @@ class MailService
                     'body'  => (string) $body,
                 ]
             );
+            self::$dbQueued = true;
         } catch (Throwable $e) {
-            // Table not yet created (migration pending) — fall back to shutdown queue.
-            error_log('[MailService::sendDeferred] DB queue unavailable, using sync fallback: ' . $e->getMessage());
+            // DB table not yet created — fall back to PHP-array + shutdown.
+            error_log('[MailService::sendDeferred] DB queue unavailable, sync fallback: ' . $e->getMessage());
             self::$queue[] = [
                 'toEmail'        => $toEmail,
                 'toName'         => $toName,
@@ -57,29 +64,129 @@ class MailService
                 'body'           => $body,
                 'municipalityId' => $municipalityId,
             ];
-            if (!self::$shutdownRegistered) {
-                self::$shutdownRegistered = true;
-                register_shutdown_function(['MailService', 'flushQueue']);
-            }
+        }
+        if (!self::$shutdownRegistered) {
+            self::$shutdownRegistered = true;
+            register_shutdown_function(['MailService', 'flushQueue']);
         }
     }
 
     /**
-     * Fallback shutdown handler — only runs when the mail_queue table is missing.
-     * On PHP-FPM hosts fastcgi_finish_request() lets the browser get the redirect first.
-     * On Apache/mod_php this still blocks, but it is the graceful-degradation path.
+     * Shutdown handler — runs once, after ALL sendDeferred() calls in this request.
+     *
+     * DB-queue path (normal):
+     *   1. Try fastcgi_finish_request() — browser gets the redirect instantly (PHP-FPM only).
+     *   2. Try dispatchAsync() — fire-and-forget loopback HTTP to /cron/mail-queue.
+     *      The server processes it in a separate PHP worker while we exit.
+     *   3. If both fail: send synchronously from here (blocks, but reliable fallback).
+     *
+     * Legacy PHP-array path (mail_queue table missing):
+     *   Send array contents synchronously (old behaviour, unchanged).
      */
     public static function flushQueue()
     {
-        if (empty(self::$queue)) { return; }
+        // ── Legacy path: DB table unavailable ──────────────────────────────
+        if (!empty(self::$queue)) {
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            @set_time_limit(120);
+            foreach (self::$queue as $m) {
+                self::send($m['toEmail'], $m['toName'], $m['subject'], $m['body'], $m['municipalityId']);
+            }
+            self::$queue = [];
+            return;
+        }
+
+        // ── DB-queue path ───────────────────────────────────────────────────
+        if (!self::$dbQueued) { return; }
+
+        // PHP-FPM: browser gets the redirect before we do anything else.
         if (function_exists('fastcgi_finish_request')) {
             fastcgi_finish_request();
+            @set_time_limit(120);
+            self::processPendingDbQueue();
+            return;
         }
+
+        // Apache/mod_php: try a fire-and-forget loopback HTTP request.
+        // dispatchAsync() opens a TCP socket, writes the GET, and closes
+        // WITHOUT reading — so we don't wait and neither does the browser.
+        if (self::dispatchAsync()) {
+            return; // separate PHP worker will call /cron/mail-queue
+        }
+
+        // Both failed — send synchronously as last resort (may block the response).
         @set_time_limit(120);
-        foreach (self::$queue as $m) {
-            self::send($m['toEmail'], $m['toName'], $m['subject'], $m['body'], $m['municipalityId']);
+        self::processPendingDbQueue();
+    }
+
+    /**
+     * Fire a non-blocking HTTP request to /cron/mail-queue on the current server.
+     * Opens a TCP socket, writes the GET request, closes immediately without reading
+     * the response — the server handles it in a separate PHP worker.
+     *
+     * Returns true if the request was dispatched, false if the connection failed.
+     */
+    private static function dispatchAsync(): bool
+    {
+        try {
+            $secret = dbq(
+                "SELECT setting_value FROM app_settings WHERE setting_key = 'cron_secret' LIMIT 1"
+            )->fetchColumn();
+            if (!$secret) { return false; }
+
+            $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+            $host  = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            // Strip port from host for fsockopen; keep it in the Host header.
+            $fsHost = preg_replace('/:\d+$/', '', $host);
+            $port   = $https ? 443 : (int) ($_SERVER['SERVER_PORT'] ?? 80);
+            // Build the path: dirname of SCRIPT_NAME gives the app sub-directory.
+            $base   = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/index.php'), '/\\');
+            $path   = $base . '/cron/mail-queue';
+
+            $fp = @fsockopen(($https ? 'ssl://' : '') . $fsHost, $port, $errno, $errstr, 2);
+            if (!$fp) { return false; }
+
+            fwrite($fp,
+                "GET {$path} HTTP/1.0\r\n"
+                . "Host: {$host}\r\n"
+                . "Authorization: Bearer {$secret}\r\n"
+                . "Connection: close\r\n\r\n"
+            );
+            fclose($fp); // close without reading — fire and forget
+            return true;
+        } catch (Throwable $e) {
+            error_log('[MailService::dispatchAsync] ' . $e->getMessage());
+            return false;
         }
-        self::$queue = [];
+    }
+
+    /** Send all pending unsent rows from mail_queue (used as synchronous fallback). */
+    private static function processPendingDbQueue(int $limit = 30): void
+    {
+        try {
+            $rows = dbq(
+                "SELECT * FROM mail_queue WHERE sent_at IS NULL AND attempts < 3
+                 ORDER BY created_at ASC LIMIT :lim",
+                ['lim' => $limit]
+            )->fetchAll();
+            foreach ($rows as $m) {
+                dbq("UPDATE mail_queue SET attempts = attempts + 1, last_attempt = NOW() WHERE id = :id",
+                    ['id' => $m['id']]);
+                $ok = self::send($m['to_email'], $m['to_name'], $m['subject'], $m['body'],
+                    $m['municipality_id'] ?: null);
+                if ($ok) {
+                    dbq("UPDATE mail_queue SET sent_at = NOW(), error_msg = NULL WHERE id = :id",
+                        ['id' => $m['id']]);
+                } else {
+                    dbq("UPDATE mail_queue SET error_msg = :err WHERE id = :id",
+                        ['err' => self::$lastError, 'id' => $m['id']]);
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('[MailService::processPendingDbQueue] ' . $e->getMessage());
+        }
     }
 
     /**
