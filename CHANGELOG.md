@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.51-beta] — 2026-06-19
+
+### Fix — Διόρθωση timezone MySQL/PHP (UTC vs Αθήνα)
+
+**Πρόβλημα:** Η σύνδεση PDO δεν έκανε `SET time_zone`, οπότε η MySQL αποθήκευε/επέστρεφε ώρες UTC ενώ η PHP τις ερμήνευε ως ώρα Αθήνας (+3). Αποτέλεσμα:
+- Ώρες check-in στη λίστα «Παρόντες» έδειχναν 3 ώρες πίσω (π.χ. 06:47 αντί 09:47)
+- Ο μετρητής «Xλ» ήταν λανθασμένος κατά +180 λεπτά
+
+**Λύση:** Μία γραμμή στο `db()`: `SET time_zone = '+03:00'` (δυναμικά μέσω `DateTime::format('P')` για σωστό DST χειμώνα/καλοκαίρι). Πλέον MySQL session = PHP timezone = Αθήνα.
+
+---
+
 ## [0.9.50-beta] — 2026-06-19
 
 ### Fix — Σωστή ένδειξη χρόνου ομάδας στο επιχειρησιακό κέντρο

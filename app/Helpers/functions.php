@@ -37,6 +37,9 @@ function db()
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
+        // Sync MySQL session timezone to PHP's timezone so DATETIME values
+        // are read/written consistently (prevents 3-hour UTC/Athens mismatch).
+        $pdo->exec("SET time_zone = '" . (new DateTime('now'))->format('P') . "'");
     }
     return $pdo;
 }
