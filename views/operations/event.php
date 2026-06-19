@@ -187,6 +187,19 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     </div>
   </div>
 
+<?php if (current_role() === 'municipality_admin'): ?>
+  <!-- FULL WIDTH: Pending applications (municipality_admin only, hidden when none) -->
+  <div class="col-12" id="pendingAppsRow" style="display:none">
+    <div class="card" style="border:1.5px solid #f59e0b">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background:rgba(245,158,11,.1)">
+        <span><i class="bi bi-hourglass-split me-1 text-warning"></i><strong>Αιτήσεις Συμμετοχής</strong> <span class="fw-normal small text-muted">— υποβλήθηκαν κατά τη διάρκεια της δράσης</span></span>
+        <span class="badge bg-warning text-dark" id="pendingAppsBadge">0</span>
+      </div>
+      <div class="card-body p-2" id="pendingAppsBox"></div>
+    </div>
+  </div>
+<?php endif; ?>
+
   <!-- LEFT: Map + Teams -->
   <div class="col-xl-7">
 
@@ -459,6 +472,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   var BASE       = <?= json_encode(url('')) ?>;
   var ORG_LABEL  = <?= json_encode($orgLabel ?? 'Δήμος') ?>;
   var ORG_ICON   = <?= json_encode($orgIcon  ?? '🏛️') ?>;
+  var IS_ADMIN   = <?= json_encode(current_role() === 'municipality_admin') ?>;
 
   /* ─── Countdown ─── */
   var cdEl    = document.getElementById('countdown');
@@ -1010,6 +1024,38 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     box.innerHTML = html;
   }
 
+  function renderPendingApps(apps) {
+    if (!IS_ADMIN) return;
+    var row   = document.getElementById('pendingAppsRow');
+    var box   = document.getElementById('pendingAppsBox');
+    var badge = document.getElementById('pendingAppsBadge');
+    if (!row || !box) return;
+    apps = apps || [];
+    if (badge) badge.textContent = apps.length;
+    if (!apps.length) { row.style.display = 'none'; return; }
+    row.style.display = '';
+    var html = '';
+    apps.forEach(function(a) {
+      html += '<div class="d-flex align-items-center gap-2 py-2 border-bottom" style="flex-wrap:wrap" data-app-id="' + a.id + '">' +
+              '<div style="flex:1;min-width:160px">' +
+                '<div class="fw-semibold small">' + esc(a.team_name) + '</div>' +
+                '<div class="text-muted" style="font-size:.72rem">Προσφορά: <strong>' + (a.offered_people || 0) + ' άτομα</strong>' +
+                (a.comment ? ' &middot; «' + esc(a.comment) + '»' : '') + '</div>' +
+              '</div>' +
+              '<div class="d-flex align-items-center gap-1">' +
+                '<span class="small text-muted">Εγκρίνω</span>' +
+                '<input type="number" class="form-control form-control-sm text-center app-people-inp" min="1" max="999" value="' + (a.offered_people || 1) + '" style="width:64px">' +
+                '<span class="small text-muted">άτομα</span>' +
+              '</div>' +
+              '<div class="d-flex gap-1">' +
+                '<button type="button" class="btn btn-sm btn-success app-approve-btn" data-id="' + a.id + '"><i class="bi bi-check-lg me-1"></i>Έγκριση</button>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger app-reject-btn" data-id="' + a.id + '"><i class="bi bi-x-lg me-1"></i>Απόρριψη</button>' +
+              '</div>' +
+              '</div>';
+    });
+    box.innerHTML = html;
+  }
+
   /* ─── Apply a full snapshot (from SSE or manual poll) ─── */
   function applySnapshot(d) {
     if (!d || !d.ok) return;
@@ -1026,6 +1072,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     renderShortages(d.shortages);
     renderActivity(d.activity);
     renderNotes(d.notes);
+    if (d.pending_apps !== undefined) renderPendingApps(d.pending_apps);
     if (d.teams) populateTeamSelect(d.teams);
     checkNewSos(d.sos);
     renderSos(d.sos);
@@ -1306,7 +1353,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     });
   }
 
-  /* ─── SOS / shortage action buttons (delegated) ─── */
+  /* ─── SOS / shortage / pending-application action buttons (delegated) ─── */
   document.addEventListener('click', function(e){
     if (!e.target || !e.target.closest) return;
     var b;
@@ -1314,6 +1361,30 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     else if ((b = e.target.closest('.sos-res-btn'))) { if (confirm('Κλείσιμο SOS;')) { b.disabled = true; postForm('/sos/' + b.dataset.id + '/resolve', {}).then(pollStatus); } }
     else if ((b = e.target.closest('.sh-ack-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/acknowledge', {}).then(pollStatus); }
     else if ((b = e.target.closest('.sh-res-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/resolve', {}).then(pollStatus); }
+    else if (IS_ADMIN && (b = e.target.closest('.app-approve-btn'))) {
+      var appRow = b.closest('[data-app-id]');
+      var inp    = appRow ? appRow.querySelector('.app-people-inp') : null;
+      var people = inp ? parseInt(inp.value, 10) : 1;
+      if (isNaN(people) || people < 1) people = 1;
+      b.disabled = true;
+      postForm('/operations/events/' + EID + '/applications/' + b.dataset.id + '/approve',
+               { approved_people: people })
+        .then(function(d) {
+          if (d.ok) { if (appRow) appRow.style.opacity = '.3'; setTimeout(pollStatus, 400); }
+          else { b.disabled = false; alert(d.error || 'Σφάλμα.'); }
+        }).catch(function(){ b.disabled = false; });
+    }
+    else if (IS_ADMIN && (b = e.target.closest('.app-reject-btn'))) {
+      var teamRow  = b.closest('[data-app-id]');
+      var nameEl   = teamRow ? teamRow.querySelector('.fw-semibold') : null;
+      if (!confirm('Απόρριψη αίτησης' + (nameEl ? ' από «' + nameEl.textContent.trim() + '»' : '') + ';')) return;
+      b.disabled = true;
+      postForm('/operations/events/' + EID + '/applications/' + b.dataset.id + '/reject', {})
+        .then(function(d) {
+          if (d.ok) { if (teamRow) teamRow.style.opacity = '.3'; setTimeout(pollStatus, 400); }
+          else { b.disabled = false; alert(d.error || 'Σφάλμα.'); }
+        }).catch(function(){ b.disabled = false; });
+    }
   });
 
   /* ─── Boot ─── */

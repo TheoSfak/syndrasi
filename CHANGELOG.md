@@ -4,6 +4,27 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.45-beta] — 2026-06-19
+
+### Feature — Inline team approval from operational command centre
+
+Municipality admins can now approve or reject pending team applications **directly from the operational event page** (`/operations/events/{id}`) while the event is already active — no need to navigate to the applications review screen.
+
+A full-width amber card appears automatically at the top of the command centre grid whenever there are pending applications. For each pending request it shows:
+- Team name and number of people offered
+- Optional comment left by the team
+- An editable "Εγκρίνω X άτομα" number input (pre-filled with the team's offer)
+- **Έγκριση** (green) / **Απόρριψη** (red) buttons
+
+Clicking Έγκριση immediately approves the application, sends the standard approval notification to the team, logs an audit entry, and refreshes the board. Clicking Απόρριψη shows a confirmation dialog before rejecting. The card hides itself when no pending applications remain.
+
+Technical:
+- Two new routes: `POST /operations/events/{id}/applications/{appId}/approve` and `.../reject` → `OperationController@approveApplication/rejectApplication`
+- Restricted to `municipality_admin` role only (event operators cannot approve)
+- `pending_apps` array added to both the SSE snapshot (`buildStreamSnapshot`) and the manual poll (`status`) so the panel stays live
+
+---
+
 ## [0.9.44-beta] — 2026-06-19
 
 ### Fix — Bootstrap modal greyed-out in danger zone

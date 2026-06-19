@@ -162,6 +162,15 @@ class OperationController
         $nameMap = [];
         foreach ($teams as $t) { $nameMap[(int)$t['team_id']] = $t['team_name']; }
 
+        $pendingApps = dbq(
+            "SELECT ea.id, ea.team_id, t.name AS team_name, ea.offered_people, ea.comment
+             FROM event_applications ea
+             JOIN volunteer_teams t ON t.id = ea.team_id
+             WHERE ea.event_id = :eid AND ea.status = 'pending'
+             ORDER BY ea.submitted_at ASC",
+            ['eid' => $eid]
+        )->fetchAll();
+
         json_out([
             'ok'           => true,
             'ts'           => date('H:i:s'),
@@ -175,14 +184,15 @@ class OperationController
                 'coverage'       => $coverage,
                 'open_shortages' => $openShortages,
             ],
-            'teams'      => $teamsPayload,
-            'shortages'  => $shortages,
-            'notes'      => $notes,
-            'activity'   => $activity,
-            'sos'        => SosAlert::activeForEvent((int) $eid),
-            'messages'   => EventMessage::forEvent((int) $eid),
-            'room'       => EventRoomMessage::forEvent((int) $eid),
-            'geo_orders' => $this->geoOrdersForEvent((int) $eid, $tids, $nameMap),
+            'teams'        => $teamsPayload,
+            'shortages'    => $shortages,
+            'notes'        => $notes,
+            'activity'     => $activity,
+            'sos'          => SosAlert::activeForEvent((int) $eid),
+            'messages'     => EventMessage::forEvent((int) $eid),
+            'room'         => EventRoomMessage::forEvent((int) $eid),
+            'geo_orders'   => $this->geoOrdersForEvent((int) $eid, $tids, $nameMap),
+            'pending_apps' => $pendingApps,
         ]);
     }
 
@@ -489,6 +499,15 @@ class OperationController
         // Check for teams that have gone silent beyond the configured threshold.
         $this->checkSilentTeams($eid, $event, $teamsPayload);
 
+        $pendingApps = dbq(
+            "SELECT ea.id, ea.team_id, t.name AS team_name, ea.offered_people, ea.comment
+             FROM event_applications ea
+             JOIN volunteer_teams t ON t.id = ea.team_id
+             WHERE ea.event_id = :eid AND ea.status = 'pending'
+             ORDER BY ea.submitted_at ASC",
+            ['eid' => $eid]
+        )->fetchAll();
+
         return [
             'ok'           => true,
             'ts'           => date('H:i:s'),
@@ -500,18 +519,19 @@ class OperationController
                 'coverage'       => $coverage,
                 'open_shortages' => $openShortages,
             ],
-            'teams'     => $teamsPayload,
-            'shortages' => $shortages,
-            'notes'     => $notes,
-            'activity'  => $activity,
-            'pings'     => array_values($latestPings),
-            'photos'    => self::photoMarkers($eid),
-            'sos'        => SosAlert::activeForEvent($eid),
-            'messages'   => EventMessage::forEvent($eid),
-            'room'       => EventRoomMessage::forEvent($eid),
-            'geo_orders' => $this->geoOrdersForEvent($eid,
-                                array_map(fn($t) => (int)$t['team_id'], $teams),
-                                array_column($teams, 'team_name', 'team_id')),
+            'teams'        => $teamsPayload,
+            'shortages'    => $shortages,
+            'notes'        => $notes,
+            'activity'     => $activity,
+            'pings'        => array_values($latestPings),
+            'photos'       => self::photoMarkers($eid),
+            'sos'          => SosAlert::activeForEvent($eid),
+            'messages'     => EventMessage::forEvent($eid),
+            'room'         => EventRoomMessage::forEvent($eid),
+            'geo_orders'   => $this->geoOrdersForEvent($eid,
+                                  array_map(fn($t) => (int)$t['team_id'], $teams),
+                                  array_column($teams, 'team_name', 'team_id')),
+            'pending_apps' => $pendingApps,
         ];
     }
 
@@ -621,6 +641,56 @@ class OperationController
             }
         } catch (Throwable $e) { error_log('[Ops::sendMessage] ' . $e->getMessage()); }
         audit('ops_message_sent', 'event', (int) $event['id'], ($pkind ?: $kind) . ($teamId ? ' team ' . $teamId : ' broadcast'));
+        json_out(['ok' => true]);
+    }
+
+    /**
+     * POST /operations/events/{id}/applications/{appId}/approve
+     * Approve a pending team application directly from the operational view.
+     * Municipality admin only — event_operator cannot approve/reject.
+     */
+    public function approveApplication($id, $appId)
+    {
+        requireRole(['municipality_admin']);
+        $event = Event::findForCurrent($id);
+        $app   = EventApplication::find($appId);
+        if (!$app
+            || (int) $app['event_id']        !== (int) $event['id']
+            || (int) $app['municipality_id'] !== (int) $event['municipality_id']
+            || $app['status'] !== 'pending') {
+            json_out(['ok' => false, 'error' => 'Η δήλωση δεν βρέθηκε ή δεν είναι σε αναμονή.'], 422);
+            return;
+        }
+        $people = post_int('approved_people');
+        if ($people < 1) { $people = (int) $app['offered_people']; }
+        $comment = post_str('admin_comment') ?: null;
+        EventApplication::approve($appId, $people, $comment, current_user_id());
+        audit('application_approved', 'event_application', $appId, 'via ops, people: ' . $people);
+        $app['approved_people'] = $people;
+        try { NotificationService::applicationApproved($event, $app); } catch (Throwable $e) { error_log('[Ops::approveApp] ' . $e->getMessage()); }
+        json_out(['ok' => true]);
+    }
+
+    /**
+     * POST /operations/events/{id}/applications/{appId}/reject
+     * Reject a pending team application directly from the operational view.
+     */
+    public function rejectApplication($id, $appId)
+    {
+        requireRole(['municipality_admin']);
+        $event = Event::findForCurrent($id);
+        $app   = EventApplication::find($appId);
+        if (!$app
+            || (int) $app['event_id']        !== (int) $event['id']
+            || (int) $app['municipality_id'] !== (int) $event['municipality_id']
+            || $app['status'] !== 'pending') {
+            json_out(['ok' => false, 'error' => 'Η δήλωση δεν βρέθηκε ή δεν είναι σε αναμονή.'], 422);
+            return;
+        }
+        $comment = post_str('admin_comment') ?: null;
+        EventApplication::reject($appId, $comment, current_user_id());
+        audit('application_rejected', 'event_application', $appId, 'via ops');
+        try { NotificationService::applicationRejected($event, $app, (string) $comment); } catch (Throwable $e) { error_log('[Ops::rejectApp] ' . $e->getMessage()); }
         json_out(['ok' => true]);
     }
 

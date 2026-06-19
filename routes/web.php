@@ -123,6 +123,8 @@ $router->post('/operations/events/{id}/request-photo', 'OperationController@requ
 $router->post('/operations/events/{id}/request-gps', 'OperationController@requestGps');
 $router->post('/operations/events/{id}/message', 'OperationController@sendMessage');
 $router->post('/operations/events/{id}/room', 'OperationController@sendRoom');
+$router->post('/operations/events/{id}/applications/{appId}/approve', 'OperationController@approveApplication');
+$router->post('/operations/events/{id}/applications/{appId}/reject',  'OperationController@rejectApplication');
 $router->get('/operations/photos/{id}', 'OperationController@servePhoto');
 $router->post('/shortages/{id}/acknowledge', 'OperationController@acknowledgeShortage');
 $router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage');
