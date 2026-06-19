@@ -746,9 +746,16 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
       var dotAnim = (hasSos || cs === 'present_full') ? ';animation:pp 1.8s infinite' : '';
 
       var pingHtml = '';
-      if (t.ping_age_min !== null && t.ping_age_min !== undefined) {
-        var pc = t.ping_age_min < 5 ? '#22c55e' : t.ping_age_min < 20 ? '#f59e0b' : '#ef4444';
-        pingHtml = '<span style="font-size:.7rem;color:' + pc + ';flex-shrink:0">' + t.ping_age_min + 'λ</span>';
+      // Use the most recent activity: GPS ping OR check-in, whichever is newer.
+      var displayAge = t.ping_age_min;
+      if (t.checkin_age_min !== null && t.checkin_age_min !== undefined) {
+        if (displayAge === null || displayAge === undefined || t.checkin_age_min < displayAge) {
+          displayAge = t.checkin_age_min;
+        }
+      }
+      if (displayAge !== null && displayAge !== undefined) {
+        var pc = displayAge < 5 ? '#22c55e' : displayAge < 20 ? '#f59e0b' : '#ef4444';
+        pingHtml = '<span style="font-size:.7rem;color:' + pc + ';flex-shrink:0">' + displayAge + 'λ</span>';
       } else {
         pingHtml = '<span style="font-size:.7rem;color:#cbd5e1;flex-shrink:0">—</span>';
       }

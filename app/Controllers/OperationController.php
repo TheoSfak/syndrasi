@@ -140,21 +140,26 @@ class OperationController
                     ? $pingAgeMin . ' λεπτά πριν'
                     : round($pingAgeMin / 60, 1) . ' ώρες πριν';
             }
+            $checkinAgeMin = null;
+            if (!empty($t['checked_in_at'])) {
+                $checkinAgeMin = max(0, (int) round((time() - strtotime($t['checked_in_at'])) / 60));
+            }
             $teamsPayload[] = [
-                'team_id'        => (int) $t['team_id'],
-                'team_name'      => $t['team_name'],
-                'team_phone'     => $t['team_phone'],
-                'checkin_status' => $t['checkin_status'],
-                'checkin_msg'    => $t['checkin_msg'],
-                'present_people' => (int) $t['present_people'],
-                'approved_people'=> (int) $t['approved_people'],
-                'last_ping_at'   => $t['last_ping_at'],
-                'ping_age'       => $pingAge,
-                'ping_age_min'   => $pingAgeMin,
-                'ping_lat'       => $t['last_lat'] ? (float)$t['last_lat'] : null,
-                'ping_lng'       => $t['last_lng'] ? (float)$t['last_lng'] : null,
-                'photo_pending'  => isset($pendingPhoto[(int) $t['team_id']]),
-                'gps_pending'    => isset($pendingGps[(int) $t['team_id']]),
+                'team_id'         => (int) $t['team_id'],
+                'team_name'       => $t['team_name'],
+                'team_phone'      => $t['team_phone'],
+                'checkin_status'  => $t['checkin_status'],
+                'checkin_msg'     => $t['checkin_msg'],
+                'present_people'  => (int) $t['present_people'],
+                'approved_people' => (int) $t['approved_people'],
+                'last_ping_at'    => $t['last_ping_at'],
+                'ping_age'        => $pingAge,
+                'ping_age_min'    => $pingAgeMin,
+                'checkin_age_min' => $checkinAgeMin,
+                'ping_lat'        => $t['last_lat'] ? (float)$t['last_lat'] : null,
+                'ping_lng'        => $t['last_lng'] ? (float)$t['last_lng'] : null,
+                'photo_pending'   => isset($pendingPhoto[(int) $t['team_id']]),
+                'gps_pending'     => isset($pendingGps[(int) $t['team_id']]),
             ];
         }
 
@@ -476,6 +481,10 @@ class OperationController
                     ? $pingAgeMin . ' λεπτά πριν'
                     : round($pingAgeMin / 60, 1) . ' ώρες πριν';
             }
+            $checkinAgeMin = null;
+            if (!empty($t['checked_in_at'])) {
+                $checkinAgeMin = max(0, (int) round((time() - strtotime($t['checked_in_at'])) / 60));
+            }
             $teamsPayload[] = [
                 'team_id'         => (int) $t['team_id'],
                 'team_name'       => $t['team_name'],
@@ -487,6 +496,7 @@ class OperationController
                 'last_ping_at'    => $t['last_ping_at'],
                 'ping_age'        => $pingAge,
                 'ping_age_min'    => $pingAgeMin,
+                'checkin_age_min' => $checkinAgeMin,
                 'ping_lat'        => $t['last_lat'] ? (float) $t['last_lat'] : null,
                 'ping_lng'        => $t['last_lng'] ? (float) $t['last_lng'] : null,
                 'photo_pending'   => isset($pendingPhoto[(int) $t['team_id']]),
@@ -815,7 +825,12 @@ class OperationController
 
         $candidates = [];
         foreach ($teams as $t) {
+            // Use the most recent activity: GPS ping OR check-in, whichever is newer.
             $age = $t['ping_age_min'];
+            $ci  = $t['checkin_age_min'] ?? null;
+            if ($ci !== null && ($age === null || $ci < $age)) {
+                $age = $ci;
+            }
             if ($age !== null && (int) $age >= $minutes) {
                 $candidates[(int) $t['team_id']] = $t;
             }
@@ -1017,6 +1032,7 @@ class OperationController
                     ea.approved_people,
                     oc.status AS checkin_status,
                     oc.present_people, oc.message AS checkin_msg,
+                    oc.checked_in_at,
                     lp.latitude  AS last_lat,
                     lp.longitude AS last_lng,
                     lp.created_at AS last_ping_at
