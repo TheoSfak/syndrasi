@@ -1034,6 +1034,12 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     if (badge) badge.textContent = apps.length;
     if (!apps.length) { row.style.display = 'none'; return; }
     row.style.display = '';
+    // Save values the admin may have already edited before the poll re-renders.
+    var saved = {};
+    box.querySelectorAll('[data-app-id]').forEach(function(el) {
+      var inp = el.querySelector('.app-people-inp');
+      if (inp) saved[el.getAttribute('data-app-id')] = inp.value;
+    });
     var html = '';
     apps.forEach(function(a) {
       html += '<div class="d-flex align-items-center gap-2 py-2 border-bottom" style="flex-wrap:wrap" data-app-id="' + a.id + '">' +
@@ -1054,6 +1060,11 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
               '</div>';
     });
     box.innerHTML = html;
+    // Restore any values the admin had changed before the re-render.
+    box.querySelectorAll('[data-app-id]').forEach(function(el) {
+      var v = saved[el.getAttribute('data-app-id')];
+      if (v !== undefined) { var inp = el.querySelector('.app-people-inp'); if (inp) inp.value = v; }
+    });
   }
 
   /* ─── Apply a full snapshot (from SSE or manual poll) ─── */
