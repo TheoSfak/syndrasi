@@ -4,6 +4,30 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.44-beta] — 2026-06-19
+
+### Fix — Bootstrap modal greyed-out in danger zone
+
+The "Διαγραφή όλων των δεδομένων…" modal was showing as an inaccessible grey overlay. Root cause: Bootstrap 5 does not teleport modals to `<body>` — the modal lived inside `<main>`, while the backdrop is always appended to `<body>`. This placed them in different stacking contexts, making the backdrop render above the dialog. Fixed by moving the modal to `document.body` on `DOMContentLoaded` via an inline script, so both the modal (z-index 1055) and backdrop (z-index 1050) share the same stacking context.
+
+---
+
+## [0.9.43-beta] — 2026-06-19
+
+### Feature — High-priority notification system for emergency operations
+
+Complete overhaul of the notification pipeline for civil protection / fire department scenarios where no alert can be missed:
+
+**Web Push urgency (RFC 8030):** `WebPushService::send()` now accepts an `$urgency` parameter (`very-high | high | normal | low`) and sets the `Urgency:` HTTP header. `very-high` bypasses Android Doze mode so the device wakes even when battery-optimised. SOS alerts and geo-incident orders now send at `very-high`; GPS-arrival and silent-team alerts at `high`.
+
+**GPS arrival notification:** When command staff requests a team's GPS and the team submits it, command now receives an immediate in-app + push notification with a Google Maps link. Implemented via `NotificationService::gpsArrived()` called from `FieldController::location()` when a pending GPS request is fulfilled.
+
+**Silent team alert:** `OperationController::checkSilentTeams()` runs on every SSE snapshot. If a team has not pinged for more than the configured threshold (default 20 min), command staff receive a warning notification. A dedup check on the `notifications` table prevents re-alerting within the same silence window. Threshold is now a per-municipality setting (`ops_silent_team_minutes`, 0 = disabled) under Settings → Municipality → Notifications.
+
+**Field hub (Mission Commander) audio + banner:** When a new order or message arrives on the `/f/{token}` hub page, the browser plays a short beep via Web Audio API and vibrates (mobile). An amber fixed-position flash banner shows the new message text for 6 seconds. First-load seeding avoids false alerts on page open.
+
+---
+
 ## [0.9.42-beta] — 2026-06-19
 
 ### Security — photo serving MIME whitelist

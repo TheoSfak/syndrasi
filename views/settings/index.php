@@ -237,8 +237,8 @@
 
 </div><!-- /.tab-content -->
 
-<!-- Reset data confirmation modal -->
-<div class="modal fade" id="resetDataModal" tabindex="-1" aria-labelledby="resetDataModalLabel" aria-modal="true">
+<!-- Reset data confirmation modal — must be a direct body child for z-index to work -->
+<div class="modal fade" id="resetDataModal" tabindex="-1" aria-labelledby="resetDataModalLabel" role="dialog">
   <div class="modal-dialog">
     <div class="modal-content border-danger">
       <div class="modal-header bg-danger text-white">
@@ -265,9 +265,12 @@
 </div>
 
 <script>
-// Activate the tab matching the URL hash (so redirects to #cron / #updates / #danger land right).
-// Runs on DOMContentLoaded so Bootstrap (loaded in the footer) is available.
 document.addEventListener('DOMContentLoaded', function () {
+  // Move modal to <body> so Bootstrap's backdrop z-index stacking works correctly.
+  var m = document.getElementById('resetDataModal');
+  if (m) { document.body.appendChild(m); }
+
+  // Activate the tab matching the URL hash (so redirects to #danger etc. land right).
   var hash = window.location.hash;
   if (!hash) return;
   var btn = document.querySelector('[data-bs-target="#tab-' + hash.replace('#', '') + '"]');
