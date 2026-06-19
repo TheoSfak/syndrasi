@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.48-beta] — 2026-06-19
+
+### Fix — Αριθμός εθελοντών επαναφερόταν κατά το live refresh
+
+Στο Επιχειρησιακό Κέντρο, ο admin δεν μπορούσε να αλλάξει τον αριθμό ατόμων στο input "Εγκρίνω Χ άτομα" γιατί κάθε ~9 δευτερόλεπτα το SSE/poll ξανά-render την κάρτα Αιτήσεων και επανέφερε την τιμή στο `offered_people` της ομάδας.
+
+Fix: `renderPendingApps()` τώρα αποθηκεύει τις τιμές που έχει ήδη επεξεργαστεί ο admin πριν το `innerHTML` rebuild και τις επαναφέρει αμέσως μετά.
+
+---
+
 ## [0.9.47-beta] — 2026-06-19
 
 ### Fix — Email dispatch: cron job no longer required
