@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.50-beta] — 2026-06-19
+
+### Fix — Σωστή ένδειξη χρόνου ομάδας στο επιχειρησιακό κέντρο
+
+**Πρόβλημα:** Ο μετρητής "Xλ" στον πίνακα ομάδων έδειχνε λεπτά από το τελευταίο **GPS ping**, όχι από το check-in. Ομάδα που μόλις δήλωσε παρούσα εμφανιζόταν με 180+ λεπτά (κόκκινο) αντί για ~0 (πράσινο).
+
+**Λύση:** Ο δείκτης χρησιμοποιεί πλέον την **πιο πρόσφατη δραστηριότητα** — είτε GPS ping είτε check-in, όποιο είναι νεότερο. Το ίδιο και η λογική silent-team alert.
+
+---
+
 ## [0.9.49-beta] — 2026-06-19
 
 ### Fix — Αυτόματη δημιουργία cron_secret · βελτίωση Cron Jobs tab
