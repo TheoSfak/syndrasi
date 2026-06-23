@@ -41,7 +41,7 @@
       <?php endif; ?>
 
       <?php if (in_array($event['status'], ['open','review','confirmed','active'], true)): ?>
-        <form method="post" action="<?= e(url('/events/' . $event['id'] . '/complete')) ?>"
+        <form method="post" action="<?= e(url('/events/' . $event['id'] . '/close')) ?>"
               onsubmit="return confirm('Η δράση θα κλειστεί και οι ομάδες θα ειδοποιηθούν να υποβάλουν αναφορά. Συνέχεια;')">
           <?= csrf_field() ?>
           <button class="btn btn-danger"><i class="bi bi-lock me-1"></i>Κλείσιμο δράσης</button>

@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.9.52-beta] — 2026-06-23
+
+### Fix — Διαδρομές υπενθύμισης/ακύρωσης και σωστό κλείσιμο δράσης
+
+- Προστέθηκαν οι missing handlers `EventController::remind()` και `EventController::cancel()`, ώστε τα κουμπιά υπενθύμισης και ακύρωσης να μην οδηγούν σε router crash.
+- Το κουμπί «Κλείσιμο δράσης» οδηγεί πλέον στο `/close`, ώστε να περνά από τη ροή `closed → debrief/reconcile → completed`.
+- Το base `schema.sql` περιλαμβάνει πλέον το status `closed` στο enum των δράσεων, για συμβατότητα με fresh installs.
+
+---
+
 ## [0.9.51-beta] — 2026-06-19
 
 ### Fix — Διόρθωση timezone MySQL/PHP (UTC vs Αθήνα)

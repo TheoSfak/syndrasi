@@ -312,6 +312,43 @@ class EventController
         redirect('/operations');
     }
 
+    public function remind($id)
+    {
+        requireRole(['municipality_admin']);
+        $event = Event::findForCurrent((int) $id);
+        if (!in_array($event['status'], ['open', 'review', 'confirmed', 'active'], true)) {
+            flash_set('danger', 'Δεν μπορεί να σταλεί υπενθύμιση για δράση σε αυτή την κατάσταση.');
+            redirect('/events/' . $event['id']);
+        }
+
+        try {
+            $sent = NotificationService::eventReminder($event);
+        } catch (Throwable $e) {
+            error_log('[EventReminder] ' . $e->getMessage());
+            flash_set('danger', 'Η υπενθύμιση δεν στάλθηκε. Δοκιμάστε ξανά.');
+            redirect('/events/' . $event['id']);
+        }
+
+        audit('event_reminder_sent', 'event', $event['id'], 'teams: ' . $sent);
+        flash_set('success', 'Η υπενθύμιση στάλθηκε σε ' . $sent . ' εγκεκριμένες ομάδα/ες.');
+        redirect('/events/' . $event['id']);
+    }
+
+    public function cancel($id)
+    {
+        requireRole(['municipality_admin']);
+        $event = Event::findForCurrent((int) $id);
+        if (!Event::canTransition($event['status'], 'cancelled')) {
+            flash_set('danger', 'Η δράση δεν μπορεί να ακυρωθεί από αυτή την κατάσταση.');
+            redirect('/events/' . $event['id']);
+        }
+
+        Event::setStatus($event['id'], 'cancelled');
+        audit('event_cancelled', 'event', $event['id'], $event['title']);
+        flash_set('success', 'Η δράση ακυρώθηκε.');
+        redirect('/events');
+    }
+
     /** Move completed → archived (cancelled = archived in this system) */
     public function archive($id)
     {

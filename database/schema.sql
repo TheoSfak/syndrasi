@@ -115,7 +115,7 @@ CREATE TABLE events (
   requested_vehicle TINYINT(1) NOT NULL DEFAULT 0,
   requested_medical_equipment TINYINT(1) NOT NULL DEFAULT 0,
   instructions TEXT NULL,
-  status ENUM('draft','open','review','confirmed','active','completed','cancelled') NOT NULL DEFAULT 'draft',
+  status ENUM('draft','open','review','confirmed','active','closed','completed','cancelled') NOT NULL DEFAULT 'draft',
   published_at DATETIME NULL,
   created_by INT NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
