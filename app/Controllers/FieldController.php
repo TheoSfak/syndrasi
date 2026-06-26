@@ -61,6 +61,11 @@ class FieldController
     {
         $ctx = $this->resolve($token);
         $app = $ctx['app'];
+        // Optional PIN gate: if a field PIN is set and this device isn't verified, show the gate.
+        if (!empty($app['field_pin']) && !$this->pinVerified($app)) {
+            render('field/pin', ['pageTitle' => 'PIN — ' . $app['event_title'], 'app' => $app, 'token' => $app['field_token'], 'error' => false], false);
+            return;
+        }
         $lastPing = dbq(
             'SELECT latitude, longitude, created_at FROM location_pings
              WHERE event_id = :eid AND team_id = :tid ORDER BY id DESC LIMIT 1',
@@ -83,6 +88,34 @@ class FieldController
             'orgLabel'     => MunicipalitySetting::orgLabelShort($munSettings),
             'orgIcon'      => MunicipalitySetting::orgIcon($munSettings),
         ], false); // standalone, no app layout / no login chrome
+    }
+
+    /* ── Field PIN gate helpers ─────────────────────────────────────────── */
+    private function pinCookieName(array $app): string { return 'fld_' . (int) $app['id']; }
+    private function pinExpected(array $app): string { return hash('sha256', $app['field_token'] . '|' . (string) ($app['field_pin'] ?? '')); }
+    private function pinVerified(array $app): bool
+    {
+        $c = $this->pinCookieName($app);
+        return isset($_COOKIE[$c]) && hash_equals($this->pinExpected($app), (string) $_COOKIE[$c]);
+    }
+
+    /** POST /f/{token}/pin — verify the field PIN and remember this device. */
+    public function pin($token)
+    {
+        $ctx = $this->resolve($token); $app = $ctx['app'];
+        $expected = (string) ($app['field_pin'] ?? '');
+        $entered  = preg_replace('/\\D/', '', (string) post_str('pin'));
+        if ($expected !== '' && hash_equals($expected, $entered)) {
+            setcookie($this->pinCookieName($app), $this->pinExpected($app), [
+                'expires'  => time() + 180 * 86400,
+                'path'     => '/',
+                'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            redirect('/f/' . $app['field_token']);
+        }
+        render('field/pin', ['pageTitle' => 'PIN — ' . $app['event_title'], 'app' => $app, 'token' => $app['field_token'], 'error' => true], false);
     }
 
     /** POST /f/{token}/location (JSON) — send GPS location. */

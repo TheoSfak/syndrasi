@@ -125,6 +125,26 @@ class EventApplication
         return $tok;
     }
 
+    /** Ensure a 4-digit field PIN exists for the link; return it. */
+    public static function ensureFieldPin(int $appId): string
+    {
+        $row = dbq('SELECT field_pin FROM event_applications WHERE id = :id LIMIT 1', ['id' => $appId])->fetch();
+        $pin = ($row && !empty($row['field_pin'])) ? (string) $row['field_pin'] : null;
+        if (!$pin) {
+            $pin = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            dbq('UPDATE event_applications SET field_pin = :p WHERE id = :id', ['p' => $pin, 'id' => $appId]);
+        }
+        return $pin;
+    }
+
+    /** Force-rotate the field PIN (invalidates remembered devices). Returns the new PIN. */
+    public static function regenerateFieldPin(int $appId): string
+    {
+        $pin = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        dbq('UPDATE event_applications SET field_pin = :p WHERE id = :id', ['p' => $pin, 'id' => $appId]);
+        return $pin;
+    }
+
     /** Resolve a field token to its application row (with team + event context). */
     public static function findByFieldToken(string $token)
     {

@@ -204,15 +204,30 @@ class TeamPortalController
             redirect('/team/events/' . $application['event_id']);
         }
         $token = EventApplication::ensureFieldToken((int) $application['id']);
+        $pin   = EventApplication::ensureFieldPin((int) $application['id']);
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $link = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . url('/f/' . $token);
-        $sms = 'SynDrasi — Πεδίο δράσης «' . $application['event_title'] . '». Σύνδεσμος υπευθύνου: ' . $link;
+        $sms = 'SynDrasi — Πεδίο δράσης «' . $application['event_title'] . '». Σύνδεσμος: ' . $link . ' — PIN: ' . $pin;
 
         $ok = SmsService::send($commander['phone'], $sms, (int) $application['municipality_id']);
         audit('field_link_sms', 'event_application', (int) $application['id'], 'to ' . $commander['phone']);
         flash_set($ok ? 'success' : 'warning',
             $ok ? ('Ο σύνδεσμος στάλθηκε με SMS στον/στην ' . $commander['full_name'] . '.')
                 : ('Δεν στάλθηκε SMS (' . (SmsService::lastError() ?: 'έλεγξε τις ρυθμίσεις SMS') . '). Μπορείτε να αντιγράψετε τον σύνδεσμο.'));
+        redirect('/team/events/' . $application['event_id']);
+    }
+
+    /** POST /team/applications/{id}/regenerate-pin — rotate the field PIN. */
+    public function regenerateFieldPin($id)
+    {
+        requireRole(['team_admin']);
+        $application = EventApplication::find((int) $id);
+        if (!$application || (int) $application['team_id'] !== (int) current_team_id()) {
+            abort(404, 'Δεν βρέθηκε η δήλωση.');
+        }
+        $pin = EventApplication::regenerateFieldPin((int) $application['id']);
+        audit('field_pin_regenerated', 'event_application', (int) $application['id'], 'rotated');
+        flash_set('success', 'Νέο PIN: ' . $pin . '. Οι ήδη συνδεδεμένες συσκευές θα ζητήσουν ξανά κωδικό.');
         redirect('/team/events/' . $application['event_id']);
     }
 

@@ -4,6 +4,24 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.11.0-beta] — 2026-06-27
+
+### Feature — Προαιρετικό PIN στον σύνδεσμο πεδίου
+
+Ο σύνδεσμος του Mission Υπευθύνου (`/f/{token}`) μπορεί πλέον να προστατεύεται με 4ψήφιο PIN. Όταν υπάρχει PIN, η πρώτη επίσκεψη σε κάθε συσκευή ζητά τον κωδικό· μετά τη σωστή εισαγωγή η συσκευή «θυμάται» (signed cookie 180 ημερών) και δεν ξαναρωτά. Πλήρως συμβατό προς τα πίσω: χωρίς PIN, καμία αλλαγή στη ροή.
+
+- **DB:** migration `020_field_pin.sql` — στήλη `event_applications.field_pin` (NULL = χωρίς gate).
+- **Model:** `EventApplication::ensureFieldPin()` (παράγει 4ψήφιο PIN όταν χρειαστεί).
+- **FieldController:** PIN gate στο `hub()` (cookie remember-device), handler `pin()` (επαλήθευση + cookie), helpers.
+- **View:** `views/field/pin.php` — οθόνη εισαγωγής PIN (standalone, mobile).
+- **Sharing:** το «Αποστολή με SMS» στέλνει πλέον σύνδεσμο **+ PIN**· το PIN εμφανίζεται και στον πίνακα συνδέσμου πεδίου της δράσης.
+- **Route:** `POST /f/{token}/pin`.
+- **Regenerate:** κουμπί «Νέο PIN» στον πίνακα συνδέσμου — περιστρέφει το PIN και ακυρώνει αυτόματα όλες τις θυμημένες συσκευές (route `POST /team/applications/{id}/regenerate-pin`).
+
+> Σημείωση: το PIN ενεργοποιείται τη στιγμή που ο υπεύθυνος ομάδας ανοίγει/στέλνει τον σύνδεσμο (όπου παράγεται). Επικοινωνήστε το PIN μαζί με τον σύνδεσμο.
+
+---
+
 ## [0.10.0-beta] — 2026-06-26
 
 ### Feature — Σύντομο βίντεο από το πεδίο (live ή gallery)

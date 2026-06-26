@@ -262,6 +262,7 @@
           <?php if (!empty($fieldToken)):
             $scheme   = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $fieldUrl = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . url('/f/' . $fieldToken);
+            $fieldPin = EventApplication::ensureFieldPin((int) $application['id']);
           ?>
           <hr class="my-3">
           <div class="p-3 rounded border border-2 border-warning bg-warning-subtle">
@@ -271,6 +272,16 @@
               <input type="text" class="form-control" id="fieldLinkInput" value="<?= e($fieldUrl) ?>" readonly onclick="this.select()">
               <button class="btn btn-outline-secondary" type="button" onclick="copyFieldLink()"><i class="bi bi-clipboard me-1"></i>Αντιγραφή</button>
             </div>
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+              <span class="small text-muted"><i class="bi bi-shield-lock me-1"></i>PIN συσκευής:</span>
+              <span class="badge bg-dark fs-6" style="letter-spacing:3px"><?= e($fieldPin) ?></span>
+              <form method="post" action="<?= e(url('/team/applications/' . $application['id'] . '/regenerate-pin')) ?>" class="m-0"
+                    onsubmit="return confirm('Δημιουργία νέου PIN; Οι ήδη συνδεδεμένες συσκευές θα ζητήσουν ξανά κωδικό.');">
+                <?= csrf_field() ?>
+                <button class="btn btn-sm btn-outline-warning" type="submit"><i class="bi bi-arrow-repeat me-1"></i>Νέο PIN</button>
+              </form>
+            </div>
+            <div class="small text-muted mb-2">Στείλτε το PIN μαζί με τον σύνδεσμο.</div>
             <div class="d-flex flex-wrap gap-2">
               <form method="post" action="<?= e(url('/team/applications/' . $application['id'] . '/send-field-link')) ?>" class="m-0">
                 <?= csrf_field() ?>
