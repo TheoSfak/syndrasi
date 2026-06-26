@@ -4,13 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
-## [0.11.0-beta] — 2026-06-27
+## [0.11.1-beta] — 2026-06-27
 
 ### UI — Μετρητές σε όλα τα tabs δράσεων
 
-Τα tabs «Ενεργές / Κλειστές / Ολοκληρωμένες» στη λίστα δράσεων δείχνουν πλέον τον αριθμό τους και τα τρία, σε κάθε σελίδα — χωρίς να χρειάζεται να μπεις σε καθένα (`Event::statusCounts()`).
+Τα tabs «Ενεργές / Κλειστές / Ολοκληρωμένες» στη λίστα δράσεων δείχνουν πλέον τον αριθμό τους και τα τρία, σε κάθε σελίδα — χωρίς να χρειάζεται να μπεις σε καθένα.
+
+- **Model:** `Event::statusCounts()` — ένα query μετράει τις τρεις κατηγορίες.
+- **Controller/Views:** `tabCounts` περνά στις σελίδες· badges σε όλα τα tabs (Ενεργές/Κλειστές/Ολοκληρωμένες).
 
 ---
+
+## [0.11.0-beta] — 2026-06-27
 
 ### Feature — Προαιρετικό PIN στον σύνδεσμο πεδίου
 
