@@ -33,8 +33,25 @@ class MaintenanceService
                 OR created_at < DATE_SUB(NOW(), INTERVAL 1 DAY)"
         )->rowCount();
 
+        // Auto-purge field videos older than EventVideo::RETENTION_DAYS (file + row).
+        $videoDir = BASE_PATH . EventVideo::DIR;
+        $vc = 0;
+        $oldVideos = dbq(
+            "SELECT id, file_name FROM event_videos
+             WHERE created_at < DATE_SUB(NOW(), INTERVAL " . EventVideo::RETENTION_DAYS . " DAY)"
+        )->fetchAll();
+        foreach ($oldVideos as $v) {
+            $name = basename((string) $v['file_name']);
+            if ($name !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $name)) {
+                @unlink($videoDir . '/' . $name);
+            }
+            dbq("DELETE FROM event_videos WHERE id = :id", ['id' => (int) $v['id']]);
+            $vc++;
+        }
+
         return [
             'rate_limit_removed'   => $rl,
+            'videos_purged'        => $vc,
             'shift_flags_removed'  => $sr,
             'reset_tokens_removed' => $pr,
             'at'                   => date('Y-m-d H:i:s'),

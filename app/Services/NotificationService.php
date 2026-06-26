@@ -575,6 +575,49 @@ class NotificationService
         }
     }
 
+
+    /** Commander asks a team for a short video — notify the team (in-app + push). */
+    public static function videoRequested(array $event, array $team, ?string $instructions = null)
+    {
+        $title = 'Αίτημα βίντεο';
+        $msg   = 'Ο δήμος ζητά σύντομο βίντεο για τη δράση «' . $event['title'] . '».'
+               . ($instructions ? ' Οδηγίες: ' . $instructions : '');
+        foreach (User::teamAdmins($team['id']) as $admin) {
+            Notification::create([
+                'municipality_id' => $event['municipality_id'],
+                'user_id'         => $admin['id'],
+                'team_id'         => $team['id'],
+                'event_id'        => $event['id'],
+                'title'           => $title,
+                'message'         => $msg,
+                'type'            => 'video_request',
+                'email_sent'      => 0,
+            ]);
+            self::sendPush($admin['id'], $title, $msg);
+        }
+    }
+
+    /** Team uploaded a video — notify municipality admins (in-app + push). */
+    public static function videoUploaded(array $event, int $teamId)
+    {
+        $team  = VolunteerTeam::find($teamId);
+        $tname = $team['name'] ?? ('#' . $teamId);
+        $title = 'Νέο βίντεο ομάδας';
+        $msg   = 'Η ομάδα «' . $tname . '» έστειλε βίντεο για τη δράση «' . $event['title'] . '».';
+        foreach (User::municipalityAdmins($event['municipality_id']) as $admin) {
+            Notification::create([
+                'municipality_id' => $event['municipality_id'],
+                'user_id'         => $admin['id'],
+                'event_id'        => $event['id'],
+                'title'           => $title,
+                'message'         => $msg,
+                'type'            => 'video_uploaded',
+                'email_sent'      => 0,
+            ]);
+            self::sendPush($admin['id'], $title, $msg);
+        }
+    }
+
     /* ── Active-event communications ─────────────────────────────────────── */
 
     /**

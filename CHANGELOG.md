@@ -4,6 +4,25 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.10.0-beta] — 2026-06-26
+
+### Feature — Σύντομο βίντεο από το πεδίο (live ή gallery)
+
+Ο χειριστής μπορεί να ζητήσει από μία ομάδα — ή με broadcast από όλες — ένα σύντομο βίντεο (προεπιλογή 40\'\'), με προαιρετικές οδηγίες. Ο Υπεύθυνος Ομάδας λαμβάνει Web Push, ανοίγει το token link του και είτε τραβάει ζωντανά μέσα από την εφαρμογή (με όριο χρόνου που επιβάλλεται αυτόματα, 720p) είτε επιλέγει βίντεο από το gallery. Το κλιπ ανεβαίνει geotagged και εμφανίζεται στην Επιχειρησιακή Σελίδα με player, ώρα και αντίστροφη μέτρηση διαγραφής.
+
+- **DB:** migration `019_event_videos.sql` — πίνακες `video_requests` (με `batch_id` για broadcast) και `event_videos`.
+- **Models:** `VideoRequest`, `EventVideo`.
+- **Routes:** `POST /operations/events/{id}/request-video`, `GET /operations/videos/{id}`, `GET /operations/videos/{id}/download`, `POST /f/{token}/video`.
+- **OperationController:** `requestVideo` (single/broadcast), `serveVideo` (inline streaming με HTTP Range), `downloadVideo` (αρχειοθέτηση).
+- **FieldController:** `video()` upload (mime whitelist mp4/webm/mov, όριο 60MB, geotag, λεζάντα).
+- **NotificationService:** `videoRequested`, `videoUploaded` (in-app + Web Push).
+- **UI:** κάρτα λήψης βίντεο στο field hub (live + gallery, preview, progress) και κουμπί «Ζήτησε βίντεο» + panel «Βίντεο πεδίου» στην Επιχειρησιακή Σελίδα.
+- **Διατήρηση:** auto-purge βίντεο > 7 ημερών μέσω `MaintenanceService::cleanup()` (file + row).
+
+> Σημείωση deploy: χρειάζονται αυξημένα όρια PHP στον production server (`upload_max_filesize`/`post_max_size` ≥ 64M/80M). Web Push σε iPhone απαιτεί iOS 16.4+ και «Add to Home Screen».
+
+---
+
 ## [0.9.52-beta] — 2026-06-23
 
 ### Fix — Διαδρομές υπενθύμισης/ακύρωσης και σωστό κλείσιμο δράσης

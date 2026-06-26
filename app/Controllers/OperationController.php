@@ -240,6 +240,7 @@ class OperationController
             'ok'         => true,
             'pings'      => array_values($latest),
             'photos'     => self::photoMarkers($eid),
+            'videos'     => self::videoMarkers($eid),
             'geo_orders' => $this->geoOrdersForEvent($eid, $approvedIds, $nameMap),
         ]);
     }
@@ -348,6 +349,177 @@ class OperationController
         }
         flash_set('success', 'Ζητήθηκε στίγμα GPS από την ομάδα «' . $team['name'] . '».');
         redirect('/operations/events/' . $event['id']);
+    }
+
+
+    /**
+     * POST /operations/events/{id}/request-video — ask one team, or broadcast to
+     * several/all approved teams, for a short video clip.
+     * Accepts: team_id (single) OR team_ids[] OR all=1, plus instructions & max_seconds.
+     */
+    public function requestVideo($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent($id);
+        $mid   = (int) $event['municipality_id'];
+
+        $instructions = trim(post_str('instructions'));
+        if ($instructions === '') { $instructions = null; }
+        $maxSeconds = post_int('max_seconds') ?: 40;
+        if ($maxSeconds < 10)  { $maxSeconds = 10; }
+        if ($maxSeconds > 120) { $maxSeconds = 120; }
+
+        // Resolve target team list.
+        $targetIds = [];
+        $broadcast = (post_int('all') === 1) || !empty($_POST['team_ids']);
+        if ($broadcast) {
+            if (!empty($_POST['team_ids']) && is_array($_POST['team_ids'])) {
+                $targetIds = array_map('intval', $_POST['team_ids']);
+            } else {
+                $targetIds = array_map('intval', dbq(
+                    "SELECT DISTINCT team_id FROM event_applications WHERE event_id = :eid AND status = 'approved'",
+                    ['eid' => $event['id']]
+                )->fetchAll(PDO::FETCH_COLUMN) ?: []);
+            }
+        } else {
+            $targetIds = [post_int('team_id')];
+        }
+
+        // Validate every target belongs to this municipality.
+        $valid = [];
+        foreach (array_unique(array_filter($targetIds)) as $tid) {
+            $team = VolunteerTeam::find((int) $tid);
+            if ($team && (int) $team['municipality_id'] === $mid) {
+                $valid[(int) $tid] = $team;
+            }
+        }
+        if (!$valid) {
+            if (wants_json()) { json_out(['ok' => false, 'error' => 'no_teams'], 422); }
+            flash_set('danger', 'Δεν βρέθηκε έγκυρη ομάδα για το αίτημα βίντεο.');
+            redirect('/operations/events/' . $event['id']);
+        }
+
+        $batchId = count($valid) > 1 ? self::uuid4() : null;
+        foreach ($valid as $tid => $team) {
+            VideoRequest::create($mid, (int) $event['id'], (int) $tid, current_user_id(), $instructions, $maxSeconds, $batchId);
+            try { NotificationService::videoRequested($event, $team, $instructions); }
+            catch (Throwable $e) { error_log('[Ops::requestVideo] ' . $e->getMessage()); }
+        }
+        audit('video_requested', 'event', $event['id'], 'teams ' . implode(',', array_keys($valid)));
+
+        if (wants_json()) {
+            json_out(['ok' => true, 'teams' => count($valid)]);
+        }
+        $first = reset($valid);
+        $msg = count($valid) > 1
+            ? ('Ζητήθηκε βίντεο από ' . count($valid) . ' ομάδες.')
+            : ('Ζητήθηκε βίντεο από την ομάδα «' . $first['name'] . '».');
+        flash_set('success', $msg);
+        redirect('/operations/events/' . $event['id']);
+    }
+
+    /** RFC-4122 v4 UUID (for broadcast batch grouping). */
+    private static function uuid4(): string
+    {
+        $b = random_bytes(16);
+        $b[6] = chr((ord($b[6]) & 0x0f) | 0x40);
+        $b[8] = chr((ord($b[8]) & 0x3f) | 0x80);
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($b), 4));
+    }
+
+    /** Map-ready video list for an event. */
+    private static function videoMarkers(int $eid): array
+    {
+        $out = [];
+        foreach (EventVideo::forEvent($eid) as $v) {
+            $out[] = [
+                'id'        => (int) $v['id'],
+                'team_id'   => (int) $v['team_id'],
+                'team_name' => $v['team_name'],
+                'lat'       => $v['latitude'] !== null ? (float) $v['latitude'] : null,
+                'lng'       => $v['longitude'] !== null ? (float) $v['longitude'] : null,
+                'url'       => url('/operations/videos/' . (int) $v['id']),
+                'download'  => url('/operations/videos/' . (int) $v['id'] . '/download'),
+                'mime'      => $v['mime'],
+                'duration'  => $v['duration_sec'] !== null ? (int) $v['duration_sec'] : null,
+                'age_min'   => (int) $v['age_min'],
+                'days_left' => (int) $v['days_left'],
+                'caption'   => $v['caption'],
+                'at'        => gr_datetime($v['created_at']),
+                'time'      => substr($v['created_at'], 11, 5),
+            ];
+        }
+        return $out;
+    }
+
+    /** GET /operations/videos/{id} — stream a stored video (protected, inline). */
+    public function serveVideo($id)
+    {
+        requireLogin();
+        $video = EventVideo::find((int) $id);
+        if (!$video) { abort(404, 'Το βίντεο δεν βρέθηκε.'); }
+        $role = current_role();
+        if (in_array($role, ['municipality_admin', 'event_operator'], true)) {
+            requireMunicipalityAccess($video['municipality_id']);
+        } elseif ($role === 'team_admin') {
+            if ((int) $video['team_id'] !== (int) current_team_id()) { abort(403, 'Δεν έχετε πρόσβαση.'); }
+        } else {
+            abort(403, 'Δεν έχετε πρόσβαση.');
+        }
+        $path = EventVideo::path($video);
+        if ($path === null) { abort(404, 'Το αρχείο δεν βρέθηκε.'); }
+        $mime = (string) ($video['mime'] ?: 'video/mp4');
+        if (!in_array($mime, ['video/mp4', 'video/webm', 'video/quicktime'], true)) { $mime = 'video/mp4'; }
+        self::streamFile($path, $mime, false, basename($path));
+    }
+
+    /** GET /operations/videos/{id}/download — download a video for archiving. */
+    public function downloadVideo($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $video = EventVideo::find((int) $id);
+        if (!$video) { abort(404, 'Το βίντεο δεν βρέθηκε.'); }
+        requireMunicipalityAccess($video['municipality_id']);
+        $path = EventVideo::path($video);
+        if ($path === null) { abort(404, 'Το αρχείο δεν βρέθηκε.'); }
+        $mime = (string) ($video['mime'] ?: 'video/mp4');
+        $ext  = $mime === 'video/webm' ? 'webm' : ($mime === 'video/quicktime' ? 'mov' : 'mp4');
+        $fname = 'syndrasi_video_' . (int) $video['event_id'] . '_t' . (int) $video['team_id'] . '_' . substr((string) $video['created_at'], 0, 10) . '.' . $ext;
+        self::streamFile($path, $mime, true, $fname);
+    }
+
+    /** Stream a file with HTTP range support (needed for inline <video> seeking). */
+    private static function streamFile(string $path, string $mime, bool $download, string $downloadName): void
+    {
+        $size = filesize($path);
+        header('Content-Type: ' . $mime);
+        header('Accept-Ranges: bytes');
+        header('Cache-Control: private, max-age=3600');
+        if ($download) {
+            header('Content-Disposition: attachment; filename="' . $downloadName . '"');
+        }
+        $start = 0; $end = $size - 1;
+        if (!$download && isset($_SERVER['HTTP_RANGE']) && preg_match('/bytes=(\d*)-(\d*)/', $_SERVER['HTTP_RANGE'], $m)) {
+            if ($m[1] !== '') { $start = (int) $m[1]; }
+            if ($m[2] !== '') { $end = (int) $m[2]; }
+            if ($start > $end || $end >= $size) { $end = $size - 1; }
+            header('HTTP/1.1 206 Partial Content');
+            header('Content-Range: bytes ' . $start . '-' . $end . '/' . $size);
+        }
+        header('Content-Length: ' . ($end - $start + 1));
+        $fp = fopen($path, 'rb');
+        if ($fp === false) { exit; }
+        fseek($fp, $start);
+        $remaining = $end - $start + 1;
+        while ($remaining > 0 && !feof($fp)) {
+            $chunk = fread($fp, (int) min(8192, $remaining));
+            if ($chunk === false) { break; }
+            echo $chunk;
+            $remaining -= strlen($chunk);
+            flush();
+        }
+        fclose($fp);
+        exit;
     }
 
     /** GET /operations/photos/{id} — stream a stored photo (protected). */
@@ -535,6 +707,7 @@ class OperationController
             'activity'     => $activity,
             'pings'        => array_values($latestPings),
             'photos'       => self::photoMarkers($eid),
+            'videos'       => self::videoMarkers($eid),
             'sos'          => SosAlert::activeForEvent($eid),
             'messages'     => EventMessage::forEvent($eid),
             'room'         => EventRoomMessage::forEvent($eid),
@@ -984,6 +1157,7 @@ class OperationController
                 ],
                 'pings'         => array_values($latest),
                 'photos'        => self::photoMarkers($eid),
+                'videos'        => self::videoMarkers($eid),
             ];
         }
 

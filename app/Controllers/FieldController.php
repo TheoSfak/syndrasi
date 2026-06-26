@@ -69,6 +69,7 @@ class FieldController
         // Pending photo / GPS requests for this team (so the field device shows the prompt)
         $photoRequest = PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         $gpsRequest   = GpsRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
+        $videoRequest = VideoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         $munSettings  = MunicipalitySetting::all((int) $app['municipality_id']);
         render('field/hub', [
             'pageTitle'    => 'Πεδίο — ' . $app['event_title'],
@@ -78,6 +79,7 @@ class FieldController
             'lastPing'     => $lastPing,
             'photoRequest' => $photoRequest,
             'gpsRequest'   => $gpsRequest,
+            'videoRequest' => $videoRequest,
             'orgLabel'     => MunicipalitySetting::orgLabelShort($munSettings),
             'orgIcon'      => MunicipalitySetting::orgIcon($munSettings),
         ], false); // standalone, no app layout / no login chrome
@@ -186,6 +188,10 @@ class FieldController
             'sos'           => SosAlert::latestForTeamEvent((int) $app['event_id'], (int) $app['team_id']),
             'photo_request' => (bool) PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']),
             'gps_request'   => (bool) GpsRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']),
+            'video_request' => (function () use ($app) {
+                $vr = VideoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
+                return $vr ? ['instructions' => $vr['instructions'], 'max_seconds' => (int) $vr['max_seconds']] : null;
+            })(),
             'room'          => EventRoomMessage::forEvent((int) $app['event_id']),
             'now'           => date('H:i:s'),
         ]);
@@ -307,6 +313,61 @@ class FieldController
         try { NotificationService::photoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) {}
 
         flash_set('success', 'Η φωτογραφία στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        redirect($back);
+    }
+
+    /** POST /f/{token}/video (multipart) — upload a short geotagged video clip. */
+    public function video($token)
+    {
+        $ctx = $this->resolve($token); $app = $ctx['app'];
+        $back = '/f/' . $app['field_token'];
+
+        if (empty($_FILES['video']) || (int) ($_FILES['video']['error'] ?? 1) !== UPLOAD_ERR_OK) {
+            flash_set('danger', 'Δεν επιλέχθηκε έγκυρο βίντεο.');
+            redirect($back);
+        }
+        $f = $_FILES['video'];
+        if ((int) $f['size'] > 60 * 1024 * 1024) {
+            flash_set('danger', 'Το βίντεο είναι πολύ μεγάλο (μέγιστο 60MB).');
+            redirect($back);
+        }
+        // Trust the server-detected MIME, not the browser-supplied one.
+        $detected = function_exists('mime_content_type') ? (mime_content_type($f['tmp_name']) ?: '') : (string) ($f['type'] ?? '');
+        $allowed  = ['video/mp4' => 'mp4', 'video/webm' => 'webm', 'video/quicktime' => 'mov'];
+        $base = strtolower(trim(explode(';', $detected)[0]));
+        if (!isset($allowed[$base])) {
+            flash_set('danger', 'Επιτρέπονται μόνο βίντεο MP4 / WebM / MOV.');
+            redirect($back);
+        }
+        $dir = BASE_PATH . EventVideo::DIR;
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            flash_set('danger', 'Αδυναμία αποθήκευσης (φάκελος).');
+            redirect($back);
+        }
+        $name = 'ev' . (int) $app['event_id'] . '_t' . (int) $app['team_id'] . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$base];
+        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) {
+            flash_set('danger', 'Αποτυχία αποθήκευσης βίντεο.');
+            redirect($back);
+        }
+        $lat = post_float_or_null('latitude');
+        $lng = post_float_or_null('longitude');
+        if ($lat !== null && ($lat < -90 || $lat > 90))   { $lat = null; }
+        if ($lng !== null && ($lng < -180 || $lng > 180)) { $lng = null; }
+        if ($lat === null || $lng === null) { $lat = null; $lng = null; }
+
+        $dur = post_int('duration');
+        if ($dur < 1 || $dur > 600) { $dur = null; }
+
+        EventVideo::create([
+            'mid' => $app['municipality_id'], 'eid' => $app['event_id'], 'tid' => $app['team_id'],
+            'uid' => $ctx['owner'] ?: null, 'rid' => null, 'file' => $name,
+            'mime' => $base, 'dur' => $dur, 'size' => (int) $f['size'],
+            'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
+        ]);
+        VideoRequest::fulfillForEventTeam((int) $app['event_id'], (int) $app['team_id']);
+        try { NotificationService::videoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) {}
+
+        flash_set('success', 'Το βίντεο στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
         redirect($back);
     }
 }

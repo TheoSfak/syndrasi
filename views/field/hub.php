@@ -158,6 +158,44 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     </form>
   </div>
 
+
+  <!-- Video -->
+  <div class="card">
+    <div class="hdr"><i class="bi bi-camera-video"></i> Αποστολή βίντεο</div>
+    <div id="videoReqBanner" style="margin:0 14px 8px;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($videoRequest) ? 'block' : 'none' ?>">
+      <i class="bi bi-camera-video-fill me-1"></i> <span id="videoReqText"><?= (!empty($videoRequest) && !empty($videoRequest['instructions'])) ? e($videoRequest['instructions']) : 'Ο δήμος ζήτησε σύντομο βίντεο — τραβήξτε/ανεβάστε ένα παρακάτω.' ?></span>
+    </div>
+
+    <div id="vidIdle" style="padding:0 14px 14px">
+      <button type="button" class="submit" id="vidRecordBtn"><i class="bi bi-record-circle me-1"></i>Τράβα τώρα (<span id="vidMax"><?= !empty($videoRequest['max_seconds']) ? (int) $videoRequest['max_seconds'] : 40 ?></span>'')</button>
+      <label class="submit" for="vidGallery" style="background:#1f3a3a;margin-top:8px;display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="bi bi-images me-1"></i>Από gallery</label>
+      <input id="vidGallery" type="file" accept="video/*" capture="environment" style="display:none">
+      <div id="vidErr" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:#3a1620;border:1px solid #6a2330;color:#ffd9df;font-size:12px"></div>
+    </div>
+
+    <div id="vidStage" style="display:none;padding:0 14px 14px">
+      <div style="position:relative;background:#000;border-radius:12px;overflow:hidden;aspect-ratio:9/16">
+        <video id="vidPreview" playsinline muted autoplay style="width:100%;height:100%;object-fit:cover;display:block"></video>
+        <div id="vidBar" style="position:absolute;top:0;left:0;height:4px;background:#e23b4e;width:0%"></div>
+        <div id="vidTimer" style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);border-radius:999px;padding:5px 12px;font-weight:700;font-size:14px">00:40</div>
+        <div id="vidOverlay" style="position:absolute;left:8px;right:8px;bottom:8px;background:rgba(0,0,0,.55);border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.35"></div>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:10px">
+        <button type="button" id="vidShutter" aria-label="Record" style="width:64px;height:64px;border-radius:50%;border:4px solid #fff;background:#e23b4e;cursor:pointer"></button>
+      </div>
+      <button type="button" class="submit" id="vidCancel" style="background:#333;margin-top:10px">Άκυρο</button>
+    </div>
+
+    <div id="vidReview" style="display:none;padding:0 14px 14px">
+      <video id="vidReviewPlayer" controls playsinline style="width:100%;border-radius:12px;background:#000;display:block"></video>
+      <div class="field"><label>Λεζάντα (προαιρετικά)</label><input type="text" id="vidCaption" maxlength="200" placeholder="π.χ. σημείο, κατάσταση"></div>
+      <div id="vidProg" style="display:none;height:8px;background:#0d1a1a;border-radius:999px;overflow:hidden;margin:8px 0"><div id="vidProgBar" style="height:100%;width:0;background:#0e7490;transition:width .2s"></div></div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="submit" id="vidRetake" style="background:#333;flex:1">↺ Ξανά</button>
+        <button type="button" class="submit" id="vidSend" style="flex:2"><i class="bi bi-upload me-1"></i>Αποστολή</button>
+      </div>
+    </div>
+  </div>
   <!-- Comms (read + ack + compose) -->
   <div class="card">
     <div class="hdr"><i class="bi bi-chat-dots"></i> Επικοινωνία · <?= e($orgLabel ?? 'Δήμος') ?></div>
@@ -490,6 +528,137 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     });
   }
   pollComms();setInterval(pollComms,5000);
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  var BASE = window.baseUrl || '', CSRF = window.csrfToken || '';
+  var TOKEN = '<?= e($token) ?>';
+  var MAX = parseInt(document.getElementById('vidMax') ? document.getElementById('vidMax').textContent : '40', 10) || 40;
+  var stream=null, recorder=null, chunks=[], blob=null, startTs=0, timerInt=null, geo=null, durSec=null;
+
+  var $=function(id){return document.getElementById(id);};
+  function fmt(s){var m=String(Math.floor(s/60)).padStart(2,'0'),x=String(s%60).padStart(2,'0');return m+':'+x;}
+  function showSection(which){
+    ['vidIdle','vidStage','vidReview'].forEach(function(s){var el=$(s);if(el)el.style.display='none';});
+    var t=$(which); if(t)t.style.display='block';
+  }
+  function err(msg){var e=$('vidErr');if(e){e.textContent=msg;e.style.display='block';}}
+  function grabGeo(){
+    if(!navigator.geolocation)return;
+    navigator.geolocation.getCurrentPosition(function(p){geo={lat:p.coords.latitude,lng:p.coords.longitude};},function(){},{enableHighAccuracy:true,timeout:6000});
+  }
+  function overlayText(){
+    var b=$('videoReqText'); return b?b.textContent.trim():'';
+  }
+
+  /* LIVE CAPTURE */
+  $('vidRecordBtn').addEventListener('click', function(){
+    if($('vidErr'))$('vidErr').style.display='none';
+    if(!navigator.mediaDevices || !window.MediaRecorder){
+      err('Η συσκευή δεν υποστηρίζει live εγγραφή. Χρησιμοποιήστε «Από gallery».');return;
+    }
+    grabGeo();
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:true})
+      .then(function(s){
+        stream=s; $('vidPreview').srcObject=s; showSection('vidStage');
+        $('vidShutter').style.borderRadius='50%'; $('vidTimer').textContent=fmt(MAX);
+        $('vidBar').style.width='0%'; $('vidOverlay').textContent=overlayText();
+      })
+      .catch(function(){ showSection('vidIdle'); err('Δεν δόθηκε άδεια κάμερας/μικροφώνου. Δοκιμάστε «Από gallery».'); });
+  });
+
+  function pickMime(){
+    var c=['video/mp4;codecs=h264','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+    for(var i=0;i<c.length;i++){if(window.MediaRecorder&&MediaRecorder.isTypeSupported(c[i]))return c[i];}
+    return '';
+  }
+  $('vidShutter').addEventListener('click', function(){
+    if(recorder&&recorder.state==='recording')stopRec();else startRec();
+  });
+  function startRec(){
+    chunks=[]; var m=pickMime();
+    try{recorder=m?new MediaRecorder(stream,{mimeType:m,videoBitsPerSecond:2500000}):new MediaRecorder(stream);}
+    catch(e){recorder=new MediaRecorder(stream);}
+    recorder.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+    recorder.onstop=finishRec; recorder.start(); startTs=Date.now();
+    $('vidShutter').style.borderRadius='14px';
+    timerInt=setInterval(function(){
+      var el=Math.floor((Date.now()-startTs)/1000), left=Math.max(0,MAX-el);
+      $('vidTimer').textContent=fmt(left); $('vidBar').style.width=Math.min(100,(el/MAX)*100)+'%';
+      if(left<=0)stopRec();
+    },200);
+  }
+  function stopRec(){
+    if(timerInt){clearInterval(timerInt);timerInt=null;}
+    if(recorder&&recorder.state!=='inactive')recorder.stop();
+    $('vidShutter').style.borderRadius='50%';
+  }
+  function finishRec(){
+    durSec=Math.round((Date.now()-startTs)/1000);
+    blob=new Blob(chunks,{type:(chunks[0]&&chunks[0].type)||'video/webm'});
+    stopStream(); loadReview(blob);
+  }
+
+  /* GALLERY */
+  $('vidGallery').addEventListener('change', function(e){
+    var f=e.target.files&&e.target.files[0]; if(!f)return;
+    grabGeo(); blob=f; durSec=null; loadReview(f);
+  });
+
+  function loadReview(b){
+    $('vidReviewPlayer').src=URL.createObjectURL(b);
+    if(durSec==null){$('vidReviewPlayer').onloadedmetadata=function(){var d=Math.round($('vidReviewPlayer').duration);if(isFinite(d))durSec=d;};}
+    $('vidProg').style.display='none'; $('vidProgBar').style.width='0';
+    showSection('vidReview');
+  }
+
+  /* SEND (real upload) */
+  $('vidSend').addEventListener('click', function(){
+    if(!blob)return;
+    $('vidSend').disabled=true; $('vidRetake').disabled=true; $('vidProg').style.display='block';
+    var fd=new FormData();
+    var ext=(blob.type.indexOf('mp4')>=0)?'mp4':(blob.type.indexOf('quicktime')>=0?'mov':'webm');
+    fd.append('video', blob, 'clip.'+ext);
+    fd.append('_token', CSRF);
+    fd.append('caption', $('vidCaption').value||'');
+    if(geo){fd.append('latitude',geo.lat);fd.append('longitude',geo.lng);}
+    if(durSec){fd.append('duration',durSec);}
+    var xhr=new XMLHttpRequest();
+    xhr.open('POST', BASE+'/f/'+TOKEN+'/video', true);
+    xhr.setRequestHeader('X-CSRF-Token', CSRF);
+    xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');
+    xhr.upload.onprogress=function(ev){if(ev.lengthComputable)$('vidProgBar').style.width=Math.round(ev.loaded/ev.total*100)+'%';};
+    xhr.onload=function(){
+      if(xhr.status>=200&&xhr.status<400){ location.reload(); }
+      else{ $('vidSend').disabled=false;$('vidRetake').disabled=false; err('Αποτυχία αποστολής ('+xhr.status+'). Δοκιμάστε ξανά.'); showSection('vidIdle'); }
+    };
+    xhr.onerror=function(){ $('vidSend').disabled=false;$('vidRetake').disabled=false; err('Σφάλμα δικτύου. Δοκιμάστε ξανά.'); showSection('vidIdle'); };
+    xhr.send(fd);
+  });
+
+  $('vidRetake').addEventListener('click', function(){ resetMedia(); showSection('vidIdle'); });
+  $('vidCancel').addEventListener('click', function(){ stopRec(); stopStream(); showSection('vidIdle'); });
+
+  function stopStream(){ if(stream){stream.getTracks().forEach(function(t){t.stop();});stream=null;} }
+  function resetMedia(){ stopStream(); blob=null; chunks=[]; durSec=null; $('vidReviewPlayer').removeAttribute('src'); $('vidGallery').value=''; }
+
+  /* Light poll: keep the request banner + max duration in sync */
+  function pollVideoReq(){
+    fetch(BASE+'/f/'+TOKEN+'/comms',{headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var vr=d&&d.video_request; var banner=$('videoReqBanner');
+        if(vr){
+          if(banner)banner.style.display='block';
+          if(vr.instructions&&$('videoReqText'))$('videoReqText').textContent=vr.instructions;
+          if(vr.max_seconds){MAX=parseInt(vr.max_seconds,10)||MAX; if($('vidMax'))$('vidMax').textContent=MAX;}
+        } else if(banner){ banner.style.display='none'; }
+      }).catch(function(){});
+  }
+  setInterval(pollVideoReq, 8000);
 })();
 </script>
 </body>

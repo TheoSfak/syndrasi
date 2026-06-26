@@ -269,6 +269,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
           <div class="col-12 col-sm-7 d-flex gap-1">
             <button type="button" class="btn btn-outline-info btn-sm flex-fill" id="bulkReqPhoto"><i class="bi bi-camera me-1"></i>Ζήτησε φωτό</button>
             <button type="button" class="btn btn-outline-success btn-sm flex-fill" id="bulkReqGps"><i class="bi bi-geo-alt me-1"></i>Ζήτησε στίγμα</button>
+            <button type="button" class="btn btn-outline-warning btn-sm flex-fill" id="bulkReqVideo"><i class="bi bi-camera-video me-1"></i>Ζήτησε βίντεο</button>
           </div>
         </div>
       </div>
@@ -431,6 +432,15 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     <span class="badge bg-info" id="photosBadge">0</span>
   </div>
   <div class="card-body p-2 d-flex flex-wrap gap-2" id="photosBox"></div>
+</div>
+
+<!-- Βίντεο ομάδων -->
+<div class="card mt-3" id="videosCard" style="display:none">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-camera-video me-1 text-warning"></i>Βίντεο πεδίου</span>
+    <span class="badge bg-warning text-dark" id="videosBadge">0</span>
+  </div>
+  <div class="card-body p-2 d-flex flex-wrap gap-2" id="videosBox"></div>
 </div>
 
 <!-- Photo viewer modal -->
@@ -1098,6 +1108,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     renderRoom(d.room);
     /* map pings included in SSE snapshot — photos first so GPS popup can show them */
     if (d.photos) { updatePhotos(d.photos); renderPhotoWall(d.photos); }
+    if (d.videos) { renderVideos(d.videos); }
     if (d.pings) updateMap(d.pings, d.geo_orders || []);
     /* flash sections where count increased */
     if (!isNaN(prevCi) && (d.stats.checked_in || 0) > prevCi) flashEl('teamsBox');
@@ -1207,6 +1218,49 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   }
   document.getElementById('bulkReqPhoto').addEventListener('click', function(){ bulkRequest('photo', this); });
   document.getElementById('bulkReqGps').addEventListener('click', function(){ bulkRequest('gps', this); });
+
+  /* ─── Video: request (single/broadcast) + render received clips ─── */
+  function requestVideo(target, instructions) {
+    var fd = new FormData(); fd.append('_token', CSRF);
+    if (target) { fd.append('team_id', target); } else { fd.append('all', '1'); }
+    if (instructions) { fd.append('instructions', instructions); }
+    fd.append('max_seconds', '40');
+    return fetch(BASE + '/operations/events/' + EID + '/request-video', { method:'POST', body: fd, headers:{ 'Accept':'application/json' } })
+      .then(function(r){ return r.json().catch(function(){ return {}; }); });
+  }
+  document.getElementById('bulkReqVideo').addEventListener('click', function(){
+    var sel = document.getElementById('reqTargetTeam');
+    var target = sel ? sel.value : '';
+    var n = target ? 1 : lastTeams.length;
+    if (!target && !n) return;
+    var ins = prompt('Οδηγίες βίντεο (προαιρετικά) — π.χ. «30΄΄, δείξε το σημείο και πες τι κάνετε»:', '');
+    if (ins === null) return; /* cancelled */
+    if (!target && !confirm('Αποστολή αιτήματος βίντεο σε ΟΛΕΣ τις ομάδες (' + n + ');')) return;
+    var btn = this; btn.disabled = true;
+    requestVideo(target, ins).then(function(){ pollStatus(); }).finally(function(){ btn.disabled = false; });
+  });
+
+  function renderVideos(videos) {
+    videos = videos || [];
+    var card = document.getElementById('videosCard');
+    if (!card) return;
+    card.style.display = videos.length ? '' : 'none';
+    document.getElementById('videosBadge').textContent = videos.length;
+    var box = document.getElementById('videosBox');
+    if (!videos.length) { box.innerHTML = ''; return; }
+    box.innerHTML = videos.map(function(v){
+      var dleft = (v.days_left != null) ? '<span class="badge bg-secondary">διαγραφή σε ' + v.days_left + 'ημ.</span>' : '';
+      var dur   = (v.duration != null) ? (v.duration + '\u2033') : '';
+      var pin   = (v.lat != null && v.lng != null) ? '<a href="https://www.google.com/maps?q=' + v.lat + ',' + v.lng + '" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-geo-alt"></i></a>' : '';
+      return '<div class="border rounded p-2" style="width:230px;background:#0d1a1a">' +
+        '<video src="' + v.url + '" controls preload="metadata" playsinline style="width:100%;border-radius:6px;background:#000"></video>' +
+        '<div class="small mt-1 d-flex justify-content-between align-items-center"><b>' + esc(v.team_name) + '</b><span class="text-muted">' + esc(v.time) + ' ' + dur + '</span></div>' +
+        '<div class="d-flex gap-1 mt-1 align-items-center flex-wrap">' + dleft +
+          '<a href="' + v.download + '" class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-download"></i> Αρχειοθέτηση</a>' + pin + '</div>' +
+        (v.caption ? '<div class="small text-muted mt-1">' + esc(v.caption) + '</div>' : '') +
+        '</div>';
+    }).join('');
+  }
 
   function openPhoto(url, team, at) {
     document.getElementById('photoModalImg').src = url;
