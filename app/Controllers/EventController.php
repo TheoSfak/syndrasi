@@ -22,6 +22,7 @@ class EventController
             'pageTitle' => 'Ενεργές Δράσεις',
             'events'    => $events,
             'templates' => EventTemplate::forMunicipality($mid),
+            'tabCounts' => Event::statusCounts($mid),
         ]);
     }
 
@@ -91,6 +92,7 @@ class EventController
         render('events/closed', [
             'pageTitle' => 'Κλειστές Δράσεις',
             'events'    => $events,
+            'tabCounts' => Event::statusCounts($mid),
         ]);
     }
 
@@ -109,6 +111,7 @@ class EventController
             'q'         => $q,
             'from'      => $from,
             'to'        => $to,
+            'tabCounts' => Event::statusCounts($mid),
         ]);
     }
 

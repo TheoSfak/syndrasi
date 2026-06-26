@@ -37,9 +37,9 @@
 
 <!-- Status navigation -->
 <ul class="nav nav-pills mb-3 small">
-  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events')) ?>">Ενεργές <span class="badge text-bg-light ms-1"><?= count($events) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/closed')) ?>">Κλειστές</a></li>
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>">Ολοκληρωμένες</a></li>
+  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events')) ?>">Ενεργές <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['active'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/closed')) ?>">Κλειστές <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['closed'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>">Ολοκληρωμένες <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['completed'] ?? 0) ?></span></a></li>
 </ul>
 
 <?php if (!$events): ?>

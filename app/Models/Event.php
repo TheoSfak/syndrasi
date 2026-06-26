@@ -88,6 +88,24 @@ class Event
      * Fetch events for a municipality filtered to specific statuses.
      * Accepts optional text/date filters.
      */
+    /** Counts of events per tab group (active / closed / completed) for a municipality. */
+    public static function statusCounts($municipalityId): array
+    {
+        $row = dbq(
+            "SELECT
+                SUM(status IN ('open','review','confirmed','active')) AS active_cnt,
+                SUM(status = 'closed')    AS closed_cnt,
+                SUM(status = 'completed') AS completed_cnt
+             FROM events WHERE municipality_id = :mid",
+            ['mid' => $municipalityId]
+        )->fetch() ?: [];
+        return [
+            'active'    => (int) ($row['active_cnt'] ?? 0),
+            'closed'    => (int) ($row['closed_cnt'] ?? 0),
+            'completed' => (int) ($row['completed_cnt'] ?? 0),
+        ];
+    }
+
     public static function forMunicipalityByStatuses($municipalityId, array $statuses, array $filters = [])
     {
         if (empty($statuses)) {
