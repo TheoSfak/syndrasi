@@ -1,7 +1,7 @@
 <div class="d-flex align-items-center mb-3 gap-2">
   <a href="<?= e(url('/events/' . $event['id'])) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
   <div>
-    <h1 class="h3 mb-0">Αρχειοθέτηση</h1>
+    <h1 class="h3 mb-0">Απολογισμός-Στοιχεία</h1>
     <p class="text-muted small mb-0"><?= e($event['title']) ?> — <?= e(gr_datetime($event['start_datetime'])) ?></p>
   </div>
 </div>
@@ -9,7 +9,7 @@
 <div class="alert alert-info small">
   <i class="bi bi-info-circle me-1"></i>
   Καταχωρήστε τα πραγματικά δεδομένα κάθε ομάδας και επιλέξτε ποια μέλη παρευρέθηκαν.
-  Μετά την αποθήκευση, πατήστε <strong>«Οριστική Αρχειοθέτηση»</strong> από τη σελίδα της δράσης.
+  Μετά την αποθήκευση, πατήστε <strong>«Ολοκλήρωση»</strong> από τη σελίδα της δράσης.
 </div>
 
 <div class="row g-4">
@@ -148,9 +148,9 @@
     </div>
 
     <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold text-success"><i class="bi bi-archive me-1"></i> Οριστική Αρχειοθέτηση</div>
+      <div class="card-header bg-white fw-semibold text-success"><i class="bi bi-archive me-1"></i> Ολοκλήρωση</div>
       <div class="card-body small text-muted">
-        <p>Αφού αποθηκεύσετε τα στοιχεία παραπάνω, πατήστε το κουμπί <strong>«Οριστική Αρχειοθέτηση»</strong> από τη σελίδα της δράσης.</p>
+        <p>Αφού αποθηκεύσετε τα στοιχεία παραπάνω, πατήστε το κουμπί <strong>«Ολοκλήρωση»</strong> από τη σελίδα της δράσης.</p>
         <p>Μετά την αρχειοθέτηση η δράση μετακινείται στις <strong>Ολοκληρωμένες</strong> και δεν μπορεί να τροποποιηθεί.</p>
         <a href="<?= e(url('/events/' . $event['id'])) ?>" class="btn btn-success btn-sm w-100 mt-1">
           <i class="bi bi-archive me-1"></i>Πήγαινε στη δράση →

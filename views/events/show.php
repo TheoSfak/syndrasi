@@ -50,12 +50,12 @@
 
       <?php if ($event['status'] === 'closed'): ?>
         <a class="btn btn-warning" href="<?= e(url('/events/' . $event['id'] . '/reconcile')) ?>">
-          <i class="bi bi-clipboard-check me-1"></i>Αρχειοθέτηση
+          <i class="bi bi-clipboard-check me-1"></i>Απολογισμός-Στοιχεία
         </a>
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/archive')) ?>"
-              onsubmit="return confirm('Η δράση θα αρχειοθετηθεί οριστικά. Συνέχεια;')">
+              onsubmit="return confirm('Η δράση θα ολοκληρωθεί οριστικά και θα μετακινηθεί στις Ολοκληρωμένες. Συνέχεια;')">
           <?= csrf_field() ?>
-          <button class="btn btn-success"><i class="bi bi-archive me-1"></i>Οριστική Αρχειοθέτηση</button>
+          <button class="btn btn-success"><i class="bi bi-archive me-1"></i>Ολοκλήρωση</button>
         </form>
       <?php endif; ?>
 

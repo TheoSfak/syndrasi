@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.11.3-beta] — 2026-06-27
+
+### UI — Σαφέστερες ονομασίες στη ροή κλεισίματος
+
+- «Αρχειοθέτηση» → **«Απολογισμός-Στοιχεία»** (φόρμα καταχώρησης πραγματικών στοιχείων).
+- «Οριστική Αρχειοθέτηση» → **«Ολοκλήρωση»** (οριστικοποίηση → Ολοκληρωμένες).
+
+---
+
 ## [0.11.2-beta] — 2026-06-27
 
 ### Fix — Ροή αρχειοθέτησης κλειστών δράσεων

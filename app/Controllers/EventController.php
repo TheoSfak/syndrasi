@@ -381,7 +381,7 @@ class EventController
         $existingByApp  = VolunteerParticipation::forApplications($appIds);
 
         render('events/reconcile', [
-            'pageTitle'     => 'Αρχειοθέτηση: ' . $event['title'],
+            'pageTitle'     => 'Απολογισμός-Στοιχεία: ' . $event['title'],
             'event'         => $event,
             'applications'  => $applications,
             'membersByApp'  => $membersByApp,
