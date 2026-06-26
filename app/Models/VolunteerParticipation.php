@@ -94,7 +94,7 @@ class VolunteerParticipation
     public static function forApplication(int $appId): array
     {
         return dbq(
-            "SELECT vp.*, tm.full_name AS member_name, tm.specialty
+            "SELECT vp.*, tm.full_name AS member_name, tm.role_in_team AS specialty
              FROM volunteer_participations vp
              JOIN team_members tm ON tm.id = vp.member_id
              WHERE vp.application_id = :aid
@@ -119,7 +119,7 @@ class VolunteerParticipation
         }
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $stmt = db()->prepare(
-            "SELECT vp.*, tm.full_name AS member_name, tm.specialty
+            "SELECT vp.*, tm.full_name AS member_name, tm.role_in_team AS specialty
              FROM volunteer_participations vp
              JOIN team_members tm ON tm.id = vp.member_id
              WHERE vp.application_id IN ($placeholders)
@@ -138,7 +138,7 @@ class VolunteerParticipation
     public static function topMembers(int $municipalityId, int $limit = 20): array
     {
         return dbq(
-            "SELECT tm.full_name, tm.specialty, vt.name AS team_name,
+            "SELECT tm.full_name, tm.role_in_team AS specialty, vt.name AS team_name,
                     SUM(vp.hours)                         AS total_hours,
                     SUM(vp.was_present)                   AS events_attended,
                     SUM(vp.is_mission_commander)          AS times_commander

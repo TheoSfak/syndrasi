@@ -40,7 +40,7 @@
               </td>
               <td class="text-end text-nowrap">
                 <a href="<?= e(url('/events/' . $e['id'] . '/reconcile')) ?>"
-                   class="btn btn-sm btn-outline-info me-1">
+                   class="btn btn-sm btn-warning me-1">
                   <i class="bi bi-clipboard-check me-1"></i>Αρχειοθέτηση
                 </a>
                 <a href="<?= e(url('/events/' . $e['id'])) ?>" class="btn btn-sm btn-outline-secondary">Προβολή</a>

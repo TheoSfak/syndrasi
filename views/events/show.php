@@ -49,7 +49,7 @@
       <?php endif; ?>
 
       <?php if ($event['status'] === 'closed'): ?>
-        <a class="btn btn-info" href="<?= e(url('/events/' . $event['id'] . '/reconcile')) ?>">
+        <a class="btn btn-warning" href="<?= e(url('/events/' . $event['id'] . '/reconcile')) ?>">
           <i class="bi bi-clipboard-check me-1"></i>Αρχειοθέτηση
         </a>
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/archive')) ?>"

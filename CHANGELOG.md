@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.11.2-beta] — 2026-06-27
+
+### Fix — Ροή αρχειοθέτησης κλειστών δράσεων
+
+- **500 στο reconcile:** το `VolunteerParticipation` τραβούσε ανύπαρκτη στήλη `tm.specialty` — διορθώθηκε σε `tm.role_in_team` (η σελίδα «Αρχειοθέτηση» άνοιγε με «Σφάλμα συστήματος»).
+- **Εξαφάνιση δράσης:** η «Οριστική Αρχειοθέτηση» έβαζε status `cancelled` (που δεν φαίνεται πουθενά)· πλέον βάζει `completed`, οπότε η δράση μετακινείται σωστά στις **Ολοκληρωμένες**.
+- **Αναγνωσιμότητα:** το κουμπί «Αρχειοθέτηση» έγινε `btn-warning` (πορτοκαλί με λευκό κείμενο) αντί για το δυσανάγνωστο προηγούμενο.
+
+---
+
 ## [0.11.1-beta] — 2026-06-27
 
 ### UI — Μετρητές σε όλα τα tabs δράσεων

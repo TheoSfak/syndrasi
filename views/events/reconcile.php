@@ -82,8 +82,8 @@
                                value="1" <?= $isPresent ? 'checked' : '' ?>>
                         <label class="form-check-label" for="mem-<?= (int)$app['id'] ?>-<?= (int)$member['id'] ?>">
                           <strong><?= e($member['full_name']) ?></strong>
-                          <?php if ($member['specialty']): ?>
-                            <span class="text-muted small">(<?= e($member['specialty']) ?>)</span>
+                          <?php if ($member['role_in_team']): ?>
+                            <span class="text-muted small">(<?= e($member['role_in_team']) ?>)</span>
                           <?php endif; ?>
                           <?php if ((int)$member['id'] === (int)$app['mission_commander_id']): ?>
                             <span class="badge text-bg-warning ms-1 small">Υπεύθυνος</span>

@@ -357,13 +357,13 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent((int)$id);
-        if (!Event::canTransition($event['status'], 'cancelled')) {
+        if (!Event::canTransition($event['status'], 'completed')) {
             flash_set('danger', 'Η δράση δεν μπορεί να αρχειοθετηθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
-        Event::setStatus($event['id'], 'cancelled');
+        Event::setStatus($event['id'], 'completed');
         audit('event_archived', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η δράση αρχειοθετήθηκε.');
+        flash_set('success', 'Η δράση αρχειοθετήθηκε και μετακινήθηκε στις Ολοκληρωμένες.');
         redirect('/events/completed');
     }
 
