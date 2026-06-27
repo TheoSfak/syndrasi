@@ -58,6 +58,17 @@ class EventVideo
         )->fetchAll();
     }
 
+    /** Delete a video: remove the stored file and the DB row. */
+    public static function delete(int $id): bool
+    {
+        $video = self::find($id);
+        if (!$video) { return false; }
+        $path = self::path($video);
+        if ($path !== null) { @unlink($path); }
+        dbq('DELETE FROM event_videos WHERE id = :id', ['id' => $id]);
+        return true;
+    }
+
     /** Absolute path to the stored file, validated, or null. */
     public static function path(array $video): ?string
     {

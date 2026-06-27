@@ -425,6 +425,27 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   <div class="card-body p-2 d-flex flex-wrap gap-2" id="videosBox"></div>
 </div>
 
+<!-- Team video modal (isolated player — not affected by live poll) -->
+<div class="modal fade" id="videoModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title" id="videoModalLabel"><i class="bi bi-camera-video me-1"></i>Βίντεο</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-2 text-center">
+        <video id="videoModalPlayer" controls playsinline preload="auto" style="width:100%;max-height:70vh;border-radius:8px;background:#000"></video>
+        <div id="videoModalCaption" class="small text-muted mt-2"></div>
+      </div>
+      <div class="modal-footer py-2">
+        <a id="videoModalDl" href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i>Αρχειοθέτηση</a>
+        <button type="button" id="videoModalDel" class="btn btn-sm btn-outline-danger" style="display:none"><i class="bi bi-trash me-1"></i>Διαγραφή</button>
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Κλείσιμο</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Geo-order map picker modal -->
 <div class="modal fade" id="geoOrderModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -1275,13 +1296,16 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     if (!videos.length) { box.innerHTML = ''; return; }
     box.innerHTML = videos.map(function(v){
       var dleft = (v.days_left != null) ? '<span class="badge bg-secondary">διαγραφή σε ' + v.days_left + 'ημ.</span>' : '';
-      var dur   = (v.duration != null) ? (v.duration + '\u2033') : '';
-      var pin   = (v.lat != null && v.lng != null) ? '<a href="https://www.google.com/maps?q=' + v.lat + ',' + v.lng + '" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-geo-alt"></i></a>' : '';
+      var dur   = (v.duration != null) ? (v.duration + '″') : '';
+      var del   = IS_ADMIN ? '<button type="button" class="btn btn-sm btn-outline-danger py-0 vid-del-btn" data-id="' + v.id + '" title="Διαγραφή"><i class="bi bi-trash"></i></button>' : '';
       return '<div class="border rounded p-2" style="width:230px;background:#0d1a1a">' +
-        '<video src="' + v.url + '" controls preload="metadata" playsinline style="width:100%;border-radius:6px;background:#000"></video>' +
-        '<div class="small mt-1 d-flex justify-content-between align-items-center"><b>' + esc(v.team_name) + '</b><span class="text-muted">' + esc(v.time) + ' ' + dur + '</span></div>' +
+        '<div class="vid-open" data-url="' + v.url + '" data-dl="' + v.download + '" data-id="' + v.id + '" data-team="' + esc(v.team_name) + '" data-time="' + esc(v.time) + '" data-caption="' + esc(v.caption || '') + '" style="position:relative;cursor:pointer;height:128px;border-radius:6px;background:#000;display:flex;align-items:center;justify-content:center">' +
+          '<i class="bi bi-play-circle-fill" style="font-size:44px;color:#fff;opacity:.9"></i>' +
+          (dur ? '<span style="position:absolute;bottom:4px;right:6px;font-size:11px;color:#e5e7eb;background:rgba(0,0,0,.5);padding:0 4px;border-radius:4px">' + dur + '</span>' : '') +
+        '</div>' +
+        '<div class="small mt-1 d-flex justify-content-between align-items-center"><b>' + esc(v.team_name) + '</b><span class="text-muted">' + esc(v.time) + '</span></div>' +
         '<div class="d-flex gap-1 mt-1 align-items-center flex-wrap">' + dleft +
-          '<a href="' + v.download + '" class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-download"></i> Αρχειοθέτηση</a>' + pin + '</div>' +
+          '<a href="' + v.download + '" class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-download"></i> Αρχειοθέτηση</a>' + del + '</div>' +
         (v.caption ? '<div class="small text-muted mt-1">' + esc(v.caption) + '</div>' : '') +
         '</div>';
     }).join('');
@@ -1404,6 +1428,44 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   document.getElementById('cmsgSendOrder').addEventListener('click', function(){ sendCmsg('order'); });
   document.getElementById('cmsgBody').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); sendCmsg('message'); } });
 
+  /* ─── Team video: open in isolated modal (poll-safe) + delete ─── */
+  (function(){
+    var vModalEl = document.getElementById('videoModal');
+    if (!vModalEl || typeof bootstrap === 'undefined') return;
+    var player = document.getElementById('videoModalPlayer');
+
+    function openVideo(d){
+      player.src = d.url;
+      document.getElementById('videoModalLabel').innerHTML = '<i class="bi bi-camera-video me-1"></i>' + esc(d.team || 'Βίντεο') + ' · ' + esc(d.time || '');
+      document.getElementById('videoModalCaption').textContent = d.caption || '';
+      document.getElementById('videoModalDl').href = d.dl;
+      var delBtn = document.getElementById('videoModalDel');
+      if (IS_ADMIN) { delBtn.style.display = ''; delBtn.dataset.id = d.id; } else { delBtn.style.display = 'none'; }
+      bootstrap.Modal.getOrCreateInstance(vModalEl).show();
+      try { player.load(); player.play().catch(function(){}); } catch(e){}
+    }
+    vModalEl.addEventListener('hidden.bs.modal', function(){ try { player.pause(); player.removeAttribute('src'); player.load(); } catch(e){} });
+
+    function delVideo(id, closeModal){
+      if (!id) return;
+      if (!confirm('Διαγραφή βίντεο; Δεν αναιρείται.')) return;
+      postForm('/operations/videos/' + id + '/delete', {}).then(function(){
+        if (closeModal) { try { bootstrap.Modal.getOrCreateInstance(vModalEl).hide(); } catch(e){} }
+        pollStatus();
+      });
+    }
+
+    document.addEventListener('click', function(e){
+      if (!e.target || !e.target.closest) return;
+      var del = e.target.closest('.vid-del-btn');
+      if (del) { e.stopPropagation(); delVideo(del.dataset.id, false); return; }
+      var mdel = e.target.closest('#videoModalDel');
+      if (mdel) { delVideo(mdel.dataset.id, true); return; }
+      var open = e.target.closest('.vid-open');
+      if (open) { openVideo({ url: open.dataset.url, dl: open.dataset.dl, id: open.dataset.id, team: open.dataset.team, time: open.dataset.time, caption: open.dataset.caption }); }
+    });
+  })();
+
   /* ─── Geo-order modal: map picker + address search (Nominatim, GR) ─── */
   (function(){
     var modalEl = document.getElementById('geoOrderModal');
@@ -1426,7 +1488,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(goMap);
         goMap.on('click', function(e){ setPoint(e.latlng.lat, e.latlng.lng); });
       }
-      goMap.invalidateSize();
+      setTimeout(function(){ goMap.invalidateSize(); goMap.setView([DEF_LAT, DEF_LNG], DEF_ZOOM); }, 250);
       var sel = document.getElementById('goTeam');
       if (sel && typeof lastTeams !== 'undefined' && lastTeams) {
         var cur = sel.value;

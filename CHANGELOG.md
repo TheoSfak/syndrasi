@@ -4,6 +4,26 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.11.7-beta] — 2026-06-27
+
+### Fix — Live ενημέρωση ελλείψεων στο Team Live
+
+Όταν ο δήμος επέλυε/λάμβανε μια έλλειψη (πρόβλημα), το Team Live το έδειχνε ακόμη «Ανοιχτό/εκκρεμεί» μέχρι χειροκίνητο refresh. Πλέον η κατάσταση των αναφορών ανανεώνεται **ζωντανά** μέσω του poll (~5s).
+
+- `commsFeed` επιστρέφει τις ελλείψεις της ομάδας με έτοιμα labels/χρώματα κατάστασης.
+- Το `views/team/live.php` ξαναζωγραφίζει τη λίστα αναφορών σε κάθε poll (`renderShortages`).
+
+---
+
+## [0.11.6-beta] — 2026-06-27
+
+### UX/Feature — Βίντεο σε modal + διαγραφή
+
+- Το βίντεο ομάδας ανοίγει πλέον σε **popup modal** (ξεχωριστός player) — δεν διακόπτεται πια από το auto-refresh της σελίδας. Στη λίστα φαίνεται ελαφριά κάρτα με κουμπί ▶ (χωρίς live video element που ξαναφόρτωνε σε κάθε poll).
+- **Διαγραφή βίντεο** από admin (κουμπί στην κάρτα και στο modal) → route `POST /operations/videos/{id}/delete` (διαγράφει αρχείο + εγγραφή).
+
+---
+
 ## [0.11.5-beta] — 2026-06-27
 
 ### Feature — Popup χάρτη για εντολή σημείου (μετάβαση/περιστατικό/σημείο)

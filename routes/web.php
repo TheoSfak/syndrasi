@@ -131,6 +131,7 @@ $router->post('/operations/events/{id}/applications/{appId}/reject',  'Operation
 $router->get('/operations/photos/{id}', 'OperationController@servePhoto');
 $router->get('/operations/videos/{id}', 'OperationController@serveVideo');
 $router->get('/operations/videos/{id}/download', 'OperationController@downloadVideo');
+$router->post('/operations/videos/{id}/delete', 'OperationController@deleteVideo');
 $router->post('/shortages/{id}/acknowledge', 'OperationController@acknowledgeShortage');
 $router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage');
 $router->post('/sos/{id}/acknowledge', 'OperationController@sosAck');

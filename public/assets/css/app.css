@@ -367,7 +367,7 @@ main { animation: fadeInUp .4s var(--ease) backwards; }
   background: linear-gradient(135deg,#16a34a,#15803d) !important; color:#fff !important;
 }
 .badge.bg-warning, .badge.text-bg-warning {
-  background: linear-gradient(135deg,#f97316,#ea6c0a) !important; color:#fff !important;
+  background: linear-gradient(135deg,#f97316,#ea6c0a) !important; color:#1f2937 !important;
 }
 .badge.bg-danger, .badge.text-bg-danger {
   background: linear-gradient(135deg,#ef4444,#dc2626) !important; color:#fff !important;

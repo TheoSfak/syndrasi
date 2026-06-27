@@ -880,6 +880,21 @@ class TeamPortalController
         requireRole(['team_admin']);
         [$event, $tid] = $this->commsContext($id);
         $since = (int) ($_GET['since'] ?? 0);
+        $shortRows = dbq('SELECT * FROM shortage_reports WHERE event_id = :eid AND team_id = :tid ORDER BY created_at DESC', ['eid' => $event['id'], 'tid' => $tid])->fetchAll();
+        $shortages = array_map(function ($sh) {
+            $stClass = ['acknowledged' => 'badge-acknowledged', 'resolved' => 'badge-resolved'][$sh['status']] ?? 'badge-open';
+            $stLabel = ['acknowledged' => 'Λήφθηκε', 'resolved' => 'Επιλύθηκε'][$sh['status']] ?? 'Ανοιχτό';
+            $svClass = ['low' => 'badge-low', 'high' => 'badge-high', 'critical' => 'badge-critical'][$sh['severity']] ?? 'badge-medium';
+            return [
+                'title'          => $sh['title'],
+                'severity_label' => severity_label($sh['severity']),
+                'severity_class' => $svClass,
+                'status_label'   => $stLabel,
+                'status_class'   => $stClass,
+                'type_label'     => shortage_type_label($sh['shortage_type']),
+                'time'           => substr((string) $sh['created_at'], 11, 5),
+            ];
+        }, $shortRows);
         json_out([
             'success'       => true,
             'messages'      => EventMessage::forTeamEvent((int) $event['id'], $tid, $since),
@@ -888,6 +903,7 @@ class TeamPortalController
             'photo_request' => PhotoRequest::pendingForEventTeam((int) $event['id'], $tid),
             'gps_request'   => GpsRequest::pendingForEventTeam((int) $event['id'], $tid),
             'video_request' => VideoRequest::pendingForEventTeam((int) $event['id'], $tid),
+            'shortages'     => $shortages,
             'now'           => date('H:i:s'),
         ]);
     }

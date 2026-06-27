@@ -741,9 +741,9 @@ foreach (flash_get() as $flash):
     </div>
   </div>
 
-  <!-- ── Shortage history ───────────────────────────────────────────── -->
-  <?php if ($shortages): ?>
-  <div>
+  <!-- ── Shortage history (live-updated by poll) ───────────────────────── -->
+  <div id="shortageHistory">
+    <?php if ($shortages): ?>
     <div class="section-title"><i class="bi bi-clock-history me-1"></i>Αναφορές μας σε αυτή τη δράση</div>
     <?php foreach ($shortages as $sh): ?>
       <div class="shortage-item">
@@ -760,8 +760,8 @@ foreach (flash_get() as $flash):
         <div class="shortage-meta"><?= e(shortage_type_label($sh['shortage_type'])) ?> · <?= e(gr_time($sh['created_at'])) ?></div>
       </div>
     <?php endforeach; ?>
+    <?php endif; ?>
   </div>
-  <?php endif; ?>
 
   <!-- ── Γρήγορη ενημέρωση (status pings) ────────────────────────────── -->
   <div class="action-card">
@@ -1213,6 +1213,21 @@ foreach (flash_get() as $flash):
     }
   }
 
+  var shortHistEl = document.getElementById('shortageHistory');
+  function renderShortages(list){
+    if (!shortHistEl) return;
+    list = list || [];
+    if (!list.length) { shortHistEl.innerHTML = ''; return; }
+    shortHistEl.innerHTML = '<div class="section-title"><i class="bi bi-clock-history me-1"></i>Αναφορές μας σε αυτή τη δράση</div>' +
+      list.map(function(sh){
+        return '<div class="shortage-item"><div class="shortage-row">' +
+          '<span class="badge ' + sh.severity_class + '">' + escapeHtml(sh.severity_label) + '</span>' +
+          '<span class="shortage-title">' + escapeHtml(sh.title) + '</span>' +
+          '<span class="badge ' + sh.status_class + '">' + escapeHtml(sh.status_label) + '</span>' +
+          '</div><div class="shortage-meta">' + escapeHtml(sh.type_label) + ' · ' + escapeHtml(sh.time) + '</div></div>';
+      }).join('');
+  }
+
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
@@ -1225,6 +1240,7 @@ foreach (flash_get() as $flash):
           renderRoom(d.room);
           renderRequests(d.photo_request, d.gps_request);
           renderVideoRequest(d.video_request);
+          renderShortages(d.shortages);
         }
       })
       .catch(function () {});

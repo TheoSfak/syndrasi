@@ -488,6 +488,22 @@ class OperationController
         self::streamFile($path, $mime, true, $fname);
     }
 
+    /** POST /operations/videos/{id}/delete — delete a team video (file + row). */
+    public function deleteVideo($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $video = EventVideo::find((int) $id);
+        if (!$video) {
+            if (wants_json()) { json_out(['ok' => false, 'error' => 'not_found'], 404); }
+            abort(404, 'Το βίντεο δεν βρέθηκε.');
+        }
+        requireMunicipalityAccess($video['municipality_id']);
+        EventVideo::delete((int) $id);
+        audit('video_deleted', 'event', (int) $video['event_id'], 'video ' . (int) $id);
+        if (wants_json()) { json_out(['ok' => true]); }
+        redirect('/operations/events/' . (int) $video['event_id']);
+    }
+
     /** Stream a file with HTTP range support (needed for inline <video> seeking). */
     private static function streamFile(string $path, string $mime, bool $download, string $downloadName): void
     {
