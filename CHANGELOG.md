@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.3-beta] — 2026-06-27
+
+### Cleanup — Αφαίρεση προσωρινού diagnostic στο Story
+
+Το query fix του 0.13.2 (`:eid1`/`:eid2`) επιβεβαιώθηκε. Αφαιρέθηκε το προσωρινό admin-only diagnostic try/catch από το `EventController@story` — η σελίδα Απολογισμού κάνει πλέον καθαρό render χωρίς το debug block.
+
+---
+
 ## [0.13.2-beta] — 2026-06-27
 
 ### Fix — 500 στη σελίδα Απολογισμού (reused named param)
