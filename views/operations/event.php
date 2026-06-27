@@ -1431,7 +1431,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   /* ─── Team video: open in isolated modal (poll-safe) + delete ─── */
   (function(){
     var vModalEl = document.getElementById('videoModal');
-    if (!vModalEl || typeof bootstrap === 'undefined') return;
+    if (!vModalEl) return;
     var player = document.getElementById('videoModalPlayer');
 
     function openVideo(d){
@@ -1469,7 +1469,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   /* ─── Geo-order modal: map picker + address search (Nominatim, GR) ─── */
   (function(){
     var modalEl = document.getElementById('geoOrderModal');
-    if (!modalEl || typeof bootstrap === 'undefined') return;
+    if (!modalEl) return;
     var goMap = null, goMarker = null, goLat = null, goLng = null;
 
     function setPoint(lat, lng, label){

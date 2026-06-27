@@ -4,6 +4,21 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.11.8-beta] — 2026-06-27
+
+### Fix — Live κατάσταση ελλείψεων στις «Επιχειρησιακές Ενέργειες» (team)
+
+Στη σελίδα `/team/operations/events/{id}` η λίστα «Οι αναφορές μας για αυτή τη δράση» έμενε «Εκκρεμεί» μέχρι refresh, παρότι ο δήμος είχε επιλύσει την έλλειψη. Πλέον ανανεώνεται ζωντανά μέσω του υπάρχοντος poll (~5s). (Συμπληρώνει το ίδιο fix στο Team Live hub.)
+
+- `commsFeed`: προστέθηκαν op-friendly πεδία κατάστασης/χρώματος στις ελλείψεις.
+- `operations.php`: η κάρτα αναφορών ξαναζωγραφίζεται σε κάθε poll (`renderShortages`).
+
+### Fix — Play/Delete βίντεο + geo-modal χάρτης
+
+Αφαιρέθηκε λάθος έλεγχος `typeof bootstrap === 'undefined'` (το bootstrap φορτώνει στο footer) που εμπόδιζε τα κουμπιά play/delete βίντεο και την αρχικοποίηση του χάρτη στο geo-modal.
+
+---
+
 ## [0.11.7-beta] — 2026-06-27
 
 ### Fix — Live ενημέρωση ελλείψεων στο Team Live

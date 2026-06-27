@@ -304,22 +304,20 @@ window.addEventListener('load', function () {
   </div>
 </div>
 
-<?php if ($shortages): ?>
-  <div class="card shadow-sm">
-    <div class="card-header bg-white fw-semibold">Οι αναφορές μας για αυτή τη δράση</div>
-    <ul class="list-group list-group-flush">
-      <?php foreach ($shortages as $s): ?>
-        <li class="list-group-item small">
-          <span class="badge text-bg-<?= e(status_color($s['severity'])) ?>"><?= e(severity_label($s['severity'])) ?></span>
-          <strong class="ms-1"><?= e($s['title']) ?></strong>
-          — <?= e(shortage_type_label($s['shortage_type'])) ?>
-          · <?= status_badge($s['status'] === 'open' ? 'pending' : $s['status']) ?>
-          <span class="text-muted">· <?= e(gr_datetime($s['created_at'])) ?></span>
-        </li>
-      <?php endforeach; ?>
-    </ul>
-  </div>
-<?php endif; ?>
+<div class="card shadow-sm" id="opShortageCard"<?= $shortages ? '' : ' style="display:none"' ?>>
+  <div class="card-header bg-white fw-semibold">Οι αναφορές μας για αυτή τη δράση</div>
+  <ul class="list-group list-group-flush" id="opShortageList">
+    <?php foreach ($shortages as $s): ?>
+      <li class="list-group-item small">
+        <span class="badge text-bg-<?= e(status_color($s['severity'])) ?>"><?= e(severity_label($s['severity'])) ?></span>
+        <strong class="ms-1"><?= e($s['title']) ?></strong>
+        — <?= e(shortage_type_label($s['shortage_type'])) ?>
+        · <?= status_badge($s['status'] === 'open' ? 'pending' : $s['status']) ?>
+        <span class="text-muted">· <?= e(gr_datetime($s['created_at'])) ?></span>
+      </li>
+    <?php endforeach; ?>
+  </ul>
+</div>
 
 <script>
 (function () {
@@ -462,10 +460,25 @@ window.addEventListener('load', function () {
     });
   }
 
+  function renderShortages(list) {
+    var card = document.getElementById('opShortageCard');
+    var ul = document.getElementById('opShortageList');
+    if (!card || !ul) return;
+    list = list || [];
+    card.style.display = list.length ? '' : 'none';
+    ul.innerHTML = list.map(function (s) {
+      return '<li class="list-group-item small">' +
+        '<span class="badge text-bg-' + s.severity_color + '">' + esc(s.severity_label) + '</span>' +
+        ' <strong class="ms-1">' + esc(s.title) + '</strong> — ' + esc(s.type_label) +
+        ' · <span class="badge text-bg-' + s.op_status_color + '">' + esc(s.op_status_label) + '</span>' +
+        ' <span class="text-muted">· ' + esc(s.datetime) + '</span></li>';
+    }).join('');
+  }
+
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
-      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); renderRoom(d.room); } })
+      .then(function (d) { if (d && d.success) { renderMsgs(d.messages); renderSos(d.sos); renderOrders(d.messages); renderGeoPoints(d.messages); renderRoom(d.room); renderShortages(d.shortages); } })
       .catch(function () {});
   }
 

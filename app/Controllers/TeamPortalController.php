@@ -893,6 +893,10 @@ class TeamPortalController
                 'status_class'   => $stClass,
                 'type_label'     => shortage_type_label($sh['shortage_type']),
                 'time'           => substr((string) $sh['created_at'], 11, 5),
+                'severity_color' => status_color($sh['severity']),
+                'op_status_label'=> greek_status($sh['status'] === 'open' ? 'pending' : $sh['status']),
+                'op_status_color'=> status_color($sh['status'] === 'open' ? 'pending' : $sh['status']),
+                'datetime'       => gr_datetime($sh['created_at']),
             ];
         }, $shortRows);
         json_out([
