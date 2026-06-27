@@ -4,6 +4,24 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.2-beta] — 2026-06-27
+
+### Fix — 500 στη σελίδα Απολογισμού (reused named param)
+
+Το query παρουσιών στο `StoryService` χρησιμοποιούσε το named placeholder `:eid` δύο φορές, που με `PDO::ATTR_EMULATE_PREPARES=false` (real prepared statements) σκάει «Invalid parameter number» → «Σφάλμα συστήματος». Διορθώθηκε σε δύο διακριτά params (`:eid1`/`:eid2`).
+
+- Επίσης: admin-only diagnostic στο `EventController@story` (δείχνει το ακριβές σφάλμα μόνο σε municipality_admin).
+
+---
+
+## [0.13.1-beta] — 2026-06-27
+
+### Fix — Ανθεκτικότητα Story όταν λείπει η migration 021
+
+Αν δεν έχει τρέξει ακόμα η στήλη `kept` (migration 021), η σελίδα Story έβγαζε «Σφάλμα συστήματος». Πλέον το `markKeptForEvent` και το cron cleanup αγνοούν με ασφάλεια την απουσία της στήλης (try/catch), ώστε η σελίδα να δουλεύει.
+
+---
+
 ## [0.13.0-beta] — 2026-06-27
 
 ### Feature — Δημόσιος σύνδεσμος Απολογισμού (Φάση 4)

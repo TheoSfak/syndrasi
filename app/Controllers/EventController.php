@@ -343,16 +343,31 @@ class EventController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $event  = Event::findForCurrent($id);
-        $public = (($_GET['view'] ?? '') === 'public');
-        EventVideo::markKeptForEvent((int) $event['id']); // story generated → keep its media
-        $munSettings = MunicipalitySetting::all((int) $event['municipality_id']);
-        render('events/story', [
-            'pageTitle' => 'Απολογισμός: ' . $event['title'],
-            'story'     => StoryService::build((int) $event['id']),
-            'public'    => $public,
-            'logo'      => $munSettings['branding_logo_url'] ?? null,
-            'orgLabel'  => MunicipalitySetting::orgLabelShort($munSettings),
-        ], false); // standalone — clean presentation / print
+        try {
+            $public = (($_GET['view'] ?? '') === 'public');
+            EventVideo::markKeptForEvent((int) $event['id']); // story generated → keep its media
+            $munSettings = MunicipalitySetting::all((int) $event['municipality_id']);
+            render('events/story', [
+                'pageTitle' => 'Απολογισμός: ' . $event['title'],
+                'story'     => StoryService::build((int) $event['id']),
+                'public'    => $public,
+                'logo'      => $munSettings['branding_logo_url'] ?? null,
+                'orgLabel'  => MunicipalitySetting::orgLabelShort($munSettings),
+            ], false); // standalone — clean presentation / print
+        } catch (Throwable $e) {
+            error_log('[Story] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+            if (current_role() === 'municipality_admin') {
+                http_response_code(500);
+                header('Content-Type: text/html; charset=utf-8');
+                echo '<pre style="padding:20px;white-space:pre-wrap;font:13px monospace;color:#b91c1c">STORY ERROR
+' . e($e->getMessage()) . '
+' . e($e->getFile()) . ':' . (int) $e->getLine() . '
+
+' . e($e->getTraceAsString()) . '</pre>';
+                exit;
+            }
+            throw $e;
+        }
     }
 
     public function close($id)

@@ -101,10 +101,10 @@ class StoryService
         $checkins = dbq(
             "SELECT oc.team_id, oc.status, oc.present_people, oc.expected_people, oc.checked_in_at
              FROM operational_checkins oc
-             JOIN ( SELECT team_id, MAX(id) AS mid FROM operational_checkins WHERE event_id = :eid GROUP BY team_id ) last
+             JOIN ( SELECT team_id, MAX(id) AS mid FROM operational_checkins WHERE event_id = :eid1 GROUP BY team_id ) last
                ON last.mid = oc.id
-             WHERE oc.event_id = :eid",
-            ['eid' => $eid]
+             WHERE oc.event_id = :eid2",
+            ['eid1' => $eid, 'eid2' => $eid]
         )->fetchAll();
         $checkinByTeam = [];
         foreach ($checkins as $c) { $checkinByTeam[(int) $c['team_id']] = $c; }

@@ -36,10 +36,17 @@ class MaintenanceService
         // Auto-purge field videos older than EventVideo::RETENTION_DAYS (file + row).
         $videoDir = BASE_PATH . EventVideo::DIR;
         $vc = 0;
-        $oldVideos = dbq(
-            "SELECT id, file_name FROM event_videos
-             WHERE kept = 0 AND created_at < DATE_SUB(NOW(), INTERVAL " . EventVideo::RETENTION_DAYS . " DAY)"
-        )->fetchAll();
+        try {
+            $oldVideos = dbq(
+                "SELECT id, file_name FROM event_videos
+                 WHERE kept = 0 AND created_at < DATE_SUB(NOW(), INTERVAL " . EventVideo::RETENTION_DAYS . " DAY)"
+            )->fetchAll();
+        } catch (Throwable $e) {
+            $oldVideos = dbq(
+                "SELECT id, file_name FROM event_videos
+                 WHERE created_at < DATE_SUB(NOW(), INTERVAL " . EventVideo::RETENTION_DAYS . " DAY)"
+            )->fetchAll();
+        }
         foreach ($oldVideos as $v) {
             $name = basename((string) $v['file_name']);
             if ($name !== '' && preg_match('/^[A-Za-z0-9._-]+$/', $name)) {

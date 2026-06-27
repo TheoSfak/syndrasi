@@ -61,7 +61,12 @@ class EventVideo
     /** Flag every video of an event as kept (excluded from auto-purge). */
     public static function markKeptForEvent(int $eid): void
     {
-        dbq('UPDATE event_videos SET kept = 1 WHERE event_id = :eid', ['eid' => $eid]);
+        // Defensive: if migration 021 (kept column) hasn't run yet, don't break the page.
+        try {
+            dbq('UPDATE event_videos SET kept = 1 WHERE event_id = :eid', ['eid' => $eid]);
+        } catch (Throwable $e) {
+            error_log('[markKeptForEvent] ' . $e->getMessage());
+        }
     }
 
     /** Delete a video: remove the stored file and the DB row. */
