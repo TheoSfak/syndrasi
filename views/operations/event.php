@@ -382,29 +382,11 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
         <button type="button" class="btn btn-sm btn-warning flex-fill fw-bold" id="cmsgSendOrder" title="Στέλνεται ως εντολή — ζητά επιβεβαίωση λήψης από την ομάδα"><i class="bi bi-megaphone me-1"></i>Εντολή</button>
       </div>
     </div>
-    <!-- Geo point sender -->
-    <div class="row g-2 align-items-end mb-3 pt-2 border-top">
-      <div class="col-12"><span class="small text-muted"><i class="bi bi-geo-alt me-1"></i>Αποστολή <strong>σημείου</strong> στην ομάδα (παραλήπτης από πάνω)</span></div>
-      <div class="col-md-3">
-        <label class="form-label small mb-1">Τύπος</label>
-        <select class="form-select form-select-sm" id="geoKind">
-          <option value="move">➡️ Μετάβαση εδώ</option>
-          <option value="incident">⚠️ Περιστατικό</option>
-          <option value="poi">📍 Σημείο ενδιαφέροντος</option>
-        </select>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small mb-1">Συντεταγμένες</label>
-        <input type="text" class="form-control form-control-sm" id="geoCoords" placeholder="lat, lng">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small mb-1">Σχόλιο</label>
-        <input type="text" class="form-control form-control-sm" id="geoNote" maxlength="200" placeholder="προαιρετικό">
-      </div>
-      <div class="col-md-3 d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="geoPickBtn" title="Κλικ στον χάρτη"><i class="bi bi-crosshair me-1"></i>Χάρτη</button>
-        <button type="button" class="btn btn-sm btn-success flex-fill" id="geoSendBtn"><i class="bi bi-send-fill me-1"></i>Σημείο</button>
-      </div>
+    <!-- Geo order: opens map-picker modal -->
+    <div class="mb-3 pt-2 border-top">
+      <button type="button" class="btn btn-sm btn-success w-100" data-bs-toggle="modal" data-bs-target="#geoOrderModal">
+        <i class="bi bi-geo-alt-fill me-1"></i>Νέα εντολή στον χάρτη (μετάβαση / περιστατικό / σημείο)
+      </button>
     </div>
     <div class="msg-thread" id="msgThread"><div class="text-muted small text-center">Καμία επικοινωνία ακόμη.</div></div>
   </div>
@@ -441,6 +423,49 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
     <span class="badge bg-warning text-dark" id="videosBadge">0</span>
   </div>
   <div class="card-body p-2 d-flex flex-wrap gap-2" id="videosBox"></div>
+</div>
+
+<!-- Geo-order map picker modal -->
+<div class="modal fade" id="geoOrderModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title"><i class="bi bi-geo-alt-fill me-1 text-success"></i>Νέα εντολή στον χάρτη</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex gap-2 mb-2">
+          <input type="text" class="form-control form-control-sm" id="goSearch" placeholder="Γράψε διεύθυνση (π.χ. Λ. Κνωσού 10, Ηράκλειο)…">
+          <button type="button" class="btn btn-sm btn-outline-primary" id="goSearchBtn"><i class="bi bi-search me-1"></i>Αναζήτηση</button>
+        </div>
+        <div id="goSearchResults" class="list-group small mb-2" style="max-height:130px;overflow:auto"></div>
+        <div id="goMap" style="height:300px;border-radius:8px;overflow:hidden;border:1px solid #dee2e6"></div>
+        <div class="small text-muted mt-1" id="goCoordsLabel"><i class="bi bi-info-circle me-1"></i>Κάνε κλικ στον χάρτη ή ψάξε διεύθυνση για να βάλεις πινέζα.</div>
+        <div class="row g-2 mt-1 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Τύπος</label>
+            <select class="form-select form-select-sm" id="goKind">
+              <option value="move">➡️ Μετάβαση εδώ</option>
+              <option value="incident">⚠️ Περιστατικό</option>
+              <option value="poi">📍 Σημείο ενδιαφέροντος</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Ομάδα-παραλήπτης</label>
+            <select class="form-select form-select-sm" id="goTeam"><option value="">📢 Όλες οι ομάδες</option></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small mb-1">Σχόλιο</label>
+            <input type="text" class="form-control form-control-sm" id="goNote" maxlength="200" placeholder="προαιρετικό">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Άκυρο</button>
+        <button type="button" class="btn btn-success btn-sm" id="goSendBtn"><i class="bi bi-send-fill me-1"></i>Αποστολή</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Photo viewer modal -->
@@ -1379,51 +1404,83 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   document.getElementById('cmsgSendOrder').addEventListener('click', function(){ sendCmsg('order'); });
   document.getElementById('cmsgBody').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); sendCmsg('message'); } });
 
-  /* ─── Geo point sender ─── */
-  var geoPick = false, geoTempMarker = null;
-  var geoPickBtn = document.getElementById('geoPickBtn');
-  var geoCoords  = document.getElementById('geoCoords');
-  function geoBtnReset() { if (geoPickBtn) { geoPickBtn.classList.remove('btn-warning'); geoPickBtn.classList.add('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Χάρτη'; } }
-  function setGeoPoint(lat, lng) {
-    geoCoords.value = lat.toFixed(6) + ', ' + lng.toFixed(6);
-    if (geoTempMarker) { map.removeLayer(geoTempMarker); }
-    geoTempMarker = L.marker([lat, lng]).addTo(map).bindPopup('Επιλεγμένο σημείο').openPopup();
-  }
-  if (geoPickBtn) {
-    geoPickBtn.addEventListener('click', function () {
-      geoPick = !geoPick;
-      if (geoPick) {
-        mapAutoFit = false; /* user is about to interact with the map — never auto-fit again */
-        geoPickBtn.classList.add('btn-warning'); geoPickBtn.classList.remove('btn-outline-secondary'); geoPickBtn.innerHTML = '<i class="bi bi-crosshair me-1"></i>Κλικ στον χάρτη…';
-      } else { geoBtnReset(); }
+  /* ─── Geo-order modal: map picker + address search (Nominatim, GR) ─── */
+  (function(){
+    var modalEl = document.getElementById('geoOrderModal');
+    if (!modalEl || typeof bootstrap === 'undefined') return;
+    var goMap = null, goMarker = null, goLat = null, goLng = null;
+
+    function setPoint(lat, lng, label){
+      goLat = lat; goLng = lng;
+      if (!goMarker) { goMarker = L.marker([lat,lng]).addTo(goMap); }
+      else { goMarker.setLatLng([lat,lng]); }
+      goMap.setView([lat,lng], Math.max(goMap.getZoom() || 0, 15));
+      document.getElementById('goCoordsLabel').innerHTML =
+        '<i class="bi bi-pin-map-fill text-success me-1"></i>' + (label ? esc(label) + ' — ' : '') +
+        lat.toFixed(5) + ', ' + lng.toFixed(5);
+    }
+
+    modalEl.addEventListener('shown.bs.modal', function(){
+      if (!goMap) {
+        goMap = L.map('goMap').setView([DEF_LAT, DEF_LNG], DEF_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(goMap);
+        goMap.on('click', function(e){ setPoint(e.latlng.lat, e.latlng.lng); });
+      }
+      goMap.invalidateSize();
+      var sel = document.getElementById('goTeam');
+      if (sel && typeof lastTeams !== 'undefined' && lastTeams) {
+        var cur = sel.value;
+        var opts = '<option value="">📢 Όλες οι ομάδες</option>';
+        lastTeams.forEach(function(t){ opts += '<option value="' + t.team_id + '">' + esc(t.team_name) + '</option>'; });
+        sel.innerHTML = opts; sel.value = cur;
+      }
     });
-  }
-  map.on('click', function (e) {
-    if (!geoPick) return;
-    setGeoPoint(e.latlng.lat, e.latlng.lng);
-    geoPick = false; geoBtnReset();
-  });
-  var geoSendBtn = document.getElementById('geoSendBtn');
-  if (geoSendBtn) {
-    geoSendBtn.addEventListener('click', function () {
-      var raw = (geoCoords.value || '').trim();
-      var mm = raw.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);
-      if (!mm) { alert('Δώστε συντεταγμένες (lat, lng) ή πατήστε «Χάρτη» και κλικ στον χάρτη.'); return; }
-      var lat = parseFloat(mm[1]), lng = parseFloat(mm[2]);
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) { alert('Μη έγκυρες συντεταγμένες.'); return; }
-      var pkind = document.getElementById('geoKind').value;
+
+    function doSearch(){
+      var q = (document.getElementById('goSearch').value || '').trim();
+      if (!q) return;
+      var box = document.getElementById('goSearchResults');
+      box.innerHTML = '<div class="text-muted p-1">Αναζήτηση…</div>';
+      fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&countrycodes=gr&limit=5&q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+        .then(function(r){ return r.json(); })
+        .then(function(arr){
+          if (!arr || !arr.length) { box.innerHTML = '<div class="text-muted p-1">Δεν βρέθηκε διεύθυνση.</div>'; return; }
+          box.innerHTML = arr.map(function(it){
+            return '<button type="button" class="list-group-item list-group-item-action py-1" data-lat="' + it.lat + '" data-lng="' + it.lon + '">' + esc(it.display_name) + '</button>';
+          }).join('');
+        })
+        .catch(function(){ box.innerHTML = '<div class="text-danger p-1">Σφάλμα αναζήτησης.</div>'; });
+    }
+    document.getElementById('goSearchBtn').addEventListener('click', doSearch);
+    document.getElementById('goSearch').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); doSearch(); } });
+    document.getElementById('goSearchResults').addEventListener('click', function(e){
+      var b = e.target.closest('[data-lat]'); if (!b) return;
+      setPoint(parseFloat(b.dataset.lat), parseFloat(b.dataset.lng), b.textContent);
+      document.getElementById('goSearchResults').innerHTML = '';
+      document.getElementById('goSearch').value = b.textContent;
+    });
+
+    document.getElementById('goSendBtn').addEventListener('click', function(){
+      if (goLat === null || goLng === null) { alert('Όρισε σημείο: κλικ στον χάρτη ή αναζήτηση διεύθυνσης.'); return; }
+      var pkind = document.getElementById('goKind').value;
       if (pkind === 'incident' && !confirm('Αποστολή ΠΕΡΙΣΤΑΤΙΚΟΥ;\nΘα σταλεί forced push + SMS στην ομάδα.')) return;
+      var btn = this; btn.disabled = true;
       postForm('/operations/events/' + EID + '/message', {
-        point_kind: pkind, latitude: lat, longitude: lng,
-        team_id: document.getElementById('cmsgTeam').value,
-        body: document.getElementById('geoNote').value
-      }).then(function () {
-        document.getElementById('geoNote').value = ''; geoCoords.value = '';
-        if (geoTempMarker) { map.removeLayer(geoTempMarker); geoTempMarker = null; }
+        point_kind: pkind, latitude: goLat, longitude: goLng,
+        team_id: document.getElementById('goTeam').value,
+        body: document.getElementById('goNote').value
+      }).then(function(){
+        btn.disabled = false;
+        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        document.getElementById('goNote').value = '';
+        if (goMarker && goMap) { goMap.removeLayer(goMarker); goMarker = null; }
+        goLat = goLng = null;
+        document.getElementById('goCoordsLabel').innerHTML = '<i class="bi bi-info-circle me-1"></i>Κάνε κλικ στον χάρτη ή ψάξε διεύθυνση για να βάλεις πινέζα.';
+        document.getElementById('goSearchResults').innerHTML = '';
         pollStatus();
-      });
+      }).catch(function(){ btn.disabled = false; });
     });
-  }
+  })();
 
   /* ─── SOS / shortage / pending-application action buttons (delegated) ─── */
   document.addEventListener('click', function(e){

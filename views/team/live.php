@@ -578,6 +578,42 @@ foreach (flash_get() as $flash):
     </div>
   </div>
 
+  <div class="action-card" id="videoCard">
+    <button class="photo-toggle" id="videoToggle" onclick="toggleVideo()" <?= !$isActive ? 'disabled' : '' ?>>
+      <i class="bi bi-camera-video-fill photo-toggle-icon"></i>
+      <div>
+        <div class="photo-toggle-label">Αποστολή Βίντεο</div>
+        <div class="photo-toggle-sub" id="videoToggleSub">Στείλτε σύντομο βίντεο στον δήμο</div>
+      </div>
+      <i class="bi bi-chevron-right photo-toggle-arrow" id="videoArrow"></i>
+    </button>
+    <div id="videoBanner" style="display:none" class="req-banner">
+      <i class="bi bi-camera-video-fill"></i> <span id="videoBannerText">Ο δήμος ζητά βίντεο — τραβήξτε ή επιλέξτε ένα παρακάτω</span>
+    </div>
+    <div id="videoUploadForm">
+      <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/video')) ?>"
+            enctype="multipart/form-data" class="photo-form-inner" id="videoFormEl">
+        <?= csrf_field() ?>
+        <input type="hidden" name="_from" value="live">
+        <input type="hidden" name="latitude"   id="videoLat">
+        <input type="hidden" name="longitude"  id="videoLng">
+        <input type="hidden" name="request_id" id="videoRequestId">
+        <div class="form-group">
+          <label class="form-group" style="font-size:12px;color:#9ca3af;font-weight:600">Βίντεο * (30–40'')</label>
+          <input type="file" name="video" accept="video/*" capture="environment"
+                 class="photo-file-input" id="videoFile" required>
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600">Λεζάντα (προαιρετικό)</label>
+          <input type="text" name="caption" class="form-input" placeholder="π.χ. Κατάσταση στο σημείο…" maxlength="200">
+        </div>
+        <button type="button" class="photo-submit" id="videoSubmitBtn" onclick="submitVideo()">
+          <i class="bi bi-camera-video-fill"></i> Αποστολή Βίντεο
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ── Χάρτης ──────────────────────────────────────────────────────── -->
   <div class="action-card">
     <div class="presence-header"><i class="bi bi-map"></i> Χάρτης Δράσης
@@ -1130,6 +1166,53 @@ foreach (flash_get() as $flash):
     }
   };
 
+  window.toggleVideo = function () {
+    document.getElementById('videoUploadForm').classList.toggle('show');
+    document.getElementById('videoToggle').classList.toggle('open');
+  };
+
+  window.submitVideo = function () {
+    var fileEl = document.getElementById('videoFile');
+    if (!fileEl || !fileEl.files || !fileEl.files.length) { alert('Επιλέξτε ή τραβήξτε βίντεο πρώτα.'); return; }
+    var btn = document.getElementById('videoSubmitBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Λήψη GPS…';
+    function doSubmit(lat, lng) {
+      if (lat !== null) document.getElementById('videoLat').value = lat;
+      if (lng !== null) document.getElementById('videoLng').value = lng;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Αποστολή…';
+      document.getElementById('videoFormEl').submit();
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (p) { doSubmit(p.coords.latitude, p.coords.longitude); },
+        function ()  { doSubmit(null, null); },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } else { doSubmit(null, null); }
+  };
+
+  var videoBannerEl = document.getElementById('videoBanner');
+  var videoToggleEl = document.getElementById('videoToggle');
+  var videoToggleSubEl = document.getElementById('videoToggleSub');
+  function renderVideoRequest(videoReq) {
+    var has = !!(videoReq && videoReq.id);
+    if (videoBannerEl) {
+      videoBannerEl.style.display = has ? 'flex' : 'none';
+      var t = document.getElementById('videoBannerText');
+      if (has && videoReq.instructions && t) { t.textContent = 'Ο δήμος ζητά βίντεο: ' + videoReq.instructions; }
+    }
+    if (videoToggleEl) {
+      videoToggleEl.classList.toggle('has-request', has);
+      if (videoToggleSubEl) videoToggleSubEl.textContent = has ? '⚡ Ο δήμος ζητά βίντεο — πατήστε για να ανοίξει' : 'Στείλτε σύντομο βίντεο στον δήμο';
+    }
+    var ridEl = document.getElementById('videoRequestId');
+    if (ridEl) ridEl.value = has ? videoReq.id : '';
+    if (has) {
+      var form = document.getElementById('videoUploadForm');
+      if (form && !form.classList.contains('show')) { form.classList.add('show'); if (videoToggleEl) videoToggleEl.classList.add('open'); }
+    }
+  }
+
   function pollComms() {
     fetch(BASE + '/team/operations/events/' + EID + '/comms?since=0', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
@@ -1141,6 +1224,7 @@ foreach (flash_get() as $flash):
           renderGeoPoints(d.messages);
           renderRoom(d.room);
           renderRequests(d.photo_request, d.gps_request);
+          renderVideoRequest(d.video_request);
         }
       })
       .catch(function () {});

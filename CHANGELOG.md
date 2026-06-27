@@ -4,6 +4,30 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.11.5-beta] — 2026-06-27
+
+### Feature — Popup χάρτη για εντολή σημείου (μετάβαση/περιστατικό/σημείο)
+
+Στην Επιχειρησιακή Σελίδα, το κουμπί «Νέα εντολή στον χάρτη» ανοίγει popup με χάρτη όπου ορίζεις σημείο είτε με **κλικ για πινέζα** είτε **γράφοντας διεύθυνση** (αναζήτηση OpenStreetMap/Nominatim, προτεραιότητα Ελλάδα). Μέσα στο popup διαλέγεις τύπο, ομάδα-παραλήπτη και σχόλιο, και με το πράσινο **«Σημείο»** φεύγει η εντολή.
+
+- Πλήρης εντολή μέσα στο popup (χάρτης + διεύθυνση + τύπος + ομάδα + σχόλιο + αποστολή).
+- Δωρεάν geocoding (Nominatim, χωρίς API key), bias σε `countrycodes=gr`.
+- Αντικατέστησε το παλιό inline «Χάρτη/Σημείο» (ίδιο endpoint `/message` με `point_kind`).
+
+---
+
+## [0.11.4-beta] — 2026-06-27
+
+### Fix — Αίτημα βίντεο στο Team Live (Mobile Action Hub)
+
+Το αίτημα βίντεο εμφανιζόταν μόνο στο field hub (`/f/{token}`), όχι στο `/team/live` που χρησιμοποιεί ο υπεύθυνος ομάδας από κινητό — γι' αυτό «δεν ερχόταν τίποτα». Προστέθηκε κάρτα «Αποστολή Βίντεο» στο team live, με banner όταν ο δήμος ζητά βίντεο (instructions), εγγραφή/επιλογή από κινητό, geotag και λεζάντα.
+
+- **commsFeed:** επιστρέφει `video_request` (poll κάθε ~5s, ανάβει το banner).
+- **TeamPortalController::uploadVideo** + route `POST /team/operations/events/{id}/video`.
+- **live.php:** κάρτα βίντεο + JS (toggle/submit/renderVideoRequest).
+
+---
+
 ## [0.11.3-beta] — 2026-06-27
 
 ### UI — Σαφέστερες ονομασίες στη ροή κλεισίματος

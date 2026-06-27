@@ -571,6 +571,62 @@ class TeamPortalController
         redirect($back);
     }
 
+    public function uploadVideo($id)
+    {
+        requireRole(['team_admin']);
+        $context = $this->approvedContext($id);
+        $event   = $context['event'];
+        $tid     = (int) current_team_id();
+        $back    = '/team/operations/events/' . $event['id'];
+
+        if (empty($_FILES['video']) || (int) ($_FILES['video']['error'] ?? 1) !== UPLOAD_ERR_OK) {
+            flash_set('danger', 'Δεν επιλέχθηκε έγκυρο βίντεο.');
+            redirect($back);
+        }
+        $f = $_FILES['video'];
+        if ((int) $f['size'] > 60 * 1024 * 1024) {
+            flash_set('danger', 'Το βίντεο είναι πολύ μεγάλο (μέγιστο 60MB).');
+            redirect($back);
+        }
+        $detected = function_exists('mime_content_type') ? (mime_content_type($f['tmp_name']) ?: '') : (string) ($f['type'] ?? '');
+        $allowed  = ['video/mp4' => 'mp4', 'video/webm' => 'webm', 'video/quicktime' => 'mov'];
+        $base = strtolower(trim(explode(';', $detected)[0]));
+        if (!isset($allowed[$base])) {
+            flash_set('danger', 'Επιτρέπονται μόνο βίντεο MP4 / WebM / MOV.');
+            redirect($back);
+        }
+        $dir = BASE_PATH . EventVideo::DIR;
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            flash_set('danger', 'Αδυναμία αποθήκευσης (φάκελος).');
+            redirect($back);
+        }
+        $name = 'ev' . (int) $event['id'] . '_t' . $tid . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$base];
+        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) {
+            flash_set('danger', 'Αποτυχία αποθήκευσης βίντεο.');
+            redirect($back);
+        }
+        $lat = post_float_or_null('latitude');
+        $lng = post_float_or_null('longitude');
+        if ($lat !== null && ($lat < -90 || $lat > 90))   { $lat = null; }
+        if ($lng !== null && ($lng < -180 || $lng > 180)) { $lng = null; }
+        if ($lat === null || $lng === null) { $lat = null; $lng = null; }
+        $dur = post_int('duration');
+        if ($dur < 1 || $dur > 600) { $dur = null; }
+
+        EventVideo::create([
+            'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
+            'uid' => $_SESSION['user_id'], 'rid' => post_int('request_id') ?: null, 'file' => $name,
+            'mime' => $base, 'dur' => $dur, 'size' => (int) $f['size'],
+            'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
+        ]);
+        VideoRequest::fulfillForEventTeam((int) $event['id'], $tid);
+        NotificationService::videoUploaded($event, $tid);
+        audit('video_uploaded', 'event', $event['id'], 'team ' . $tid);
+
+        flash_set('success', 'Το βίντεο στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        redirect($back);
+    }
+
     /** POST /team/operations/events/{id}/checkin */
     public function checkin($id)
     {
@@ -831,6 +887,7 @@ class TeamPortalController
             'room'          => EventRoomMessage::forEvent((int) $event['id']),
             'photo_request' => PhotoRequest::pendingForEventTeam((int) $event['id'], $tid),
             'gps_request'   => GpsRequest::pendingForEventTeam((int) $event['id'], $tid),
+            'video_request' => VideoRequest::pendingForEventTeam((int) $event['id'], $tid),
             'now'           => date('H:i:s'),
         ]);
     }

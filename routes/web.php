@@ -170,6 +170,7 @@ $router->get('/team/operations/events/{id}', 'TeamPortalController@operations');
 $router->post('/team/operations/events/{id}/checkin', 'TeamPortalController@checkin');
 $router->post('/team/operations/events/{id}/send-location', 'TeamPortalController@sendLocation');
 $router->post('/team/operations/events/{id}/photo', 'TeamPortalController@uploadPhoto');
+$router->post('/team/operations/events/{id}/video', 'TeamPortalController@uploadVideo');
 $router->post('/team/operations/events/{id}/sos', 'TeamPortalController@sos');
 $router->post('/team/operations/events/{id}/message', 'TeamPortalController@sendTeamMessage');
 $router->post('/team/operations/events/{id}/status-ping', 'TeamPortalController@statusPing');
