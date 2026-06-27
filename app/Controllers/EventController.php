@@ -286,6 +286,75 @@ class EventController
 
     /** Manual early-end OR scheduled close */
     /** Operational close: active/live event → 'closed' (then reconciliation). */
+    /** GET /events/{id}/story/download — self-contained HTML (φωτό base64, βίντεο ως links). */
+    public function storyDownload($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent($id);
+        $eid   = (int) $event['id'];
+        EventVideo::markKeptForEvent($eid);
+        $story = StoryService::build($eid);
+
+        // Inline photos as base64 (cap each at 6MB to keep the file sane).
+        foreach ($story['photos'] as $k => $p) {
+            $ph   = EventPhoto::find((int) $p['id']);
+            $path = $ph ? EventPhoto::path($ph) : null;
+            if ($path && is_file($path) && filesize($path) <= 6 * 1024 * 1024) {
+                $mime = function_exists('mime_content_type') ? (mime_content_type($path) ?: 'image/jpeg') : 'image/jpeg';
+                $story['photos'][$k]['data_uri'] = 'data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($path));
+            }
+        }
+        $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $absHost = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $munSettings = MunicipalitySetting::all((int) $event['municipality_id']);
+
+        header('Content-Type: text/html; charset=utf-8');
+        header('Content-Disposition: attachment; filename="apologismos-drasis-' . $eid . '.html"');
+        render('events/story', [
+            'pageTitle' => 'Απολογισμός: ' . $event['title'],
+            'story'     => $story,
+            'public'    => (($_GET['view'] ?? '') === 'public'),
+            'download'  => true,
+            'absHost'   => $absHost,
+            'logo'      => $munSettings['branding_logo_url'] ?? null,
+            'orgLabel'  => MunicipalitySetting::orgLabelShort($munSettings),
+        ], false);
+    }
+
+    /** POST /events/{id}/story/publish — create/return the public Story link. */
+    public function publishStory($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent($id);
+        $token = $event['story_token'] ?? null;
+        if (!$token) {
+            $token = bin2hex(random_bytes(16));
+            dbq('UPDATE events SET story_token = :t, story_published_at = NOW() WHERE id = :id', ['t' => $token, 'id' => $event['id']]);
+        }
+        EventVideo::markKeptForEvent((int) $event['id']);
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $url = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . url('/public/story/' . $token);
+        audit('story_published', 'event', $event['id'], $event['title']);
+        json_out(['ok' => true, 'url' => $url]);
+    }
+
+    /** GET /events/{id}/story — full storytelling / απολογισμός page (standalone). */
+    public function story($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event  = Event::findForCurrent($id);
+        $public = (($_GET['view'] ?? '') === 'public');
+        EventVideo::markKeptForEvent((int) $event['id']); // story generated → keep its media
+        $munSettings = MunicipalitySetting::all((int) $event['municipality_id']);
+        render('events/story', [
+            'pageTitle' => 'Απολογισμός: ' . $event['title'],
+            'story'     => StoryService::build((int) $event['id']),
+            'public'    => $public,
+            'logo'      => $munSettings['branding_logo_url'] ?? null,
+            'orgLabel'  => MunicipalitySetting::orgLabelShort($munSettings),
+        ], false); // standalone — clean presentation / print
+    }
+
     public function close($id)
     {
         requireRole(['municipality_admin', 'event_operator']);

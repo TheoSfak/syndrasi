@@ -71,4 +71,85 @@ class PublicEventController
         </div></body></html>';
         exit;
     }
+    /** Resolve a Story token to its (closed/completed) event, or 404. */
+    private function eventByStoryToken(string $token): array
+    {
+        $token = preg_replace('/[^a-f0-9]/', '', strtolower($token));
+        if (strlen($token) < 16) { $this->notFound(); }
+        $event = dbq(
+            "SELECT * FROM events WHERE story_token = :t AND status IN ('closed','completed') LIMIT 1",
+            ['t' => $token]
+        )->fetch();
+        if (!$event) { $this->notFound(); }
+        return $event;
+    }
+
+    /** GET /public/story/{token} — public Story page (no login). */
+    public function story($token)
+    {
+        $event = $this->eventByStoryToken((string) $token);
+        $tok   = preg_replace('/[^a-f0-9]/', '', strtolower((string) $token));
+        $munSettings = MunicipalitySetting::all((int) $event['municipality_id']);
+        render('events/story', [
+            'pageTitle'  => 'Απολογισμός: ' . $event['title'],
+            'story'      => StoryService::build((int) $event['id']),
+            'public'     => true,
+            'publicMode' => true,
+            'storyToken' => $tok,
+            'logo'       => $munSettings['branding_logo_url'] ?? null,
+            'orgLabel'   => MunicipalitySetting::orgLabelShort($munSettings),
+        ], false);
+    }
+
+    /** GET /public/story/{token}/photo/{id} — serve a story photo (no login). */
+    public function storyPhoto($token, $id)
+    {
+        $event = $this->eventByStoryToken((string) $token);
+        $photo = EventPhoto::find((int) $id);
+        if (!$photo || (int) $photo['event_id'] !== (int) $event['id']) { $this->notFound(); }
+        $path = EventPhoto::path($photo);
+        if ($path === null) { $this->notFound(); }
+        $mime = function_exists('mime_content_type') ? (mime_content_type($path) ?: 'image/jpeg') : 'image/jpeg';
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . filesize($path));
+        header('Cache-Control: public, max-age=86400');
+        readfile($path);
+        exit;
+    }
+
+    /** GET /public/story/{token}/video/{id} — serve a story video (no login, range). */
+    public function storyVideo($token, $id)
+    {
+        $event = $this->eventByStoryToken((string) $token);
+        $video = EventVideo::find((int) $id);
+        if (!$video || (int) $video['event_id'] !== (int) $event['id']) { $this->notFound(); }
+        $path = EventVideo::path($video);
+        if ($path === null) { $this->notFound(); }
+        $mime = (string) ($video['mime'] ?: 'video/mp4');
+        if (!in_array($mime, ['video/mp4', 'video/webm', 'video/quicktime'], true)) { $mime = 'video/mp4'; }
+        $size = filesize($path);
+        $start = 0; $end = $size - 1;
+        header('Content-Type: ' . $mime);
+        header('Accept-Ranges: bytes');
+        header('Cache-Control: public, max-age=86400');
+        if (isset($_SERVER['HTTP_RANGE']) && preg_match('/bytes=(\d*)-(\d*)/', $_SERVER['HTTP_RANGE'], $m)) {
+            if ($m[1] !== '') { $start = (int) $m[1]; }
+            if ($m[2] !== '') { $end = (int) $m[2]; }
+            if ($start > $end || $end >= $size) { $end = $size - 1; }
+            header('HTTP/1.1 206 Partial Content');
+            header('Content-Range: bytes ' . $start . '-' . $end . '/' . $size);
+        }
+        header('Content-Length: ' . ($end - $start + 1));
+        $fp = fopen($path, 'rb');
+        if ($fp === false) { exit; }
+        fseek($fp, $start);
+        $remaining = $end - $start + 1;
+        while ($remaining > 0 && !feof($fp)) {
+            $chunk = fread($fp, (int) min(8192, $remaining));
+            if ($chunk === false) { break; }
+            echo $chunk; $remaining -= strlen($chunk); flush();
+        }
+        fclose($fp);
+        exit;
+    }
 }

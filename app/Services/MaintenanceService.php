@@ -38,7 +38,7 @@ class MaintenanceService
         $vc = 0;
         $oldVideos = dbq(
             "SELECT id, file_name FROM event_videos
-             WHERE created_at < DATE_SUB(NOW(), INTERVAL " . EventVideo::RETENTION_DAYS . " DAY)"
+             WHERE kept = 0 AND created_at < DATE_SUB(NOW(), INTERVAL " . EventVideo::RETENTION_DAYS . " DAY)"
         )->fetchAll();
         foreach ($oldVideos as $v) {
             $name = basename((string) $v['file_name']);

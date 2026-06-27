@@ -4,6 +4,49 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.0-beta] — 2026-06-27
+
+### Feature — Δημόσιος σύνδεσμος Απολογισμού (Φάση 4)
+
+Κουμπί «Δημόσιος σύνδεσμος» στη σελίδα Story → δημιουργεί token και δίνει shareable URL `/public/story/{token}` που ανοίγει χωρίς login (δημόσια εκδοχή, κρυμμένα προσωπικά), με φωτό/βίντεο να σερβίρονται μέσω του token.
+
+- Migration `022_story_token.sql` (`story_token`, `story_published_at`).
+- `EventController@publishStory` + `PublicEventController@story/storyPhoto/storyVideo` (public media, range για βίντεο).
+- Ολοκληρώνει το storytelling (Φάσεις 1-4).
+
+---
+
+## [0.12.2-beta] — 2026-06-27
+
+### Feature — Λήψη Απολογισμού ως αυτόνομο HTML (Φάση 3)
+
+Κουμπί «Λήψη HTML» στη σελίδα Story → κατεβάζει self-contained αρχείο: οι φωτογραφίες ενσωματώνονται **base64** (offline), τα βίντεο ως απόλυτα links. Route `/events/{id}/story/download`.
+
+---
+
+## [0.12.1-beta] — 2026-06-27
+
+### Feature — Διατήρηση media του Story (Φάση 2)
+
+Τα βίντεο μιας δράσης που έχει Απολογισμό/Story δεν διαγράφονται πια από το auto-purge των 7 ημερών.
+
+- Migration `021_event_video_kept.sql` (στήλη `kept`).
+- `EventVideo::markKeptForEvent()` — καλείται όταν ανοίγει το Story.
+- `MaintenanceService::cleanup()` εξαιρεί `kept = 1`.
+
+---
+
+## [0.12.0-beta] — 2026-06-27
+
+### Feature — Απολογισμός / Παρουσίαση Δράσης (storytelling)
+
+Σε κλειστή/ολοκληρωμένη δράση, κουμπί «Παρουσίαση Δράσης» ανοίγει μια όμορφη standalone σελίδα (`/events/{id}/story`) με όλη την ιστορικότητα: σύνοψη, χάρτη με διαδρομές ομάδων, χρόνους απόκρισης ανά ομάδα (στίγμα/φωτό/βίντεο + ACK εντολών), χρονολόγιο όλων των γεγονότων, παρουσίες/ώρες, ελλείψεις και gallery. Με print/PDF και διακόπτη Εσωτερική/Δημόσια. (Φάση 1 — δεν χρειάστηκε νέα συλλογή δεδομένων.)
+
+- `StoryService::build()` μαζεύει δεδομένα + υπολογίζει μετρικές απόκρισης (created_at→fulfilled_at/acknowledged_at).
+- `EventController@story` + route + κουμπί στο `/events/{id}` + `views/events/story.php` (Leaflet + Chart.js).
+
+---
+
 ## [0.11.8-beta] — 2026-06-27
 
 ### Fix — Live κατάσταση ελλείψεων στις «Επιχειρησιακές Ενέργειες» (team)

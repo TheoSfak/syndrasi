@@ -59,6 +59,10 @@
         </form>
       <?php endif; ?>
 
+      <?php if (in_array($event['status'], ['closed','completed'], true)): ?>
+        <a class="btn btn-info" href="<?= e(url('/events/' . $event['id'] . '/story')) ?>" target="_blank"><i class="bi bi-easel2 me-1"></i>Παρουσίαση Δράσης</a>
+      <?php endif; ?>
+
       <?php if ($event['status'] === 'completed'): ?>
         <a class="btn btn-outline-primary" href="<?= e(url('/events/' . $event['id'] . '/debriefs')) ?>">
           <i class="bi bi-clipboard2-data me-1"></i>Απολογισμός Δράσης

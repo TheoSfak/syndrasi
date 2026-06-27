@@ -6,6 +6,9 @@
 
 /* Public (no auth required) */
 $router->get('/public/events/{token}', 'PublicEventController@show');
+$router->get('/public/story/{token}', 'PublicEventController@story');
+$router->get('/public/story/{token}/photo/{id}', 'PublicEventController@storyPhoto');
+$router->get('/public/story/{token}/video/{id}', 'PublicEventController@storyVideo');
 
 /* Emergency mobilization — volunteer response (token link, no login required) */
 $router->get('/m/{token}',         'MobilizationController@respondForm');
@@ -72,6 +75,9 @@ $router->post('/events/{id}/activate', 'EventController@activate');
 $router->post('/events/{id}/close', 'EventController@close');
 $router->post('/events/{id}/complete', 'EventController@complete');
 $router->post('/events/{id}/archive', 'EventController@archive');
+$router->get('/events/{id}/story', 'EventController@story');
+$router->get('/events/{id}/story/download', 'EventController@storyDownload');
+$router->post('/events/{id}/story/publish', 'EventController@publishStory');
 $router->get('/events/{id}/reconcile', 'EventController@reconcile');
 $router->post('/events/{id}/reconcile', 'EventController@saveReconciliation');
 $router->post('/events/{id}/remind', 'EventController@remind');
