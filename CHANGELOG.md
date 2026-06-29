@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.6-beta] — 2026-06-29
+
+### Hotfix — Telegram settings production fallback
+
+- Διορθώθηκε πιθανό production crash στη σελίδα Ρυθμίσεων όταν το νέο `config/telegram.php` δεν υπάρχει στο live επειδή ο self-updater διατηρεί το υπάρχον `config/`.
+- Το `TelegramService` έχει πλέον εσωτερικά fallback defaults και συνεχίζει να λειτουργεί με env variables ή με τις ρυθμίσεις δήμου από τη βάση.
+
+---
+
 ## [0.14.5-beta] — 2026-06-29
 
 ### Feature — Superadmin πλήρης εικόνα ομάδων και εθελοντών

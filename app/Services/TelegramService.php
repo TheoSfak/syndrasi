@@ -16,7 +16,7 @@ class TelegramService
 
     public static function resolveConfig($municipalityId = null): array
     {
-        $cfg = config('telegram');
+        $cfg = self::defaultConfig();
 
         if ($municipalityId) {
             try {
@@ -37,6 +37,27 @@ class TelegramService
         }
 
         return $cfg;
+    }
+
+    private static function defaultConfig(): array
+    {
+        $path = BASE_PATH . '/config/telegram.php';
+        if (is_file($path)) {
+            try {
+                $cfg = config('telegram');
+                if (is_array($cfg)) {
+                    return $cfg;
+                }
+            } catch (Throwable $e) {
+                error_log('[Telegram] config fallback: ' . $e->getMessage());
+            }
+        }
+
+        return [
+            'enabled' => env('TELEGRAM_ENABLED', '0') === '1',
+            'bot_token' => env('TELEGRAM_BOT_TOKEN', ''),
+            'command_chat_id' => env('TELEGRAM_COMMAND_CHAT_ID', ''),
+        ];
     }
 
     public static function sendCommand($municipalityId, string $title, string $message, ?string $url = null): bool
