@@ -251,6 +251,7 @@ $router->post('/admin/municipalities/store', 'AdminController@storeMunicipality'
 $router->get('/admin/municipalities/{id}', 'AdminController@showMunicipality');
 $router->post('/admin/municipalities/{id}/update', 'AdminController@updateMunicipality');
 $router->post('/admin/municipalities/{id}/toggle', 'AdminController@toggleMunicipality');
+$router->get('/admin/teams', 'AdminController@teamsOverview');
 $router->get('/admin/users', 'AdminController@users');
 $router->post('/admin/users/store', 'AdminController@storeUser');
 $router->post('/admin/users/{id}/update', 'AdminController@updateUser');

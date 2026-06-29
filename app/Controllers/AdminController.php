@@ -206,6 +206,105 @@ class AdminController
         ]);
     }
 
+    public function teamsOverview()
+    {
+        requireRole(['super_admin']);
+
+        $municipalityId = isset($_GET['municipality_id']) && $_GET['municipality_id'] !== '' ? (int) $_GET['municipality_id'] : 0;
+        $teamId = isset($_GET['team_id']) && $_GET['team_id'] !== '' ? (int) $_GET['team_id'] : 0;
+        $status = isset($_GET['status']) ? trim((string) $_GET['status']) : '';
+        $q = isset($_GET['q']) ? trim((string) $_GET['q']) : '';
+
+        $where = [];
+        $params = [];
+        if ($municipalityId > 0) {
+            $where[] = 'vt.municipality_id = :mid';
+            $params['mid'] = $municipalityId;
+        }
+        if ($teamId > 0) {
+            $where[] = 'vt.id = :tid';
+            $params['tid'] = $teamId;
+        }
+        if (in_array($status, ['active', 'inactive'], true)) {
+            $where[] = 'vt.status = :status';
+            $params['status'] = $status;
+        }
+        if ($q !== '') {
+            $where[] = '(vt.name LIKE :q OR vt.contact_person LIKE :q OR vt.email LIKE :q OR vt.phone LIKE :q OR m.name LIKE :q)';
+            $params['q'] = '%' . $q . '%';
+        }
+        $teamWhere = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+
+        $teams = dbq(
+            "SELECT vt.*, m.name AS municipality_name,
+                    (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = vt.id) AS members_count,
+                    (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = vt.id AND tm.status = 'active') AS active_members_count,
+                    (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = vt.id AND tm.is_team_admin = 1) AS roster_admins_count,
+                    (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = vt.id AND tm.is_assistant_admin = 1) AS assistant_admins_count,
+                    (SELECT COUNT(*) FROM users u WHERE u.team_id = vt.id AND u.role = 'team_admin') AS login_admins_count
+             FROM volunteer_teams vt
+             JOIN municipalities m ON m.id = vt.municipality_id
+             $teamWhere
+             ORDER BY m.name, vt.name",
+            $params
+        )->fetchAll();
+
+        $memberWhere = [];
+        $memberParams = [];
+        if ($municipalityId > 0) {
+            $memberWhere[] = 'tm.municipality_id = :mmid';
+            $memberParams['mmid'] = $municipalityId;
+        }
+        if ($teamId > 0) {
+            $memberWhere[] = 'tm.team_id = :mtid';
+            $memberParams['mtid'] = $teamId;
+        }
+        if (in_array($status, ['active', 'inactive'], true)) {
+            $memberWhere[] = 'tm.status = :mstatus';
+            $memberParams['mstatus'] = $status;
+        }
+        if ($q !== '') {
+            $memberWhere[] = '(tm.full_name LIKE :mq OR tm.phone LIKE :mq OR tm.email LIKE :mq OR tm.role_in_team LIKE :mq OR tm.civil_protection_registry_no LIKE :mq OR vt.name LIKE :mq OR m.name LIKE :mq)';
+            $memberParams['mq'] = '%' . $q . '%';
+        }
+        $memberSqlWhere = $memberWhere ? ('WHERE ' . implode(' AND ', $memberWhere)) : '';
+
+        $members = dbq(
+            "SELECT tm.*, vt.name AS team_name, vt.type AS team_type, m.name AS municipality_name,
+                    u.email AS login_email, u.role AS login_role, u.status AS login_status, u.last_login_at
+             FROM team_members tm
+             JOIN volunteer_teams vt ON vt.id = tm.team_id
+             JOIN municipalities m ON m.id = tm.municipality_id
+             LEFT JOIN users u ON u.id = tm.user_id
+             $memberSqlWhere
+             ORDER BY m.name, vt.name, tm.is_team_admin DESC, tm.is_assistant_admin DESC, tm.full_name",
+            $memberParams
+        )->fetchAll();
+
+        $counts = [
+            'teams' => (int) dbq('SELECT COUNT(*) FROM volunteer_teams')->fetchColumn(),
+            'active_teams' => (int) dbq("SELECT COUNT(*) FROM volunteer_teams WHERE status = 'active'")->fetchColumn(),
+            'members' => (int) dbq('SELECT COUNT(*) FROM team_members')->fetchColumn(),
+            'active_members' => (int) dbq("SELECT COUNT(*) FROM team_members WHERE status = 'active'")->fetchColumn(),
+            'assistants' => (int) dbq('SELECT COUNT(*) FROM team_members WHERE is_assistant_admin = 1')->fetchColumn(),
+        ];
+
+        render('admin/teams_overview', [
+            'pageTitle'      => 'Ομάδες & Εθελοντές',
+            'teams'          => $teams,
+            'members'        => $members,
+            'counts'         => $counts,
+            'municipalities' => Municipality::all(),
+            'allTeams'       => dbq('SELECT id, municipality_id, name FROM volunteer_teams ORDER BY name')->fetchAll(),
+            'filters'        => [
+                'municipality_id' => $municipalityId,
+                'team_id' => $teamId,
+                'status' => $status,
+                'q' => $q,
+            ],
+        ]);
+    }
+
     /* --------------------------------------------------------------- Users */
 
     public function users()

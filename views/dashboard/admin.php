@@ -10,6 +10,9 @@
     <a href="<?= e(url('/admin/users')) ?>" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-people me-1"></i>Χρήστες
     </a>
+    <a href="<?= e(url('/admin/teams')) ?>" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-shield-check me-1"></i>Ομάδες & Εθελοντές
+    </a>
   </div>
 </div>
 

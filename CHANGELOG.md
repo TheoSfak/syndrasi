@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.5-beta] — 2026-06-29
+
+### Feature — Superadmin πλήρης εικόνα ομάδων και εθελοντών
+
+- Προστέθηκε νέα σελίδα superadmin “Ομάδες & Εθελοντές” με συνολική εικόνα όλων των εθελοντικών/διασωστικών ομάδων της πλατφόρμας.
+- Ο superadmin βλέπει όλες τις ομάδες ανά δήμο με υπεύθυνο, επικοινωνία, δυνατότητες, Telegram ένδειξη, πλήθος μελών, ενεργά μέλη, βοηθούς αρχηγού και login admins.
+- Προστέθηκε πλήρης πίνακας εθελοντών με όλα τα στοιχεία roster που περνά ο αρχηγός: επικοινωνία, διεύθυνση, ρόλος, ΑΜ Πολιτικής Προστασίας, ημερομηνία γέννησης, ΑΔΤ, ΑΜΚΑ, ομάδα αίματος, δίπλωμα, πιστοποιήσεις, σημειώσεις και linked login status.
+- Προστέθηκαν φίλτρα για δήμο, ομάδα, κατάσταση και αναζήτηση.
+
+---
+
 ## [0.14.4-beta] — 2026-06-29
 
 ### UX — Telegram setup guidance

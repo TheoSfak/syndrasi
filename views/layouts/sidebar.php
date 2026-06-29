@@ -39,6 +39,7 @@ if ($role === 'municipality_admin') {
     $menus = [
         ['/admin/dashboard', 'bi-speedometer2', 'Πίνακας Ελέγχου'],
         ['/admin/municipalities', 'bi-building', 'Δήμοι'],
+        ['/admin/teams', 'bi-shield-check', 'Ομάδες & Εθελοντές'],
         ['/admin/users', 'bi-people', 'Χρήστες'],
         ['/admin/settings', 'bi-gear', 'Ρυθμίσεις'],
     ];
