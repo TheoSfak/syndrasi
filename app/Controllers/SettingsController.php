@@ -257,6 +257,25 @@ class SettingsController
         redirect('/settings#tab-notifications');
     }
 
+    public function syncFireRiskMap()
+    {
+        requireRole(['municipality_admin']);
+        $mid = (int) current_municipality_id();
+        $result = FireRiskMapService::sync($mid);
+
+        if ($result['success']) {
+            $sent = (int) ($result['telegram_sent'] ?? 0);
+            $date = !empty($result['map_date']) ? gr_date($result['map_date']) : 'τον τελευταίο χάρτη';
+            flash_set('success', 'Ο έλεγχος χάρτη κινδύνου ολοκληρώθηκε για ' . $date . '. '
+                . ($sent > 0 ? 'Στάλθηκε ειδοποίηση Telegram.' : 'Δεν υπήρχε νέα ειδοποίηση Telegram για αποστολή.'));
+        } else {
+            flash_set('danger', 'Ο έλεγχος χάρτη κινδύνου απέτυχε: ' . ($result['error'] ?? 'άγνωστο σφάλμα'));
+        }
+
+        audit('fire_risk_map_manual_sync', 'municipality', $mid, $result);
+        redirect('/settings#tab-notifications');
+    }
+
     /* ── SMS gateway ──────────────────────────────────────────────────── */
 
     public function saveSms()

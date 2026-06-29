@@ -223,6 +223,7 @@ $router->post('/settings/mail/test', 'SettingsController@testMail');
 $router->post('/settings/map', 'SettingsController@saveMap');
 $router->post('/settings/awards', 'SettingsController@saveAwards');
 $router->post('/settings/notifications', 'SettingsController@saveNotifications');
+$router->post('/settings/fire-risk-map/sync', 'SettingsController@syncFireRiskMap');
 $router->post('/settings/sms', 'SettingsController@saveSms');
 $router->post('/settings/sms/test', 'SettingsController@testSms');
 $router->post('/settings/telegram', 'SettingsController@saveTelegram');

@@ -28,14 +28,14 @@ class FireRiskMapService
         'Λασίθι' => [870 / 1384, 1250 / 1453],
     ];
 
-    public static function sync(): array
+    public static function sync(?int $onlyMunicipalityId = null): array
     {
         @set_time_limit(90);
         try {
             $map = self::latestMap();
             $image = self::fetchBinary($map['image_url']);
             $analysis = self::analyseImage($image);
-            $sent = self::notifyMunicipalities($map, $analysis);
+            $sent = self::notifyMunicipalities($map, $analysis, $onlyMunicipalityId);
             self::cleanup();
             return [
                 'success' => true,
@@ -122,12 +122,13 @@ class FireRiskMapService
         ];
     }
 
-    private static function notifyMunicipalities(array $map, array $analysis): int
+    private static function notifyMunicipalities(array $map, array $analysis, ?int $onlyMunicipalityId = null): int
     {
         $sent = 0;
         foreach (Municipality::all() as $municipality) {
             if (($municipality['status'] ?? 'active') !== 'active') { continue; }
             $mid = (int) $municipality['id'];
+            if ($onlyMunicipalityId !== null && $mid !== $onlyMunicipalityId) { continue; }
             if (!NotificationService::shouldSendTelegram($mid, 'fire_risk_crete')) { continue; }
 
             $cfg = TelegramService::resolveConfig($mid);

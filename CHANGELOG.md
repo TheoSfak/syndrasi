@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.14-beta] — 2026-06-30
+
+### UX — Manual fire-risk map check
+
+- Προστέθηκε κουμπί «Έλεγχος τώρα» στις Ρυθμίσεις → Ειδοποιήσεις για χειροκίνητη εκτέλεση του χάρτη κινδύνου πυρκαγιάς Κρήτης.
+- Το χειροκίνητο trigger χρησιμοποιεί το ίδιο dedupe με το cron, άρα δεν στέλνει δεύτερη ειδοποίηση για την ίδια ημερομηνία χάρτη.
+- Προστέθηκε έτοιμη εντολή cron για `/cron/fire-risk-map` μέσα στις Ρυθμίσεις.
+
+---
+
 ## [0.14.13-beta] — 2026-06-30
 
 ### Feature — Civil Protection fire-risk map Telegram alerts

@@ -270,6 +270,10 @@ $tzOptions = [
                 ['fire_service_crete',      'Συμβάντα Πυροσβεστικής Κρήτης', 'Νέα συμβάντα ή αλλαγές κατάστασης σε ΣΕ ΕΞΕΛΙΞΗ / ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ'],
                 ['fire_risk_crete',         'Χάρτης κινδύνου πυρκαγιάς Κρήτης', 'Ημερήσια πρόβλεψη κινδύνου ανά Π.Ε. Κρήτης από την Πολιτική Προστασία'],
             ];
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $fireRiskCronUrl = $scheme . '://' . $host . url('/cron/fire-risk-map');
+            $fireRiskCronCommand = 'curl -s -H "Authorization: Bearer TOKEN" "' . $fireRiskCronUrl . '" > /dev/null';
             $opsTypeKeys = array_map(static function ($row) { return $row[0]; }, $opsNotifTypes);
             $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];
             // Effective channel: explicit notify_channel_*, else legacy notify_email_*.
@@ -345,6 +349,19 @@ $tzOptions = [
                 </div>
                 <?php endforeach; ?>
               </div>
+              <div class="border rounded p-3 mt-3 bg-light">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                  <div>
+                    <div class="fw-semibold small">Χειροκίνητος έλεγχος χάρτη κινδύνου</div>
+                    <div class="small text-muted">Τρέχει τώρα τον ημερήσιο χάρτη Πολιτικής Προστασίας. Δεν στέλνει διπλά αν έχει ήδη σταλεί για την ίδια ημερομηνία.</div>
+                  </div>
+                  <button type="submit" form="fireRiskManualForm" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-fire me-1"></i>Έλεγχος τώρα
+                  </button>
+                </div>
+                <div class="small text-muted mb-1">Cron κάθε 60 λεπτά:</div>
+                <code class="d-block small text-break"><?= e($fireRiskCronCommand) ?></code>
+              </div>
             </div>
           </div>
             <div class="border-top mt-1 pt-3 px-1 pb-2">
@@ -366,6 +383,9 @@ $tzOptions = [
           <div class="card-footer bg-white">
             <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
           </div>
+        </form>
+        <form id="fireRiskManualForm" method="post" action="<?= e(url('/settings/fire-risk-map/sync')) ?>">
+          <?= csrf_field() ?>
         </form>
       </div>
       <div class="col-lg-5">
