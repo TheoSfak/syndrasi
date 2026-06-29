@@ -422,7 +422,7 @@ class EventController
         redirect('/events');
     }
 
-    /** Move completed → archived (cancelled = archived in this system) */
+    /** Move a closed event to completed/archive. */
     public function archive($id)
     {
         requireRole(['municipality_admin']);
@@ -433,7 +433,8 @@ class EventController
         }
         Event::setStatus($event['id'], 'completed');
         audit('event_archived', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η δράση αρχειοθετήθηκε και μετακινήθηκε στις Ολοκληρωμένες.');
+        try { NotificationService::eventCompleted($event); } catch (Throwable $e) { error_log('[EventArchiveCompleted] ' . $e->getMessage()); }
+        flash_set('success', 'Η δράση αρχειοθετήθηκε, μετακινήθηκε στις Ολοκληρωμένες και οι ειδοποιήσεις στάλθηκαν.');
         redirect('/events/completed');
     }
 

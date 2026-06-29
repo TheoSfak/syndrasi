@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.11-beta] — 2026-06-29
+
+### Hotfix — Telegram on completed archive flow
+
+- Διορθώθηκε το πραγματικό κουμπί «Ολοκλήρωση» της κλειστής δράσης, το οποίο περνά από `/events/{id}/archive`, ώστε να καλεί τις `event_completed` ειδοποιήσεις και το Telegram.
+
+---
+
 ## [0.14.10-beta] — 2026-06-29
 
 ### Feature — Shared Telegram group for teams
