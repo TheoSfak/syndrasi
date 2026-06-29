@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.4-beta] — 2026-06-29
+
+### UX — Telegram setup guidance
+
+- Προστέθηκαν αναλυτικές οδηγίες στο tab Telegram για BotFather, προσθήκη bot σε group/channel, εύρεση `chat_id` με `getUpdates`, test αποστολής και ρύθμιση group ανά εθελοντική ομάδα.
+- Προστέθηκαν επίσημα links για Telegram Bots tutorial, `sendMessage` και `getUpdates`.
+
+---
+
 ## [0.14.3-beta] — 2026-06-29
 
 ### Feature — Telegram notification channel

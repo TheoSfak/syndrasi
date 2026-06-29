@@ -471,10 +471,40 @@ $tzOptions = [
         <div class="card shadow-sm mt-3">
           <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στήσιμο bot</div>
           <div class="card-body small text-muted">
-            <p>1. Δημιουργείτε bot από το <strong>BotFather</strong> και αντιγράφετε το token.</p>
-            <p>2. Προσθέτετε το bot στο Telegram group ή channel.</p>
-            <p>3. Παίρνετε το <strong>chat_id</strong> του group/channel και το βάζετε εδώ ή στην αντίστοιχη ομάδα.</p>
-            <p class="mb-0">Για ομάδες, το Chat ID μπαίνει στη φόρμα <strong>Εθελοντικές Ομάδες → Επεξεργασία</strong>.</p>
+            <ol class="ps-3 mb-3">
+              <li class="mb-2">
+                Ανοίξτε το <a href="https://t.me/BotFather" target="_blank" rel="noopener">BotFather</a>, στείλτε <code>/newbot</code> και αντιγράψτε το <strong>Bot Token</strong>.
+              </li>
+              <li class="mb-2">
+                Δημιουργήστε ή ανοίξτε το Telegram group/channel του δήμου και προσθέστε το bot ως μέλος. Για channels, δώστε στο bot δικαίωμα δημοσίευσης.
+              </li>
+              <li class="mb-2">
+                Στείλτε ένα δοκιμαστικό μήνυμα μέσα στο group, π.χ. <code>test syndrasi</code>.
+              </li>
+              <li class="mb-2">
+                Ανοίξτε στον browser:
+                <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code>
+                και βρείτε το <code>chat.id</code>. Συνήθως τα group/channel IDs είναι αρνητικά, π.χ. <code>-1001234567890</code>.
+              </li>
+              <li class="mb-2">
+                Βάλτε αυτό το ID στο πεδίο <strong>Command / Δήμος Chat ID</strong> και πατήστε <strong>Αποθήκευση</strong>.
+              </li>
+              <li>
+                Πατήστε <strong>Αποστολή δοκιμαστικού</strong>. Αν το μήνυμα εμφανιστεί στο group, το Telegram είναι έτοιμο.
+              </li>
+            </ol>
+            <div class="border-top pt-3">
+              <div class="fw-semibold text-body mb-2">Groups ομάδων</div>
+              <p>Για κάθε εθελοντική ομάδα που θέλετε να λαμβάνει Telegram, φτιάξτε/ανοίξτε το δικό της group, προσθέστε το ίδιο bot, πάρτε το <code>chat.id</code> με τον ίδιο τρόπο και βάλτε το στο πεδίο <strong>Εθελοντικές Ομάδες → Επεξεργασία → Telegram Chat ID ομάδας</strong>.</p>
+            </div>
+            <div class="border-top pt-3 mt-3">
+              <div class="fw-semibold text-body mb-2">Χρήσιμα links</div>
+              <ul class="mb-0 ps-3">
+                <li><a href="https://core.telegram.org/bots/tutorial" target="_blank" rel="noopener">Telegram Bots tutorial</a></li>
+                <li><a href="https://core.telegram.org/bots/api#sendmessage" target="_blank" rel="noopener">Bot API: sendMessage</a></li>
+                <li><a href="https://core.telegram.org/bots/api#getupdates" target="_blank" rel="noopener">Bot API: getUpdates</a></li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
