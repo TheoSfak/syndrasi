@@ -483,8 +483,9 @@ $tzOptions = [
               </li>
               <li class="mb-2">
                 Ανοίξτε στον browser:
-                <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code>
-                και βρείτε το <code>chat.id</code>. Συνήθως τα group/channel IDs είναι αρνητικά, π.χ. <code>-1001234567890</code>.
+                <code>https://api.telegram.org/bot123456789:ABCdefYourRealToken/getUpdates</code>
+                αλλάζοντας το <code>123456789:ABCdefYourRealToken</code> με το πραγματικό Bot Token από το BotFather, χωρίς <code>&lt;</code> και <code>&gt;</code>.
+                Βρείτε το <code>chat.id</code>. Συνήθως τα group/channel IDs είναι αρνητικά, π.χ. <code>-1001234567890</code>.
               </li>
               <li class="mb-2">
                 Βάλτε αυτό το ID στο πεδίο <strong>Command / Δήμος Chat ID</strong> και πατήστε <strong>Αποθήκευση</strong>.

@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.7-beta] — 2026-06-29
+
+### Docs — Telegram getUpdates setup
+
+- Βελτιώθηκε η οδηγία για το Telegram `getUpdates` ώστε να δείχνει παράδειγμα πραγματικής μορφής Bot Token και να ξεκαθαρίζει ότι δεν μπαίνουν τα σύμβολα `<` και `>`.
+
+---
+
 ## [0.14.6-beta] — 2026-06-29
 
 ### Hotfix — Telegram settings production fallback
