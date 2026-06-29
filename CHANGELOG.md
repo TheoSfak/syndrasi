@@ -4,6 +4,23 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.5-beta] — 2026-06-29
+
+### Feature — Wow απολογισμός δράσης
+
+Η σελίδα Παρουσίασης/Απολογισμού δράσης έγινε public-facing story page:
+
+- Νέο full-screen hero με πραγματική φωτογραφία δράσης όταν υπάρχει, ισχυρό τίτλο, impact sentence και βασικούς μετρητές.
+- Sticky πλοήγηση σε Σύνοψη / Χάρτη / Ομάδες / Χρονολόγιο / Υλικό.
+- Νέα σύνοψη με narrative απολογισμό και impact cards.
+- Μεγαλύτερος χάρτης με φίλτρα ομάδων, πιο καθαρά route markers και σημεία φωτογραφιών/βίντεο/περιστατικών.
+- Κάρτες αναγνώρισης ομάδων με παρόντα άτομα, ώρες προσφοράς, άφιξη και αναχώρηση.
+- Χρονολόγιο χωρισμένο σε φάσεις (έναρξη, επιχειρησιακή ροή, περιστατικά/ελλείψεις, ολοκλήρωση).
+- Νέο masonry gallery με lightbox για φωτογραφίες και βίντεο.
+- Καλύτερη mobile και print/PDF συμπεριφορά.
+
+---
+
 ## [0.13.4-beta] — 2026-06-29
 
 ### Security / Performance / UX audit fixes

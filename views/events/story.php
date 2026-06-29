@@ -1,19 +1,21 @@
 <?php
 /** SynDrasi — Story / Απολογισμός Δράσης (standalone presentation page). */
-$ev    = $story['event'] ?? [];
-$sm    = $story['summary'] ?? [];
-$teams = $story['teams'] ?? [];
-$tl    = $story['timeline'] ?? [];
-$metr  = array_values($story['metrics'] ?? []);
-$photos= $story['photos'] ?? [];
-$videos= $story['videos'] ?? [];
-$shorts= $story['shortages'] ?? [];
-$checks= $story['checkins'] ?? [];
+$ev     = $story['event'] ?? [];
+$sm     = $story['summary'] ?? [];
+$teams  = $story['teams'] ?? [];
+$tl     = $story['timeline'] ?? [];
+$metr   = array_values($story['metrics'] ?? []);
+$photos = $story['photos'] ?? [];
+$videos = $story['videos'] ?? [];
+$shorts = $story['shortages'] ?? [];
+$checks = $story['checkins'] ?? [];
+
 $download   = !empty($download);
 $publicMode = !empty($publicMode);
 $isPublic   = !empty($public) || $publicMode;
 $absHost    = $absHost ?? '';
 $storyToken = $storyToken ?? '';
+
 $photoSrc = function($p) use ($download, $absHost, $publicMode, $storyToken) {
     if ($publicMode) { return url('/public/story/' . $storyToken . '/photo/' . (int) $p['id']); }
     if ($download && !empty($p['data_uri'])) { return $p['data_uri']; }
@@ -26,9 +28,76 @@ $videoSrc = function($id) use ($download, $absHost, $publicMode, $storyToken) {
     return $download ? $absHost . $u : $u;
 };
 
-$jsTeams = array_map(fn($t) => ['id' => $t['id'], 'name' => $t['name'], 'color' => $t['color']], $teams);
+$eventTitle = (string) ($ev['title'] ?? '');
 $startD = $ev['start_datetime'] ?? null;
 $endD   = $ev['end_datetime'] ?? null;
+$heroPhoto = $photos[0] ?? null;
+$heroImage = $heroPhoto ? $photoSrc($heroPhoto) : '';
+$mediaCount = (int) ($sm['photos'] ?? 0) + (int) ($sm['videos'] ?? 0);
+$duration = $sm['duration_h'] ?? null;
+$location = trim((string) ($ev['location_name'] ?? ''));
+$impactSentence = sprintf(
+    'Σε %s, %d ομάδες κάλυψαν τη δράση με %d εθελοντές και %s ώρες προσφοράς.',
+    $duration ? e((string) $duration) . ' ώρες' : 'μία επιχειρησιακή περίοδο',
+    (int) ($sm['teams'] ?? 0),
+    (int) ($sm['volunteers'] ?? 0),
+    e((string) ($sm['hours'] ?? 0))
+);
+
+$teamImpact = [];
+foreach ($teams as $t) {
+    $arr = $t['arrival'] ?: $startD;
+    $dep = $t['departure'] ?: $endD;
+    $people = $t['actual'] ?? ($checks[$t['id']]['present_people'] ?? $t['approved']);
+    $hours = ($arr && $dep) ? round(max(0, (strtotime($dep) - strtotime($arr)) / 3600) * (int) $people, 1) : 0;
+    $teamImpact[] = [
+        'id' => (int) $t['id'],
+        'name' => $t['name'],
+        'color' => $t['color'],
+        'approved' => (int) $t['approved'],
+        'people' => (int) $people,
+        'hours' => $hours,
+        'arrival' => $t['arrival'],
+        'departure' => $t['departure'],
+        'commander' => $t['commander'] ?? null,
+    ];
+}
+usort($teamImpact, fn($a, $b) => $b['hours'] <=> $a['hours']);
+
+$timelineGroups = [
+    'start' => ['title' => 'Έναρξη & άφιξη', 'items' => []],
+    'ops'   => ['title' => 'Επιχειρησιακή ροή', 'items' => []],
+    'risk'  => ['title' => 'Περιστατικά & ελλείψεις', 'items' => []],
+    'close' => ['title' => 'Ολοκλήρωση', 'items' => []],
+];
+foreach ($tl as $it) {
+    $icon = (string) ($it['icon'] ?? '');
+    $title = (string) ($it['title'] ?? '');
+    $key = 'ops';
+    if (str_contains($icon, 'box-arrow-in') || str_contains($title, 'παρουσίας')) { $key = 'start'; }
+    if (str_contains($icon, 'exclamation') || str_contains($title, 'SOS') || str_contains($title, 'Έλλειψη')) { $key = 'risk'; }
+    if (str_contains($icon, 'shield-check') || str_contains($title, 'επιλύθηκε') || str_contains($title, 'Αποχώρηση')) { $key = 'close'; }
+    $timelineGroups[$key]['items'][] = $it;
+}
+
+$jsTeams = array_map(fn($t) => ['id' => (int) $t['id'], 'name' => $t['name'], 'color' => $t['color']], $teams);
+$jsGallery = [];
+foreach ($photos as $p) {
+    $jsGallery[] = [
+        'type' => 'photo',
+        'src' => $photoSrc($p),
+        'caption' => (string) ($p['caption'] ?? ''),
+        'team' => '',
+    ];
+}
+foreach ($videos as $v) {
+    $jsGallery[] = [
+        'type' => 'video',
+        'src' => $videoSrc($v['id']),
+        'caption' => (string) ($v['caption'] ?? ''),
+        'team' => '',
+    ];
+}
 ?><!DOCTYPE html>
 <html lang="el">
 <head>
@@ -39,80 +108,164 @@ $endD   = $ev['end_datetime'] ?? null;
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
 <style>
-  :root{ --ink:#0f172a; --muted:#64748b; --line:#e5e7eb; --brand:#0d9488; }
+  :root{
+    --ink:#111827;--muted:#667085;--line:#e6eaf0;--paper:#ffffff;--soft:#f6f8fb;
+    --brand:#0f766e;--blue:#2563eb;--amber:#d97706;--rose:#be123c;--night:#111827;
+  }
   *{box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:#f1f5f9;margin:0}
-  .wrap{max-width:1000px;margin:0 auto;padding:0 16px 64px}
-  .hero{background:linear-gradient(135deg,#0f766e,#0d9488 55%,#14b8a6);color:#fff;border-radius:0 0 22px 22px;padding:30px 24px 26px;box-shadow:0 12px 30px rgba(13,148,136,.25)}
-  .hero .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .hero img{height:46px;border-radius:8px;background:#fff;padding:4px}
-  .hero h1{font-size:1.7rem;font-weight:800;margin:10px 0 4px}
-  .hero .meta{opacity:.92;font-size:.95rem}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-top:18px}
-  .stat{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px 14px}
-  .stat .v{font-size:1.5rem;font-weight:800;line-height:1}
-  .stat .l{font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;opacity:.9;margin-top:4px}
-  .sec{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:22px;box-shadow:0 2px 10px rgba(15,23,42,.04)}
-  .sec h2{font-size:1.15rem;font-weight:800;margin:0 0 14px;display:flex;align-items:center;gap:8px}
-  .sec h2 .bi{color:var(--brand)}
-  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
-  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--muted)}
-  .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
-  #map{height:380px;border-radius:12px;border:1px solid var(--line)}
-  /* timeline */
-  .tl{position:relative;margin-left:6px}
-  .tl::before{content:'';position:absolute;left:13px;top:4px;bottom:4px;width:2px;background:var(--line)}
-  .tl-item{position:relative;padding:6px 0 6px 40px;min-height:34px}
-  .tl-dot{position:absolute;left:4px;top:6px;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;box-shadow:0 0 0 3px #fff}
-  .tl-time{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
-  .tl-title{font-weight:700;font-size:.92rem}
-  .tl-detail{font-size:.84rem;color:#334155}
-  .tl-team{font-size:.72rem;color:var(--brand);font-weight:700}
-  .badge-actor{font-size:.66rem;padding:.12rem .4rem;border-radius:6px;font-weight:700}
-  .a-command{background:#fef3c7;color:#92400e}
-  .a-team{background:#dbeafe;color:#1e40af}
-  table{width:100%;border-collapse:collapse;font-size:.86rem}
-  th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left}
-  th{font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  a{color:inherit}
+  .containerx{width:min(1180px,calc(100% - 32px));margin:0 auto}
+  .hero{min-height:88vh;position:relative;color:#fff;display:flex;align-items:flex-end;overflow:hidden;background:#111827}
+  .hero::before{content:"";position:absolute;inset:0;background-image:var(--hero);background-size:cover;background-position:center;filter:saturate(1.04);transform:scale(1.02)}
+  .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,18,32,.9),rgba(10,18,32,.58) 48%,rgba(10,18,32,.12)),linear-gradient(0deg,rgba(10,18,32,.86),rgba(10,18,32,0) 55%)}
+  .hero.no-photo::before{background:linear-gradient(135deg,#111827 0%,#0f766e 58%,#d97706 100%);filter:none}
+  .hero-inner{position:relative;z-index:1;padding:34px 0 38px;width:100%}
+  .kicker{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:800;letter-spacing:.04em;text-transform:uppercase;font-size:.78rem;color:#d1fae5}
+  .kicker img{height:46px;max-width:160px;object-fit:contain;background:#fff;border-radius:8px;padding:4px}
+  .public-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.14);border-radius:999px;padding:5px 10px;color:#fff;text-transform:none;letter-spacing:0}
+  h1.hero-title{font-size:clamp(2.4rem,7vw,5.8rem);line-height:.98;font-weight:900;max-width:980px;margin:18px 0 14px;letter-spacing:0}
+  .hero-lede{font-size:clamp(1.05rem,2vw,1.35rem);max-width:760px;color:#e5edf4;margin:0 0 24px}
+  .hero-meta{display:flex;gap:14px;flex-wrap:wrap;color:#d9e5ef;font-size:.95rem}
+  .hero-meta span{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:8px 12px}
+  .hero-stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:28px}
+  .hero-stat{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);border-radius:8px;padding:14px 14px;min-height:86px}
+  .hero-stat .v{font-size:clamp(1.4rem,3vw,2.1rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+  .hero-stat .l{font-size:.72rem;color:#dce7ef;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+  .story-nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .story-nav .containerx{display:flex;gap:6px;overflow:auto;padding:9px 0}
+  .story-nav a{white-space:nowrap;text-decoration:none;color:#334155;border-radius:999px;padding:8px 12px;font-size:.86rem;font-weight:800}
+  .story-nav a:hover{background:#eef2f7;color:#0f766e}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:18px 0 0}
+  .section{padding:34px 0}
+  .section-head{display:flex;justify-content:space-between;gap:16px;align-items:end;margin-bottom:16px}
+  .eyebrow{font-size:.74rem;text-transform:uppercase;letter-spacing:.1em;color:var(--brand);font-weight:900;margin-bottom:6px}
+  h2{font-size:clamp(1.45rem,3vw,2.2rem);font-weight:900;margin:0;letter-spacing:0}
+  .section-sub{color:var(--muted);margin:8px 0 0;max-width:720px}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 34px rgba(15,23,42,.06)}
+  .impact-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+  .impact-copy{padding:26px}
+  .impact-copy p{font-size:1.08rem;line-height:1.7;color:#334155;margin:0}
+  .impact-mini{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:16px}
+  .mini{border:1px solid var(--line);border-radius:8px;padding:14px;background:#fbfcfe}
+  .mini i{color:var(--brand);font-size:1.25rem}
+  .mini b{display:block;font-size:1.25rem;margin-top:8px}
+  .mini span{color:var(--muted);font-size:.82rem}
+  .map-shell{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:0;overflow:hidden}
+  #map{height:560px;min-height:62vh;background:#dbe4ee}
+  .map-side{border-left:1px solid var(--line);padding:16px;max-height:560px;overflow:auto;background:#fbfcfe}
+  .team-filter{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:9px;margin-bottom:8px;cursor:pointer}
+  .team-filter input{accent-color:var(--brand)}
+  .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;flex:0 0 auto}
+  .map-help{font-size:.8rem;color:var(--muted);line-height:1.45;margin-top:12px}
+  .route-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 4px 14px rgba(15,23,42,.25);font-weight:900}
+  .metrics-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px}
+  .table-wrap{overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:.88rem}
+  th,td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
   .num{text-align:right;font-variant-numeric:tabular-nums}
-  .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-  .gal a,.gal .vid{display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000;aspect-ratio:4/3}
-  .gal img,.gal video{width:100%;height:100%;object-fit:cover;display:block}
-  .cap{font-size:.72rem;color:var(--muted);padding:4px 2px}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
-  .pill{font-size:.72rem;padding:.18rem .55rem;border-radius:999px;font-weight:700}
+  .metric-chart{padding:16px;display:flex;align-items:center}
+  .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .team-card{padding:16px;border-top:5px solid var(--brand)}
+  .team-card h3{font-size:1rem;font-weight:900;margin:0 0 8px}
+  .team-card .big{font-size:1.6rem;font-weight:900;line-height:1}
+  .team-card .muted{color:var(--muted);font-size:.82rem}
+  .team-card .rowx{display:flex;justify-content:space-between;gap:12px;margin-top:12px}
+  .timeline-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px}
+  .phase-list{position:sticky;top:58px;align-self:start}
+  .phase{display:block;text-decoration:none;border-left:4px solid var(--line);padding:10px 12px;margin-bottom:8px;background:#fff;border-radius:0 8px 8px 0;color:#334155;font-weight:800}
+  .phase:hover{border-left-color:var(--brand);color:var(--brand)}
+  .phase small{display:block;color:var(--muted);font-weight:700;margin-top:2px}
+  .tl-group{margin-bottom:24px}
+  .tl-title{font-size:1rem;font-weight:900;margin:0 0 10px;color:#334155}
+  .tl{position:relative;margin-left:7px}
+  .tl::before{content:"";position:absolute;left:15px;top:2px;bottom:2px;width:2px;background:var(--line)}
+  .tl-item{position:relative;padding:8px 0 10px 46px;min-height:42px}
+  .tl-dot{position:absolute;left:4px;top:8px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;box-shadow:0 0 0 4px #fff}
+  .tl-time{font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .tl-name{font-weight:900;font-size:.95rem;margin-top:2px}
+  .tl-detail{font-size:.86rem;color:#445267;margin-top:2px}
+  .actor{font-size:.66rem;padding:.14rem .44rem;border-radius:6px;font-weight:900}
+  .actor.command{background:#fff7ed;color:#9a3412}
+  .actor.team{background:#dbeafe;color:#1d4ed8}
+  .actor.system{background:#f1f5f9;color:#475569}
+  .team-tag{font-size:.75rem;color:var(--brand);font-weight:900}
+  .short-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .short-card{padding:16px;border-left:5px solid var(--rose)}
+  .pill{font-size:.74rem;padding:.22rem .6rem;border-radius:999px;font-weight:900;display:inline-flex}
   .p-open{background:#fee2e2;color:#991b1b}.p-ack{background:#dbeafe;color:#1e40af}.p-res{background:#dcfce7;color:#166534}
-  @media print{ body{background:#fff} .noprint{display:none!important} .sec,.hero{box-shadow:none} #map{height:320px} }
+  .gallery{columns:4 190px;column-gap:12px}
+  .media-card{break-inside:avoid;display:block;width:100%;margin:0 0 12px;padding:0;text-align:left;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#111827;cursor:pointer;position:relative;font:inherit;color:inherit}
+  .media-card img,.media-card video{width:100%;display:block}
+  .media-card video{aspect-ratio:4/3;object-fit:cover}
+  .media-caption{background:#fff;padding:8px 10px;color:#475569;font-size:.8rem}
+  .play-badge{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.9);color:#111827}
+  .thanks{background:#111827;color:#fff;border-radius:8px;padding:30px;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
+  .thanks h2{color:#fff}
+  .thanks p{color:#cbd5e1;margin:8px 0 0}
+  .footer-note{text-align:center;color:var(--muted);font-size:.84rem;padding:28px 0 38px}
+  .lightbox{position:fixed;inset:0;background:rgba(7,12,20,.92);z-index:2000;display:none;align-items:center;justify-content:center;padding:22px}
+  .lightbox.open{display:flex}
+  .lightbox-frame{width:min(1000px,100%);max-height:92vh}
+  .lightbox-media{background:#000;border-radius:8px;overflow:hidden;display:grid;place-items:center}
+  .lightbox-media img,.lightbox-media video{max-width:100%;max-height:78vh;display:block}
+  .lightbox-cap{color:#e5e7eb;margin-top:10px}
+  .lightbox-close{position:absolute;top:14px;right:16px;background:#fff;border:0;border-radius:50%;width:42px;height:42px;font-size:20px}
+  @media (max-width:900px){
+    .hero{min-height:82vh}.hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .impact-grid,.map-shell,.metrics-grid,.timeline-layout,.thanks{grid-template-columns:1fr}
+    .map-side{border-left:0;border-top:1px solid var(--line);max-height:none}
+    #map{height:430px;min-height:0}.phase-list{position:static}.section-head{display:block}
+  }
+  @media print{
+    body{background:#fff}.noprint,.story-nav,.lightbox{display:none!important}.hero{min-height:auto;color:#111827;background:#fff}
+    .hero::before,.hero::after{display:none}.hero-inner{padding:20px 0}.hero-lede,.hero-meta span,.kicker{color:#334155}
+    .hero-stats{grid-template-columns:repeat(3,1fr)}.hero-stat,.panel{box-shadow:none;border-color:#d1d5db;background:#fff;color:#111827}
+    #map{height:340px;min-height:0}.section{padding:20px 0}.thanks{color:#111827;background:#fff;border:1px solid #d1d5db}.thanks h2{color:#111827}.thanks p{color:#334155}
+  }
 </style>
 </head>
 <body>
-<div class="hero">
-  <div class="wrap" style="padding-bottom:0">
-    <div class="top">
-      <?php if (!empty($logo)): ?><img src="<?= e($logo) ?>" alt=""><?php endif; ?>
-      <span style="font-weight:700;letter-spacing:.5px"><?= e($orgLabel ?? 'Δήμος') ?> · Απολογισμός Δράσης</span>
-      <?php if ($isPublic): ?><span class="badge bg-light text-dark ms-1">Δημόσια έκδοση</span><?php endif; ?>
-    </div>
-    <h1><?= e($ev['title'] ?? '') ?></h1>
-    <div class="meta">
-      <i class="bi bi-clock me-1"></i><?= e(gr_datetime($startD)) ?> → <?= e(gr_datetime($endD)) ?>
-      <?php if (!empty($ev['location_name'])): ?> &nbsp;·&nbsp; <i class="bi bi-geo-alt me-1"></i><?= e($ev['location_name']) ?><?php endif; ?>
-      <?php if (!empty($sm['duration_h'])): ?> &nbsp;·&nbsp; διάρκεια <?= e($sm['duration_h']) ?>ω<?php endif; ?>
-    </div>
-    <div class="stats">
-      <div class="stat"><div class="v"><?= (int) ($sm['teams'] ?? 0) ?></div><div class="l">Ομάδες</div></div>
-      <div class="stat"><div class="v"><?= (int) ($sm['volunteers'] ?? 0) ?></div><div class="l">Εθελοντές</div></div>
-      <div class="stat"><div class="v"><?= e($sm['hours'] ?? 0) ?></div><div class="l">Εθελοντ. ώρες</div></div>
-      <div class="stat"><div class="v"><?= (int) ($sm['orders'] ?? 0) ?></div><div class="l">Εντολές</div></div>
-      <div class="stat"><div class="v"><?= (int) ($sm['pings'] ?? 0) ?></div><div class="l">Στίγματα</div></div>
-      <div class="stat"><div class="v"><?= (int) ($sm['photos'] ?? 0) + (int) ($sm['videos'] ?? 0) ?></div><div class="l">Φωτό/Βίντεο</div></div>
-      <div class="stat"><div class="v"><?= (int) ($sm['shortages'] ?? 0) ?></div><div class="l">Ελλείψεις</div></div>
-      <?php if ((int) ($sm['sos'] ?? 0) > 0): ?><div class="stat"><div class="v"><?= (int) $sm['sos'] ?></div><div class="l">SOS</div></div><?php endif; ?>
+<header class="hero <?= $heroImage ? '' : 'no-photo' ?>" style="--hero:url('<?= e($heroImage) ?>')">
+  <div class="hero-inner">
+    <div class="containerx">
+      <div class="kicker">
+        <?php if (!empty($logo)): ?><img src="<?= e($logo) ?>" alt=""><?php endif; ?>
+        <span><?= e($orgLabel ?? 'Δήμος') ?> · Απολογισμός Δράσης</span>
+        <?php if ($isPublic): ?><span class="public-chip"><i class="bi bi-globe2"></i>Δημόσια έκδοση</span><?php endif; ?>
+      </div>
+      <h1 class="hero-title"><?= e($eventTitle) ?></h1>
+      <p class="hero-lede"><?= $impactSentence ?></p>
+      <div class="hero-meta">
+        <span><i class="bi bi-calendar-event"></i><?= e(gr_datetime($startD)) ?> → <?= e(gr_datetime($endD)) ?></span>
+        <?php if ($location !== ''): ?><span><i class="bi bi-geo-alt-fill"></i><?= e($location) ?></span><?php endif; ?>
+        <?php if ($duration): ?><span><i class="bi bi-hourglass-split"></i>Διάρκεια <?= e((string) $duration) ?>ω</span><?php endif; ?>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['teams'] ?? 0) ?></div><div class="l">Ομάδες</div></div>
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['volunteers'] ?? 0) ?></div><div class="l">Εθελοντές</div></div>
+        <div class="hero-stat"><div class="v"><?= e($sm['hours'] ?? 0) ?></div><div class="l">Ώρες προσφοράς</div></div>
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['orders'] ?? 0) ?></div><div class="l">Εντολές</div></div>
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['pings'] ?? 0) ?></div><div class="l">Στίγματα</div></div>
+        <div class="hero-stat"><div class="v"><?= $mediaCount ?></div><div class="l">Φωτό / Βίντεο</div></div>
+      </div>
     </div>
   </div>
-</div>
+</header>
 
-<div class="wrap">
+<nav class="story-nav noprint" aria-label="Πλοήγηση απολογισμού">
+  <div class="containerx">
+    <a href="#summary">Σύνοψη</a>
+    <a href="#map-section">Χάρτης</a>
+    <a href="#teams">Ομάδες</a>
+    <a href="#timeline">Χρονολόγιο</a>
+    <a href="#media">Υλικό</a>
+  </div>
+</nav>
+
+<main class="containerx">
   <?php if (!$download && !$publicMode): ?>
   <div class="toolbar noprint">
     <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/events/' . ($ev['id'] ?? ''))) ?>"><i class="bi bi-arrow-left me-1"></i>Πίσω</a>
@@ -138,187 +291,295 @@ $endD   = $ev['end_datetime'] ?? null;
   </script>
   <?php endif; ?>
 
-  <!-- ── Χάρτης διαδρομών ───────────────────────────────────────────── -->
-  <div class="sec">
-    <h2><i class="bi bi-map"></i> Χάρτης δράσης & διαδρομές ομάδων</h2>
-    <div class="legend">
-      <?php foreach ($teams as $t): ?>
-        <span><i style="background:<?= e($t['color']) ?>"></i><?= e($t['name']) ?></span>
-      <?php endforeach; ?>
+  <section class="section" id="summary">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Η εικόνα της δράσης</div>
+        <h2>Από την κινητοποίηση μέχρι την ολοκλήρωση</h2>
+        <p class="section-sub">Συγκεντρωμένη εικόνα της επιχειρησιακής παρουσίας, της ανταπόκρισης των ομάδων και του υλικού που καταγράφηκε στο πεδίο.</p>
+      </div>
     </div>
-    <div id="map"></div>
-  </div>
-
-  <!-- ── Μετρικές απόκρισης ─────────────────────────────────────────── -->
-  <div class="sec">
-    <h2><i class="bi bi-speedometer2"></i> Χρόνοι απόκρισης ανά ομάδα</h2>
-    <div class="table-responsive">
-      <table>
-        <thead><tr>
-          <th>Ομάδα</th>
-          <th class="num">Στίγμα (μ.ό.)</th>
-          <th class="num">Φωτό (μ.ό.)</th>
-          <th class="num">Βίντεο (μ.ό.)</th>
-          <th class="num">ACK εντολής (μ.ό.)</th>
-          <th class="num">Ανταπόκριση</th>
-        </tr></thead>
-        <tbody>
-          <?php foreach ($metr as $m):
-            $tot = ($m['gps']['sent'] + $m['photo']['sent'] + $m['video']['sent']);
-            $ans = ($m['gps']['answered'] + $m['photo']['answered'] + $m['video']['answered']);
-            $rate = $tot ? round($ans / $tot * 100) : null;
-          ?>
-          <tr>
-            <td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:<?= e($m['color']) ?>;margin-right:6px"></span><?= e($m['team']) ?></td>
-            <td class="num"><?= e($m['gps']['avg_label']) ?><?php if ($m['gps']['sent']): ?> <span class="text-muted">(<?= (int) $m['gps']['answered'] ?>/<?= (int) $m['gps']['sent'] ?>)</span><?php endif; ?></td>
-            <td class="num"><?= e($m['photo']['avg_label']) ?><?php if ($m['photo']['sent']): ?> <span class="text-muted">(<?= (int) $m['photo']['answered'] ?>/<?= (int) $m['photo']['sent'] ?>)</span><?php endif; ?></td>
-            <td class="num"><?= e($m['video']['avg_label']) ?><?php if ($m['video']['sent']): ?> <span class="text-muted">(<?= (int) $m['video']['answered'] ?>/<?= (int) $m['video']['sent'] ?>)</span><?php endif; ?></td>
-            <td class="num"><?= e($m['ack']['avg_label']) ?><?php if ($m['ack']['sent']): ?> <span class="text-muted">(<?= (int) $m['ack']['answered'] ?>/<?= (int) $m['ack']['sent'] ?>)</span><?php endif; ?></td>
-            <td class="num"><?= $rate !== null ? (int) $rate . '%' : '—' ?></td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+    <div class="impact-grid">
+      <div class="panel impact-copy">
+        <p><?= $impactSentence ?> Καταγράφηκαν <?= (int) ($sm['pings'] ?? 0) ?> στίγματα, <?= (int) ($sm['orders'] ?? 0) ?> επιχειρησιακές εντολές και <?= $mediaCount ?> τεκμήρια από το πεδίο.</p>
+      </div>
+      <div class="panel impact-mini">
+        <div class="mini"><i class="bi bi-people-fill"></i><b><?= (int) ($sm['volunteers'] ?? 0) ?></b><span>συνολική δύναμη</span></div>
+        <div class="mini"><i class="bi bi-clock-history"></i><b><?= e($sm['hours'] ?? 0) ?></b><span>ώρες προσφοράς</span></div>
+        <div class="mini"><i class="bi bi-exclamation-triangle"></i><b><?= (int) ($sm['shortages'] ?? 0) ?></b><span>αναφορές ελλείψεων</span></div>
+        <div class="mini"><i class="bi bi-shield-check"></i><b><?= (int) ($sm['sos'] ?? 0) ?></b><span>SOS συμβάντα</span></div>
+      </div>
     </div>
-    <div style="margin-top:16px"><canvas id="respChart" height="120"></canvas></div>
-    <div class="cap">Μέσος χρόνος απόκρισης (λεπτά) ανά ομάδα & τύπο αιτήματος.</div>
-  </div>
+  </section>
 
-  <!-- ── Timeline ───────────────────────────────────────────────────── -->
-  <div class="sec">
-    <h2><i class="bi bi-clock-history"></i> Χρονολόγιο γεγονότων</h2>
-    <div class="tl">
-      <?php $lastDate = null; foreach ($tl as $it): ?>
-        <?php if ($it['date'] !== $lastDate): $lastDate = $it['date']; ?>
-          <div style="font-size:.74rem;font-weight:800;color:var(--muted);margin:10px 0 4px;padding-left:6px"><?= e(gr_datetime($it['at']) ? date('d/m/Y', strtotime($it['at'])) : $it['date']) ?></div>
-        <?php endif; ?>
-        <div class="tl-item">
-          <span class="tl-dot" style="background:<?= e($it['color']) ?>"><i class="bi <?= e($it['icon']) ?>"></i></span>
-          <div class="tl-time"><?= e($it['time']) ?>
-            <span class="badge-actor <?= $it['actor'] === 'command' ? 'a-command' : 'a-team' ?>"><?= $it['actor'] === 'command' ? 'Δήμος' : 'Ομάδα' ?></span>
-            <?php if (!empty($it['team'])): ?><span class="tl-team"><?= e($it['team']) ?></span><?php endif; ?>
-          </div>
-          <div class="tl-title"><?= e($it['title']) ?></div>
-          <?php if (!empty($it['detail'])): ?><div class="tl-detail"><?= e($it['detail']) ?></div><?php endif; ?>
+  <section class="section" id="map-section">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Live αποτύπωση</div>
+        <h2>Χάρτης δράσης & διαδρομές ομάδων</h2>
+        <p class="section-sub">Οι διαδρομές, τα σημεία ενδιαφέροντος και το υλικό πεδίου εμφανίζονται μαζί ώστε η ροή της δράσης να διαβάζεται με μια ματιά.</p>
+      </div>
+    </div>
+    <div class="panel map-shell">
+      <div id="map"></div>
+      <aside class="map-side">
+        <h3 class="h6 fw-bold mb-2">Φίλτρα ομάδων</h3>
+        <?php foreach ($teams as $t): ?>
+          <label class="team-filter">
+            <input type="checkbox" class="route-toggle" value="<?= (int) $t['id'] ?>" checked>
+            <span class="swatch" style="background:<?= e($t['color']) ?>"></span>
+            <span><?= e($t['name']) ?></span>
+          </label>
+        <?php endforeach; ?>
+        <div class="map-help">
+          <i class="bi bi-info-circle me-1"></i>Κάντε κλικ σε σημεία του χάρτη για φωτογραφίες, βίντεο, εντολές και επιχειρησιακές σημειώσεις.
         </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Ανταπόκριση</div>
+        <h2>Χρόνοι απόκρισης ανά ομάδα</h2>
+        <p class="section-sub">Μέσος χρόνος σε αιτήματα στίγματος, φωτογραφίας, βίντεο και επιβεβαίωση εντολών.</p>
+      </div>
+    </div>
+    <div class="metrics-grid">
+      <div class="panel table-wrap">
+        <table>
+          <thead><tr>
+            <th>Ομάδα</th>
+            <th class="num">Στίγμα</th>
+            <th class="num">Φωτό</th>
+            <th class="num">Βίντεο</th>
+            <th class="num">ACK</th>
+            <th class="num">Ανταπόκριση</th>
+          </tr></thead>
+          <tbody>
+            <?php foreach ($metr as $m):
+              $tot = ($m['gps']['sent'] + $m['photo']['sent'] + $m['video']['sent']);
+              $ans = ($m['gps']['answered'] + $m['photo']['answered'] + $m['video']['answered']);
+              $rate = $tot ? round($ans / $tot * 100) : null;
+            ?>
+            <tr>
+              <td><span class="swatch" style="background:<?= e($m['color']) ?>"></span> <?= e($m['team']) ?></td>
+              <td class="num"><?= e($m['gps']['avg_label']) ?></td>
+              <td class="num"><?= e($m['photo']['avg_label']) ?></td>
+              <td class="num"><?= e($m['video']['avg_label']) ?></td>
+              <td class="num"><?= e($m['ack']['avg_label']) ?></td>
+              <td class="num"><?= $rate !== null ? (int) $rate . '%' : '—' ?></td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel metric-chart"><canvas id="respChart" height="260"></canvas></div>
+    </div>
+  </section>
+
+  <section class="section" id="teams">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Αναγνώριση</div>
+        <h2>Οι ομάδες της δράσης</h2>
+        <p class="section-sub">Κάθε κάρτα δείχνει την επιχειρησιακή παρουσία και τη συνεισφορά της ομάδας στον συνολικό απολογισμό.</p>
+      </div>
+    </div>
+    <div class="team-grid">
+      <?php foreach ($teamImpact as $t): ?>
+        <article class="panel team-card" style="border-top-color:<?= e($t['color']) ?>">
+          <h3><?= e($t['name']) ?></h3>
+          <div class="rowx">
+            <div><div class="big"><?= (int) $t['people'] ?></div><div class="muted">άτομα παρόντα</div></div>
+            <div class="text-end"><div class="big"><?= e((string) $t['hours']) ?></div><div class="muted">ώρες</div></div>
+          </div>
+          <div class="rowx muted">
+            <span><i class="bi bi-box-arrow-in-right me-1"></i><?= $t['arrival'] ? e(gr_time($t['arrival'])) : '—' ?></span>
+            <span><i class="bi bi-box-arrow-right me-1"></i><?= $t['departure'] ? e(gr_time($t['departure'])) : '—' ?></span>
+          </div>
+          <?php if (!$isPublic && !empty($t['commander'])): ?>
+            <div class="muted mt-2"><i class="bi bi-person-badge me-1"></i><?= e($t['commander']['full_name'] ?? '—') ?><?php if (!empty($t['commander']['phone'])): ?> · <?= e($t['commander']['phone']) ?><?php endif; ?></div>
+          <?php endif; ?>
+        </article>
       <?php endforeach; ?>
-      <?php if (!$tl): ?><div class="text-muted small">Δεν καταγράφηκαν γεγονότα.</div><?php endif; ?>
     </div>
-  </div>
+  </section>
 
-  <!-- ── Παρουσίες & ώρες ───────────────────────────────────────────── -->
-  <div class="sec">
-    <h2><i class="bi bi-people-fill"></i> Παρουσίες & εθελοντικές ώρες</h2>
-    <div class="table-responsive">
-      <table>
-        <thead><tr><th>Ομάδα</th><th>Παρουσία</th><th class="num">Άτομα</th><th>Άφιξη → Αναχώρηση</th><?php if (!$isPublic): ?><th>Υπεύθυνος</th><?php endif; ?></tr></thead>
-        <tbody>
-          <?php foreach ($teams as $t): $c = $checks[$t['id']] ?? null;
-            $st = $c['status'] ?? null;
-            $stLabel = ['present_full'=>'Πλήρης','present_partial'=>'Μερική','departed'=>'Αποχώρησε'][$st] ?? '—';
-            $ppl = $t['actual'] ?? ($c['present_people'] ?? $t['approved']);
-          ?>
-          <tr>
-            <td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:<?= e($t['color']) ?>;margin-right:6px"></span><?= e($t['name']) ?></td>
-            <td><?= e($stLabel) ?></td>
-            <td class="num"><?= (int) $ppl ?> / <?= (int) $t['approved'] ?></td>
-            <td class="small"><?= $t['arrival'] ? e(gr_time($t['arrival'])) : '—' ?> → <?= $t['departure'] ? e(gr_time($t['departure'])) : '—' ?></td>
-            <?php if (!$isPublic): ?><td class="small"><?= e($t['commander']['full_name'] ?? '—') ?><?php if (!empty($t['commander']['phone'])): ?> · <?= e($t['commander']['phone']) ?><?php endif; ?></td><?php endif; ?>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+  <section class="section" id="timeline">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Όπως συνέβη</div>
+        <h2>Χρονολόγιο γεγονότων</h2>
+        <p class="section-sub">Η δράση χωρίζεται σε φάσεις για να φαίνεται καθαρά η επιχειρησιακή ροή.</p>
+      </div>
     </div>
-  </div>
+    <div class="timeline-layout">
+      <aside class="phase-list noprint">
+        <?php foreach ($timelineGroups as $key => $group): if (!$group['items']) { continue; } ?>
+          <a class="phase" href="#phase-<?= e($key) ?>"><?= e($group['title']) ?><small><?= count($group['items']) ?> γεγονότα</small></a>
+        <?php endforeach; ?>
+      </aside>
+      <div>
+        <?php foreach ($timelineGroups as $key => $group): if (!$group['items']) { continue; } ?>
+          <section class="panel tl-group" id="phase-<?= e($key) ?>">
+            <div style="padding:16px 18px">
+              <h3 class="tl-title"><?= e($group['title']) ?></h3>
+              <div class="tl">
+                <?php foreach ($group['items'] as $it): ?>
+                  <div class="tl-item">
+                    <span class="tl-dot" style="background:<?= e($it['color']) ?>"><i class="bi <?= e($it['icon']) ?>"></i></span>
+                    <div class="tl-time">
+                      <?= e($it['date']) ?> · <?= e($it['time']) ?>
+                      <span class="actor <?= e($it['actor']) ?>"><?= $it['actor'] === 'command' ? 'Δήμος' : ($it['actor'] === 'team' ? 'Ομάδα' : 'Σύστημα') ?></span>
+                      <?php if (!empty($it['team'])): ?><span class="team-tag"><?= e($it['team']) ?></span><?php endif; ?>
+                    </div>
+                    <div class="tl-name"><?= e($it['title']) ?></div>
+                    <?php if (!empty($it['detail'])): ?><div class="tl-detail"><?= e($it['detail']) ?></div><?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </section>
+        <?php endforeach; ?>
+        <?php if (!$tl): ?><div class="panel p-4 text-muted">Δεν καταγράφηκαν γεγονότα.</div><?php endif; ?>
+      </div>
+    </div>
+  </section>
 
-  <!-- ── Ελλείψεις ──────────────────────────────────────────────────── -->
   <?php if ($shorts): ?>
-  <div class="sec">
-    <h2><i class="bi bi-exclamation-triangle"></i> Ελλείψεις / αναφορές</h2>
-    <div class="table-responsive">
-      <table>
-        <thead><tr><th>Ομάδα</th><th>Αναφορά</th><th>Κατάσταση</th><th class="num">Χρόνος επίλυσης</th></tr></thead>
-        <tbody>
-          <?php foreach ($shorts as $sh):
-            $teamNm = '';
-            foreach ($teams as $t) { if ($t['id'] === (int) $sh['team_id']) { $teamNm = $t['name']; break; } }
-            $pill = $sh['status'] === 'resolved' ? 'p-res' : ($sh['status'] === 'acknowledged' ? 'p-ack' : 'p-open');
-            $plabel = ['resolved'=>'Επιλύθηκε','acknowledged'=>'Ελήφθη'][$sh['status']] ?? 'Εκκρεμεί';
-            $rt = $sh['resolved_at'] ? StoryService::dur(strtotime($sh['resolved_at']) - strtotime($sh['created_at'])) : '—';
-          ?>
-          <tr>
-            <td><?= e($teamNm) ?></td>
-            <td><strong><?= e($sh['title']) ?></strong> <span class="text-muted small"><?= e(shortage_type_label($sh['shortage_type'])) ?></span></td>
-            <td><span class="pill <?= $pill ?>"><?= e($plabel) ?></span></td>
-            <td class="num"><?= e($rt) ?></td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Διαχείριση αναγκών</div>
+        <h2>Ελλείψεις / αναφορές</h2>
+      </div>
     </div>
-  </div>
+    <div class="short-grid">
+      <?php foreach ($shorts as $sh):
+        $teamNm = '';
+        foreach ($teams as $t) { if ($t['id'] === (int) $sh['team_id']) { $teamNm = $t['name']; break; } }
+        $pill = $sh['status'] === 'resolved' ? 'p-res' : ($sh['status'] === 'acknowledged' ? 'p-ack' : 'p-open');
+        $plabel = ['resolved'=>'Επιλύθηκε','acknowledged'=>'Ελήφθη'][$sh['status']] ?? 'Εκκρεμεί';
+        $rt = $sh['resolved_at'] ? StoryService::dur(strtotime($sh['resolved_at']) - strtotime($sh['created_at'])) : '—';
+      ?>
+        <article class="panel short-card">
+          <div class="d-flex justify-content-between gap-2 align-items-start">
+            <strong><?= e($sh['title']) ?></strong>
+            <span class="pill <?= $pill ?>"><?= e($plabel) ?></span>
+          </div>
+          <div class="text-muted small mt-1"><?= e($teamNm) ?> · <?= e(shortage_type_label($sh['shortage_type'])) ?></div>
+          <div class="small mt-3"><i class="bi bi-stopwatch me-1"></i>Χρόνος επίλυσης: <strong><?= e($rt) ?></strong></div>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  </section>
   <?php endif; ?>
 
-  <!-- ── Gallery ────────────────────────────────────────────────────── -->
   <?php if ($photos || $videos): ?>
-  <div class="sec">
-    <h2><i class="bi bi-images"></i> Οπτικό υλικό</h2>
-    <div class="gal">
-      <?php foreach ($photos as $p): ?>
-        <div>
-          <a href="<?= e($photoSrc($p)) ?>" target="_blank"><img loading="lazy" src="<?= e($photoSrc($p)) ?>" alt=""></a>
-          <?php if (!empty($p['caption'])): ?><div class="cap"><?= e($p['caption']) ?></div><?php endif; ?>
-        </div>
+  <section class="section" id="media">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Από το πεδίο</div>
+        <h2>Οπτικό υλικό</h2>
+        <p class="section-sub">Φωτογραφίες και βίντεο που τεκμηριώνουν τη δράση.</p>
+      </div>
+    </div>
+    <div class="gallery">
+      <?php $idx = 0; foreach ($photos as $p): ?>
+        <button type="button" class="media-card" data-gallery="<?= $idx++ ?>" aria-label="Άνοιγμα φωτογραφίας">
+          <img loading="lazy" src="<?= e($photoSrc($p)) ?>" alt="">
+          <?php if (!empty($p['caption'])): ?><div class="media-caption"><?= e($p['caption']) ?></div><?php endif; ?>
+        </button>
       <?php endforeach; ?>
       <?php foreach ($videos as $v): ?>
-        <div>
-          <div class="vid"><video controls preload="metadata" src="<?= e($videoSrc($v['id'])) ?>"></video></div>
-          <div class="cap"><?= e($v['caption'] ?? '') ?><?php if (!empty($v['duration_sec'])): ?> · <?= (int) $v['duration_sec'] ?>″<?php endif; ?></div>
-        </div>
+        <button type="button" class="media-card" data-gallery="<?= $idx++ ?>" aria-label="Άνοιγμα βίντεο">
+          <span class="play-badge"><i class="bi bi-play-fill"></i></span>
+          <video muted preload="metadata" src="<?= e($videoSrc($v['id'])) ?>"></video>
+          <div class="media-caption"><?= e($v['caption'] ?? 'Βίντεο') ?><?php if (!empty($v['duration_sec'])): ?> · <?= (int) $v['duration_sec'] ?>″<?php endif; ?></div>
+        </button>
       <?php endforeach; ?>
     </div>
-  </div>
+  </section>
   <?php endif; ?>
 
-  <div class="text-center text-muted small" style="margin-top:24px">
-    Δημιουργήθηκε από το SynDrasi · <?= e(gr_datetime(date('Y-m-d H:i:s'))) ?>
+  <section class="section">
+    <div class="thanks">
+      <div>
+        <div class="eyebrow" style="color:#fbbf24">Ευχαριστούμε</div>
+        <h2>Η δράση ολοκληρώθηκε χάρη στη συνεργασία όλων.</h2>
+        <p>Ο απολογισμός κρατά ζωντανή την εικόνα της προσφοράς και βοηθά τον δήμο να αναγνωρίζει την πραγματική συμβολή των εθελοντικών ομάδων.</p>
+      </div>
+      <div style="font-size:3rem"><i class="bi bi-award"></i></div>
+    </div>
+  </section>
+
+  <div class="footer-note">Δημιουργήθηκε από το SynDrasi · <?= e(gr_datetime(date('Y-m-d H:i:s'))) ?></div>
+</main>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Προβολή υλικού">
+  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Κλείσιμο"><i class="bi bi-x"></i></button>
+  <div class="lightbox-frame">
+    <div class="lightbox-media" id="lightboxMedia"></div>
+    <div class="lightbox-cap" id="lightboxCap"></div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-  var TEAMS   = <?= json_encode($jsTeams, JSON_UNESCAPED_UNICODE) ?>;
-  var PINGS   = <?= json_encode($story['pingsByTeam'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
-  var POINTS  = <?= json_encode($story['mapPoints'] ?? [], JSON_UNESCAPED_UNICODE) ?>;
-  var METRICS = <?= json_encode($metr, JSON_UNESCAPED_UNICODE) ?>;
+  var TEAMS   = <?= json_encode($jsTeams, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var PINGS   = <?= json_encode($story['pingsByTeam'] ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var POINTS  = <?= json_encode($story['mapPoints'] ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var METRICS = <?= json_encode($metr, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var GALLERY = <?= json_encode($jsGallery, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
-  /* ── Map ── */
+  function escHtml(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+
   (function(){
-    var map = L.map('map');
+    var map = L.map('map', { scrollWheelZoom:false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-    var colorById = {}; TEAMS.forEach(function(t){ colorById[t.id] = t.color; });
-    var bounds = [];
+    var colorById = {}, nameById = {}, routeLayers = {}, bounds = [];
+    TEAMS.forEach(function(t){ colorById[t.id] = t.color; nameById[t.id] = t.name; });
+
     Object.keys(PINGS).forEach(function(tid){
-      var pts = PINGS[tid].map(function(p){ return [p.lat, p.lng]; });
+      var pts = (PINGS[tid] || []).map(function(p){ return [p.lat, p.lng]; });
       if (!pts.length) return;
       pts.forEach(function(c){ bounds.push(c); });
-      L.polyline(pts, { color: colorById[tid] || '#2563eb', weight: 4, opacity: .8 }).addTo(map);
-      L.circleMarker(pts[0], { radius: 5, color: '#16a34a', fillColor:'#16a34a', fillOpacity:1 }).addTo(map).bindPopup('Έναρξη');
-      L.circleMarker(pts[pts.length-1], { radius: 6, color: colorById[tid]||'#2563eb', fillColor: colorById[tid]||'#2563eb', fillOpacity:1 }).addTo(map);
+      var group = L.layerGroup();
+      L.polyline(pts, { color: colorById[tid] || '#2563eb', weight: 4, opacity: .82 }).addTo(group);
+      L.marker(pts[0], { icon: L.divIcon({ className:'', iconSize:[30,30], iconAnchor:[15,15], html:'<div class="route-icon" style="background:#16a34a"><i class="bi bi-play-fill"></i></div>' }) }).bindPopup('Έναρξη · ' + escHtml(nameById[tid] || '')).addTo(group);
+      L.marker(pts[pts.length-1], { icon: L.divIcon({ className:'', iconSize:[30,30], iconAnchor:[15,15], html:'<div class="route-icon" style="background:' + (colorById[tid] || '#2563eb') + '"><i class="bi bi-geo-alt-fill"></i></div>' }) }).bindPopup('Τελευταίο στίγμα · ' + escHtml(nameById[tid] || '')).addTo(group);
+      group.addTo(map);
+      routeLayers[tid] = group;
     });
-    var ICON = { move:'➡️', incident:'⚠️', poi:'📍', photo:'📷', video:'🎥' };
+
+    var iconByKind = { move:'bi-arrow-right', incident:'bi-exclamation-triangle-fill', poi:'bi-pin-map-fill', photo:'bi-camera-fill', video:'bi-camera-video-fill' };
+    var colorByKind = { move:'#2563eb', incident:'#be123c', poi:'#d97706', photo:'#0891b2', video:'#7c3aed' };
     POINTS.forEach(function(p){
       if (p.lat == null) return;
       bounds.push([p.lat, p.lng]);
-      L.marker([p.lat, p.lng]).addTo(map).bindPopup('<b>' + (ICON[p.kind]||'') + ' ' + (p.label||'') + '</b><br>' + (p.team||'') + (p.body ? '<br>' + p.body : ''));
+      var color = colorByKind[p.kind] || '#334155';
+      var icon = iconByKind[p.kind] || 'bi-geo-alt-fill';
+      L.marker([p.lat, p.lng], { icon: L.divIcon({ className:'', iconSize:[30,30], iconAnchor:[15,15], html:'<div class="route-icon" style="background:' + color + '"><i class="bi ' + icon + '"></i></div>' }) })
+        .bindPopup('<b>' + escHtml(p.label || '') + '</b><br>' + escHtml(p.team || '') + (p.body ? '<br>' + escHtml(p.body) : ''))
+        .addTo(map);
     });
-    if (bounds.length) { map.fitBounds(bounds, { padding:[28,28], maxZoom:16 }); }
+    if (bounds.length) { map.fitBounds(bounds, { padding:[34,34], maxZoom:16 }); }
     else { map.setView([35.34, 25.13], 12); }
     setTimeout(function(){ map.invalidateSize(); }, 200);
+
+    document.querySelectorAll('.route-toggle').forEach(function(cb){
+      cb.addEventListener('change', function(){
+        var layer = routeLayers[cb.value];
+        if (!layer) return;
+        if (cb.checked) { layer.addTo(map); }
+        else { map.removeLayer(layer); }
+      });
+    });
   })();
 
-  /* ── Response chart ── */
   (function(){
     if (!window.Chart || !METRICS.length) return;
     var labels = METRICS.map(function(m){ return m.team; });
@@ -328,11 +589,33 @@ $endD   = $ev['end_datetime'] ?? null;
       data: { labels: labels, datasets: [
         { label: 'Στίγμα', data: ser('gps'),   backgroundColor:'#2563eb' },
         { label: 'Φωτό',   data: ser('photo'), backgroundColor:'#16a34a' },
-        { label: 'Βίντεο', data: ser('video'), backgroundColor:'#ea6c0a' },
-        { label: 'ACK',    data: ser('ack'),   backgroundColor:'#9333ea' }
+        { label: 'Βίντεο', data: ser('video'), backgroundColor:'#d97706' },
+        { label: 'ACK',    data: ser('ack'),   backgroundColor:'#be123c' }
       ]},
-      options: { responsive:true, scales:{ y:{ beginAtZero:true, title:{ display:true, text:'λεπτά' } } }, plugins:{ legend:{ position:'bottom' } } }
+      options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, title:{ display:true, text:'λεπτά' } } }, plugins:{ legend:{ position:'bottom' } } }
     });
+  })();
+
+  (function(){
+    var box = document.getElementById('lightbox');
+    var media = document.getElementById('lightboxMedia');
+    var cap = document.getElementById('lightboxCap');
+    var close = document.getElementById('lightboxClose');
+    function openItem(i){
+      var item = GALLERY[i]; if (!item) return;
+      media.innerHTML = item.type === 'video'
+        ? '<video controls autoplay src="' + escHtml(item.src) + '"></video>'
+        : '<img src="' + escHtml(item.src) + '" alt="">';
+      cap.textContent = item.caption || '';
+      box.classList.add('open');
+    }
+    function closeBox(){ box.classList.remove('open'); media.innerHTML=''; cap.textContent=''; }
+    document.querySelectorAll('[data-gallery]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openItem(parseInt(btn.getAttribute('data-gallery'), 10)); });
+    });
+    close.addEventListener('click', closeBox);
+    box.addEventListener('click', function(e){ if (e.target === box) closeBox(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeBox(); });
   })();
 </script>
 </body>
