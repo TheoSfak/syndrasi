@@ -157,9 +157,13 @@ foreach ($videos as $v) {
   .map-stage{min-width:0;background:#f8fafc}
   .replay-panel{display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px;border-bottom:1px solid var(--line);background:#fff}
   .replay-btn{border:0;border-radius:8px;background:#111827;color:#fff;font-weight:900;padding:9px 13px;display:inline-flex;align-items:center;gap:7px}
+  .replay-btn.active{background:#2563eb}
   .replay-ghost{border:1px solid var(--line);border-radius:8px;background:#fff;color:#334155;font-weight:900;padding:9px 11px}
   .replay-speed{border:1px solid var(--line);border-radius:8px;background:#fff;color:#334155;font-weight:800;padding:8px 10px}
   .replay-range{width:100%;accent-color:var(--brand)}
+  .movement-panel{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line);background:#fff}
+  .movement-panel select{border:1px solid var(--line);border-radius:8px;background:#fff;color:#334155;font-weight:800;padding:8px 10px}
+  .movement-hint{color:var(--muted);font-size:.8rem;font-weight:700}
   .replay-current{padding:12px;border-bottom:1px solid var(--line);background:#fbfcfe;display:flex;gap:12px;align-items:flex-start;min-height:72px}
   .replay-current .rc-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:0 0 auto}
   .replay-current .rc-title{font-weight:900}
@@ -177,6 +181,7 @@ foreach ($videos as $v) {
   .route-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 4px 14px rgba(15,23,42,.25);font-weight:900}
   .replay-icon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 8px 18px rgba(15,23,42,.28);font-weight:900}
   .move-arrow-head{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 8px 20px rgba(37,99,235,.3);font-size:18px}
+  .move-time-badge{background:#fff;border:2px solid #2563eb;color:#111827;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;box-shadow:0 8px 18px rgba(15,23,42,.18);white-space:nowrap}
   .metrics-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px}
   .table-wrap{overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:.88rem}
@@ -361,6 +366,14 @@ foreach ($videos as $v) {
             <option value="2">2x</option>
             <option value="4">4x</option>
           </select>
+        </div>
+        <div class="movement-panel">
+          <button type="button" class="replay-btn" id="movementOverview"><i class="bi bi-signpost-split-fill"></i><span>Μετακινήσεις</span></button>
+          <select id="movementScope" aria-label="Ομάδες μετακινήσεων">
+            <option value="selected">Επιλεγμένες ομάδες</option>
+            <option value="all">Όλες οι ομάδες</option>
+          </select>
+          <span class="movement-hint" id="movementHint">Δείχνει όλα τα βελάκια μετακίνησης με την ώρα τους.</span>
         </div>
         <div class="replay-current" id="replayCurrent">
           <div class="rc-icon" style="background:#64748b"><i class="bi bi-clock-history"></i></div>
@@ -644,8 +657,10 @@ foreach ($videos as $v) {
     var colorById = {}, nameById = {}, routeLayers = {}, bounds = [];
     var replayMarkerLayer = L.layerGroup().addTo(map);
     var replayLineLayer = L.layerGroup().addTo(map);
+    var movementLayer = L.layerGroup().addTo(map);
     var replayTimer = null;
     var replayIndex = 0;
+    var movementOverviewOn = false;
     TEAMS.forEach(function(t){ colorById[t.id] = t.color; nameById[t.id] = t.name; });
 
     Object.keys(PINGS).forEach(function(tid){
@@ -682,6 +697,7 @@ foreach ($videos as $v) {
         if (cb.checked) { layer.addTo(map); }
         else { map.removeLayer(layer); }
         rebuildReplay();
+        if (movementOverviewOn) drawMovementOverview();
       });
     });
 
@@ -690,6 +706,9 @@ foreach ($videos as $v) {
     var range = document.getElementById('replayRange');
     var speed = document.getElementById('replaySpeed');
     var current = document.getElementById('replayCurrent');
+    var movementBtn = document.getElementById('movementOverview');
+    var movementScope = document.getElementById('movementScope');
+    var movementHint = document.getElementById('movementHint');
     var kindColor = {
       ping:'#16a34a', gps_request:'#7c3aed', gps_response:'#0f766e',
       photo_request:'#0891b2', video_request:'#7c3aed', photo:'#0891b2', video:'#7c3aed',
@@ -758,6 +777,71 @@ foreach ($videos as $v) {
     function hasMoveOrigin(ev){
       if (ev.kind !== 'move' || ev.origin_lat == null || ev.origin_lng == null || ev.lat == null || ev.lng == null) return false;
       return Math.abs(parseFloat(ev.origin_lat) - parseFloat(ev.lat)) > 0.00001 || Math.abs(parseFloat(ev.origin_lng) - parseFloat(ev.lng)) > 0.00001;
+    }
+    function movementPopup(ev){
+      var html = '<b>Μετακίνηση ομάδας</b>';
+      if (ev.team) html += '<br><span>' + escHtml(ev.team) + '</span>';
+      if (ev.at) html += '<br><small>' + escHtml(ev.at.slice(0,16).replace('T',' ')) + '</small>';
+      if (ev.detail) html += '<br><span>' + escHtml(ev.detail) + '</span>';
+      return html;
+    }
+    function movementEvents(){
+      var useSelected = !movementScope || movementScope.value !== 'all';
+      var ids = selectedTeamIds();
+      return (REPLAY || []).filter(function(ev){
+        if (!hasMoveOrigin(ev)) return false;
+        if (useSelected && ev.team_id != null && !ids[String(ev.team_id)]) return false;
+        return true;
+      });
+    }
+    function movementTimeIcon(ev){
+      var color = colorById[ev.team_id] || kindColor.move || '#2563eb';
+      var time = ev.at ? ev.at.slice(11,16) : '';
+      return L.divIcon({ className:'', iconSize:[88,24], iconAnchor:[44,12],
+        html:'<div class="move-time-badge" style="border-color:' + color + '">' + escHtml(time) + (ev.team ? ' · ' + escHtml(ev.team) : '') + '</div>' });
+    }
+    function setMovementHint(count){
+      if (!movementHint) return;
+      if (!movementOverviewOn) { movementHint.textContent = 'Δείχνει όλα τα βελάκια μετακίνησης με την ώρα τους.'; return; }
+      movementHint.textContent = count ? ('Εμφανίζονται ' + count + ' μετακινήσεις στον χάρτη.') : 'Δεν υπάρχουν μετακινήσεις για το τρέχον φίλτρο.';
+    }
+    function drawMovementOverview(){
+      movementLayer.clearLayers();
+      var events = movementEvents();
+      setMovementHint(events.length);
+      if (!movementOverviewOn || !events.length) return;
+      var overviewBounds = [];
+      events.forEach(function(ev, idx){
+        var color = colorById[ev.team_id] || kindColor.move || '#2563eb';
+        var from = [parseFloat(ev.origin_lat), parseFloat(ev.origin_lng)];
+        var to = [parseFloat(ev.lat), parseFloat(ev.lng)];
+        var mid = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
+        overviewBounds.push(from, to);
+        L.polyline([from, to], { color: color, weight: 5, opacity:.9, dashArray:'12,8' })
+          .bindPopup(movementPopup(ev))
+          .addTo(movementLayer);
+        L.circleMarker(from, { radius:6, color:color, fillColor:'#fff', fillOpacity:1, weight:3 })
+          .bindPopup('Αφετηρία μετακίνησης · ' + escHtml(ev.team || ''))
+          .addTo(movementLayer);
+        L.marker(mid, { icon: moveArrowIcon(ev), zIndexOffset: 5200 + idx })
+          .bindPopup(movementPopup(ev))
+          .addTo(movementLayer);
+        L.marker(to, { icon: movementTimeIcon(ev), zIndexOffset: 5400 + idx })
+          .bindPopup(movementPopup(ev))
+          .addTo(movementLayer);
+      });
+      if (overviewBounds.length) map.fitBounds(overviewBounds, { padding:[44,44], maxZoom:16 });
+    }
+    function toggleMovementOverview(force){
+      movementOverviewOn = typeof force === 'boolean' ? force : !movementOverviewOn;
+      if (movementBtn) movementBtn.classList.toggle('active', movementOverviewOn);
+      if (!movementOverviewOn) {
+        movementLayer.clearLayers();
+        setMovementHint(0);
+        return;
+      }
+      stopReplay();
+      drawMovementOverview();
     }
     function setCurrent(ev, total){
       if (!current) return;
@@ -863,6 +947,12 @@ foreach ($videos as $v) {
     }
     if (speed) {
       speed.addEventListener('change', function(){ if (replayTimer) startReplay(); });
+    }
+    if (movementBtn) {
+      movementBtn.addEventListener('click', function(){ toggleMovementOverview(); });
+    }
+    if (movementScope) {
+      movementScope.addEventListener('change', function(){ if (movementOverviewOn) drawMovementOverview(); });
     }
     document.querySelectorAll('.event-toggle').forEach(function(cb){
       cb.addEventListener('change', function(){ stopReplay(); replayIndex = 0; rebuildReplay(); });

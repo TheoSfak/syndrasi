@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.9-beta] — 2026-06-29
+
+### Feature — Overview μετακινήσεων στο Story map
+
+- Προστέθηκε κουμπί “Μετακινήσεις” στον χάρτη του Story που εμφανίζει όλες τις εντολές μετακίνησης χωρίς να χρειάζεται replay slider.
+- Οι μετακινήσεις σχεδιάζονται ως dashed βέλη από το τελευταίο γνωστό στίγμα της ομάδας προς τον προορισμό.
+- Κάθε μετακίνηση εμφανίζει time badge πάνω στον χάρτη με ώρα και ομάδα.
+- Προστέθηκε scope φίλτρο για “Επιλεγμένες ομάδες” ή “Όλες οι ομάδες”.
+
+---
+
 ## [0.13.8-beta] — 2026-06-29
 
 ### Feature — Επικοινωνίες πεδίου στο Story
