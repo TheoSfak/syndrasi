@@ -175,6 +175,7 @@ foreach ($videos as $v) {
   .map-help{font-size:.8rem;color:var(--muted);line-height:1.45;margin-top:12px}
   .route-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 4px 14px rgba(15,23,42,.25);font-weight:900}
   .replay-icon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 8px 18px rgba(15,23,42,.28);font-weight:900}
+  .move-arrow-head{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 8px 20px rgba(37,99,235,.3);font-size:18px}
   .metrics-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px}
   .table-wrap{overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:.88rem}
@@ -375,7 +376,7 @@ foreach ($videos as $v) {
         <label class="event-filter"><input type="checkbox" class="event-toggle" value="video" checked><i class="bi bi-camera-video-fill text-info"></i><span>Βίντεο</span></label>
         <label class="event-filter"><input type="checkbox" class="event-toggle" value="incident" checked><i class="bi bi-exclamation-triangle-fill text-danger"></i><span>Περιστατικά / SOS</span></label>
         <label class="event-filter"><input type="checkbox" class="event-toggle" value="shortage" checked><i class="bi bi-tools text-warning"></i><span>Ελλείψεις</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="order" checked><i class="bi bi-megaphone-fill text-secondary"></i><span>Σημεία / εντολές</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="order" checked><i class="bi bi-megaphone-fill text-secondary"></i><span>Σημεία / μετακινήσεις</span></label>
         <div class="map-help">
           <i class="bi bi-info-circle me-1"></i>Το replay δείχνει ζητήματα, αιτήματα GPS, απαντήσεις και στίγματα με χρονολογική σειρά.
         </div>
@@ -675,6 +676,9 @@ foreach ($videos as $v) {
     function replayPopup(ev){
       var html = '<b>' + escHtml(ev.title || '') + '</b>';
       if (ev.team) html += '<br><span>' + escHtml(ev.team) + '</span>';
+      if (ev.kind === 'move' && ev.origin_lat != null && ev.origin_lng != null) {
+        html += '<br><span>Βέλος από τελευταίο στίγμα προς νέο σημείο.</span>';
+      }
       if (ev.detail) html += '<br><span>' + escHtml(ev.detail) + '</span>';
       if (ev.at) html += '<br><small>' + escHtml(ev.at.slice(0,16).replace('T',' ')) + '</small>';
       return html;
@@ -685,6 +689,22 @@ foreach ($videos as $v) {
       return L.divIcon({ className:'', iconSize:[34,34], iconAnchor:[17,17],
         html:'<div class="replay-icon" style="background:' + color + '"><i class="bi ' + icon + '"></i></div>' });
     }
+    function moveBearing(fromLat, fromLng, toLat, toLng){
+      var y = Math.sin((toLng - fromLng) * Math.PI / 180) * Math.cos(toLat * Math.PI / 180);
+      var x = Math.cos(fromLat * Math.PI / 180) * Math.sin(toLat * Math.PI / 180) -
+        Math.sin(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) * Math.cos((toLng - fromLng) * Math.PI / 180);
+      return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
+    function moveArrowIcon(ev){
+      var angle = moveBearing(parseFloat(ev.origin_lat), parseFloat(ev.origin_lng), parseFloat(ev.lat), parseFloat(ev.lng));
+      var color = colorById[ev.team_id] || kindColor.move || '#2563eb';
+      return L.divIcon({ className:'', iconSize:[30,30], iconAnchor:[15,15],
+        html:'<div class="move-arrow-head" style="background:' + color + ';transform:rotate(' + angle + 'deg)"><i class="bi bi-arrow-up"></i></div>' });
+    }
+    function hasMoveOrigin(ev){
+      if (ev.kind !== 'move' || ev.origin_lat == null || ev.origin_lng == null || ev.lat == null || ev.lng == null) return false;
+      return Math.abs(parseFloat(ev.origin_lat) - parseFloat(ev.lat)) > 0.00001 || Math.abs(parseFloat(ev.origin_lng) - parseFloat(ev.lng)) > 0.00001;
+    }
     function setCurrent(ev, total){
       if (!current) return;
       if (!ev) {
@@ -693,10 +713,14 @@ foreach ($videos as $v) {
       }
       var color = kindColor[ev.kind] || colorById[ev.team_id] || '#334155';
       var icon = kindIcon[ev.kind] || 'bi-geo-alt-fill';
+      var detail = ev.detail || '';
+      if (ev.kind === 'move' && ev.origin_lat != null && ev.origin_lng != null) {
+        detail = (detail ? detail + ' · ' : '') + 'Βέλος από το τελευταίο γνωστό στίγμα προς τον προορισμό.';
+      }
       current.innerHTML = '<div class="rc-icon" style="background:' + color + '"><i class="bi ' + icon + '"></i></div>' +
         '<div><div class="rc-time">' + escHtml((ev.at || '').slice(11,16)) + ' · ' + (replayIndex + 1) + '/' + total + '</div>' +
         '<div class="rc-title">' + escHtml(ev.title || '') + (ev.team ? ' · ' + escHtml(ev.team) : '') + '</div>' +
-        '<div class="rc-detail">' + escHtml(ev.detail || '') + '</div></div>';
+        '<div class="rc-detail">' + escHtml(detail) + '</div></div>';
     }
     function drawReplay(events, upto){
       replayMarkerLayer.clearLayers();
@@ -713,6 +737,19 @@ foreach ($videos as $v) {
           .bindPopup(replayPopup(ev))
           .addTo(replayMarkerLayer);
         lastMarker = marker;
+        if (hasMoveOrigin(ev)) {
+          var color = colorById[ev.team_id] || kindColor.move || '#2563eb';
+          var from = [parseFloat(ev.origin_lat), parseFloat(ev.origin_lng)];
+          var to = [parseFloat(ev.lat), parseFloat(ev.lng)];
+          var mid = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
+          L.polyline([from, to], { color: color, weight: 4, opacity:.9, dashArray:'10,7' }).addTo(replayLineLayer);
+          L.circleMarker(from, { radius:6, color:color, fillColor:'#fff', fillOpacity:1, weight:3 })
+            .bindPopup('Αφετηρία μετακίνησης · ' + escHtml(ev.team || ''))
+            .addTo(replayMarkerLayer);
+          L.marker(mid, { icon: moveArrowIcon(ev), zIndexOffset: 3600 + i })
+            .bindPopup('Κατεύθυνση μετακίνησης · ' + escHtml(ev.team || ''))
+            .addTo(replayMarkerLayer);
+        }
         if (ev.kind === 'gps_request' && ev.response_lat != null && ev.response_lng != null) {
           L.polyline([[ev.lat, ev.lng], [ev.response_lat, ev.response_lng]], {
             color:'#7c3aed', weight:2, opacity:.75, dashArray:'5,7'

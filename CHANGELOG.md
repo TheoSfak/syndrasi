@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.7-beta] — 2026-06-29
+
+### Feature — Βελάκια μετακίνησης ομάδων στο replay
+
+- Τα replay events για εντολές μετάβασης κρατούν πλέον την αφετηρία από το τελευταίο γνωστό στίγμα της ομάδας πριν την εντολή.
+- Στον χάρτη του απολογισμού εμφανίζεται dashed βέλος από την αφετηρία προς το σημείο προορισμού της μετακίνησης.
+- Το current replay panel και τα popups εξηγούν καθαρά ότι η γραμμή δείχνει τη μετακίνηση από τελευταίο στίγμα προς νέο σημείο.
+
+---
+
 ## [0.13.6-beta] — 2026-06-29
 
 ### Feature — Διαδραστικό replay χάρτη απολογισμού

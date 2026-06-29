@@ -356,14 +356,19 @@ class StoryService
 
         foreach ($messages as $m) {
             if (!empty($m['point_kind']) && $m['latitude'] !== null && $m['longitude'] !== null) {
+                $tid = $m['team_id'] !== null ? (int) $m['team_id'] : null;
+                $isMove = $m['point_kind'] === 'move';
+                $origin = ($isMove && $tid) ? self::positionBefore($pingsByTeam[$tid] ?? [], (string) $m['created_at']) : null;
                 $add([
                     'at' => $m['created_at'],
-                    'kind' => $m['point_kind'] === 'incident' ? 'incident' : 'order',
-                    'team_id' => $m['team_id'] !== null ? (int) $m['team_id'] : null,
-                    'team' => $m['team_id'] !== null ? $teamName($m['team_id']) : '',
+                    'kind' => $m['point_kind'] === 'incident' ? 'incident' : ($isMove ? 'move' : 'order'),
+                    'team_id' => $tid,
+                    'team' => $tid ? $teamName($tid) : '',
                     'lat' => (float) $m['latitude'],
                     'lng' => (float) $m['longitude'],
-                    'title' => self::pointKind((string) $m['point_kind']),
+                    'origin_lat' => $origin['lat'] ?? null,
+                    'origin_lng' => $origin['lng'] ?? null,
+                    'title' => $isMove ? 'Μετακίνηση ομάδας' : self::pointKind((string) $m['point_kind']),
                     'detail' => $m['body'] ?: '',
                 ]);
             }
@@ -429,6 +434,17 @@ class StoryService
             return ['lat' => (float) $pick['lat'], 'lng' => (float) $pick['lng']];
         }
         return isset($fallback['lat'], $fallback['lng']) && $fallback['lat'] !== null && $fallback['lng'] !== null ? $fallback : null;
+    }
+
+    private static function positionBefore(array $pings, string $at): ?array
+    {
+        $ts = strtotime($at) ?: 0;
+        $before = null;
+        foreach ($pings as $p) {
+            $pTs = strtotime((string) $p['at']) ?: 0;
+            if ($pTs <= $ts) { $before = $p; }
+        }
+        return $before ? ['lat' => (float) $before['lat'], 'lng' => (float) $before['lng']] : null;
     }
 
     /** Per-team response-time metrics. */
