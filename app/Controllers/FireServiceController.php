@@ -36,7 +36,9 @@ class FireServiceController
         requireRole(['municipality_admin']);
         $result = FireServiceIncidentService::sync();
         if ($result['success']) {
-            flash_set('success', 'Η ενημέρωση ολοκληρώθηκε. Βρέθηκαν ' . (int) $result['incidents'] . ' συμβάντα.');
+            $telegramSent = (int) ($result['telegram_sent'] ?? 0);
+            flash_set('success', 'Η ενημέρωση ολοκληρώθηκε. Βρέθηκαν ' . (int) $result['incidents'] . ' συμβάντα.'
+                . ($telegramSent > 0 ? ' Στάλθηκαν ' . $telegramSent . ' ειδοποιήσεις Telegram.' : ' Δεν υπήρχαν νέες ειδοποιήσεις Telegram.'));
         } else {
             flash_set('danger', 'Η ενημέρωση απέτυχε: ' . $result['error']);
         }

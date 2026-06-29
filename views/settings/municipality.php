@@ -266,6 +266,9 @@ $tzOptions = [
                 ['shortage_update',        'Ενημέρωση έλλειψης',      'Στην ομάδα'],
                 ['sos_ack',                'Επιβεβαίωση SOS',         'Στην ομάδα'],
             ];
+            $telegramExternalTypes = [
+                ['fire_service_crete',      'Συμβάντα Πυροσβεστικής Κρήτης', 'Νέα συμβάντα ή αλλαγές κατάστασης σε ΣΕ ΕΞΕΛΙΞΗ / ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ'],
+            ];
             $opsTypeKeys = array_map(static function ($row) { return $row[0]; }, $opsNotifTypes);
             $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];
             // Effective channel: explicit notify_channel_*, else legacy notify_email_*.
@@ -319,6 +322,24 @@ $tzOptions = [
                       <input class="form-check-input" type="checkbox" name="notify_telegram_<?= e($type) ?>" id="tg_<?= e($type) ?>" value="1" <?= $tgOn ? 'checked' : '' ?>>
                       <label class="form-check-label small" for="tg_<?= e($type) ?>">Telegram</label>
                     </div>
+                  </div>
+                </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <div class="border-top mt-3 pt-3">
+              <div class="fw-semibold mb-1"><i class="bi bi-fire text-danger me-1"></i>Εξωτερικές πηγές</div>
+              <p class="small text-muted mb-2">Αποστολή μόνο μέσω Telegram. Τα συμβάντα Πυροσβεστικής αποστέλλονται μία φορά ανά συμβάν και ξανά μόνο αν αλλάξει σχετική κατάσταση.</p>
+              <div class="list-group list-group-flush">
+                <?php foreach ($telegramExternalTypes as [$type, $label, $desc]): $tgOn = ($settings['notify_telegram_' . $type] ?? '0') === '1'; ?>
+                <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 gap-3">
+                  <div>
+                    <div class="fw-semibold small"><?= e($label) ?></div>
+                    <div class="small text-muted"><?= e($desc) ?></div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" name="notify_telegram_<?= e($type) ?>" id="tg_<?= e($type) ?>" value="1" <?= $tgOn ? 'checked' : '' ?>>
+                    <label class="form-check-label small" for="tg_<?= e($type) ?>">Telegram</label>
                   </div>
                 </div>
                 <?php endforeach; ?>

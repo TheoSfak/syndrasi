@@ -216,6 +216,7 @@ class SettingsController
             'team_silent',
             'shortage_update',
             'sos_ack',
+            'fire_service_crete',
         ];
         $opsTypes = [
             'photo_request',
@@ -229,6 +230,7 @@ class SettingsController
             'team_silent',
             'shortage_update',
             'sos_ack',
+            'fire_service_crete',
         ];
 
         $allowed  = ['off', 'email', 'sms', 'both'];

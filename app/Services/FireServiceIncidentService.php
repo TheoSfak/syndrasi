@@ -13,6 +13,7 @@ class FireServiceIncidentService
     ];
 
     private const STATUSES = ['ΣΕ ΕΞΕΛΙΞΗ', 'ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ', 'ΠΛΗΡΗΣ ΕΛΕΓΧΟΣ', 'ΛΗΞΗ'];
+    private const TELEGRAM_STATUSES = ['ΣΕ ΕΞΕΛΙΞΗ', 'ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ'];
 
     public static function sync(): array
     {
@@ -25,6 +26,7 @@ class FireServiceIncidentService
                 throw new RuntimeException('Η πηγή φορτώθηκε αλλά δεν αναγνωρίστηκε κανένα συμβάν.');
             }
             self::upsertIncidents($incidents, $fetchId);
+            $telegramSent = self::notifyCreteTelegramIncidents();
             self::cleanup();
             dbq(
                 "UPDATE fire_service_fetches
@@ -32,13 +34,13 @@ class FireServiceIncidentService
                  WHERE id = :id",
                 ['cnt' => count($incidents), 'hash' => hash('sha256', $html), 'id' => $fetchId]
             );
-            return ['success' => true, 'fetch_id' => $fetchId, 'incidents' => count($incidents), 'error' => null];
+            return ['success' => true, 'fetch_id' => $fetchId, 'incidents' => count($incidents), 'telegram_sent' => $telegramSent, 'error' => null];
         } catch (Throwable $e) {
             dbq(
                 "UPDATE fire_service_fetches SET success = 0, error_message = :err WHERE id = :id",
                 ['err' => mb_substr($e->getMessage(), 0, 500), 'id' => $fetchId]
             );
-            return ['success' => false, 'fetch_id' => $fetchId, 'incidents' => 0, 'error' => $e->getMessage()];
+            return ['success' => false, 'fetch_id' => $fetchId, 'incidents' => 0, 'telegram_sent' => 0, 'error' => $e->getMessage()];
         }
     }
 
@@ -245,6 +247,117 @@ class FireServiceIncidentService
     {
         dbq('DELETE FROM fire_service_incidents WHERE last_seen_at < DATE_SUB(NOW(), INTERVAL 7 DAY)');
         dbq('DELETE FROM fire_service_fetches WHERE fetched_at < DATE_SUB(NOW(), INTERVAL 7 DAY)');
+        dbq('DELETE FROM fire_service_incident_notifications WHERE telegram_notified_at < DATE_SUB(NOW(), INTERVAL 14 DAY)');
+    }
+
+    private static function notifyCreteTelegramIncidents(): int
+    {
+        $statusesSql = "'" . implode("','", self::TELEGRAM_STATUSES) . "'";
+        $incidents = dbq(
+            "SELECT *
+             FROM fire_service_incidents
+             WHERE is_current = 1
+               AND region = 'ΠΕΡΙΦΕΡΕΙΑ ΚΡΗΤΗΣ'
+               AND status_label IN ({$statusesSql})
+             ORDER BY FIELD(status_label, 'ΣΕ ΕΞΕΛΙΞΗ', 'ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ'), last_seen_at DESC, id DESC"
+        )->fetchAll();
+        if (!$incidents) { return 0; }
+
+        $sent = 0;
+        foreach (Municipality::all() as $municipality) {
+            if (($municipality['status'] ?? 'active') !== 'active') { continue; }
+            $mid = (int) $municipality['id'];
+            if (!NotificationService::shouldSendTelegram($mid, 'fire_service_crete')) { continue; }
+
+            $cfg = TelegramService::resolveConfig($mid);
+            if (empty($cfg['enabled']) || trim((string) ($cfg['bot_token'] ?? '')) === '') { continue; }
+            if (trim((string) ($cfg['command_chat_id'] ?? '')) === '' && trim((string) ($cfg['team_chat_id'] ?? '')) === '') { continue; }
+
+            foreach ($incidents as $incident) {
+                if (!self::claimTelegramNotification((int) $incident['id'], $mid, (string) $incident['status_label'])) {
+                    continue;
+                }
+                $ok = self::sendIncidentTelegram($cfg, $incident, $mid);
+                if ($ok) {
+                    $sent++;
+                } else {
+                    self::releaseTelegramNotification((int) $incident['id'], $mid, (string) $incident['status_label']);
+                }
+            }
+        }
+        return $sent;
+    }
+
+    private static function claimTelegramNotification(int $incidentId, int $municipalityId, string $status): bool
+    {
+        return dbq(
+            "INSERT IGNORE INTO fire_service_incident_notifications
+             (fire_service_incident_id, municipality_id, status_label, telegram_notified_at)
+             VALUES (:iid, :mid, :st, NOW())",
+            ['iid' => $incidentId, 'mid' => $municipalityId, 'st' => $status]
+        )->rowCount() > 0;
+    }
+
+    private static function releaseTelegramNotification(int $incidentId, int $municipalityId, string $status): void
+    {
+        dbq(
+            "DELETE FROM fire_service_incident_notifications
+             WHERE fire_service_incident_id = :iid AND municipality_id = :mid AND status_label = :st",
+            ['iid' => $incidentId, 'mid' => $municipalityId, 'st' => $status]
+        );
+    }
+
+    private static function sendIncidentTelegram(array $cfg, array $incident, int $municipalityId): bool
+    {
+        $hadPrevious = (int) dbq(
+            "SELECT COUNT(*)
+             FROM fire_service_incident_notifications
+             WHERE fire_service_incident_id = :iid AND municipality_id = :mid AND status_label <> :st",
+            ['iid' => (int) $incident['id'], 'mid' => $municipalityId, 'st' => (string) $incident['status_label']]
+        )->fetchColumn() > 0;
+
+        $title = $hadPrevious ? 'Αλλαγή κατάστασης Πυροσβεστικής' : 'Νέο συμβάν Πυροσβεστικής Κρήτης';
+        $message = self::formatIncidentTelegramMessage($incident);
+        $url = self::absoluteUrl('/fire-service?region=' . rawurlencode('ΠΕΡΙΦΕΡΕΙΑ ΚΡΗΤΗΣ'));
+        $ok = false;
+
+        $commandChat = trim((string) ($cfg['command_chat_id'] ?? ''));
+        if ($commandChat !== '') {
+            $ok = TelegramService::sendToChat($cfg, $commandChat, $title, $message, $url) || $ok;
+        }
+
+        $teamChat = trim((string) ($cfg['team_chat_id'] ?? ''));
+        if ($teamChat !== '') {
+            $ok = TelegramService::sendToChat($cfg, $teamChat, $title, $message, $url) || $ok;
+        }
+
+        return $ok;
+    }
+
+    private static function formatIncidentTelegramMessage(array $incident): string
+    {
+        $parts = [
+            'Κατηγορία: ' . ($incident['category'] ?: '—'),
+            'Κατάσταση: ' . ($incident['status_label'] ?: '—'),
+            'Περιοχή: ' . trim(($incident['regional_unit'] ?: 'ΚΡΗΤΗ') . ' / ' . ($incident['municipality'] ?: ''), ' /'),
+        ];
+        if (!empty($incident['area_text'])) {
+            $parts[] = 'Δημοτική ενότητα/περιοχή: ' . $incident['area_text'];
+        }
+        if (!empty($incident['location_text'])) {
+            $parts[] = 'Τοποθεσία: ' . $incident['location_text'];
+        }
+        if (!empty($incident['raw_text'])) {
+            $parts[] = mb_substr((string) $incident['raw_text'], 0, 500);
+        }
+        return implode("\n", $parts);
+    }
+
+    private static function absoluteUrl(string $path): string
+    {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        return $scheme . '://' . $host . url($path);
     }
 
     private static function startFetch(): int

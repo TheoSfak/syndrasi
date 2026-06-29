@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.12-beta] — 2026-06-29
+
+### Feature — Telegram alerts for Fire Service incidents in Crete
+
+- Προστέθηκε Telegram-only toggle στις Ρυθμίσεις για «Συμβάντα Πυροσβεστικής Κρήτης».
+- Το sync της Πυροσβεστικής στέλνει ένα Telegram μήνυμα ανά νέο συμβάν της Περιφέρειας Κρήτης με κατάσταση `ΣΕ ΕΞΕΛΙΞΗ` ή `ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ`.
+- Στέλνει ξανά μόνο όταν αλλάξει σχετική κατάσταση συμβάντος, όχι σε κάθε cron/manual refresh.
+- Οι ειδοποιήσεις αποστέλλονται και στο command chat και στο κοινό chat ομάδων/εθελοντών, με dedupe όταν τα δύο chats είναι ίδια.
+- Προστέθηκε migration `027_fire_service_telegram_notifications.sql` για per-municipality dedupe ανά συμβάν και κατάσταση.
+
+---
+
 ## [0.14.11-beta] — 2026-06-29
 
 ### Hotfix — Telegram on completed archive flow
