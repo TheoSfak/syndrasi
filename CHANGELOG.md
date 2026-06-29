@@ -4,6 +4,14 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.1-beta] — 2026-06-29
+
+### Docs — Fire Service incidents integration guide
+
+- Added a full technical Markdown handoff for the “Συμβάντα Πυροσβεστικής” integration, including architecture, schema, parser strategy, cron/manual sync, UI, dashboard alert, create-action flow, safety notes, and porting checklist.
+
+---
+
 ## [0.14.0-beta] — 2026-06-29
 
 ### Feature — Συμβάντα Πυροσβεστικής
