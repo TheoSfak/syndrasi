@@ -133,17 +133,18 @@ class StoryService
         }
         foreach ($messages as $m) {
             $actor = $m['sender_role'] === 'command' ? 'command' : 'team';
+            $body = self::publicText($m['body'] ?? '');
             if ($m['kind'] === 'order') {
-                $add($m['created_at'], 'command', $m['team_id'], 'bi-megaphone-fill', '#ea6c0a', 'Εντολή', $m['body']);
+                $add($m['created_at'], 'command', $m['team_id'], 'bi-megaphone-fill', '#ea6c0a', 'Εντολή', $body);
                 if ($m['acknowledged_at']) {
                     $add($m['acknowledged_at'], 'team', $m['team_id'], 'bi-check2-all', '#16a34a', 'Επιβεβαίωση εντολής (ACK)', '');
                 }
             } elseif (!empty($m['point_kind'])) {
-                $add($m['created_at'], 'command', $m['team_id'], 'bi-geo-alt-fill', '#2563eb', 'Σημείο: ' . self::pointKind($m['point_kind']), $m['body']);
+                $add($m['created_at'], 'command', $m['team_id'], 'bi-geo-alt-fill', '#2563eb', 'Σημείο: ' . self::pointKind($m['point_kind']), $body);
             } elseif ($m['kind'] === 'status') {
-                $add($m['created_at'], 'team', $m['team_id'], 'bi-lightning-charge-fill', '#0891b2', 'Ενημέρωση', $m['body']);
+                $add($m['created_at'], 'team', $m['team_id'], 'bi-lightning-charge-fill', '#0891b2', 'Ενημέρωση', $body);
             } else {
-                $add($m['created_at'], $actor, $m['team_id'], 'bi-chat-dots', '#64748b', 'Μήνυμα', $m['body']);
+                $add($m['created_at'], $actor, $m['team_id'], 'bi-chat-dots', '#64748b', 'Μήνυμα', $body);
             }
         }
         foreach ([['gps', $gpsReq, 'Στίγμα', 'bi-geo'], ['photo', $photoReq, 'Φωτογραφία', 'bi-camera'], ['video', $videoReq, 'Βίντεο', 'bi-camera-video']] as [$k, $rows, $lbl, $ic]) {
@@ -172,12 +173,13 @@ class StoryService
         $mapPoints = [];
         foreach ($messages as $m) {
             if (!empty($m['point_kind']) && $m['latitude'] !== null && $m['longitude'] !== null) {
-                $mapPoints[] = ['kind' => $m['point_kind'], 'lat' => (float) $m['latitude'], 'lng' => (float) $m['longitude'], 'label' => self::pointKind($m['point_kind']), 'body' => $m['body'], 'team' => $teamName($m['team_id'])];
+                $mapPoints[] = ['kind' => $m['point_kind'], 'lat' => (float) $m['latitude'], 'lng' => (float) $m['longitude'], 'label' => self::pointKind($m['point_kind']), 'body' => self::publicText($m['body'] ?? ''), 'team' => $teamName($m['team_id'])];
             }
         }
         foreach ($photos as $p) { if ($p['latitude'] !== null) { $mapPoints[] = ['kind' => 'photo', 'lat' => (float) $p['latitude'], 'lng' => (float) $p['longitude'], 'label' => 'Φωτό', 'body' => $p['caption'], 'team' => $teamName($p['team_id'])]; } }
         foreach ($videos as $v) { if ($v['latitude'] !== null) { $mapPoints[] = ['kind' => 'video', 'lat' => (float) $v['latitude'], 'lng' => (float) $v['longitude'], 'label' => 'Βίντεο', 'body' => $v['caption'], 'team' => $teamName($v['team_id'])]; } }
         $replayEvents = self::replayEvents($event, $teams, $pingsByTeam, $gpsReq, $photoReq, $videoReq, $messages, $photos, $videos, $shortages, $sos);
+        $communications = self::communicationTranscript($messages, $teamName);
 
         /* ── Summary stats ───────────────────────────────────────────── */
         $totHours = 0.0;
@@ -210,6 +212,7 @@ class StoryService
             'mapPoints'   => $mapPoints,
             'replayEvents'=> $replayEvents,
             'timeline'    => $tl,
+            'communications' => $communications,
             'metrics'     => $metrics,
             'photos'      => $photos,
             'videos'      => $videos,
@@ -223,6 +226,44 @@ class StoryService
     {
         $extra = $table === 'video_requests' ? ', instructions' : '';
         return dbq("SELECT id, team_id, status, created_at, fulfilled_at{$extra} FROM {$table} WHERE event_id = :eid", ['eid' => $eid])->fetchAll();
+    }
+
+    private static function communicationTranscript(array $messages, callable $teamName): array
+    {
+        $out = [];
+        foreach ($messages as $m) {
+            $actor = $m['sender_role'] === 'command' ? 'command' : 'team';
+            $point = (string) ($m['point_kind'] ?? '');
+            $type = $point !== '' ? $point : (string) ($m['kind'] ?? 'message');
+            if ($type === 'poi') { $type = 'point'; }
+            $labels = [
+                'order' => ['Εντολή', 'bi-megaphone-fill', '#ea6c0a'],
+                'status' => ['Ενημέρωση', 'bi-lightning-charge-fill', '#0891b2'],
+                'message' => ['Μήνυμα', 'bi-chat-dots', '#64748b'],
+                'move' => ['Μετακίνηση', 'bi-arrow-right', '#2563eb'],
+                'incident' => ['Περιστατικό', 'bi-exclamation-triangle-fill', '#be123c'],
+                'point' => ['Σημείο', 'bi-pin-map-fill', '#d97706'],
+            ];
+            [$typeLabel, $icon, $color] = $labels[$type] ?? ['Μήνυμα', 'bi-chat-dots', '#64748b'];
+            $tid = $m['team_id'] !== null ? (int) $m['team_id'] : null;
+            $out[] = [
+                'at' => $m['created_at'],
+                'date' => substr((string) $m['created_at'], 0, 10),
+                'time' => substr((string) $m['created_at'], 11, 5),
+                'actor' => $actor,
+                'actor_label' => $actor === 'command' ? 'Δήμος / φορέας' : 'Ομάδα',
+                'team' => $tid ? $teamName($tid) : null,
+                'type' => $type,
+                'type_label' => $typeLabel,
+                'icon' => $icon,
+                'color' => $color,
+                'body' => self::publicText($m['body'] ?? ''),
+                'has_geo' => $m['latitude'] !== null && $m['longitude'] !== null,
+                'acknowledged_at' => $m['acknowledged_at'] ?? null,
+            ];
+        }
+        usort($out, fn($a, $b) => strcmp((string) $a['at'], (string) $b['at']));
+        return $out;
     }
 
     private static function replayEvents(array $event, array $teams, array $pingsByTeam, array $gpsReq, array $photoReq, array $videoReq, array $messages, array $photos, array $videos, array $shortages, array $sos): array
@@ -369,7 +410,7 @@ class StoryService
                     'origin_lat' => $origin['lat'] ?? null,
                     'origin_lng' => $origin['lng'] ?? null,
                     'title' => $isMove ? 'Μετακίνηση ομάδας' : self::pointKind((string) $m['point_kind']),
-                    'detail' => $m['body'] ?: '',
+                    'detail' => self::publicText($m['body'] ?? ''),
                 ]);
             }
         }
@@ -530,5 +571,14 @@ class StoryService
     private static function severity(string $s): string
     {
         return ['low' => 'Χαμηλή', 'medium' => 'Μεσαία', 'high' => 'Υψηλή', 'critical' => 'Κρίσιμη'][$s] ?? $s;
+    }
+
+    private static function publicText(?string $text): string
+    {
+        $text = trim((string) $text);
+        if ($text === '') { return ''; }
+        $text = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/iu', '[email]', $text);
+        $text = preg_replace('/(?<!\d)(?:\+?\d[\d\s()\-]{7,}\d)(?!\d)/u', '[τηλέφωνο]', $text);
+        return $text;
     }
 }

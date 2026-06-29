@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.8-beta] — 2026-06-29
+
+### Feature — Επικοινωνίες πεδίου στο Story
+
+- Προστέθηκε ξεχωριστή ενότητα “Επικοινωνίες πεδίου” στη σελίδα Παρουσίασης Δράσης.
+- Οι διάλογοι Δήμου/φορέα και ομάδων εμφανίζονται ως καθαρό transcript με ώρα, ρόλο, ομάδα, τύπο μηνύματος και ACK όπου υπάρχει.
+- Προστέθηκαν φίλτρα για Όλα, Δήμο/φορέα, Ομάδες, Εντολές, Ενημερώσεις, Μετακινήσεις και Μηνύματα.
+- Τα email και οι τηλεφωνικοί αριθμοί μασκάρονται στα επιχειρησιακά κείμενα του Story.
+
+---
+
 ## [0.13.7-beta] — 2026-06-29
 
 ### Feature — Βελάκια μετακίνησης ομάδων στο replay

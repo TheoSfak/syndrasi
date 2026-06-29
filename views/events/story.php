@@ -9,6 +9,7 @@ $photos = $story['photos'] ?? [];
 $videos = $story['videos'] ?? [];
 $shorts = $story['shortages'] ?? [];
 $checks = $story['checkins'] ?? [];
+$comms  = $story['communications'] ?? [];
 
 $download   = !empty($download);
 $publicMode = !empty($publicMode);
@@ -208,6 +209,17 @@ foreach ($videos as $v) {
   .actor.team{background:#dbeafe;color:#1d4ed8}
   .actor.system{background:#f1f5f9;color:#475569}
   .team-tag{font-size:.75rem;color:var(--brand);font-weight:900}
+  .comm-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .comm-filter{border:1px solid var(--line);background:#fff;color:#334155;border-radius:999px;padding:8px 12px;font-weight:900;font-size:.82rem}
+  .comm-filter.active{background:#111827;color:#fff;border-color:#111827}
+  .comm-list{display:grid;gap:10px}
+  .comm-item{border:1px solid var(--line);border-radius:8px;background:#fff;padding:14px 16px;display:grid;grid-template-columns:42px minmax(0,1fr);gap:12px}
+  .comm-icon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;margin-top:2px}
+  .comm-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--muted);font-size:.76rem;font-weight:800}
+  .comm-kind{border-radius:999px;padding:.16rem .48rem;background:#eef2f7;color:#334155}
+  .comm-actor.command{color:#9a3412}.comm-actor.team{color:#1d4ed8}
+  .comm-body{margin-top:7px;color:#1f2937;line-height:1.55;white-space:pre-wrap}
+  .comm-ack{margin-top:7px;color:#15803d;font-size:.78rem;font-weight:900}
   .short-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
   .short-card{padding:16px;border-left:5px solid var(--rose)}
   .pill{font-size:.74rem;padding:.22rem .6rem;border-radius:999px;font-weight:900;display:inline-flex}
@@ -278,6 +290,7 @@ foreach ($videos as $v) {
     <a href="#map-section">Χάρτης</a>
     <a href="#teams">Ομάδες</a>
     <a href="#timeline">Χρονολόγιο</a>
+    <?php if ($comms): ?><a href="#communications">Επικοινωνίες</a><?php endif; ?>
     <a href="#media">Υλικό</a>
   </div>
 </nav>
@@ -493,6 +506,47 @@ foreach ($videos as $v) {
       </div>
     </div>
   </section>
+
+  <?php if ($comms): ?>
+  <section class="section" id="communications">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Επικοινωνίες πεδίου</div>
+        <h2>Διάλογοι Δήμου και ομάδων</h2>
+        <p class="section-sub">Οι βασικές εντολές, ενημερώσεις και απαντήσεις της δράσης, με ευαίσθητα στοιχεία μασκαρισμένα όπου εντοπίζονται.</p>
+      </div>
+    </div>
+    <div class="comm-toolbar noprint" aria-label="Φίλτρα επικοινωνιών">
+      <button type="button" class="comm-filter active" data-comm-filter="all">Όλα</button>
+      <button type="button" class="comm-filter" data-comm-filter="command">Δήμος / φορέας</button>
+      <button type="button" class="comm-filter" data-comm-filter="team">Ομάδες</button>
+      <button type="button" class="comm-filter" data-comm-filter="order">Εντολές</button>
+      <button type="button" class="comm-filter" data-comm-filter="status">Ενημερώσεις</button>
+      <button type="button" class="comm-filter" data-comm-filter="move">Μετακινήσεις</button>
+      <button type="button" class="comm-filter" data-comm-filter="message">Μηνύματα</button>
+    </div>
+    <div class="comm-list" id="commList">
+      <?php foreach ($comms as $c): ?>
+        <article class="comm-item" data-actor="<?= e($c['actor']) ?>" data-type="<?= e($c['type']) ?>">
+          <div class="comm-icon" style="background:<?= e($c['color']) ?>"><i class="bi <?= e($c['icon']) ?>"></i></div>
+          <div>
+            <div class="comm-meta">
+              <span><?= e($c['date']) ?> · <?= e($c['time']) ?></span>
+              <span class="comm-actor <?= e($c['actor']) ?>"><?= e($c['actor_label']) ?></span>
+              <?php if (!empty($c['team'])): ?><span class="team-tag"><?= e($c['team']) ?></span><?php endif; ?>
+              <span class="comm-kind"><?= e($c['type_label']) ?></span>
+              <?php if (!empty($c['has_geo'])): ?><span><i class="bi bi-geo-alt-fill"></i>Σημείο χάρτη</span><?php endif; ?>
+            </div>
+            <div class="comm-body"><?= e($c['body'] !== '' ? $c['body'] : 'Χωρίς κείμενο.') ?></div>
+            <?php if (!empty($c['acknowledged_at'])): ?>
+              <div class="comm-ack"><i class="bi bi-check2-all me-1"></i>Επιβεβαιώθηκε <?= e(gr_time($c['acknowledged_at'])) ?></div>
+            <?php endif; ?>
+          </div>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  </section>
+  <?php endif; ?>
 
   <?php if ($shorts): ?>
   <section class="section">
@@ -814,6 +868,25 @@ foreach ($videos as $v) {
       cb.addEventListener('change', function(){ stopReplay(); replayIndex = 0; rebuildReplay(); });
     });
     rebuildReplay();
+  })();
+
+  (function(){
+    var filters = document.querySelectorAll('[data-comm-filter]');
+    var items = document.querySelectorAll('.comm-item');
+    if (!filters.length || !items.length) return;
+    function visible(item, filter){
+      if (filter === 'all') return true;
+      if (filter === 'command' || filter === 'team') return item.dataset.actor === filter;
+      if (filter === 'order') return item.dataset.type === 'order' || item.dataset.type === 'point' || item.dataset.type === 'incident';
+      return item.dataset.type === filter;
+    }
+    filters.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var filter = btn.dataset.commFilter || 'all';
+        filters.forEach(function(b){ b.classList.toggle('active', b === btn); });
+        items.forEach(function(item){ item.style.display = visible(item, filter) ? '' : 'none'; });
+      });
+    });
   })();
 
   (function(){
