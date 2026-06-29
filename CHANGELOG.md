@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.13-beta] — 2026-06-30
+
+### Feature — Civil Protection fire-risk map Telegram alerts
+
+- Προστέθηκε νέο cron endpoint `/cron/fire-risk-map` για έλεγχο ανά 60 λεπτά του ημερήσιου χάρτη πρόβλεψης κινδύνου πυρκαγιάς της Πολιτικής Προστασίας.
+- Προστέθηκε service που βρίσκει την τελευταία εικόνα χάρτη, αναγνωρίζει το επίπεδο κινδύνου για Χανιά, Ρέθυμνο, Ηράκλειο και Λασίθι από το χρώμα της Κρήτης, και στέλνει κείμενο με link στην εικόνα.
+- Προστέθηκε Telegram-only toggle στις Ρυθμίσεις για «Χάρτης κινδύνου πυρκαγιάς Κρήτης».
+- Οι ειδοποιήσεις αποστέλλονται και στο command chat και στο κοινό chat ομάδων/εθελοντών, με dedupe όταν τα δύο chats είναι ίδια.
+- Προστέθηκε migration `028_fire_risk_map_notifications.sql` ώστε να στέλνεται μόνο μία ειδοποίηση ανά δήμο και ημερομηνία χάρτη.
+
+---
+
 ## [0.14.12-beta] — 2026-06-29
 
 ### Feature — Telegram alerts for Fire Service incidents in Crete

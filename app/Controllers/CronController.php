@@ -155,6 +155,17 @@ class CronController
         json_out(array_merge($result, ['at' => date('Y-m-d H:i:s')]), $result['success'] ? 200 : 502);
     }
 
+    /**
+     * GET /cron/fire-risk-map
+     * Checks the Civil Protection daily fire-risk map. Safe to run every 60 min.
+     */
+    public function fireRiskMap()
+    {
+        $this->authCron();
+        $result = FireRiskMapService::sync();
+        json_out(array_merge($result, ['at' => date('Y-m-d H:i:s')]), $result['success'] ? 200 : 502);
+    }
+
     /* ── Private ─────────────────────────────────────────────────────────── */
 
     private function authCron()

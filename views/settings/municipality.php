@@ -268,6 +268,7 @@ $tzOptions = [
             ];
             $telegramExternalTypes = [
                 ['fire_service_crete',      'Συμβάντα Πυροσβεστικής Κρήτης', 'Νέα συμβάντα ή αλλαγές κατάστασης σε ΣΕ ΕΞΕΛΙΞΗ / ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ'],
+                ['fire_risk_crete',         'Χάρτης κινδύνου πυρκαγιάς Κρήτης', 'Ημερήσια πρόβλεψη κινδύνου ανά Π.Ε. Κρήτης από την Πολιτική Προστασία'],
             ];
             $opsTypeKeys = array_map(static function ($row) { return $row[0]; }, $opsNotifTypes);
             $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];

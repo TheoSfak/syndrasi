@@ -243,6 +243,7 @@ $router->get('/cron/shift-reminders', 'CronController@shiftReminders');
 $router->get('/cron/cleanup', 'CronController@cleanup');
 $router->get('/cron/mail-queue', 'CronController@processMailQueue');
 $router->get('/cron/fire-service', 'CronController@fireService');
+$router->get('/cron/fire-risk-map', 'CronController@fireRiskMap');
 
 /* Super admin */
 $router->get('/admin/dashboard', 'AdminController@dashboard');
