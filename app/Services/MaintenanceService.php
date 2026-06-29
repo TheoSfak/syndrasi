@@ -8,7 +8,7 @@ class MaintenanceService
 {
     /**
      * Purge transient rows that accumulate and never expire:
-     *   - login rate-limit counters/locks (login_fail_* / login_lock_*)
+     *   - login/reset rate-limit counters/locks
      *   - per-shift "already reminded" flags for shifts that ran long ago
      *   - spent / expired password-reset tokens
      * Returns a counts array. Safe to run repeatedly.
@@ -17,7 +17,9 @@ class MaintenanceService
     {
         $rl = dbq(
             "DELETE FROM app_settings
-             WHERE (setting_key LIKE 'login_fail_%' OR setting_key LIKE 'login_lock_%')
+             WHERE (setting_key LIKE 'login_fail_%'
+                    OR setting_key LIKE 'login_lock_%'
+                    OR setting_key LIKE 'reset_req_%')
                AND updated_at < DATE_SUB(NOW(), INTERVAL 1 DAY)"
         )->rowCount();
 

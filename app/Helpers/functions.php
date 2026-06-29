@@ -256,6 +256,10 @@ function audit($action, $entityType = null, $entityId = null, $details = null)
 function render($view, array $data = [], $withLayout = true)
 {
     $config = config('config');
+    $needsLeaflet = $data['needsLeaflet'] ?? in_array($view, ['events/show', 'team/event_show'], true);
+    $needsChart = $data['needsChart'] ?? in_array($view, ['dashboard/municipality', 'statistics/index'], true);
+    $needsSimpleMaps = $data['needsSimpleMaps'] ?? $needsLeaflet;
+    $needsStatsCharts = $data['needsStatsCharts'] ?? ($view === 'statistics/index');
     extract($data, EXTR_SKIP);
     if ($withLayout) {
         include BASE_PATH . '/views/layouts/header.php';

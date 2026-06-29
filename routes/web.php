@@ -120,6 +120,7 @@ $router->post('/mobilizations/{id}/checkin',   'MobilizationController@checkin')
 /* Municipality admin & operator: operational page */
 $router->get('/operations', 'OperationController@index');
 $router->get('/operations/war-room', 'OperationController@warRoom');
+$router->get('/operations/war-room/status', 'OperationController@warRoomStatus');
 $router->get('/operations/war-room/stream', 'OperationController@warRoomStream');
 $router->get('/operations/events/{id}', 'OperationController@show');
 $router->get('/operations/events/{id}/gate-qr', 'OperationController@gateQr');

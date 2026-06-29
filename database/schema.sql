@@ -122,7 +122,8 @@ CREATE TABLE events (
   updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_events_municipality_id (municipality_id),
   INDEX idx_events_status (status),
-  INDEX idx_events_start_datetime (start_datetime)
+  INDEX idx_events_start_datetime (start_datetime),
+  INDEX idx_events_muni_status_start (municipality_id, status, start_datetime)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -147,7 +148,9 @@ CREATE TABLE event_applications (
   INDEX idx_applications_municipality_id (municipality_id),
   INDEX idx_applications_event_id (event_id),
   INDEX idx_applications_team_id (team_id),
-  INDEX idx_applications_status (status)
+  INDEX idx_applications_status (status),
+  INDEX idx_apps_event_status (event_id, status),
+  INDEX idx_apps_team_status (team_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -166,7 +169,8 @@ CREATE TABLE operational_checkins (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_checkins_event_id (event_id),
   INDEX idx_checkins_team_id (team_id),
-  INDEX idx_checkins_municipality_id (municipality_id)
+  INDEX idx_checkins_municipality_id (municipality_id),
+  INDEX idx_checkins_event_team_id (event_id, team_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -182,7 +186,9 @@ CREATE TABLE location_pings (
   message VARCHAR(255) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_location_event_team (event_id, team_id),
-  INDEX idx_location_created_at (created_at)
+  INDEX idx_location_created_at (created_at),
+  INDEX idx_loc_event_created (event_id, created_at),
+  INDEX idx_loc_event_created_id (event_id, created_at, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -206,7 +212,8 @@ CREATE TABLE shortage_reports (
   INDEX idx_shortages_event_id (event_id),
   INDEX idx_shortages_team_id (team_id),
   INDEX idx_shortages_status (status),
-  INDEX idx_shortages_severity (severity)
+  INDEX idx_shortages_severity (severity),
+  INDEX idx_shortages_event_status_created (event_id, status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -243,7 +250,9 @@ CREATE TABLE notifications (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_notifications_user_id (user_id),
   INDEX idx_notifications_team_id (team_id),
-  INDEX idx_notifications_event_id (event_id)
+  INDEX idx_notifications_event_id (event_id),
+  INDEX idx_notif_user_read (user_id, is_read),
+  INDEX idx_notif_user_read_created (user_id, is_read, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

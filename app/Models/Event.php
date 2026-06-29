@@ -53,10 +53,17 @@ class Event
     public static function forMunicipality($municipalityId, array $filters = [])
     {
         $sql = 'SELECT e.*, c.name AS category_name,
-                (SELECT COUNT(*) FROM event_applications ea WHERE ea.event_id = e.id) AS applications_count,
-                (SELECT COUNT(*) FROM event_applications ea WHERE ea.event_id = e.id AND ea.status = \'pending\') AS pending_count
+                COALESCE(ac.applications_count, 0) AS applications_count,
+                COALESCE(ac.pending_count, 0) AS pending_count
                 FROM events e
                 LEFT JOIN event_categories c ON c.id = e.category_id
+                LEFT JOIN (
+                    SELECT event_id,
+                           COUNT(*) AS applications_count,
+                           SUM(status = \'pending\') AS pending_count
+                    FROM event_applications
+                    GROUP BY event_id
+                ) ac ON ac.event_id = e.id
                 WHERE e.municipality_id = :mid';
         $params = ['mid' => $municipalityId];
 
@@ -130,10 +137,17 @@ class Event
 
         $stmt = db()->prepare(
             "SELECT e.*, c.name AS category_name,
-                    (SELECT COUNT(*) FROM event_applications ea WHERE ea.event_id = e.id) AS applications_count,
-                    (SELECT COUNT(*) FROM event_applications ea WHERE ea.event_id = e.id AND ea.status = 'pending') AS pending_count
+                    COALESCE(ac.applications_count, 0) AS applications_count,
+                    COALESCE(ac.pending_count, 0) AS pending_count
              FROM events e
              LEFT JOIN event_categories c ON c.id = e.category_id
+             LEFT JOIN (
+                 SELECT event_id,
+                        COUNT(*) AS applications_count,
+                        SUM(status = 'pending') AS pending_count
+                 FROM event_applications
+                 GROUP BY event_id
+             ) ac ON ac.event_id = e.id
              WHERE e.municipality_id = ? AND e.status IN ($placeholders)
              $extra
              ORDER BY e.start_datetime DESC"

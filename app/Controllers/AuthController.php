@@ -137,6 +137,13 @@ class AuthController
             redirect('/forgot-password');
         }
 
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $rateKey = 'reset_req_' . hash('sha256', $ip . '|' . $email);
+        if (!$this->allowResetRequest($rateKey)) {
+            flash_set('success', 'Αν το email υπάρχει στο σύστημα, θα λάβετε οδηγίες επαναφοράς αμέσως.');
+            redirect('/forgot-password');
+        }
+
         // Always show the same message to prevent email enumeration
         $user = User::findByEmail($email);
         if ($user && $user['status'] === 'active') {
@@ -168,6 +175,27 @@ class AuthController
 
         flash_set('success', 'Αν το email υπάρχει στο σύστημα, θα λάβετε οδηγίες επαναφοράς αμέσως.');
         redirect('/forgot-password');
+    }
+
+    private function allowResetRequest(string $key): bool
+    {
+        $now = time();
+        $windowSeconds = 1800;
+        $maxRequests = 3;
+        $raw = (string) ($this->rateSetting($key) ?? '');
+        $state = json_decode($raw, true);
+        if (!is_array($state) || empty($state['reset_at']) || $now >= (int) $state['reset_at']) {
+            $state = ['count' => 0, 'reset_at' => $now + $windowSeconds];
+        }
+
+        if ((int) $state['count'] >= $maxRequests) {
+            $this->setRateSetting($key, json_encode($state));
+            return false;
+        }
+
+        $state['count'] = (int) $state['count'] + 1;
+        $this->setRateSetting($key, json_encode($state));
+        return true;
     }
 
     public function showResetForm()

@@ -7,17 +7,27 @@
  */
 class StatsService
 {
+    private static function yearRange($year): array
+    {
+        $year = (int) $year;
+        return [
+            'from' => sprintf('%04d-01-01 00:00:00', $year),
+            'to'   => sprintf('%04d-01-01 00:00:00', $year + 1),
+        ];
+    }
+
     /* -------------------------------------------------- Municipality level */
 
     public static function municipalityOverview($municipalityId, $year = null)
     {
         $year = $year ?: (int) date('Y');
-        $p = ['mid' => $municipalityId, 'year' => $year];
+        $p = ['mid' => $municipalityId] + self::yearRange($year);
 
         $eventsWithCoverage = (int) dbq(
             "SELECT COUNT(DISTINCT e.id) FROM events e
              JOIN event_applications ea ON ea.event_id = e.id AND ea.status = 'approved'
-             WHERE e.municipality_id = :mid AND e.status = 'completed' AND YEAR(e.start_datetime) = :year",
+             WHERE e.municipality_id = :mid AND e.status = 'completed'
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -36,7 +46,8 @@ class StatsService
              ) lc ON lc.event_id = ea.event_id AND lc.team_id = ea.team_id
              LEFT JOIN operational_checkins ci ON ci.id = lc.last_id
              WHERE ea.municipality_id = :mid AND ea.status = 'approved'
-               AND e.status = 'completed' AND YEAR(e.start_datetime) = :year",
+               AND e.status = 'completed'
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -53,7 +64,8 @@ class StatsService
              ) lc ON lc.event_id = ea.event_id AND lc.team_id = ea.team_id
              LEFT JOIN operational_checkins ci ON ci.id = lc.last_id
              WHERE ea.municipality_id = :mid AND ea.status = 'approved'
-               AND e.status = 'completed' AND YEAR(e.start_datetime) = :year",
+               AND e.status = 'completed'
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -62,7 +74,8 @@ class StatsService
              FROM event_applications ea
              JOIN events e ON e.id = ea.event_id
              WHERE ea.municipality_id = :mid AND e.published_at IS NOT NULL
-               AND ea.submitted_at >= e.published_at AND YEAR(e.start_datetime) = :year",
+               AND ea.submitted_at >= e.published_at
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -71,14 +84,14 @@ class StatsService
              FROM event_applications ea
              JOIN events e ON e.id = ea.event_id
              WHERE ea.municipality_id = :mid AND ea.status = 'approved'
-               AND YEAR(e.start_datetime) = :year",
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
         $requested = (int) dbq(
             "SELECT COALESCE(SUM(requested_people),0) FROM events
              WHERE municipality_id = :mid AND status IN ('completed','active','confirmed')
-               AND YEAR(start_datetime) = :year",
+               AND start_datetime >= :from AND start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -99,9 +112,10 @@ class StatsService
         return dbq(
             "SELECT COALESCE(c.name, 'Χωρίς κατηγορία') AS category, COUNT(*) AS total
              FROM events e LEFT JOIN event_categories c ON c.id = e.category_id
-             WHERE e.municipality_id = :mid AND e.status = 'completed' AND YEAR(e.start_datetime) = :year
+             WHERE e.municipality_id = :mid AND e.status = 'completed'
+               AND e.start_datetime >= :from AND e.start_datetime < :to
              GROUP BY c.name ORDER BY total DESC",
-            ['mid' => $municipalityId, 'year' => $year]
+            ['mid' => $municipalityId] + self::yearRange($year)
         )->fetchAll();
     }
 
@@ -110,9 +124,10 @@ class StatsService
         $rows = dbq(
             "SELECT MONTH(e.start_datetime) AS m, COUNT(*) AS total
              FROM events e
-             WHERE e.municipality_id = :mid AND e.status = 'completed' AND YEAR(e.start_datetime) = :year
+             WHERE e.municipality_id = :mid AND e.status = 'completed'
+               AND e.start_datetime >= :from AND e.start_datetime < :to
              GROUP BY MONTH(e.start_datetime)",
-            ['mid' => $municipalityId, 'year' => $year]
+            ['mid' => $municipalityId] + self::yearRange($year)
         )->fetchAll();
         $byMonth = array_fill(1, 12, 0);
         foreach ($rows as $r) {
@@ -127,13 +142,13 @@ class StatsService
     public static function teamStats($teamId, $year = null)
     {
         $year = $year ?: (int) date('Y');
-        $p = ['tid' => $teamId, 'year' => $year];
+        $p = ['tid' => $teamId] + self::yearRange($year);
 
         $eventsCount = (int) dbq(
             "SELECT COUNT(*) FROM event_applications ea
              JOIN events e ON e.id = ea.event_id
              WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
-               AND YEAR(e.start_datetime) = :year",
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -141,7 +156,7 @@ class StatsService
             "SELECT COALESCE(SUM(ea.approved_people),0) FROM event_applications ea
              JOIN events e ON e.id = ea.event_id
              WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
-               AND YEAR(e.start_datetime) = :year",
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -155,7 +170,7 @@ class StatsService
              ) lc ON lc.event_id = ea.event_id AND lc.team_id = ea.team_id
              LEFT JOIN operational_checkins ci ON ci.id = lc.last_id
              WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
-               AND YEAR(e.start_datetime) = :year",
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -172,7 +187,7 @@ class StatsService
              ) lc ON lc.event_id = ea.event_id AND lc.team_id = ea.team_id
              LEFT JOIN operational_checkins ci ON ci.id = lc.last_id
              WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
-               AND YEAR(e.start_datetime) = :year",
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
             $p
         )->fetchColumn();
 
@@ -182,7 +197,7 @@ class StatsService
              JOIN events e ON e.id = ea.event_id
              LEFT JOIN event_categories c ON c.id = e.category_id
              WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
-               AND YEAR(e.start_datetime) = :year
+               AND e.start_datetime >= :from AND e.start_datetime < :to
              GROUP BY c.name ORDER BY total DESC",
             $p
         )->fetchAll();
@@ -192,7 +207,7 @@ class StatsService
 
         $shortages = (int) dbq(
             "SELECT COUNT(*) FROM shortage_reports sr
-             WHERE sr.team_id = :tid AND YEAR(sr.created_at) = :year",
+             WHERE sr.team_id = :tid AND sr.created_at >= :from AND sr.created_at < :to",
             $p
         )->fetchColumn();
 
@@ -225,8 +240,8 @@ class StatsService
                   ON x.last_id = oc1.id
              ) ci ON ci.event_id = ea.event_id AND ci.team_id = ea.team_id
              WHERE ea.team_id = :tid AND ea.status = 'approved' AND e.status = 'completed'
-               AND YEAR(e.start_datetime) = :year",
-            ['tid' => $teamId, 'year' => $year]
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
+            ['tid' => $teamId] + self::yearRange($year)
         )->fetch();
         $apps = (int) $row['approved_apps'];
         if ($apps === 0) {
@@ -242,8 +257,9 @@ class StatsService
              FROM event_applications ea
              JOIN events e ON e.id = ea.event_id
              WHERE ea.team_id = :tid AND e.published_at IS NOT NULL
-               AND ea.submitted_at >= e.published_at AND YEAR(e.start_datetime) = :year",
-            ['tid' => $teamId, 'year' => $year]
+               AND ea.submitted_at >= e.published_at
+               AND e.start_datetime >= :from AND e.start_datetime < :to",
+            ['tid' => $teamId] + self::yearRange($year)
         )->fetchColumn();
         return $val !== null ? (int) round((float) $val) : null;
     }

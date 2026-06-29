@@ -10,7 +10,7 @@
  * NOTE: bump CACHE_NAME whenever the caching logic changes so old caches are purged.
  */
 
-var CACHE_NAME = 'syndrasi-v5';
+var CACHE_NAME = 'syndrasi-v6';
 
 // Scope directory of this service worker, e.g. '' (root) or '/syndrasi/public'
 var BASE = self.location.pathname.replace(/\/service-worker\.js$/, '');

@@ -109,7 +109,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
       <i class="bi bi-exclamation-octagon-fill sos-ico"></i>
       <div style="flex:1"><div class="sos-lbl">SOS — ΚΙΝΔΥΝΟΣ</div><div class="sos-sub">Άμεση κλήση βοήθειας στον δήμο</div></div>
     </button>
-    <div class="sos-banner" id="sosBanner" style="display:none"></div>
+    <div class="sos-banner" id="sosBanner" role="alert" aria-live="assertive" style="display:none"></div>
   </div>
 
   <!-- Στίγμα -->
@@ -297,14 +297,36 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 
   /* SOS */
   var sosBtn=document.getElementById('sosBtn'),sosBanner=document.getElementById('sosBanner');
+  var sosArmed=false,sosArmTimer=null;
+  function sosStatus(msg,ack){
+    if(!sosBanner)return;
+    sosBanner.className=ack?'sos-banner ack':'sos-banner';
+    sosBanner.style.display='flex';
+    sosBanner.innerHTML='<i class="bi '+(ack?'bi-info-circle-fill':'bi-exclamation-octagon-fill')+'"></i> '+esc(msg);
+  }
+  function armSos(){
+    sosArmed=true;
+    sosBtn.querySelector('.sos-sub').textContent='Πατήστε ξανά για αποστολή SOS';
+    sosStatus('Επιβεβαίωση SOS: πατήστε ξανά το κόκκινο κουμπί μέσα σε 6 δευτερόλεπτα.',false);
+    clearTimeout(sosArmTimer);
+    sosArmTimer=setTimeout(function(){
+      sosArmed=false;
+      if(!sosBtn.disabled){sosBtn.querySelector('.sos-sub').textContent='Άμεση κλήση βοήθειας στον δήμο';}
+      if(sosBanner&&sosBanner.textContent.indexOf('Επιβεβαίωση SOS')!==-1){sosBanner.style.display='none';}
+    },6000);
+  }
   sosBtn.addEventListener('click',function(){
-    if(!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ο δήμος ότι κινδυνεύετε. Συνέχεια;'))return;
+    if(!sosArmed){armSos();return;}
+    clearTimeout(sosArmTimer);sosArmed=false;
     sosBtn.disabled=true;sosBtn.querySelector('.sos-sub').textContent='Λήψη τοποθεσίας…';
     var send=function(la,ln,ac){postJSON('/sos',{latitude:la,longitude:ln,accuracy:ac}).then(function(d){
-      if(d&&d.success){sosBtn.querySelector('.sos-sub').textContent='SOS εστάλη — ο δήμος ειδοποιήθηκε';pollComms();}
-      else{sosBtn.disabled=false;sosBtn.querySelector('.sos-sub').textContent=(d&&d.message)||'Αποτυχία';}
-    }).catch(function(){sosBtn.disabled=false;sosBtn.querySelector('.sos-sub').textContent='Σφάλμα σύνδεσης';});};
-    if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){send(p.coords.latitude,p.coords.longitude,p.coords.accuracy);},function(){send(null,null,null);},{enableHighAccuracy:true,timeout:8000,maximumAge:0});}else{send(null,null,null);}
+      if(d&&d.success){sosBtn.querySelector('.sos-sub').textContent='SOS εστάλη — ο δήμος ειδοποιήθηκε';sosStatus('SOS εστάλη — ο δήμος ειδοποιήθηκε.',true);pollComms();}
+      else{sosBtn.disabled=false;sosBtn.querySelector('.sos-sub').textContent='Αποτυχία — δοκιμάστε ξανά';sosStatus((d&&d.message)||'Το SOS δεν στάλθηκε. Δοκιμάστε ξανά.',false);}
+    }).catch(function(){sosBtn.disabled=false;sosBtn.querySelector('.sos-sub').textContent='Σφάλμα σύνδεσης';sosStatus('Σφάλμα σύνδεσης. Ελέγξτε το δίκτυο και δοκιμάστε ξανά.',false);});};
+    if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){send(p.coords.latitude,p.coords.longitude,p.coords.accuracy);},function(err){
+      var m=err&&err.code===1?'Δεν δόθηκε άδεια GPS. Το SOS θα σταλεί χωρίς στίγμα.':'Δεν βρέθηκε GPS έγκαιρα. Το SOS θα σταλεί χωρίς στίγμα.';
+      sosStatus(m,false);send(null,null,null);
+    },{enableHighAccuracy:true,timeout:8000,maximumAge:0});}else{sosStatus('Η συσκευή δεν υποστηρίζει GPS. Το SOS θα σταλεί χωρίς στίγμα.',false);send(null,null,null);}
   });
 
   /* Στίγμα */

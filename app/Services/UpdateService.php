@@ -97,10 +97,10 @@ class UpdateService
         if ($zip->open($path) !== true) {
             return ['ok' => false, 'error' => 'Αδυναμία ανοίγματος του backup.'];
         }
-        $ok = $zip->extractTo(BASE_PATH);
+        $extract = self::extractZipTo($zip, BASE_PATH);
         $zip->close();
-        if (!$ok) {
-            return ['ok' => false, 'error' => 'Η εξαγωγή του backup απέτυχε.'];
+        if (!$extract['ok']) {
+            return ['ok' => false, 'error' => $extract['error']];
         }
         self::log('Restored backup ' . $name);
         return ['ok' => true, 'name' => $name];
@@ -243,8 +243,13 @@ class UpdateService
             return ['ok' => false, 'error' => 'Αδυναμία ανοίγματος του ληφθέντος ZIP.'];
         }
         @mkdir($exDir, 0775, true);
-        $zip->extractTo($exDir);
+        $extract = self::extractZipTo($zip, $exDir);
         $zip->close();
+        if (!$extract['ok']) {
+            self::rrmdir($exDir);
+            @unlink($zipPath);
+            return ['ok' => false, 'error' => $extract['error']];
+        }
 
         $root = self::singleSubdir($exDir);
         if ($root === null) {
@@ -353,6 +358,116 @@ class UpdateService
             }
         }
         return $zip->close();
+    }
+
+    /**
+     * Extract a ZIP without allowing absolute paths, parent traversal, stream
+     * wrappers, Windows drive paths, or symlink entries.
+     */
+    private static function extractZipTo(ZipArchive $zip, string $dest): array
+    {
+        if (!is_dir($dest) && !@mkdir($dest, 0775, true)) {
+            return ['ok' => false, 'error' => 'Δεν μπορεί να δημιουργηθεί ο φάκελος εξαγωγής.'];
+        }
+
+        $root = realpath($dest);
+        if ($root === false) {
+            return ['ok' => false, 'error' => 'Μη έγκυρος φάκελος εξαγωγής.'];
+        }
+        $root = rtrim(str_replace('\\', '/', $root), '/');
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = $zip->getNameIndex($i);
+            $rel = self::safeZipEntryName((string) $name);
+            if ($rel === null) {
+                return ['ok' => false, 'error' => 'Το ZIP περιέχει μη ασφαλή διαδρομή αρχείου.'];
+            }
+            if (self::isZipSymlink($zip, $i)) {
+                return ['ok' => false, 'error' => 'Το ZIP περιέχει μη ασφαλές symbolic link.'];
+            }
+
+            $isDir = str_ends_with((string) $name, '/');
+            $target = $root . '/' . $rel;
+            $targetDir = $isDir ? $target : dirname($target);
+            if (!is_dir($targetDir) && !@mkdir($targetDir, 0775, true)) {
+                return ['ok' => false, 'error' => 'Αποτυχία δημιουργίας φακέλου κατά την εξαγωγή.'];
+            }
+
+            $realDir = realpath($targetDir);
+            if ($realDir === false || !self::isWithinPath($realDir, $root)) {
+                return ['ok' => false, 'error' => 'Το ZIP προσπάθησε να γράψει εκτός εφαρμογής.'];
+            }
+            if ($isDir) {
+                continue;
+            }
+            if (is_link($target)) {
+                return ['ok' => false, 'error' => 'Το ZIP προσπάθησε να αντικαταστήσει symbolic link.'];
+            }
+            if (file_exists($target)) {
+                $realTarget = realpath($target);
+                if ($realTarget === false || !self::isWithinPath($realTarget, $root)) {
+                    return ['ok' => false, 'error' => 'Το ZIP προσπάθησε να γράψει εκτός εφαρμογής.'];
+                }
+            }
+
+            $in = $zip->getStream((string) $name);
+            if ($in === false) {
+                return ['ok' => false, 'error' => 'Αποτυχία ανάγνωσης αρχείου από το ZIP.'];
+            }
+            $out = @fopen($target, 'wb');
+            if ($out === false) {
+                fclose($in);
+                return ['ok' => false, 'error' => 'Αποτυχία εγγραφής αρχείου κατά την εξαγωγή.'];
+            }
+            stream_copy_to_stream($in, $out);
+            fclose($out);
+            fclose($in);
+        }
+
+        return ['ok' => true];
+    }
+
+    private static function safeZipEntryName(string $name): ?string
+    {
+        if ($name === '' || str_contains($name, "\0") || str_contains($name, '://')) {
+            return null;
+        }
+        $name = str_replace('\\', '/', $name);
+        if ($name === '' || $name[0] === '/' || preg_match('/^[A-Za-z]:/', $name) || str_contains($name, ':')) {
+            return null;
+        }
+
+        $parts = [];
+        foreach (explode('/', $name) as $part) {
+            if ($part === '') {
+                continue;
+            }
+            if ($part === '.' || $part === '..') {
+                return null;
+            }
+            $parts[] = $part;
+        }
+        return $parts ? implode('/', $parts) : null;
+    }
+
+    private static function isWithinPath(string $path, string $root): bool
+    {
+        $path = rtrim(str_replace('\\', '/', $path), '/');
+        $root = rtrim(str_replace('\\', '/', $root), '/');
+        return $path === $root || str_starts_with($path, $root . '/');
+    }
+
+    private static function isZipSymlink(ZipArchive $zip, int $index): bool
+    {
+        $opsys = 0;
+        $attr = 0;
+        if (!$zip->getExternalAttributesIndex($index, $opsys, $attr)) {
+            return false;
+        }
+        if ($opsys !== ZipArchive::OPSYS_UNIX) {
+            return false;
+        }
+        return (($attr >> 16) & 0170000) === 0120000;
     }
 
     /** Copy everything from $src into $dst, skipping protected top-level dirs. */

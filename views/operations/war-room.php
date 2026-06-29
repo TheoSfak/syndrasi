@@ -78,6 +78,8 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
   var evMarkers = {};   // event_id -> marker
   var teamLayer = L.layerGroup().addTo(map);
   var prevShortById = {};
+  var lastSnapshotAt = Date.now();
+  var pollInFlight = false;
 
   function esc(s){ return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
   function pad(n){ return n<10 ? '0'+n : ''+n; }
@@ -194,6 +196,7 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
 
   function applySnapshot(d){
     if (!d || !d.ok) return;
+    lastSnapshotAt = Date.now();
     var t = d.totals || {};
     document.getElementById('t-events').textContent  = t.events || 0;
     document.getElementById('t-present').textContent = t.people_present || 0;
@@ -229,19 +232,39 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
   });
 
   /* SSE live updates (close-and-retry) */
-  function setLive(on){
+  function setLive(mode){
     var b = document.getElementById('liveBadge'); if(!b) return;
-    if (on){ b.textContent='◉ LIVE SSE'; b.className='badge bg-success ms-1'; }
-    else   { b.textContent='↺ Επανασύνδεση…'; b.className='badge bg-warning text-dark ms-1'; }
+    if (mode === 'sse'){ b.textContent='◉ LIVE SSE'; b.className='badge bg-success ms-1'; }
+    else if (mode === 'poll'){ b.textContent='↻ LIVE POLL'; b.className='badge bg-info text-dark ms-1'; }
+    else { b.textContent='↺ Επανασύνδεση…'; b.className='badge bg-warning text-dark ms-1'; }
   }
   var es = null;
   function connectSSE(){
     if (es){ try{ es.close(); }catch(e){} }
     es = new EventSource(BASE + '/operations/war-room/stream');
-    es.onopen = function(){ setLive(true); };
-    es.addEventListener('update', function(evt){ try{ applySnapshot(JSON.parse(evt.data)); }catch(e){} });
-    es.onerror = function(){ setLive(false); };
+    es.onopen = function(){ setLive('sse'); };
+    es.addEventListener('update', function(evt){ try{ applySnapshot(JSON.parse(evt.data)); setLive('sse'); }catch(e){} });
+    es.onerror = function(){
+      setLive('retry');
+      setTimeout(function(){
+        if (Date.now() - lastSnapshotAt > 4500) { pollStatus(); }
+      }, 1800);
+    };
   }
+
+  function pollStatus(){
+    if (pollInFlight) return;
+    pollInFlight = true;
+    fetch(BASE + '/operations/war-room/status', { headers:{ 'X-Requested-With':'XMLHttpRequest' }, cache:'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ applySnapshot(d); setLive('poll'); })
+      .catch(function(){ setLive('retry'); })
+      .finally(function(){ pollInFlight = false; });
+  }
+
+  setInterval(function(){
+    if (Date.now() - lastSnapshotAt > 10000) { pollStatus(); }
+  }, 5000);
 
   /* boot with server-rendered snapshot, then go live */
   applySnapshot(INIT);

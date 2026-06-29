@@ -507,7 +507,11 @@ class OperationController
     /** Stream a file with HTTP range support (needed for inline <video> seeking). */
     private static function streamFile(string $path, string $mime, bool $download, string $downloadName): void
     {
-        $size = filesize($path);
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        $size = (int) filesize($path);
         header('Content-Type: ' . $mime);
         header('Accept-Ranges: bytes');
         header('Cache-Control: private, max-age=3600');
@@ -565,11 +569,7 @@ class OperationController
         if (!in_array($mime, $allowed, true)) {
             abort(415, 'Μη υποστηριζόμενος τύπος αρχείου.');
         }
-        header('Content-Type: ' . $mime);
-        header('Content-Length: ' . filesize($path));
-        header('Cache-Control: private, max-age=3600');
-        readfile($path);
-        exit;
+        self::streamFile($path, $mime, false, basename($path));
     }
 
     /**
@@ -998,6 +998,17 @@ class OperationController
 
         flush();
         exit;
+    }
+
+    /** GET /operations/war-room/status — JSON fallback when SSE is unavailable. */
+    public function warRoomStatus()
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $mid = current_municipality_id();
+        $this->autoCloseExpired($mid);
+
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        json_out($this->buildWarRoomSnapshot($mid));
     }
 
     /**

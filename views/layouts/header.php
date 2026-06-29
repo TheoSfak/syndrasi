@@ -15,8 +15,13 @@
 <meta name="apple-mobile-web-app-title" content="SynDrasi">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<?php if (!empty($needsLeaflet)): ?>
 <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+<?php endif; ?>
 <link href="<?= e(url('/assets/css/app.css')) ?>" rel="stylesheet">
+<?php if (!empty($needsChart)): ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<?php endif; ?>
 <script>window.csrfToken = '<?= e(csrf_token()) ?>'; window.baseUrl = '<?= e(base_uri()) ?>';</script>
 </head>
 <body class="bg-light">

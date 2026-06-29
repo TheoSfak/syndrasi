@@ -4,6 +4,22 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.13.4-beta] — 2026-06-29
+
+### Security / Performance / UX audit fixes
+
+- Hardened self-update and backup restore ZIP extraction against path traversal, absolute paths, stream wrappers, Windows drive paths, and symbolic links.
+- Added war-room JSON fallback polling when SSE stalls, with visible LIVE POLL/reconnect state for operators.
+- Streamed protected operation photos through the buffered file streamer instead of direct `readfile()` output.
+- Replaced `StatsService` yearly filters with indexed date ranges and added performance indexes for event lists, stats, notifications, pings, check-ins, and shortages (`023_more_perf_indexes.sql`).
+- Removed correlated application-count subqueries from event list queries in favor of aggregate joins.
+- Added forgot-password throttling without email enumeration (`3` requests per IP+email per 30 minutes).
+- Stopped loading Leaflet and Chart.js globally on every layout page; only pages that need them request them.
+- Improved field SOS UX: no native confirm dialog, two-tap inline confirmation, accessible alert banner, and distinct GPS/network/server failure messages.
+- Bumped PWA cache to `syndrasi-v6`.
+
+---
+
 ## [0.13.3-beta] — 2026-06-27
 
 ### Cleanup — Αφαίρεση προσωρινού diagnostic στο Story
