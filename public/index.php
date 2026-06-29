@@ -64,8 +64,12 @@ if (is_file(BASE_PATH . '/vendor/autoload.php')) {
 
 /* Global CSRF protection for all POST requests */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    $isProtectedCronIngest = str_ends_with($requestPath, '/cron/fire-risk-map/ingest');
     $token = '';
-    if (isset($_POST['_token'])) {
+    if ($isProtectedCronIngest) {
+        $token = csrf_token();
+    } elseif (isset($_POST['_token'])) {
         $token = $_POST['_token'];
     } elseif (isset($_SERVER['HTTP_X_CSRF_TOKEN'])) {
         $token = $_SERVER['HTTP_X_CSRF_TOKEN'];

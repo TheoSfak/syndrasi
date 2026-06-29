@@ -9,6 +9,7 @@ $router->get('/public/events/{token}', 'PublicEventController@show');
 $router->get('/public/story/{token}', 'PublicEventController@story');
 $router->get('/public/story/{token}/photo/{id}', 'PublicEventController@storyPhoto');
 $router->get('/public/story/{token}/video/{id}', 'PublicEventController@storyVideo');
+$router->get('/public/fire-risk-map/{token}', 'FireRiskMapController@show');
 
 /* Emergency mobilization — volunteer response (token link, no login required) */
 $router->get('/m/{token}',         'MobilizationController@respondForm');
@@ -224,6 +225,7 @@ $router->post('/settings/map', 'SettingsController@saveMap');
 $router->post('/settings/awards', 'SettingsController@saveAwards');
 $router->post('/settings/notifications', 'SettingsController@saveNotifications');
 $router->post('/settings/fire-risk-map/sync', 'SettingsController@syncFireRiskMap');
+$router->post('/settings/fire-risk-map/upload', 'SettingsController@uploadFireRiskMap');
 $router->post('/settings/sms', 'SettingsController@saveSms');
 $router->post('/settings/sms/test', 'SettingsController@testSms');
 $router->post('/settings/telegram', 'SettingsController@saveTelegram');
@@ -245,6 +247,7 @@ $router->get('/cron/cleanup', 'CronController@cleanup');
 $router->get('/cron/mail-queue', 'CronController@processMailQueue');
 $router->get('/cron/fire-service', 'CronController@fireService');
 $router->get('/cron/fire-risk-map', 'CronController@fireRiskMap');
+$router->post('/cron/fire-risk-map/ingest', 'CronController@ingestFireRiskMap');
 
 /* Super admin */
 $router->get('/admin/dashboard', 'AdminController@dashboard');

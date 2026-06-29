@@ -8,6 +8,7 @@ class FireRiskMapService
     public const ARCHIVE_URL = 'https://civilprotection.gov.gr/arxeio-imerision-xartwn';
 
     private const REGION_LABEL = 'Κρήτη';
+    private const LOCAL_MAP_DIR = '/storage/uploads/fire_risk_maps';
 
     private const RISK_LEVELS = [
         1 => ['label' => 'Χαμηλή', 'rgb' => [150, 240, 160]],
@@ -55,6 +56,53 @@ class FireRiskMapService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    public static function syncBinary(string $binary, string $mapDate, ?int $onlyMunicipalityId = null, ?string $sourceUrl = null): array
+    {
+        @set_time_limit(90);
+        try {
+            $mapDate = self::normalizeDate($mapDate);
+            $analysis = self::analyseImage($binary);
+            $imageUrl = self::storeLocalMap($binary, $mapDate);
+            $map = [
+                'map_date' => $mapDate,
+                'image_url' => $imageUrl,
+                'source_url' => $sourceUrl,
+            ];
+            $sent = self::notifyMunicipalities($map, $analysis, $onlyMunicipalityId);
+            self::cleanup();
+            return [
+                'success' => true,
+                'map_date' => $mapDate,
+                'image_url' => $imageUrl,
+                'levels' => $analysis['levels'],
+                'telegram_sent' => $sent,
+                'error' => null,
+            ];
+        } catch (Throwable $e) {
+            return [
+                'success' => false,
+                'map_date' => null,
+                'image_url' => null,
+                'levels' => [],
+                'telegram_sent' => 0,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public static function localMapPathFromToken(string $token): ?string
+    {
+        if (!preg_match('/^\d{8}$/', $token)) { return null; }
+        $date = substr($token, 0, 4) . '-' . substr($token, 4, 2) . '-' . substr($token, 6, 2);
+        try {
+            $date = self::normalizeDate($date);
+        } catch (Throwable $e) {
+            return null;
+        }
+        $path = BASE_PATH . self::LOCAL_MAP_DIR . '/' . $date . '.img';
+        return is_file($path) ? $path : null;
     }
 
     public static function latestMap(): array
@@ -122,6 +170,39 @@ class FireRiskMapService
             $out[] = date('Y-m-d', strtotime(($offset >= 0 ? '+' : '') . $offset . ' day'));
         }
         return array_values(array_unique($out));
+    }
+
+    private static function normalizeDate(string $date): string
+    {
+        $date = trim($date);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            throw new RuntimeException('Μη έγκυρη ημερομηνία χάρτη.');
+        }
+        [$year, $month, $day] = array_map('intval', explode('-', $date));
+        if (!checkdate($month, $day, $year)) {
+            throw new RuntimeException('Μη έγκυρη ημερομηνία χάρτη.');
+        }
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
+    }
+
+    private static function storeLocalMap(string $binary, string $mapDate): string
+    {
+        $dir = BASE_PATH . self::LOCAL_MAP_DIR;
+        if (!is_dir($dir) && !mkdir($dir, 0775, true)) {
+            throw new RuntimeException('Δεν μπορεί να δημιουργηθεί ο φάκελος αποθήκευσης χάρτη.');
+        }
+
+        $path = $dir . '/' . $mapDate . '.img';
+        $tmp = $path . '.tmp';
+        if (file_put_contents($tmp, $binary, LOCK_EX) === false) {
+            throw new RuntimeException('Δεν μπορεί να αποθηκευτεί ο χάρτης κινδύνου.');
+        }
+        if (!rename($tmp, $path)) {
+            @unlink($tmp);
+            throw new RuntimeException('Δεν μπορεί να ολοκληρωθεί η αποθήκευση χάρτη κινδύνου.');
+        }
+
+        return self::absoluteUrl('/public/fire-risk-map/' . str_replace('-', '', $mapDate));
     }
 
     private static function imageUrlForDate(string $date): string
@@ -249,6 +330,11 @@ class FireRiskMapService
     private static function cleanup(): void
     {
         dbq('DELETE FROM fire_risk_map_notifications WHERE telegram_notified_at < DATE_SUB(NOW(), INTERVAL 60 DAY)');
+        foreach (glob(BASE_PATH . self::LOCAL_MAP_DIR . '/*.img') ?: [] as $file) {
+            if (is_file($file) && filemtime($file) !== false && filemtime($file) < strtotime('-90 days')) {
+                @unlink($file);
+            }
+        }
     }
 
     private static function nearestRiskPixel($img, int $x, int $y, int $radius): ?array
@@ -391,5 +477,12 @@ class FireRiskMapService
             throw new RuntimeException('Αποτυχία λήψης από την Πολιτική Προστασία' . $status . '.');
         }
         return (string) $body;
+    }
+
+    private static function absoluteUrl(string $path): string
+    {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        return $scheme . '://' . $host . url($path);
     }
 }

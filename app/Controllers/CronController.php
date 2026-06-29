@@ -166,6 +166,44 @@ class CronController
         json_out(array_merge($result, ['at' => date('Y-m-d H:i:s')]), $result['success'] ? 200 : 502);
     }
 
+    /**
+     * POST /cron/fire-risk-map/ingest
+     * Receives a fire-risk map image from an external fetcher when the live
+     * server cannot download Civil Protection directly. Multipart fields:
+     *   - map_date: YYYY-MM-DD
+     *   - fire_risk_map or image: image file
+     */
+    public function ingestFireRiskMap()
+    {
+        $this->authCron();
+        @set_time_limit(90);
+
+        $date = isset($_POST['map_date']) ? trim((string) $_POST['map_date']) : '';
+        $sourceUrl = isset($_POST['source_url']) ? trim((string) $_POST['source_url']) : 'external-ingest';
+        $file = $_FILES['fire_risk_map'] ?? ($_FILES['image'] ?? null);
+
+        if ($date === '') {
+            json_out(['success' => false, 'error' => 'Missing map_date.'], 422);
+        }
+        if (!$file || !is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            json_out(['success' => false, 'error' => 'Missing fire_risk_map/image upload.'], 422);
+        }
+        if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > 12 * 1024 * 1024) {
+            json_out(['success' => false, 'error' => 'Uploaded map must be up to 12MB.'], 422);
+        }
+        if (!is_uploaded_file((string) ($file['tmp_name'] ?? ''))) {
+            json_out(['success' => false, 'error' => 'Invalid uploaded file.'], 422);
+        }
+
+        $binary = file_get_contents((string) $file['tmp_name']);
+        if ($binary === false || $binary === '') {
+            json_out(['success' => false, 'error' => 'Could not read uploaded map.'], 422);
+        }
+
+        $result = FireRiskMapService::syncBinary((string) $binary, $date, null, $sourceUrl);
+        json_out(array_merge($result, ['at' => date('Y-m-d H:i:s')]), $result['success'] ? 200 : 422);
+    }
+
     /* ── Private ─────────────────────────────────────────────────────────── */
 
     private function authCron()

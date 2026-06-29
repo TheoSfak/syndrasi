@@ -273,7 +273,10 @@ $tzOptions = [
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
             $fireRiskCronUrl = $scheme . '://' . $host . url('/cron/fire-risk-map');
+            $fireRiskIngestUrl = $scheme . '://' . $host . url('/cron/fire-risk-map/ingest');
             $fireRiskCronCommand = 'curl -s -H "Authorization: Bearer TOKEN" "' . $fireRiskCronUrl . '" > /dev/null';
+            $fireRiskIngestCommand = 'curl -s -H "Authorization: Bearer TOKEN" -F "map_date=YYYY-MM-DD" -F "fire_risk_map=@/path/to/map.jpg" "' . $fireRiskIngestUrl . '"';
+            $fireRiskDefaultDate = date('Y-m-d', strtotime('+1 day'));
             $opsTypeKeys = array_map(static function ($row) { return $row[0]; }, $opsNotifTypes);
             $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];
             // Effective channel: explicit notify_channel_*, else legacy notify_email_*.
@@ -361,6 +364,26 @@ $tzOptions = [
                 </div>
                 <div class="small text-muted mb-1">Cron κάθε 60 λεπτά:</div>
                 <code class="d-block small text-break"><?= e($fireRiskCronCommand) ?></code>
+                <hr>
+                <div class="fw-semibold small mb-2">Fallback όταν η Πολιτική Προστασία μπλοκάρει το server</div>
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-4">
+                    <label class="form-label small mb-1" for="fireRiskUploadDate">Ημερομηνία χάρτη</label>
+                    <input type="date" id="fireRiskUploadDate" name="map_date" form="fireRiskUploadForm" class="form-control form-control-sm" value="<?= e($fireRiskDefaultDate) ?>">
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label small mb-1" for="fireRiskUploadFile">Εικόνα χάρτη</label>
+                    <input type="file" id="fireRiskUploadFile" name="fire_risk_map" form="fireRiskUploadForm" class="form-control form-control-sm" accept="image/*">
+                  </div>
+                  <div class="col-md-3 d-grid">
+                    <button type="submit" form="fireRiskUploadForm" class="btn btn-danger btn-sm">
+                      <i class="bi bi-upload me-1"></i>Ανέβασμα & αποστολή
+                    </button>
+                  </div>
+                </div>
+                <div class="small text-muted mt-2">Το upload αναλύει την εικόνα τοπικά, κρατά δημόσιο link για Telegram και δεν στέλνει δεύτερη ειδοποίηση για ίδια ημερομηνία.</div>
+                <div class="small text-muted mt-2 mb-1">External fetcher upload:</div>
+                <code class="d-block small text-break"><?= e($fireRiskIngestCommand) ?></code>
               </div>
             </div>
           </div>
@@ -385,6 +408,9 @@ $tzOptions = [
           </div>
         </form>
         <form id="fireRiskManualForm" method="post" action="<?= e(url('/settings/fire-risk-map/sync')) ?>">
+          <?= csrf_field() ?>
+        </form>
+        <form id="fireRiskUploadForm" method="post" action="<?= e(url('/settings/fire-risk-map/upload')) ?>" enctype="multipart/form-data">
           <?= csrf_field() ?>
         </form>
       </div>

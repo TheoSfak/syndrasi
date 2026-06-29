@@ -276,6 +276,47 @@ class SettingsController
         redirect('/settings#tab-notifications');
     }
 
+    public function uploadFireRiskMap()
+    {
+        requireRole(['municipality_admin']);
+        $mid = (int) current_municipality_id();
+        $date = post_str('map_date');
+        $file = $_FILES['fire_risk_map'] ?? null;
+
+        if (!$file || !is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            flash_set('danger', 'Ανεβάστε εικόνα χάρτη κινδύνου.');
+            redirect('/settings#tab-notifications');
+        }
+        if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > 12 * 1024 * 1024) {
+            flash_set('danger', 'Η εικόνα χάρτη πρέπει να είναι έως 12MB.');
+            redirect('/settings#tab-notifications');
+        }
+        if (!is_uploaded_file((string) ($file['tmp_name'] ?? ''))) {
+            flash_set('danger', 'Μη έγκυρο αρχείο upload.');
+            redirect('/settings#tab-notifications');
+        }
+
+        $binary = file_get_contents((string) $file['tmp_name']);
+        if ($binary === false || $binary === '') {
+            flash_set('danger', 'Δεν ήταν δυνατή η ανάγνωση της εικόνας χάρτη.');
+            redirect('/settings#tab-notifications');
+        }
+
+        $result = FireRiskMapService::syncBinary((string) $binary, $date, $mid, 'manual-upload');
+
+        if ($result['success']) {
+            $sent = (int) ($result['telegram_sent'] ?? 0);
+            $dateLabel = !empty($result['map_date']) ? gr_date($result['map_date']) : 'την επιλεγμένη ημερομηνία';
+            flash_set('success', 'Ο χάρτης ανέβηκε και αναλύθηκε για ' . $dateLabel . '. '
+                . ($sent > 0 ? 'Στάλθηκε ειδοποίηση Telegram.' : 'Δεν υπήρχε νέα ειδοποίηση Telegram για αποστολή.'));
+        } else {
+            flash_set('danger', 'Το ανέβασμα χάρτη απέτυχε: ' . ($result['error'] ?? 'άγνωστο σφάλμα'));
+        }
+
+        audit('fire_risk_map_manual_upload', 'municipality', $mid, $result);
+        redirect('/settings#tab-notifications');
+    }
+
     /* ── SMS gateway ──────────────────────────────────────────────────── */
 
     public function saveSms()

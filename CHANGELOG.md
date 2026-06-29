@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.17-beta] — 2026-06-30
+
+### Hotfix — Fire-risk map manual/external fallback
+
+- Προστέθηκε fallback upload στις Ρυθμίσεις → Ειδοποιήσεις ώστε ο admin να ανεβάζει χειροκίνητα την εικόνα του ημερήσιου χάρτη όταν η Πολιτική Προστασία μπλοκάρει το production server με `403 Forbidden`.
+- Το uploaded image αναλύεται με τον ίδιο μηχανισμό χρώματος για Χανιά, Ρέθυμνο, Ηράκλειο και Λασίθι, αποθηκεύεται τοπικά και στέλνεται στο Telegram με το υπάρχον dedupe ανά δήμο/ημερομηνία.
+- Προστέθηκε protected endpoint `POST /cron/fire-risk-map/ingest` για GitHub Action/Worker/VPS fetcher που ανεβάζει multipart `map_date` + `fire_risk_map` με το ίδιο Bearer token των cron.
+- Προστέθηκε δημόσιο read-only URL `/public/fire-risk-map/{YYYYMMDD}` για να περιλαμβάνεται στα Telegram μηνύματα το τοπικά αποθηκευμένο image link.
+
+---
+
 ## [0.14.16-beta] — 2026-06-30
 
 ### Hotfix — Fire-risk map archive 403 fallback
