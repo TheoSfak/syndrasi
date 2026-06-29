@@ -1,0 +1,94 @@
+name: Fire Risk Map Ingest
+
+on:
+  schedule:
+    - cron: "5 * * * *"
+  workflow_dispatch:
+    inputs:
+      map_date:
+        description: "Optional map date to fetch, YYYY-MM-DD. Empty = tomorrow/today/yesterday."
+        required: false
+        type: string
+      base_url:
+        description: "Optional SynDrasi base URL. Default: secret SYNDRASI_BASE_URL or https://1stop.gr/public"
+        required: false
+        type: string
+
+jobs:
+  fetch-and-ingest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      TZ: Europe/Athens
+      SYNDRASI_CRON_TOKEN: ${{ secrets.SYNDRASI_CRON_TOKEN }}
+      SYNDRASI_BASE_URL: ${{ secrets.SYNDRASI_BASE_URL }}
+      INPUT_MAP_DATE: ${{ github.event.inputs.map_date }}
+      INPUT_BASE_URL: ${{ github.event.inputs.base_url }}
+
+    steps:
+      - name: Fetch official map and send to SynDrasi
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SYNDRASI_CRON_TOKEN:-}" ]; then
+            echo "Missing GitHub secret SYNDRASI_CRON_TOKEN. Use the app cron_secret value."
+            exit 1
+          fi
+
+          base_url="${INPUT_BASE_URL:-${SYNDRASI_BASE_URL:-https://1stop.gr/public}}"
+          base_url="${base_url%/}"
+          ingest_url="${base_url}/cron/fire-risk-map/ingest"
+
+          if [ -n "${INPUT_MAP_DATE:-}" ]; then
+            dates=("${INPUT_MAP_DATE}")
+          else
+            dates=(
+              "$(date -d '+1 day' +%F)"
+              "$(date +%F)"
+              "$(date -d '-1 day' +%F)"
+            )
+          fi
+
+          for map_date in "${dates[@]}"; do
+            if ! [[ "$map_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "Skipping invalid map date: $map_date"
+              continue
+            fi
+
+            ym="$(date -d "$map_date" +%Y-%m)"
+            code="$(date -d "$map_date" +%y%m%d)"
+            source_url="https://civilprotection.gov.gr/sites/default/files/${ym}/${code}.jpg"
+
+            echo "Trying ${source_url}"
+            if ! curl -fsSL --retry 3 --retry-delay 2 \
+              -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36" \
+              -H "Accept: image/avif,image/webp,image/apng,image/*,*/*;q=0.8" \
+              "$source_url" \
+              -o fire-risk-map.jpg; then
+              echo "Download failed for ${map_date}"
+              continue
+            fi
+
+            if [ ! -s fire-risk-map.jpg ]; then
+              echo "Downloaded file is empty for ${map_date}"
+              continue
+            fi
+
+            echo "Uploading ${map_date} to ${ingest_url}"
+            curl -fsS \
+              -H "Authorization: Bearer ${SYNDRASI_CRON_TOKEN}" \
+              -F "map_date=${map_date}" \
+              -F "source_url=${source_url}" \
+              -F "fire_risk_map=@fire-risk-map.jpg;type=image/jpeg" \
+              "$ingest_url" \
+              -o response.json
+
+            cat response.json
+            echo
+            exit 0
+          done
+
+          echo "No fire-risk map image could be downloaded from the official Civil Protection URLs."
+          exit 1

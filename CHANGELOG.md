@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.18-beta] — 2026-06-30
+
+### Feature — GitHub Action fire-risk map fetcher
+
+- Προστέθηκε GitHub Actions workflow `.github/workflows/fire-risk-map-ingest.yml` που τρέχει κάθε ώρα και κατεβάζει την ημερήσια εικόνα χάρτη από τα επίσημα predictable URLs της Πολιτικής Προστασίας μέσω GitHub runner.
+- Το workflow ανεβάζει την εικόνα στο SynDrasi μέσω `POST /cron/fire-risk-map/ingest`, ώστε το production server να μην χρειάζεται να κάνει download από την Πολιτική Προστασία όταν το IP του παίρνει `403 Forbidden`.
+- Υποστηρίζεται manual run με προαιρετικό `map_date` και `base_url`.
+- Προστέθηκαν οδηγίες στις Ρυθμίσεις → Ειδοποιήσεις για τα GitHub secrets `SYNDRASI_CRON_TOKEN` και προαιρετικά `SYNDRASI_BASE_URL`.
+
+---
+
 ## [0.14.17-beta] — 2026-06-30
 
 ### Hotfix — Fire-risk map manual/external fallback

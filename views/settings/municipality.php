@@ -384,6 +384,7 @@ $tzOptions = [
                 <div class="small text-muted mt-2">Το upload αναλύει την εικόνα τοπικά, κρατά δημόσιο link για Telegram και δεν στέλνει δεύτερη ειδοποίηση για ίδια ημερομηνία.</div>
                 <div class="small text-muted mt-2 mb-1">External fetcher upload:</div>
                 <code class="d-block small text-break"><?= e($fireRiskIngestCommand) ?></code>
+                <div class="small text-muted mt-2">GitHub Action: ορίστε secret <code>SYNDRASI_CRON_TOKEN</code> με το <code>cron_secret</code>. Προαιρετικά <code>SYNDRASI_BASE_URL</code>, αλλιώς χρησιμοποιείται <code>https://1stop.gr/public</code>.</div>
               </div>
             </div>
           </div>
