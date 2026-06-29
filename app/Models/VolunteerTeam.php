@@ -24,9 +24,9 @@ class VolunteerTeam
         dbq(
             'INSERT INTO volunteer_teams
              (municipality_id, name, type, contact_person, email, phone, address,
-              has_vehicle, has_medical_equipment, default_people_capacity, notes, status)
+              telegram_chat_id, has_vehicle, has_medical_equipment, default_people_capacity, notes, status)
              VALUES (:municipality_id, :name, :type, :contact_person, :email, :phone, :address,
-              :has_vehicle, :has_medical_equipment, :default_people_capacity, :notes, :status)',
+              :telegram_chat_id, :has_vehicle, :has_medical_equipment, :default_people_capacity, :notes, :status)',
             $d
         );
         return (int) db()->lastInsertId();
@@ -39,7 +39,7 @@ class VolunteerTeam
             'UPDATE volunteer_teams SET name = :name, type = :type, contact_person = :contact_person,
              email = :email, phone = :phone, address = :address, has_vehicle = :has_vehicle,
              has_medical_equipment = :has_medical_equipment, default_people_capacity = :default_people_capacity,
-             notes = :notes, status = :status
+             telegram_chat_id = :telegram_chat_id, notes = :notes, status = :status
              WHERE id = :id',
             $d
         );

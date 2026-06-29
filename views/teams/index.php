@@ -22,6 +22,7 @@
                 <?php if ($t['has_vehicle']): ?><span class="badge text-bg-secondary"><i class="bi bi-truck"></i> Όχημα</span><?php endif; ?>
                 <?php if ($t['has_medical_equipment']): ?><span class="badge text-bg-secondary"><i class="bi bi-heart-pulse"></i> Υγειον.</span><?php endif; ?>
                 <?php if ($t['default_people_capacity']): ?><span class="badge text-bg-light text-dark"><?= (int) $t['default_people_capacity'] ?> άτομα</span><?php endif; ?>
+                <?php if (!empty($t['telegram_chat_id'])): ?><span class="badge text-bg-info"><i class="bi bi-telegram"></i> Telegram</span><?php endif; ?>
               </td>
               <td><span class="badge text-bg-<?= $t['status'] === 'active' ? 'success' : 'secondary' ?>"><?= $t['status'] === 'active' ? 'Ενεργή' : 'Ανενεργή' ?></span></td>
               <td class="text-end">

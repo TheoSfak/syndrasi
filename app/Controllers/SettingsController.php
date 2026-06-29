@@ -11,6 +11,7 @@ class SettingsController
         $municipality = Municipality::find($mid);
         $settings  = MunicipalitySetting::all($mid);
         $effective = MailService::resolveConfig($mid);
+        $telegramEffective = TelegramService::resolveConfig($mid);
 
         // Email template definitions + stored values for the UI
         $emailTemplates      = EmailTemplate::definitions();
@@ -24,6 +25,7 @@ class SettingsController
             'municipality'         => $municipality,
             'settings'             => $settings,
             'effective'            => $effective,
+            'telegramEffective'    => $telegramEffective,
             'emailTemplates'       => $emailTemplates,
             'emailTemplateValues'  => $emailTemplateValues,
         ]);
@@ -203,6 +205,17 @@ class SettingsController
             'shortage_reported',
             'event_reminder',
             'event_completed',
+            'photo_request',
+            'video_request',
+            'gps_request',
+            'photo_uploaded',
+            'video_uploaded',
+            'gps_arrived',
+            'ops_message',
+            'ops_geo',
+            'team_silent',
+            'shortage_update',
+            'sos_ack',
         ];
 
         $allowed  = ['off', 'email', 'sms', 'both'];
@@ -211,6 +224,7 @@ class SettingsController
             $ch = isset($_POST['notify_channel_' . $t]) ? (string) $_POST['notify_channel_' . $t] : 'email';
             if (!in_array($ch, $allowed, true)) { $ch = 'email'; }
             $settings['notify_channel_' . $t] = $ch;
+            $settings['notify_telegram_' . $t] = !empty($_POST['notify_telegram_' . $t]) ? '1' : '0';
             // Keep the legacy email flag in sync for backward compatibility
             $settings['notify_email_' . $t] = in_array($ch, ['email', 'both'], true) ? '1' : '0';
         }
@@ -293,6 +307,55 @@ class SettingsController
             flash_set('danger', 'Αποτυχία αποστολής SMS: ' . (SmsService::lastError() ?: 'άγνωστο σφάλμα'));
         }
         redirect('/settings#tab-sms');
+    }
+
+    /* ── Telegram Bot ─────────────────────────────────────────────────── */
+
+    public function saveTelegram()
+    {
+        requireRole(['municipality_admin']);
+        $mid = current_municipality_id();
+
+        $enabled = post_bool('telegram_enabled') ? '1' : '0';
+        $commandChatId = post_str('telegram_command_chat_id');
+
+        $settings = [
+            'telegram_enabled' => $enabled,
+            'telegram_command_chat_id' => $commandChatId,
+        ];
+
+        $token = isset($_POST['telegram_bot_token']) ? trim((string) $_POST['telegram_bot_token']) : '';
+        if ($token !== '') {
+            $settings['telegram_bot_token'] = $token;
+        }
+
+        MunicipalitySetting::setMany($mid, $settings);
+        audit('municipality_telegram_settings_updated', 'municipality', $mid, 'enabled: ' . $enabled);
+
+        flash_set('success', 'Οι ρυθμίσεις Telegram αποθηκεύτηκαν.');
+        redirect('/settings#tab-telegram');
+    }
+
+    public function testTelegram()
+    {
+        set_time_limit(60);
+        requireRole(['municipality_admin']);
+        $mid = current_municipality_id();
+        $municipality = Municipality::find($mid);
+
+        $ok = TelegramService::sendCommand(
+            $mid,
+            'Δοκιμαστικό Telegram SynDrasi',
+            'Η σύνδεση Telegram λειτουργεί για ' . ($municipality['name'] ?? 'τον δήμο') . '.'
+        );
+        audit('municipality_telegram_test', 'municipality', $mid, $ok ? 'success' : 'failed: ' . TelegramService::lastError());
+
+        if ($ok) {
+            flash_set('success', 'Το δοκιμαστικό Telegram στάλθηκε στο command chat.');
+        } else {
+            flash_set('danger', 'Αποτυχία αποστολής Telegram: ' . (TelegramService::lastError() ?: 'άγνωστο σφάλμα'));
+        }
+        redirect('/settings#tab-telegram');
     }
 
     /* ── Event defaults ───────────────────────────────────────────────── */

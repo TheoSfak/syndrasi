@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.3-beta] — 2026-06-29
+
+### Feature — Telegram notification channel
+
+- Προστέθηκε νέο Telegram Bot integration με per-municipality Bot Token, command chat ID και δοκιμαστικό μήνυμα.
+- Προστέθηκε `telegram_chat_id` στις εθελοντικές ομάδες για αποστολή ειδοποιήσεων σε group/channel ομάδας.
+- Οι ρυθμίσεις ειδοποιήσεων υποστηρίζουν ανεξάρτητο Telegram switch ανά τύπο, δίπλα στα υπάρχοντα Email/SMS κανάλια.
+- Προστέθηκε Telegram αποστολή για επιχειρησιακές ειδοποιήσεις όπως αιτήματα GPS/φωτό/βίντεο, λήψη υλικού, σίγη ομάδας, μηνύματα και ενημερώσεις ελλείψεων.
+- SOS, περιστατικό και εντολή αποστέλλονται forced και σε Telegram όταν υπάρχει ενεργό Telegram setup.
+
+---
+
 ## [0.14.2-beta] — 2026-06-29
 
 ### Feature — Βοηθοί Αρχηγού ομάδας

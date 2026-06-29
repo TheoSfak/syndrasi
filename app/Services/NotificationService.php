@@ -37,6 +37,13 @@ class NotificationService
         return in_array(self::channelFor($municipalityId, $type), ['sms', 'both'], true);
     }
 
+    /** Returns true if Telegram should be sent for this notification type. */
+    public static function shouldSendTelegram($municipalityId, $type)
+    {
+        if (!$municipalityId) { return false; }
+        return MunicipalitySetting::get($municipalityId, 'notify_telegram_' . $type, '0') === '1';
+    }
+
     /** Send a short SMS to a recipient with a phone, best-effort. */
     private static function maybeSms($municipalityId, $type, $phone, $title, $message)
     {
@@ -46,6 +53,26 @@ class NotificationService
             SmsService::send($phone, $text, $municipalityId);
         } catch (Throwable $e) {
             error_log('[Notify] sms failed: ' . $e->getMessage());
+        }
+    }
+
+    private static function maybeTelegramTeam($municipalityId, $type, $teamId, $title, $message, ?string $url = null, bool $forced = false): void
+    {
+        if (!$forced && !self::shouldSendTelegram($municipalityId, $type)) { return; }
+        try {
+            TelegramService::sendTeam((int) $teamId, $title, $message, $municipalityId, $url);
+        } catch (Throwable $e) {
+            error_log('[Notify] telegram team failed: ' . $e->getMessage());
+        }
+    }
+
+    private static function maybeTelegramCommand($municipalityId, $type, $title, $message, ?string $url = null, bool $forced = false): void
+    {
+        if (!$forced && !self::shouldSendTelegram($municipalityId, $type)) { return; }
+        try {
+            TelegramService::sendCommand($municipalityId, $title, $message, $url);
+        } catch (Throwable $e) {
+            error_log('[Notify] telegram command failed: ' . $e->getMessage());
         }
     }
 
@@ -79,6 +106,7 @@ class NotificationService
             // Web push
             self::sendPush($admin['id'], $title, $message);
         }
+        self::maybeTelegramTeam($municipalityId, $type, $teamId, $title, $message, self::absoluteUrl($eventId ? '/team/events/' . $eventId : '/team/dashboard'));
     }
 
     /**
@@ -110,6 +138,7 @@ class NotificationService
             // Web push
             self::sendPush($admin['id'], $title, $message);
         }
+        self::maybeTelegramCommand($municipalityId, $type, $title, $message, self::absoluteUrl($eventId ? '/events/' . $eventId : '/dashboard'));
     }
 
     /**
@@ -519,6 +548,7 @@ class NotificationService
     {
         $title = 'Αίτημα φωτογραφίας';
         $msg   = 'Ο δήμος ζητά φωτογραφία για τη δράση «' . $event['title'] . '».';
+        self::maybeTelegramTeam((int) $event['municipality_id'], 'photo_request', (int) $team['id'], $title, $msg, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
         foreach (User::teamAdmins($team['id']) as $admin) {
             Notification::create([
                 'municipality_id' => $event['municipality_id'],
@@ -539,6 +569,7 @@ class NotificationService
     {
         $title = 'Αίτημα στίγματος GPS';
         $msg   = 'Ο δήμος ζητά το στίγμα GPS σας για τη δράση «' . $event['title'] . '».';
+        self::maybeTelegramTeam((int) $event['municipality_id'], 'gps_request', (int) $team['id'], $title, $msg, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
         foreach (User::teamAdmins($team['id']) as $admin) {
             Notification::create([
                 'municipality_id' => $event['municipality_id'],
@@ -561,6 +592,7 @@ class NotificationService
         $tname = $team['name'] ?? ('#' . $teamId);
         $title = 'Νέα φωτογραφία ομάδας';
         $msg   = 'Η ομάδα «' . $tname . '» έστειλε φωτογραφία για τη δράση «' . $event['title'] . '».';
+        self::maybeTelegramCommand((int) $event['municipality_id'], 'photo_uploaded', $title, $msg, self::absoluteUrl('/operations/events/' . (int) $event['id']));
         foreach (User::municipalityAdmins($event['municipality_id']) as $admin) {
             Notification::create([
                 'municipality_id' => $event['municipality_id'],
@@ -582,6 +614,7 @@ class NotificationService
         $title = 'Αίτημα βίντεο';
         $msg   = 'Ο δήμος ζητά σύντομο βίντεο για τη δράση «' . $event['title'] . '».'
                . ($instructions ? ' Οδηγίες: ' . $instructions : '');
+        self::maybeTelegramTeam((int) $event['municipality_id'], 'video_request', (int) $team['id'], $title, $msg, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
         foreach (User::teamAdmins($team['id']) as $admin) {
             Notification::create([
                 'municipality_id' => $event['municipality_id'],
@@ -604,6 +637,7 @@ class NotificationService
         $tname = $team['name'] ?? ('#' . $teamId);
         $title = 'Νέο βίντεο ομάδας';
         $msg   = 'Η ομάδα «' . $tname . '» έστειλε βίντεο για τη δράση «' . $event['title'] . '».';
+        self::maybeTelegramCommand((int) $event['municipality_id'], 'video_uploaded', $title, $msg, self::absoluteUrl('/operations/events/' . (int) $event['id']));
         foreach (User::municipalityAdmins($event['municipality_id']) as $admin) {
             Notification::create([
                 'municipality_id' => $event['municipality_id'],
@@ -636,6 +670,8 @@ class NotificationService
         $geoTxt  = $hasGeo ? (' Θέση: ' . $alert['latitude'] . ',' . $alert['longitude'] . '.') : '';
         $sms     = 'SOS! ' . $tname . ' — ' . $event['title'] . '.' . $geoTxt . ' ' . $link;
 
+        self::maybeTelegramCommand($mid, 'sos', $title, $msg . $geoTxt, $link, true);
+
         foreach (User::commandStaff($mid) as $u) {
             try {
                 Notification::create([
@@ -662,6 +698,7 @@ class NotificationService
     {
         $title = 'Το SOS σας ελήφθη';
         $msg   = 'Ο δήμος έλαβε το SOS σας για τη δράση «' . $event['title'] . '» και ανταποκρίνεται.';
+        self::maybeTelegramTeam((int) $event['municipality_id'], 'sos_ack', (int) $alert['team_id'], $title, $msg, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
         foreach (User::teamAdmins((int) $alert['team_id']) as $u) {
             try {
                 Notification::create([
@@ -690,7 +727,10 @@ class NotificationService
         $mid   = (int) $event['municipality_id'];
         $title = $kind === 'order' ? 'Εντολή δήμου' : 'Μήνυμα δήμου';
         $msg   = mb_substr(trim($body), 0, 200);
+        $forced = $kind === 'order';
+        $link = self::absoluteUrl('/team/operations/events/' . (int) $event['id']);
         foreach (array_unique(array_map('intval', $teamIds)) as $tid) {
+            self::maybeTelegramTeam($mid, 'ops_message', $tid, $title, $msg, $link, $forced);
             foreach (User::teamAdmins($tid) as $u) {
                 try {
                     Notification::create([
@@ -723,10 +763,12 @@ class NotificationService
         $title  = $titles[$pointKind] ?? 'Σημείο δήμου';
         $msg    = mb_substr(trim($body), 0, 200);
         $maps   = ($lat !== null && $lng !== null) ? ('https://www.google.com/maps?q=' . $lat . ',' . $lng) : '';
-        $forced = ($pointKind === 'incident');
+        $forced = in_array($pointKind, ['incident', 'move'], true);
         $sms    = $title . ': ' . $msg . ($maps ? ' ' . $maps : '');
+        $link   = self::absoluteUrl('/team/operations/events/' . (int) $event['id']);
 
         foreach (array_unique(array_map('intval', $teamIds)) as $tid) {
+            self::maybeTelegramTeam($mid, $pointKind === 'incident' ? 'ops_incident' : 'ops_geo', $tid, $title, $msg . ($maps ? ' ' . $maps : ''), $link, $forced);
             foreach (User::teamAdmins($tid) as $u) {
                 try {
                     Notification::create([
@@ -771,6 +813,7 @@ class NotificationService
     {
         $mid = (int) $event['municipality_id'];
         $msg = ($team['name'] ?? 'Ομάδα') . ': ' . mb_substr(trim($body), 0, 200);
+        self::maybeTelegramCommand($mid, 'ops_message', $title, $msg, self::absoluteUrl('/operations/events/' . (int) $event['id']));
         foreach (User::commandStaff($mid) as $u) {
             try {
                 Notification::create([
@@ -796,6 +839,7 @@ class NotificationService
         $title = 'Η έλλειψη ' . $verb;
         $msg   = 'Η αναφορά έλλειψης «' . $shortage['title'] . '» ' . $verb
                . ' από τον δήμο (δράση «' . $event['title'] . '»).';
+        self::maybeTelegramTeam((int) $event['municipality_id'], 'shortage_update', (int) $shortage['team_id'], $title, $msg, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
         foreach (User::teamAdmins((int) $shortage['team_id']) as $u) {
             try {
                 Notification::create([
@@ -826,6 +870,7 @@ class NotificationService
         $maps  = 'https://www.google.com/maps?q=' . round($lat, 6) . ',' . round($lng, 6);
         $title = '📍 Στίγμα ελήφθη: ' . $tname;
         $msg   = 'Η ομάδα «' . $tname . '» έστειλε GPS για τη δράση «' . $event['title'] . '». ' . $maps;
+        self::maybeTelegramCommand($mid, 'gps_arrived', $title, $msg, self::absoluteUrl('/operations/events/' . (int) $event['id']));
         foreach (User::commandStaff($mid) as $u) {
             try {
                 Notification::create([
@@ -855,6 +900,7 @@ class NotificationService
         $title = '⚠ Ομάδα σε σίγη: ' . $tname;
         $msg   = 'Η ομάδα «' . $tname . '» δεν έχει στείλει στίγμα για ' . $minutesSilent
                . ' λεπτά (δράση «' . $event['title'] . '»).';
+        self::maybeTelegramCommand($mid, 'team_silent', $title, $msg, self::absoluteUrl('/operations/events/' . (int) $event['id']));
         foreach (User::commandStaff($mid) as $u) {
             try {
                 Notification::create([

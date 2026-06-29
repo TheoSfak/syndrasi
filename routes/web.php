@@ -225,6 +225,8 @@ $router->post('/settings/awards', 'SettingsController@saveAwards');
 $router->post('/settings/notifications', 'SettingsController@saveNotifications');
 $router->post('/settings/sms', 'SettingsController@saveSms');
 $router->post('/settings/sms/test', 'SettingsController@testSms');
+$router->post('/settings/telegram', 'SettingsController@saveTelegram');
+$router->post('/settings/telegram/test', 'SettingsController@testTelegram');
 $router->post('/settings/event-defaults', 'SettingsController@saveEventDefaults');
 $router->post('/settings/branding', 'SettingsController@saveBranding');
 $router->post('/settings/member-fields', 'SettingsController@saveMemberFields');

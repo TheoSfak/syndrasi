@@ -39,6 +39,7 @@ $tzOptions = [
   <li class="nav-item"><a class="nav-link" href="#tab-awards"         data-bs-toggle="tab"><i class="bi bi-trophy me-1"></i>Βραβεία</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-notifications"  data-bs-toggle="tab"><i class="bi bi-bell me-1"></i>Ειδοποιήσεις</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-sms"            data-bs-toggle="tab"><i class="bi bi-chat-dots me-1"></i>SMS</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-telegram"       data-bs-toggle="tab"><i class="bi bi-telegram me-1"></i>Telegram</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-event-defaults" data-bs-toggle="tab"><i class="bi bi-calendar-plus me-1"></i>Δράσεις</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-branding"       data-bs-toggle="tab"><i class="bi bi-palette me-1"></i>Εμφάνιση</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-members"          data-bs-toggle="tab"><i class="bi bi-people me-1"></i>Μέλη Ομάδων</a></li>
@@ -241,7 +242,7 @@ $tzOptions = [
           <?= csrf_field() ?>
           <div class="card-header bg-white fw-semibold"><i class="bi bi-bell me-1"></i> Κανάλι ειδοποιήσεων</div>
           <div class="card-body">
-            <p class="text-muted small">Οι in-app ειδοποιήσεις (κουδούνι) στέλνονται πάντα. Εδώ επιλέγετε αν θα αποστέλλεται επιπλέον <strong>Email</strong>, <strong>SMS</strong> ή <strong>και τα δύο</strong> ανά τύπο. Το SMS απαιτεί ρυθμισμένο gateway στην καρτέλα «SMS».</p>
+            <p class="text-muted small">Οι in-app ειδοποιήσεις (κουδούνι) στέλνονται πάντα. Εδώ επιλέγετε αν θα αποστέλλεται επιπλέον <strong>Email</strong>, <strong>SMS</strong> ή <strong>και τα δύο</strong> ανά τύπο. Το Telegram ενεργοποιείται ανεξάρτητα ανά τύπο και απαιτεί ρυθμίσεις στην καρτέλα «Telegram».</p>
             <?php
             $notifTypes = [
                 ['event_published',        'Νέα δράση δημοσιεύτηκε',  'Σε όλες τις ενεργές ομάδες'],
@@ -252,6 +253,19 @@ $tzOptions = [
                 ['event_reminder',         'Υπενθύμιση δράσης',       'Χειροκίνητη, κουμπί «Υπενθύμιση»'],
                 ['event_completed',        'Ολοκλήρωση δράσης',       'Στις εγκεκριμένες ομάδες'],
             ];
+            $telegramOnlyTypes = [
+                ['photo_request',          'Αίτημα φωτογραφίας',      'Στην ομάδα κατά την ενεργή δράση'],
+                ['video_request',          'Αίτημα βίντεο',           'Στην ομάδα κατά την ενεργή δράση'],
+                ['gps_request',            'Αίτημα στίγματος GPS',    'Στην ομάδα κατά την ενεργή δράση'],
+                ['photo_uploaded',         'Φωτογραφία ελήφθη',       'Στους διαχειριστές δήμου'],
+                ['video_uploaded',         'Βίντεο ελήφθη',           'Στους διαχειριστές δήμου'],
+                ['gps_arrived',            'Στίγμα GPS ελήφθη',       'Στους διαχειριστές δήμου'],
+                ['ops_message',            'Μήνυμα επιχειρήσεων',     'Δήμος ↔ ομάδα, μη κρίσιμο'],
+                ['ops_geo',                'Σημείο/μετακίνηση',       'Μη κρίσιμο ή forced όταν είναι εντολή'],
+                ['team_silent',            'Ομάδα σε σίγη',           'Στους διαχειριστές δήμου'],
+                ['shortage_update',        'Ενημέρωση έλλειψης',      'Στην ομάδα'],
+                ['sos_ack',                'Επιβεβαίωση SOS',         'Στην ομάδα'],
+            ];
             $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];
             // Effective channel: explicit notify_channel_*, else legacy notify_email_* (default email)
             $channelOf = function ($type) use ($settings) {
@@ -261,24 +275,48 @@ $tzOptions = [
             };
             ?>
             <div class="list-group list-group-flush">
-              <?php foreach ($notifTypes as [$type, $label, $desc]): $cur = $channelOf($type); ?>
-              <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+              <?php foreach ($notifTypes as [$type, $label, $desc]): $cur = $channelOf($type); $tgOn = ($settings['notify_telegram_' . $type] ?? '0') === '1'; ?>
+              <div class="list-group-item d-flex justify-content-between align-items-center py-3 gap-3">
                 <div class="me-3">
                   <div class="fw-semibold"><?= e($label) ?></div>
                   <div class="small text-muted"><?= e($desc) ?></div>
                 </div>
-                <select name="notify_channel_<?= e($type) ?>" class="form-select form-select-sm flex-shrink-0" style="width:auto;min-width:140px">
-                  <?php foreach ($channelOpts as $val => $optLabel): ?>
-                  <option value="<?= e($val) ?>" <?= $cur === $val ? 'selected' : '' ?>><?= e($optLabel) ?></option>
-                  <?php endforeach; ?>
-                </select>
+                <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+                  <select name="notify_channel_<?= e($type) ?>" class="form-select form-select-sm flex-shrink-0" style="width:auto;min-width:140px">
+                    <?php foreach ($channelOpts as $val => $optLabel): ?>
+                    <option value="<?= e($val) ?>" <?= $cur === $val ? 'selected' : '' ?>><?= e($optLabel) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" name="notify_telegram_<?= e($type) ?>" id="tg_<?= e($type) ?>" value="1" <?= $tgOn ? 'checked' : '' ?>>
+                    <label class="form-check-label small" for="tg_<?= e($type) ?>">Telegram</label>
+                  </div>
+                </div>
               </div>
               <?php endforeach; ?>
+            </div>
+            <div class="border-top mt-3 pt-3">
+              <div class="fw-semibold mb-1"><i class="bi bi-telegram text-info me-1"></i>Telegram για επιχειρησιακές ειδοποιήσεις</div>
+              <p class="small text-muted mb-2">Αυτοί οι τύποι σήμερα στέλνονται in-app/push από την επιχειρησιακή ροή. Εδώ ενεργοποιείτε επιπλέον Telegram.</p>
+              <div class="list-group list-group-flush">
+                <?php foreach ($telegramOnlyTypes as [$type, $label, $desc]): $tgOn = ($settings['notify_telegram_' . $type] ?? '0') === '1'; ?>
+                <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 gap-3">
+                  <div>
+                    <div class="fw-semibold small"><?= e($label) ?></div>
+                    <div class="small text-muted"><?= e($desc) ?></div>
+                  </div>
+                  <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" name="notify_telegram_<?= e($type) ?>" id="tg_<?= e($type) ?>" value="1" <?= $tgOn ? 'checked' : '' ?>>
+                    <label class="form-check-label small" for="tg_<?= e($type) ?>">Telegram</label>
+                  </div>
+                </div>
+                <?php endforeach; ?>
+              </div>
             </div>
           </div>
             <div class="border-top mt-1 pt-3 px-1 pb-2">
               <div class="fw-semibold mb-1"><i class="bi bi-shield-exclamation text-warning me-1"></i>Ειδοποιήσεις Επιχείρησης (Ops)</div>
-              <p class="small text-muted mb-2">Εφαρμόζονται μόνο κατά τη διάρκεια ενεργών δράσεων και αποστέλλονται πάντα (δεν επηρεάζονται από τις ρυθμίσεις καναλιού παραπάνω).</p>
+              <p class="small text-muted mb-2">Εφαρμόζονται μόνο κατά τη διάρκεια ενεργών δράσεων. SOS, περιστατικό και εντολή αποστέλλονται forced και σε Telegram όταν υπάρχει ρύθμιση.</p>
               <div class="d-flex align-items-center gap-3 py-2">
                 <div class="flex-grow-1">
                   <div class="fw-semibold small">Ειδοποίηση σίγης ομάδας</div>
@@ -303,7 +341,7 @@ $tzOptions = [
           <div class="card-body small text-muted">
             <p>Η απενεργοποίηση ενός τύπου δεν επηρεάζει τις in-app ειδοποιήσεις — αυτές εμφανίζονται πάντα στο κουδούνι.</p>
             <p>Χρήσιμο όταν ο SMTP δεν έχει ρυθμιστεί ακόμα ή σε περίοδο δοκιμών για να αποφύγετε spam.</p>
-            <p class="mb-0"><strong>Ops:</strong> SOS, GPS στίγμα, φωτογραφία, σίγη ομάδας και περιστατικά παρακάμπτουν πάντα τις ρυθμίσεις καναλιού — φτάνουν ανεξάρτητα από SMTP/SMS.</p>
+            <p class="mb-0"><strong>Ops:</strong> SOS, περιστατικά και εντολές φεύγουν forced και σε Telegram όταν έχει οριστεί Bot Token και Chat ID.</p>
           </div>
         </div>
       </div>
@@ -376,6 +414,67 @@ $tzOptions = [
               <input type="text" name="test_to" class="form-control" placeholder="π.χ. 69XXXXXXXX" required>
               <button class="btn btn-outline-primary" type="submit"><i class="bi bi-send me-1"></i>Αποστολή</button>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Telegram Bot -->
+  <div class="tab-pane fade" id="tab-telegram">
+    <?php
+      $tgEnabled = !empty($telegramEffective['enabled']);
+      $tgTokenSet = !empty($telegramEffective['bot_token']);
+      $tgCommandChat = $telegramEffective['command_chat_id'] ?? '';
+    ?>
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <form method="post" action="<?= e(url('/settings/telegram')) ?>" class="card shadow-sm">
+          <?= csrf_field() ?>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-telegram me-1"></i> Telegram Bot</div>
+          <div class="card-body row g-3">
+            <div class="col-12">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="telegram_enabled" id="telegramEnabled" value="1" <?= $tgEnabled ? 'checked' : '' ?>>
+                <label class="form-check-label fw-semibold" for="telegramEnabled">Ενεργοποίηση Telegram αποστολών</label>
+              </div>
+              <div class="form-text">Αφορά command group δήμου και group/channel ομάδων. Τα προσωπικά Telegram DM δεν είναι μέρος αυτού του MVP.</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Bot Token</label>
+              <input type="password" name="telegram_bot_token" class="form-control" autocomplete="new-password"
+                     placeholder="<?= $tgTokenSet ? '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)' : '123456789:AA...' ?>">
+              <div class="form-text"><?= $tgTokenSet ? 'Υπάρχει ήδη αποθηκευμένο token. Συμπληρώστε μόνο για αλλαγή.' : 'Δημιουργείται από το BotFather.' ?></div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Command / Δήμος Chat ID</label>
+              <input type="text" name="telegram_command_chat_id" class="form-control" value="<?= e($tgCommandChat) ?>" placeholder="π.χ. -1001234567890">
+              <div class="form-text">Group/channel όπου θα πηγαίνουν ειδοποιήσεις προς τον δήμο/φορέα.</div>
+            </div>
+          </div>
+          <div class="card-footer bg-white">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+          </div>
+        </form>
+      </div>
+      <div class="col-lg-5">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> Δοκιμαστικό Telegram</div>
+          <div class="card-body">
+            <p class="small text-muted mb-3">Αποθηκεύστε πρώτα τις ρυθμίσεις. Το test στέλνει μήνυμα στο Command Chat ID.</p>
+            <form method="post" action="<?= e(url('/settings/telegram/test')) ?>">
+              <?= csrf_field() ?>
+              <button class="btn btn-outline-primary w-100"><i class="bi bi-send me-1"></i>Αποστολή δοκιμαστικού</button>
+            </form>
+          </div>
+        </div>
+        <div class="card shadow-sm mt-3">
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στήσιμο bot</div>
+          <div class="card-body small text-muted">
+            <p>1. Δημιουργείτε bot από το <strong>BotFather</strong> και αντιγράφετε το token.</p>
+            <p>2. Προσθέτετε το bot στο Telegram group ή channel.</p>
+            <p>3. Παίρνετε το <strong>chat_id</strong> του group/channel και το βάζετε εδώ ή στην αντίστοιχη ομάδα.</p>
+            <p class="mb-0">Για ομάδες, το Chat ID μπαίνει στη φόρμα <strong>Εθελοντικές Ομάδες → Επεξεργασία</strong>.</p>
           </div>
         </div>
       </div>

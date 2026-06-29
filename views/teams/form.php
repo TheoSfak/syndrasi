@@ -33,6 +33,11 @@ $v = function ($key, $default = '') use ($team) {
       <input type="text" name="phone" class="form-control" value="<?= e($v('phone')) ?>">
     </div>
     <div class="col-md-6">
+      <label class="form-label">Telegram Chat ID ομάδας</label>
+      <input type="text" name="telegram_chat_id" class="form-control" value="<?= e($v('telegram_chat_id')) ?>" placeholder="π.χ. -1001234567890">
+      <div class="form-text">Προαιρετικό group/channel της ομάδας για Telegram ειδοποιήσεις.</div>
+    </div>
+    <div class="col-md-6">
       <label class="form-label">Διεύθυνση</label>
       <input type="text" name="address" class="form-control" value="<?= e($v('address')) ?>">
     </div>

@@ -150,6 +150,7 @@ class TeamController
             'email'                   => post_str('email') ?: null,
             'phone'                   => post_str('phone') ?: null,
             'address'                 => post_str('address') ?: null,
+            'telegram_chat_id'        => post_str('telegram_chat_id') ?: null,
             'has_vehicle'             => post_bool('has_vehicle'),
             'has_medical_equipment'   => post_bool('has_medical_equipment'),
             'default_people_capacity' => post_int('default_people_capacity') ?: null,
