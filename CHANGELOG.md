@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.16-beta] — 2026-06-30
+
+### Hotfix — Fire-risk map archive 403 fallback
+
+- Αν η σελίδα αρχείου της Πολιτικής Προστασίας επιστρέψει `403 Forbidden`, το service δοκιμάζει πλέον απευθείας τα προβλέψιμα URLs εικόνας για αύριο, σήμερα, χθες και προχθές.
+- Κάθε candidate εικόνα ελέγχεται με την ίδια ανάλυση χρώματος Κρήτης πριν χρησιμοποιηθεί.
+
+---
+
 ## [0.14.15-beta] — 2026-06-30
 
 ### Hotfix — Civil Protection fetch reliability

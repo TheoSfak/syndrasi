@@ -59,6 +59,16 @@ class FireRiskMapService
 
     public static function latestMap(): array
     {
+        try {
+            return self::latestMapFromArchive();
+        } catch (Throwable $archiveError) {
+            error_log('[FireRiskMap] archive lookup failed, probing date URLs: ' . $archiveError->getMessage());
+            return self::latestMapFromDateProbe($archiveError->getMessage());
+        }
+    }
+
+    private static function latestMapFromArchive(): array
+    {
         $html = self::fetchText(self::ARCHIVE_URL);
         if (!preg_match_all('#https?://[^"\']+/sites/default/files/\d{4}-\d{2}/(\d{6})\.jpe?g|/sites/default/files/\d{4}-\d{2}/(\d{6})\.jpe?g#i', $html, $matches, PREG_SET_ORDER)) {
             throw new RuntimeException('Δεν βρέθηκε εικόνα ημερήσιου χάρτη στην Πολιτική Προστασία.');
@@ -85,6 +95,40 @@ class FireRiskMapService
         }
 
         return ['map_date' => $bestDate, 'image_url' => $bestUrl];
+    }
+
+    private static function latestMapFromDateProbe(string $archiveError): array
+    {
+        $errors = [];
+        foreach (self::candidateMapDates() as $date) {
+            $url = self::imageUrlForDate($date);
+            try {
+                $binary = self::fetchBinary($url);
+                self::analyseImage($binary);
+                return ['map_date' => $date, 'image_url' => $url];
+            } catch (Throwable $e) {
+                $errors[] = $date . ': ' . $e->getMessage();
+            }
+        }
+
+        throw new RuntimeException('Αποτυχία λήψης χάρτη από την Πολιτική Προστασία. Archive: '
+            . $archiveError . ' Direct: ' . implode(' | ', array_slice($errors, 0, 3)));
+    }
+
+    private static function candidateMapDates(): array
+    {
+        $out = [];
+        foreach ([1, 0, -1, -2] as $offset) {
+            $out[] = date('Y-m-d', strtotime(($offset >= 0 ? '+' : '') . $offset . ' day'));
+        }
+        return array_values(array_unique($out));
+    }
+
+    private static function imageUrlForDate(string $date): string
+    {
+        $ts = strtotime($date);
+        return 'https://civilprotection.gov.gr/sites/default/files/'
+            . date('Y-m', $ts) . '/' . date('ymd', $ts) . '.jpg';
     }
 
     public static function analyseImage(string $binary): array
