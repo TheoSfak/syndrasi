@@ -153,13 +153,28 @@ foreach ($videos as $v) {
   .mini b{display:block;font-size:1.25rem;margin-top:8px}
   .mini span{color:var(--muted);font-size:.82rem}
   .map-shell{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:0;overflow:hidden}
+  .map-stage{min-width:0;background:#f8fafc}
+  .replay-panel{display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto;gap:10px;align-items:center;padding:12px;border-bottom:1px solid var(--line);background:#fff}
+  .replay-btn{border:0;border-radius:8px;background:#111827;color:#fff;font-weight:900;padding:9px 13px;display:inline-flex;align-items:center;gap:7px}
+  .replay-ghost{border:1px solid var(--line);border-radius:8px;background:#fff;color:#334155;font-weight:900;padding:9px 11px}
+  .replay-speed{border:1px solid var(--line);border-radius:8px;background:#fff;color:#334155;font-weight:800;padding:8px 10px}
+  .replay-range{width:100%;accent-color:var(--brand)}
+  .replay-current{padding:12px;border-bottom:1px solid var(--line);background:#fbfcfe;display:flex;gap:12px;align-items:flex-start;min-height:72px}
+  .replay-current .rc-icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:0 0 auto}
+  .replay-current .rc-title{font-weight:900}
+  .replay-current .rc-detail{font-size:.84rem;color:var(--muted);margin-top:2px}
+  .replay-current .rc-time{font-size:.74rem;color:var(--brand);font-weight:900;text-transform:uppercase;letter-spacing:.05em}
   #map{height:560px;min-height:62vh;background:#dbe4ee}
   .map-side{border-left:1px solid var(--line);padding:16px;max-height:560px;overflow:auto;background:#fbfcfe}
   .team-filter{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:9px;margin-bottom:8px;cursor:pointer}
+  .event-filter{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px;margin-bottom:7px;cursor:pointer;font-size:.86rem}
+  .event-filter input,.team-filter input{accent-color:var(--brand)}
+  .filter-group-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:900;margin:16px 0 8px}
   .team-filter input{accent-color:var(--brand)}
   .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;flex:0 0 auto}
   .map-help{font-size:.8rem;color:var(--muted);line-height:1.45;margin-top:12px}
   .route-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 4px 14px rgba(15,23,42,.25);font-weight:900}
+  .replay-icon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;border:2px solid #fff;box-shadow:0 8px 18px rgba(15,23,42,.28);font-weight:900}
   .metrics-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px}
   .table-wrap{overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:.88rem}
@@ -216,6 +231,7 @@ foreach ($videos as $v) {
   @media (max-width:900px){
     .hero{min-height:82vh}.hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
     .impact-grid,.map-shell,.metrics-grid,.timeline-layout,.thanks{grid-template-columns:1fr}
+    .replay-panel{grid-template-columns:auto auto 1fr;gap:8px}.replay-speed{grid-column:1 / -1;width:100%}
     .map-side{border-left:0;border-top:1px solid var(--line);max-height:none}
     #map{height:430px;min-height:0}.phase-list{position:static}.section-head{display:block}
   }
@@ -321,7 +337,27 @@ foreach ($videos as $v) {
       </div>
     </div>
     <div class="panel map-shell">
-      <div id="map"></div>
+      <div class="map-stage">
+        <div class="replay-panel">
+          <button type="button" class="replay-btn" id="replayPlay"><i class="bi bi-play-fill"></i><span>Play</span></button>
+          <button type="button" class="replay-ghost" id="replayReset" title="Αρχή"><i class="bi bi-skip-backward-fill"></i></button>
+          <input type="range" min="0" max="0" value="0" class="replay-range" id="replayRange" aria-label="Χρονογραμμή replay">
+          <select class="replay-speed" id="replaySpeed" aria-label="Ταχύτητα replay">
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+          </select>
+        </div>
+        <div class="replay-current" id="replayCurrent">
+          <div class="rc-icon" style="background:#64748b"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="rc-time">Replay δράσης</div>
+            <div class="rc-title">Πατήστε Play για να εμφανιστούν τα γεγονότα με σειρά.</div>
+            <div class="rc-detail">Μπορείτε να σύρετε τη μπάρα χρόνου ή να φιλτράρετε ομάδες και τύπους γεγονότων.</div>
+          </div>
+        </div>
+        <div id="map"></div>
+      </div>
       <aside class="map-side">
         <h3 class="h6 fw-bold mb-2">Φίλτρα ομάδων</h3>
         <?php foreach ($teams as $t): ?>
@@ -331,8 +367,17 @@ foreach ($videos as $v) {
             <span><?= e($t['name']) ?></span>
           </label>
         <?php endforeach; ?>
+        <div class="filter-group-title">Γεγονότα replay</div>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="gps_request" checked><i class="bi bi-broadcast-pin text-primary"></i><span>Ζητήθηκε στίγμα</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="gps_response" checked><i class="bi bi-geo-alt-fill text-success"></i><span>Απάντηση GPS</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="ping" checked><i class="bi bi-dot text-success"></i><span>Στίγματα ομάδων</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="photo" checked><i class="bi bi-camera-fill text-info"></i><span>Φωτογραφίες</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="video" checked><i class="bi bi-camera-video-fill text-info"></i><span>Βίντεο</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="incident" checked><i class="bi bi-exclamation-triangle-fill text-danger"></i><span>Περιστατικά / SOS</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="shortage" checked><i class="bi bi-tools text-warning"></i><span>Ελλείψεις</span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="order" checked><i class="bi bi-megaphone-fill text-secondary"></i><span>Σημεία / εντολές</span></label>
         <div class="map-help">
-          <i class="bi bi-info-circle me-1"></i>Κάντε κλικ σε σημεία του χάρτη για φωτογραφίες, βίντεο, εντολές και επιχειρησιακές σημειώσεις.
+          <i class="bi bi-info-circle me-1"></i>Το replay δείχνει ζητήματα, αιτήματα GPS, απαντήσεις και στίγματα με χρονολογική σειρά.
         </div>
       </aside>
     </div>
@@ -532,6 +577,7 @@ foreach ($videos as $v) {
   var TEAMS   = <?= json_encode($jsTeams, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
   var PINGS   = <?= json_encode($story['pingsByTeam'] ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
   var POINTS  = <?= json_encode($story['mapPoints'] ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var REPLAY  = <?= json_encode($story['replayEvents'] ?? [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
   var METRICS = <?= json_encode($metr, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
   var GALLERY = <?= json_encode($jsGallery, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
@@ -541,6 +587,10 @@ foreach ($videos as $v) {
     var map = L.map('map', { scrollWheelZoom:false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
     var colorById = {}, nameById = {}, routeLayers = {}, bounds = [];
+    var replayMarkerLayer = L.layerGroup().addTo(map);
+    var replayLineLayer = L.layerGroup().addTo(map);
+    var replayTimer = null;
+    var replayIndex = 0;
     TEAMS.forEach(function(t){ colorById[t.id] = t.color; nameById[t.id] = t.name; });
 
     Object.keys(PINGS).forEach(function(tid){
@@ -576,8 +626,157 @@ foreach ($videos as $v) {
         if (!layer) return;
         if (cb.checked) { layer.addTo(map); }
         else { map.removeLayer(layer); }
+        rebuildReplay();
       });
     });
+
+    var playBtn = document.getElementById('replayPlay');
+    var resetBtn = document.getElementById('replayReset');
+    var range = document.getElementById('replayRange');
+    var speed = document.getElementById('replaySpeed');
+    var current = document.getElementById('replayCurrent');
+    var kindColor = {
+      ping:'#16a34a', gps_request:'#7c3aed', gps_response:'#0f766e',
+      photo_request:'#0891b2', video_request:'#7c3aed', photo:'#0891b2', video:'#7c3aed',
+      incident:'#be123c', sos:'#be123c', shortage:'#d97706', order:'#334155', move:'#2563eb', poi:'#d97706'
+    };
+    var kindIcon = {
+      ping:'bi-record-circle-fill', gps_request:'bi-broadcast-pin', gps_response:'bi-geo-alt-fill',
+      photo_request:'bi-camera', video_request:'bi-camera-video', photo:'bi-camera-fill', video:'bi-camera-video-fill',
+      incident:'bi-exclamation-triangle-fill', sos:'bi-exclamation-octagon-fill', shortage:'bi-tools',
+      order:'bi-megaphone-fill', move:'bi-arrow-right', poi:'bi-pin-map-fill'
+    };
+
+    function selectedTeamIds(){
+      var ids = {};
+      document.querySelectorAll('.route-toggle').forEach(function(cb){ if (cb.checked) ids[cb.value] = true; });
+      return ids;
+    }
+    function selectedKinds(){
+      var kinds = {};
+      document.querySelectorAll('.event-toggle').forEach(function(cb){ if (cb.checked) kinds[cb.value] = true; });
+      return kinds;
+    }
+    function kindVisible(ev, kinds){
+      if (ev.kind === 'sos') return !!kinds.incident;
+      if (ev.kind === 'photo_request') return !!kinds.photo;
+      if (ev.kind === 'video_request') return !!kinds.video;
+      if (ev.kind === 'move' || ev.kind === 'poi') return !!kinds.order;
+      return kinds[ev.kind] !== false;
+    }
+    function filteredReplay(){
+      var ids = selectedTeamIds();
+      var kinds = selectedKinds();
+      return (REPLAY || []).filter(function(ev){
+        if (ev.team_id != null && !ids[String(ev.team_id)]) return false;
+        return kindVisible(ev, kinds);
+      });
+    }
+    function replayPopup(ev){
+      var html = '<b>' + escHtml(ev.title || '') + '</b>';
+      if (ev.team) html += '<br><span>' + escHtml(ev.team) + '</span>';
+      if (ev.detail) html += '<br><span>' + escHtml(ev.detail) + '</span>';
+      if (ev.at) html += '<br><small>' + escHtml(ev.at.slice(0,16).replace('T',' ')) + '</small>';
+      return html;
+    }
+    function replayIcon(ev){
+      var color = kindColor[ev.kind] || colorById[ev.team_id] || '#334155';
+      var icon = kindIcon[ev.kind] || 'bi-geo-alt-fill';
+      return L.divIcon({ className:'', iconSize:[34,34], iconAnchor:[17,17],
+        html:'<div class="replay-icon" style="background:' + color + '"><i class="bi ' + icon + '"></i></div>' });
+    }
+    function setCurrent(ev, total){
+      if (!current) return;
+      if (!ev) {
+        current.innerHTML = '<div class="rc-icon" style="background:#64748b"><i class="bi bi-clock-history"></i></div><div><div class="rc-time">Replay δράσης</div><div class="rc-title">Δεν υπάρχουν γεγονότα για τα τρέχοντα φίλτρα.</div><div class="rc-detail">Αλλάξτε φίλτρα ή ομάδα για να δείτε περισσότερα.</div></div>';
+        return;
+      }
+      var color = kindColor[ev.kind] || colorById[ev.team_id] || '#334155';
+      var icon = kindIcon[ev.kind] || 'bi-geo-alt-fill';
+      current.innerHTML = '<div class="rc-icon" style="background:' + color + '"><i class="bi ' + icon + '"></i></div>' +
+        '<div><div class="rc-time">' + escHtml((ev.at || '').slice(11,16)) + ' · ' + (replayIndex + 1) + '/' + total + '</div>' +
+        '<div class="rc-title">' + escHtml(ev.title || '') + (ev.team ? ' · ' + escHtml(ev.team) : '') + '</div>' +
+        '<div class="rc-detail">' + escHtml(ev.detail || '') + '</div></div>';
+    }
+    function drawReplay(events, upto){
+      replayMarkerLayer.clearLayers();
+      replayLineLayer.clearLayers();
+      var partial = {};
+      var lastMarker = null;
+      for (var i = 0; i <= upto && i < events.length; i++) {
+        var ev = events[i];
+        if (ev.kind === 'ping' && ev.lat != null && ev.lng != null && ev.team_id != null) {
+          (partial[ev.team_id] = partial[ev.team_id] || []).push([ev.lat, ev.lng]);
+        }
+        if (ev.lat == null || ev.lng == null) continue;
+        var marker = L.marker([ev.lat, ev.lng], { icon: replayIcon(ev), zIndexOffset: 3000 + i })
+          .bindPopup(replayPopup(ev))
+          .addTo(replayMarkerLayer);
+        lastMarker = marker;
+        if (ev.kind === 'gps_request' && ev.response_lat != null && ev.response_lng != null) {
+          L.polyline([[ev.lat, ev.lng], [ev.response_lat, ev.response_lng]], {
+            color:'#7c3aed', weight:2, opacity:.75, dashArray:'5,7'
+          }).addTo(replayLineLayer);
+          L.circleMarker([ev.response_lat, ev.response_lng], {
+            radius:7, color:'#0f766e', fillColor:'#0f766e', fillOpacity:.9, weight:2
+          }).bindPopup('Απάντηση GPS · ' + escHtml(ev.team || '')).addTo(replayMarkerLayer);
+        }
+      }
+      Object.keys(partial).forEach(function(tid){
+        if (partial[tid].length > 1) {
+          L.polyline(partial[tid], { color: colorById[tid] || '#2563eb', weight: 6, opacity: .95 }).addTo(replayLineLayer);
+        }
+      });
+      if (lastMarker) {
+        var ll = lastMarker.getLatLng();
+        map.panTo(ll, { animate:true, duration:.35 });
+        lastMarker.openPopup();
+      }
+    }
+    function rebuildReplay(){
+      var events = filteredReplay();
+      if (!range) return;
+      range.max = Math.max(0, events.length - 1);
+      if (replayIndex > events.length - 1) replayIndex = Math.max(0, events.length - 1);
+      range.value = replayIndex;
+      drawReplay(events, replayIndex);
+      setCurrent(events[replayIndex], events.length);
+    }
+    function stopReplay(){
+      if (replayTimer) { clearInterval(replayTimer); replayTimer = null; }
+      if (playBtn) { playBtn.innerHTML = '<i class="bi bi-play-fill"></i><span>Play</span>'; }
+    }
+    function startReplay(){
+      var events = filteredReplay();
+      if (!events.length) return;
+      stopReplay();
+      if (playBtn) { playBtn.innerHTML = '<i class="bi bi-pause-fill"></i><span>Pause</span>'; }
+      var delay = {1:1100, 2:650, 4:320}[speed ? speed.value : '1'] || 1100;
+      replayTimer = setInterval(function(){
+        events = filteredReplay();
+        if (!events.length || replayIndex >= events.length - 1) { stopReplay(); return; }
+        replayIndex++;
+        range.value = replayIndex;
+        drawReplay(events, replayIndex);
+        setCurrent(events[replayIndex], events.length);
+      }, delay);
+    }
+    if (playBtn) {
+      playBtn.addEventListener('click', function(){ replayTimer ? stopReplay() : startReplay(); });
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function(){ stopReplay(); replayIndex = 0; rebuildReplay(); });
+    }
+    if (range) {
+      range.addEventListener('input', function(){ stopReplay(); replayIndex = parseInt(range.value, 10) || 0; rebuildReplay(); });
+    }
+    if (speed) {
+      speed.addEventListener('change', function(){ if (replayTimer) startReplay(); });
+    }
+    document.querySelectorAll('.event-toggle').forEach(function(cb){
+      cb.addEventListener('change', function(){ stopReplay(); replayIndex = 0; rebuildReplay(); });
+    });
+    rebuildReplay();
   })();
 
   (function(){

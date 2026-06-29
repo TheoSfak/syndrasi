@@ -52,13 +52,13 @@ class StoryService
         /* ── Location pings (routes) ─────────────────────────────────── */
         $pingsByTeam = [];
         foreach (dbq(
-            "SELECT team_id, latitude, longitude, created_at FROM location_pings
+            "SELECT id, team_id, latitude, longitude, created_at FROM location_pings
              WHERE event_id = :eid AND latitude IS NOT NULL AND longitude IS NOT NULL
              ORDER BY team_id, created_at",
             ['eid' => $eid]
         )->fetchAll() as $p) {
             $pingsByTeam[(int) $p['team_id']][] = [
-                'lat' => (float) $p['latitude'], 'lng' => (float) $p['longitude'], 'at' => $p['created_at'],
+                'id' => (int) $p['id'], 'lat' => (float) $p['latitude'], 'lng' => (float) $p['longitude'], 'at' => $p['created_at'],
             ];
         }
 
@@ -77,12 +77,12 @@ class StoryService
 
         /* ── Media ───────────────────────────────────────────────────── */
         $photos = dbq(
-            "SELECT id, team_id, latitude, longitude, caption, created_at FROM event_photos
+            "SELECT id, team_id, request_id, latitude, longitude, caption, created_at FROM event_photos
              WHERE event_id = :eid ORDER BY created_at",
             ['eid' => $eid]
         )->fetchAll();
         $videos = dbq(
-            "SELECT id, team_id, latitude, longitude, caption, duration_sec, created_at FROM event_videos
+            "SELECT id, team_id, request_id, latitude, longitude, caption, duration_sec, created_at FROM event_videos
              WHERE event_id = :eid ORDER BY created_at",
             ['eid' => $eid]
         )->fetchAll();
@@ -177,6 +177,7 @@ class StoryService
         }
         foreach ($photos as $p) { if ($p['latitude'] !== null) { $mapPoints[] = ['kind' => 'photo', 'lat' => (float) $p['latitude'], 'lng' => (float) $p['longitude'], 'label' => 'Φωτό', 'body' => $p['caption'], 'team' => $teamName($p['team_id'])]; } }
         foreach ($videos as $v) { if ($v['latitude'] !== null) { $mapPoints[] = ['kind' => 'video', 'lat' => (float) $v['latitude'], 'lng' => (float) $v['longitude'], 'label' => 'Βίντεο', 'body' => $v['caption'], 'team' => $teamName($v['team_id'])]; } }
+        $replayEvents = self::replayEvents($event, $teams, $pingsByTeam, $gpsReq, $photoReq, $videoReq, $messages, $photos, $videos, $shortages, $sos);
 
         /* ── Summary stats ───────────────────────────────────────────── */
         $totHours = 0.0;
@@ -207,6 +208,7 @@ class StoryService
             'teams'       => array_values($teams),
             'pingsByTeam' => $pingsByTeam,
             'mapPoints'   => $mapPoints,
+            'replayEvents'=> $replayEvents,
             'timeline'    => $tl,
             'metrics'     => $metrics,
             'photos'      => $photos,
@@ -219,7 +221,214 @@ class StoryService
 
     private static function reqRows(string $table, int $eid): array
     {
-        return dbq("SELECT team_id, created_at, fulfilled_at FROM {$table} WHERE event_id = :eid", ['eid' => $eid])->fetchAll();
+        $extra = $table === 'video_requests' ? ', instructions' : '';
+        return dbq("SELECT id, team_id, status, created_at, fulfilled_at{$extra} FROM {$table} WHERE event_id = :eid", ['eid' => $eid])->fetchAll();
+    }
+
+    private static function replayEvents(array $event, array $teams, array $pingsByTeam, array $gpsReq, array $photoReq, array $videoReq, array $messages, array $photos, array $videos, array $shortages, array $sos): array
+    {
+        $out = [];
+        $teamName = fn($tid) => $teams[(int) $tid]['name'] ?? ('Ομάδα #' . (int) $tid);
+        $eventFallback = [
+            'lat' => $event['latitude'] !== null ? (float) $event['latitude'] : null,
+            'lng' => $event['longitude'] !== null ? (float) $event['longitude'] : null,
+        ];
+        $add = function (array $e) use (&$out) {
+            if (empty($e['at'])) { return; }
+            if (!array_key_exists('lat', $e)) { $e['lat'] = null; }
+            if (!array_key_exists('lng', $e)) { $e['lng'] = null; }
+            $e['ts'] = strtotime((string) $e['at']) ?: 0;
+            $out[] = $e;
+        };
+
+        foreach ($pingsByTeam as $tid => $pings) {
+            foreach ($pings as $p) {
+                $add([
+                    'at' => $p['at'],
+                    'kind' => 'ping',
+                    'team_id' => (int) $tid,
+                    'team' => $teamName($tid),
+                    'lat' => (float) $p['lat'],
+                    'lng' => (float) $p['lng'],
+                    'title' => 'Στίγμα ομάδας',
+                    'detail' => 'Η ομάδα έστειλε ζωντανή θέση.',
+                ]);
+            }
+        }
+
+        foreach ($gpsReq as $rq) {
+            $tid = (int) $rq['team_id'];
+            $requestPos = self::positionAt($pingsByTeam[$tid] ?? [], (string) $rq['created_at'], $eventFallback);
+            $responsePos = $rq['fulfilled_at']
+                ? self::positionAt($pingsByTeam[$tid] ?? [], (string) $rq['fulfilled_at'], $requestPos ?: $eventFallback, true)
+                : null;
+            $add([
+                'at' => $rq['created_at'],
+                'kind' => 'gps_request',
+                'team_id' => $tid,
+                'team' => $teamName($tid),
+                'lat' => $requestPos['lat'] ?? null,
+                'lng' => $requestPos['lng'] ?? null,
+                'title' => 'Ζητήθηκε στίγμα GPS',
+                'detail' => $rq['fulfilled_at'] ? ('Απάντηση σε ' . self::dur(strtotime($rq['fulfilled_at']) - strtotime($rq['created_at']))) : 'Δεν καταγράφηκε απάντηση.',
+                'response_at' => $rq['fulfilled_at'],
+                'response_lat' => $responsePos['lat'] ?? null,
+                'response_lng' => $responsePos['lng'] ?? null,
+            ]);
+            if ($rq['fulfilled_at']) {
+                $add([
+                    'at' => $rq['fulfilled_at'],
+                    'kind' => 'gps_response',
+                    'team_id' => $tid,
+                    'team' => $teamName($tid),
+                    'lat' => $responsePos['lat'] ?? null,
+                    'lng' => $responsePos['lng'] ?? null,
+                    'title' => 'Στίγμα GPS στάλθηκε',
+                    'detail' => 'Απάντηση στο αίτημα GPS.',
+                ]);
+            }
+        }
+
+        $photoByRequest = self::mediaByRequest($photos);
+        foreach ($photoReq as $rq) {
+            $tid = (int) $rq['team_id'];
+            $media = $photoByRequest[(int) $rq['id']] ?? null;
+            $pos = $media && $media['latitude'] !== null
+                ? ['lat' => (float) $media['latitude'], 'lng' => (float) $media['longitude']]
+                : self::positionAt($pingsByTeam[$tid] ?? [], (string) $rq['created_at'], $eventFallback);
+            $add([
+                'at' => $rq['created_at'],
+                'kind' => 'photo_request',
+                'team_id' => $tid,
+                'team' => $teamName($tid),
+                'lat' => $pos['lat'] ?? null,
+                'lng' => $pos['lng'] ?? null,
+                'title' => 'Ζητήθηκε φωτογραφία',
+                'detail' => $rq['fulfilled_at'] ? ('Απάντηση σε ' . self::dur(strtotime($rq['fulfilled_at']) - strtotime($rq['created_at']))) : 'Δεν καταγράφηκε απάντηση.',
+            ]);
+        }
+
+        $videoByRequest = self::mediaByRequest($videos);
+        foreach ($videoReq as $rq) {
+            $tid = (int) $rq['team_id'];
+            $media = $videoByRequest[(int) $rq['id']] ?? null;
+            $pos = $media && $media['latitude'] !== null
+                ? ['lat' => (float) $media['latitude'], 'lng' => (float) $media['longitude']]
+                : self::positionAt($pingsByTeam[$tid] ?? [], (string) $rq['created_at'], $eventFallback);
+            $add([
+                'at' => $rq['created_at'],
+                'kind' => 'video_request',
+                'team_id' => $tid,
+                'team' => $teamName($tid),
+                'lat' => $pos['lat'] ?? null,
+                'lng' => $pos['lng'] ?? null,
+                'title' => 'Ζητήθηκε βίντεο',
+                'detail' => trim((string) ($rq['instructions'] ?? '')) ?: ($rq['fulfilled_at'] ? ('Απάντηση σε ' . self::dur(strtotime($rq['fulfilled_at']) - strtotime($rq['created_at']))) : 'Δεν καταγράφηκε απάντηση.'),
+            ]);
+        }
+
+        foreach ($photos as $p) {
+            if ($p['latitude'] === null) { continue; }
+            $add([
+                'at' => $p['created_at'],
+                'kind' => 'photo',
+                'team_id' => (int) $p['team_id'],
+                'team' => $teamName($p['team_id']),
+                'lat' => (float) $p['latitude'],
+                'lng' => (float) $p['longitude'],
+                'title' => 'Φωτογραφία από το πεδίο',
+                'detail' => $p['caption'] ?: '',
+            ]);
+        }
+        foreach ($videos as $v) {
+            if ($v['latitude'] === null) { continue; }
+            $add([
+                'at' => $v['created_at'],
+                'kind' => 'video',
+                'team_id' => (int) $v['team_id'],
+                'team' => $teamName($v['team_id']),
+                'lat' => (float) $v['latitude'],
+                'lng' => (float) $v['longitude'],
+                'title' => 'Βίντεο από το πεδίο',
+                'detail' => $v['caption'] ?: '',
+            ]);
+        }
+
+        foreach ($messages as $m) {
+            if (!empty($m['point_kind']) && $m['latitude'] !== null && $m['longitude'] !== null) {
+                $add([
+                    'at' => $m['created_at'],
+                    'kind' => $m['point_kind'] === 'incident' ? 'incident' : 'order',
+                    'team_id' => $m['team_id'] !== null ? (int) $m['team_id'] : null,
+                    'team' => $m['team_id'] !== null ? $teamName($m['team_id']) : '',
+                    'lat' => (float) $m['latitude'],
+                    'lng' => (float) $m['longitude'],
+                    'title' => self::pointKind((string) $m['point_kind']),
+                    'detail' => $m['body'] ?: '',
+                ]);
+            }
+        }
+        foreach ($shortages as $sh) {
+            $tid = (int) $sh['team_id'];
+            $pos = self::positionAt($pingsByTeam[$tid] ?? [], (string) $sh['created_at'], $eventFallback);
+            $add([
+                'at' => $sh['created_at'],
+                'kind' => 'shortage',
+                'team_id' => $tid,
+                'team' => $teamName($tid),
+                'lat' => $pos['lat'] ?? null,
+                'lng' => $pos['lng'] ?? null,
+                'title' => 'Έλλειψη: ' . $sh['title'],
+                'detail' => self::severity((string) $sh['severity']) . ' · ' . shortage_type_label($sh['shortage_type']),
+            ]);
+        }
+        foreach ($sos as $s) {
+            $tid = (int) $s['team_id'];
+            $pos = ($s['latitude'] !== null)
+                ? ['lat' => (float) $s['latitude'], 'lng' => (float) $s['longitude']]
+                : self::positionAt($pingsByTeam[$tid] ?? [], (string) $s['created_at'], $eventFallback);
+            $add([
+                'at' => $s['created_at'],
+                'kind' => 'sos',
+                'team_id' => $tid,
+                'team' => $teamName($tid),
+                'lat' => $pos['lat'] ?? null,
+                'lng' => $pos['lng'] ?? null,
+                'title' => 'SOS',
+                'detail' => $s['note'] ?: 'Σήμα κινδύνου από ομάδα.',
+            ]);
+        }
+
+        usort($out, fn($a, $b) => ($a['ts'] <=> $b['ts']) ?: strcmp((string) $a['kind'], (string) $b['kind']));
+        return array_values($out);
+    }
+
+    private static function mediaByRequest(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $r) {
+            if (!empty($r['request_id']) && !isset($out[(int) $r['request_id']])) {
+                $out[(int) $r['request_id']] = $r;
+            }
+        }
+        return $out;
+    }
+
+    private static function positionAt(array $pings, string $at, array $fallback, bool $preferAfter = false): ?array
+    {
+        $ts = strtotime($at) ?: 0;
+        $before = null;
+        $after = null;
+        foreach ($pings as $p) {
+            $pTs = strtotime((string) $p['at']) ?: 0;
+            if ($pTs <= $ts) { $before = $p; }
+            if ($pTs >= $ts && $after === null) { $after = $p; }
+        }
+        $pick = $preferAfter ? ($after ?: $before) : ($before ?: $after);
+        if ($pick) {
+            return ['lat' => (float) $pick['lat'], 'lng' => (float) $pick['lng']];
+        }
+        return isset($fallback['lat'], $fallback['lng']) && $fallback['lat'] !== null && $fallback['lng'] !== null ? $fallback : null;
     }
 
     /** Per-team response-time metrics. */
