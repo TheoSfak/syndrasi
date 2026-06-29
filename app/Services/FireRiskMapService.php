@@ -302,17 +302,49 @@ class FireRiskMapService
 
     private static function httpGet(string $url): string
     {
+        $headers = [
+            'User-Agent: Mozilla/5.0 (compatible; SynDrasi Fire Risk Monitor)',
+            'Accept: text/html,application/xhtml+xml,image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        ];
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_TIMEOUT => 45,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $body = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            curl_close($ch);
+
+            if ($body !== false && $code < 400) {
+                return (string) $body;
+            }
+
+            $detail = $body === false ? ($err ?: 'cURL error') : ('HTTP ' . $code);
+            error_log('[FireRiskMap] cURL fetch failed: ' . $detail . ' url=' . $url);
+        }
+
         $context = stream_context_create([
             'http' => [
                 'method' => 'GET',
-                'timeout' => 30,
-                'header' => "User-Agent: SynDrasi Fire Risk Monitor\r\nAccept: */*\r\n",
+                'timeout' => 45,
+                'header' => implode("\r\n", $headers) . "\r\n",
             ],
             'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
         ]);
         $body = @file_get_contents($url, false, $context);
         if ($body === false) {
-            throw new RuntimeException('Αποτυχία λήψης από την Πολιτική Προστασία.');
+            $status = '';
+            if (!empty($http_response_header) && is_array($http_response_header)) {
+                $status = ' (' . mb_substr((string) $http_response_header[0], 0, 80) . ')';
+            }
+            throw new RuntimeException('Αποτυχία λήψης από την Πολιτική Προστασία' . $status . '.');
         }
         return (string) $body;
     }
