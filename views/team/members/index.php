@@ -5,6 +5,11 @@
   </a>
 </div>
 <p class="text-muted small">Κατάλογος εθελοντών της ομάδας <strong><?= e($team['name'] ?? '') ?></strong>. Τα μέλη ορίζονται κατά τη δήλωση συμμετοχής σε δράσεις.</p>
+<?php if (empty($canManageAssistants)): ?>
+  <div class="alert alert-info small">
+    Έχετε πλήρη πρόσβαση διαχείρισης ομάδας ως Βοηθός Αρχηγού. Ο ορισμός ή η αφαίρεση άλλων βοηθών γίνεται μόνο από τον αρχηγό της ομάδας.
+  </div>
+<?php endif; ?>
 
 <?php if (!$members): ?>
   <div class="alert alert-info">
@@ -23,6 +28,7 @@
           <th>Ρόλος / Ειδικότητα</th>
           <th>ΑΜ Πολ. Προστ.</th>
           <th>Κατάσταση</th>
+          <th>Πρόσβαση</th>
           <th></th>
         </tr>
       </thead>
@@ -30,11 +36,15 @@
         <?php foreach ($members as $m): ?>
           <tr class="<?= $m['status'] === 'inactive' ? 'text-muted' : '' ?>">
             <td>
-              <?php if ($m['is_team_admin']): ?>
-                <i class="bi bi-shield-fill text-primary me-1" title="Διαχειριστής Ομάδας"></i>
+              <?php if (!empty($m['is_team_admin'])): ?>
+                <i class="bi bi-shield-fill <?= !empty($m['is_assistant_admin']) ? 'text-success' : 'text-primary' ?> me-1" title="<?= !empty($m['is_assistant_admin']) ? 'Βοηθός Αρχηγού' : 'Αρχηγός Ομάδας' ?>"></i>
               <?php endif; ?>
               <strong><?= e($m['full_name']) ?></strong>
-              <?php if ($m['is_team_admin']): ?><span class="badge bg-primary ms-1">Διαχειριστής</span><?php endif; ?>
+              <?php if (!empty($m['is_assistant_admin'])): ?>
+                <span class="badge bg-success ms-1">Βοηθός Αρχηγού</span>
+              <?php elseif (!empty($m['is_team_admin'])): ?>
+                <span class="badge bg-primary ms-1">Αρχηγός</span>
+              <?php endif; ?>
             </td>
             <td><?= e($m['phone']) ?></td>
             <td class="small"><?= e($m['email'] ?? '—') ?></td>
@@ -47,6 +57,17 @@
                 <span class="badge bg-secondary">Ανενεργό</span>
               <?php endif; ?>
             </td>
+            <td class="small">
+              <?php if (!empty($m['is_assistant_admin'])): ?>
+                <span class="badge text-bg-<?= ($m['login_status'] ?? '') === 'active' ? 'success' : 'secondary' ?>">
+                  <?= ($m['login_status'] ?? '') === 'active' ? 'Login ενεργό' : 'Login ανενεργό' ?>
+                </span>
+              <?php elseif (!empty($m['is_team_admin'])): ?>
+                <span class="badge text-bg-primary">Κύρια πρόσβαση</span>
+              <?php else: ?>
+                <span class="text-muted">—</span>
+              <?php endif; ?>
+            </td>
             <td class="text-end text-nowrap">
               <a href="<?= e(url('/team/members/' . $m['id'] . '/stats')) ?>" class="btn btn-sm btn-outline-info" title="Στατιστικά">
                 <i class="bi bi-bar-chart-line"></i>
@@ -54,7 +75,25 @@
               <a href="<?= e(url('/team/members/' . $m['id'] . '/edit')) ?>" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-pencil"></i>
               </a>
-              <?php if (!$m['is_team_admin']): ?>
+              <?php if (!empty($canManageAssistants) && $m['status'] === 'active' && empty($m['is_team_admin'])): ?>
+                <form method="post" action="<?= e(url('/team/members/' . $m['id'] . '/assistant/promote')) ?>" class="d-inline"
+                      onsubmit="return confirm('Να οριστεί ως Βοηθός Αρχηγού; Θα λάβει email πρόσκλησης.');">
+                  <?= csrf_field() ?>
+                  <button type="submit" class="btn btn-sm btn-outline-success" title="Ορισμός Βοηθού Αρχηγού">
+                    <i class="bi bi-shield-plus"></i>
+                  </button>
+                </form>
+              <?php endif; ?>
+              <?php if (!empty($canManageAssistants) && !empty($m['is_assistant_admin'])): ?>
+                <form method="post" action="<?= e(url('/team/members/' . $m['id'] . '/assistant/revoke')) ?>" class="d-inline"
+                      onsubmit="return confirm('Να αφαιρεθεί η πρόσβαση Βοηθού Αρχηγού;');">
+                  <?= csrf_field() ?>
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Αφαίρεση Βοηθού Αρχηγού">
+                    <i class="bi bi-shield-x"></i>
+                  </button>
+                </form>
+              <?php endif; ?>
+              <?php if (empty($m['is_team_admin']) || !empty($m['is_assistant_admin'])): ?>
                 <form method="post" action="<?= e(url('/team/members/' . $m['id'] . '/toggle')) ?>" class="d-inline">
                   <?= csrf_field() ?>
                   <button type="submit" class="btn btn-sm <?= $m['status'] === 'active' ? 'btn-outline-warning' : 'btn-outline-success' ?>"

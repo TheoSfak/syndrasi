@@ -4,6 +4,19 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.2-beta] — 2026-06-29
+
+### Feature — Βοηθοί Αρχηγού ομάδας
+
+- Προστέθηκε δυνατότητα στον αρχηγό ομάδας να ορίζει ενεργά μέλη ως “Βοηθούς Αρχηγού”.
+- Οι βοηθοί αποκτούν login ως `team_admin` με ίδια επιχειρησιακά δικαιώματα ομάδας, αλλά δεν μπορούν να ορίσουν ή να αφαιρέσουν άλλους βοηθούς.
+- Η πρόσκληση βοηθού δημιουργεί/συνδέει λογαριασμό χρήστη και στέλνει email reset/invite για ορισμό κωδικού.
+- Προστέθηκαν προστασίες για μέλη χωρίς έγκυρο email και για email που ανήκουν ήδη σε άλλον λογαριασμό.
+- Η αφαίρεση βοηθού ή η απενεργοποίηση βοηθού απενεργοποιεί και το linked login account.
+- Οι διαχειριστές δήμου μπορούν να βλέπουν τους βοηθούς κάθε ομάδας και να αφαιρούν πρόσβαση σε περίπτωση ανάγκης.
+
+---
+
 ## [0.14.1-beta] — 2026-06-29
 
 ### Docs — Fire Service incidents integration guide

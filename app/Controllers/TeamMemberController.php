@@ -8,6 +8,8 @@
  *   GET  /team/members/{id}/edit    → edit form
  *   POST /team/members/{id}         → update
  *   POST /team/members/{id}/toggle  → activate / deactivate
+ *   POST /team/members/{id}/assistant/promote → make assistant chief
+ *   POST /team/members/{id}/assistant/revoke  → remove assistant access
  */
 class TeamMemberController
 {
@@ -23,10 +25,11 @@ class TeamMemberController
         $team = VolunteerTeam::find($tid);
 
         render('team/members/index', [
-            'pageTitle'   => 'Μέλη Ομάδας',
-            'members'     => $members,
-            'fieldConfig' => $fieldConfig,
-            'team'        => $team,
+            'pageTitle'           => 'Μέλη Ομάδας',
+            'members'             => $members,
+            'fieldConfig'         => $fieldConfig,
+            'team'                => $team,
+            'canManageAssistants' => $this->canCurrentUserManageAssistants(),
         ]);
     }
 
@@ -112,9 +115,13 @@ class TeamMemberController
         requireRole(['team_admin']);
         $member = $this->requireOwned($id);
 
-        if ($member['is_team_admin']) {
+        if (!empty($member['is_team_admin']) && empty($member['is_assistant_admin'])) {
             flash_set('warning', 'Ο Διαχειριστής Ομάδας δεν μπορεί να απενεργοποιηθεί εδώ.');
             redirect('/team/members');
+        }
+
+        if ($member['status'] === 'active' && !empty($member['is_assistant_admin'])) {
+            TeamMember::revokeAssistant($id, true);
         }
 
         TeamMember::toggleStatus($id);
@@ -123,6 +130,110 @@ class TeamMemberController
 
         flash_set('success', 'Το μέλος «' . htmlspecialchars($member['full_name']) . '» ' . $newStatus . '.');
         redirect('/team/members');
+    }
+
+    // ---------------------------------------------------------- Assistant chief
+
+    public function promoteAssistant($id)
+    {
+        requireRole(['team_admin']);
+        $this->requireAssistantManager();
+        $member = $this->requireOwned($id);
+
+        if ($member['status'] !== 'active') {
+            flash_set('danger', 'Μπορείτε να ορίσετε βοηθό μόνο ενεργό μέλος.');
+            redirect('/team/members');
+        }
+        if (!empty($member['is_team_admin']) && empty($member['is_assistant_admin'])) {
+            flash_set('warning', 'Αυτό το μέλος είναι ήδη ο αρχηγός/διαχειριστής της ομάδας.');
+            redirect('/team/members');
+        }
+
+        $email = mb_strtolower(trim((string) ($member['email'] ?? '')));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash_set('danger', 'Για να οριστεί Βοηθός Αρχηγού, το μέλος πρέπει να έχει έγκυρο email.');
+            redirect('/team/members/' . $id . '/edit');
+        }
+
+        $existing = User::findByEmail($email);
+        $linkedUser = !empty($member['user_id']) ? User::find((int) $member['user_id']) : null;
+
+        if ($existing && (!$linkedUser || (int) $existing['id'] !== (int) $linkedUser['id'])) {
+            flash_set('danger', 'Το email χρησιμοποιείται ήδη από άλλον λογαριασμό. Δεν δόθηκε πρόσβαση βοηθού.');
+            redirect('/team/members');
+        }
+
+        if ($linkedUser) {
+            $userId = (int) $linkedUser['id'];
+            dbq(
+                "UPDATE users
+                 SET name = :name, email = :email, phone = :phone,
+                     municipality_id = :mid, team_id = :tid, role = 'team_admin', status = 'active'
+                 WHERE id = :id",
+                [
+                    'name' => $member['full_name'],
+                    'email' => $email,
+                    'phone' => $member['phone'] ?: null,
+                    'mid' => $member['municipality_id'],
+                    'tid' => $member['team_id'],
+                    'id' => $userId,
+                ]
+            );
+        } else {
+            $randomPassword = bin2hex(random_bytes(24));
+            dbq(
+                "INSERT INTO users (municipality_id, team_id, name, email, phone, password_hash, role, status)
+                 VALUES (:mid, :tid, :name, :email, :phone, :hash, 'team_admin', 'active')",
+                [
+                    'mid' => $member['municipality_id'],
+                    'tid' => $member['team_id'],
+                    'name' => $member['full_name'],
+                    'email' => $email,
+                    'phone' => $member['phone'] ?: null,
+                    'hash' => password_hash($randomPassword, PASSWORD_DEFAULT),
+                ]
+            );
+            $userId = (int) db()->lastInsertId();
+        }
+
+        TeamMember::promoteAssistant($id, $userId, current_user_id());
+        $mailOk = $this->sendAssistantInvite($member, $email);
+
+        audit('team_assistant_promoted', 'team_member', $id, [
+            'team_id' => (int) $member['team_id'],
+            'user_id' => $userId,
+            'email' => $email,
+        ]);
+
+        if ($mailOk) {
+            flash_set('success', 'Ο/Η «' . htmlspecialchars($member['full_name']) . '» ορίστηκε Βοηθός Αρχηγού και στάλθηκε πρόσκληση email.');
+        } else {
+            flash_set('warning', 'Ο βοηθός ενεργοποιήθηκε, αλλά το email πρόσκλησης δεν στάλθηκε: ' . htmlspecialchars(MailService::$lastError));
+        }
+        redirect('/team/members');
+    }
+
+    public function revokeAssistant($id)
+    {
+        requireRole(['team_admin']);
+        $this->requireAssistantManager();
+        $member = $this->requireOwned($id);
+        $this->revokeAssistantMember($member);
+        redirect('/team/members');
+    }
+
+    public static function revokeAssistantFromMunicipality($memberId): bool
+    {
+        $member = TeamMember::find($memberId);
+        if (!$member || empty($member['is_assistant_admin'])) {
+            return false;
+        }
+        TeamMember::revokeAssistant($memberId, true);
+        audit('team_assistant_revoked_by_municipality', 'team_member', $memberId, [
+            'team_id' => (int) $member['team_id'],
+            'user_id' => !empty($member['user_id']) ? (int) $member['user_id'] : null,
+        ]);
+        return true;
     }
 
     // --------------------------------------------------------- Stats + Certificate
@@ -180,6 +291,71 @@ class TeamMemberController
             abort(404, 'Το μέλος δεν βρέθηκε.');
         }
         return $member;
+    }
+
+    private function canCurrentUserManageAssistants(): bool
+    {
+        if (current_role() !== 'team_admin') {
+            return false;
+        }
+        $member = TeamMember::findByUser(current_user_id());
+        return !$member || empty($member['is_assistant_admin']);
+    }
+
+    private function requireAssistantManager(): void
+    {
+        if (!$this->canCurrentUserManageAssistants()) {
+            flash_set('danger', 'Οι Βοηθοί Αρχηγού έχουν πλήρη πρόσβαση στην ομάδα, αλλά δεν μπορούν να ορίζουν ή να αφαιρούν άλλους βοηθούς.');
+            redirect('/team/members');
+        }
+    }
+
+    private function revokeAssistantMember(array $member): void
+    {
+        if (empty($member['is_assistant_admin'])) {
+            flash_set('warning', 'Το μέλος δεν είναι Βοηθός Αρχηγού.');
+            return;
+        }
+        TeamMember::revokeAssistant((int) $member['id'], true);
+        audit('team_assistant_revoked', 'team_member', (int) $member['id'], [
+            'team_id' => (int) $member['team_id'],
+            'user_id' => !empty($member['user_id']) ? (int) $member['user_id'] : null,
+        ]);
+        flash_set('success', 'Η πρόσβαση Βοηθού Αρχηγού αφαιρέθηκε από τον/την «' . htmlspecialchars($member['full_name']) . '».');
+    }
+
+    private function sendAssistantInvite(array $member, string $email): bool
+    {
+        dbq("DELETE FROM password_resets WHERE email = :email", ['email' => $email]);
+        $token = bin2hex(random_bytes(32));
+        dbq(
+            "INSERT INTO password_resets (email, token) VALUES (:email, :token)",
+            ['email' => $email, 'token' => hash('sha256', $token)]
+        );
+
+        $resetUrl = $this->absoluteUrl('/reset-password') . '?token=' . urlencode($token);
+        $teamName = $member['team_name'] ?? 'την ομάδα σας';
+        $body = '<p>Έχετε οριστεί ως <strong>Βοηθός Αρχηγού</strong> στην ομάδα <strong>'
+            . htmlspecialchars($teamName, ENT_QUOTES, 'UTF-8') . '</strong>.</p>'
+            . '<p>Με αυτή την πρόσβαση μπορείτε να χρησιμοποιείτε το portal της ομάδας με τα ίδια επιχειρησιακά δικαιώματα του αρχηγού, εκτός από τον ορισμό άλλων βοηθών.</p>'
+            . '<p>Πατήστε στον παρακάτω σύνδεσμο για να ορίσετε κωδικό πρόσβασης:</p>'
+            . '<p><a href="' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($resetUrl, ENT_QUOTES, 'UTF-8') . '</a></p>'
+            . '<p>Ο σύνδεσμος ισχύει για <strong>1 ώρα</strong>.</p>';
+
+        return MailService::send(
+            $email,
+            $member['full_name'],
+            'Πρόσκληση Βοηθού Αρχηγού — SynDrasi',
+            $body,
+            $member['municipality_id']
+        );
+    }
+
+    private function absoluteUrl(string $path): string
+    {
+        $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        return ($https ? 'https' : 'http') . '://' . $host . url($path);
     }
 
     private function validate(array $fieldConfig): array

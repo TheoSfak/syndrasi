@@ -28,6 +28,7 @@
                 <div class="btn-group btn-group-sm">
                   <a class="btn btn-outline-secondary" href="<?= e(url('/teams/' . $t['id'] . '/edit')) ?>" title="Επεξεργασία"><i class="bi bi-pencil"></i></a>
                   <a class="btn btn-outline-info" href="<?= e(url('/statistics/teams/' . $t['id'])) ?>" title="Στατιστικά"><i class="bi bi-bar-chart"></i></a>
+                  <a class="btn btn-outline-success" href="<?= e(url('/teams/' . $t['id'] . '/assistants')) ?>" title="Βοηθοί Αρχηγού"><i class="bi bi-shield-check"></i></a>
                 </div>
                 <form method="post" class="d-inline" action="<?= e(url('/teams/' . $t['id'] . '/toggle')) ?>"
                       onsubmit="return confirm('Να αλλάξει η κατάσταση της ομάδας;')">

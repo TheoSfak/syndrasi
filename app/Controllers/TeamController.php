@@ -72,6 +72,18 @@ class TeamController
         render('teams/form', ['pageTitle' => 'Επεξεργασία Ομάδας', 'team' => $team]);
     }
 
+    public function assistants($id)
+    {
+        requireRole(['municipality_admin']);
+        $team = $this->findOwn($id);
+        $assistants = TeamMember::assistantsByTeam($team['id']);
+        render('teams/assistants', [
+            'pageTitle'  => 'Βοηθοί Αρχηγού',
+            'team'       => $team,
+            'assistants' => $assistants,
+        ]);
+    }
+
     public function update($id)
     {
         requireRole(['municipality_admin']);
@@ -94,6 +106,23 @@ class TeamController
         audit('team_status_toggled', 'volunteer_team', $team['id']);
         flash_set('success', 'Η κατάσταση της ομάδας άλλαξε.');
         redirect('/teams');
+    }
+
+    public function revokeAssistant($id, $memberId)
+    {
+        requireRole(['municipality_admin']);
+        $team = $this->findOwn($id);
+        $member = TeamMember::find($memberId);
+        if (!$member || (int) $member['team_id'] !== (int) $team['id']) {
+            abort(404, 'Το μέλος δεν βρέθηκε.');
+        }
+
+        if (TeamMemberController::revokeAssistantFromMunicipality((int) $member['id'])) {
+            flash_set('success', 'Η πρόσβαση Βοηθού Αρχηγού αφαιρέθηκε.');
+        } else {
+            flash_set('warning', 'Το μέλος δεν είναι Βοηθός Αρχηγού.');
+        }
+        redirect('/teams/' . $team['id'] . '/assistants');
     }
 
     private function findOwn($id)

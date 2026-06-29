@@ -61,8 +61,10 @@ $router->get('/teams', 'TeamController@index');
 $router->get('/teams/create', 'TeamController@create');
 $router->post('/teams/store', 'TeamController@store');
 $router->get('/teams/{id}/edit', 'TeamController@edit');
+$router->get('/teams/{id}/assistants', 'TeamController@assistants');
 $router->post('/teams/{id}/update', 'TeamController@update');
 $router->post('/teams/{id}/toggle', 'TeamController@toggleStatus');
+$router->post('/teams/{id}/members/{memberId}/assistant/revoke', 'TeamController@revokeAssistant');
 
 /* Municipality admin: events */
 $router->get('/events', 'EventController@index');
@@ -211,6 +213,8 @@ $router->get('/team/members/{id}/stats', 'TeamMemberController@stats');
 $router->get('/team/members/{id}/certificate', 'TeamMemberController@certificate');
 $router->post('/team/members/{id}', 'TeamMemberController@update');
 $router->post('/team/members/{id}/toggle', 'TeamMemberController@toggle');
+$router->post('/team/members/{id}/assistant/promote', 'TeamMemberController@promoteAssistant');
+$router->post('/team/members/{id}/assistant/revoke', 'TeamMemberController@revokeAssistant');
 
 /* Municipality admin: settings */
 $router->get('/settings', 'SettingsController@index');
