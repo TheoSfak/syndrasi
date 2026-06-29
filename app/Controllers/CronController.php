@@ -144,6 +144,17 @@ class CronController
         ]);
     }
 
+    /**
+     * GET /cron/fire-service
+     * Fetches the official Fire Service incidents page. Safe to run every 5 minutes.
+     */
+    public function fireService()
+    {
+        $this->authCron();
+        $result = FireServiceIncidentService::sync();
+        json_out(array_merge($result, ['at' => date('Y-m-d H:i:s')]), $result['success'] ? 200 : 502);
+    }
+
     /* ── Private ─────────────────────────────────────────────────────────── */
 
     private function authCron()

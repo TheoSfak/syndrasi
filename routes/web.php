@@ -51,6 +51,11 @@ $router->post('/notifications/read-all', 'NotificationController@markAllRead');
 /* Municipality admin: dashboard */
 $router->get('/dashboard', 'DashboardController@municipality');
 
+/* Municipality admin: official Fire Service incidents */
+$router->get('/fire-service', 'FireServiceController@index');
+$router->post('/fire-service/sync', 'FireServiceController@sync');
+$router->post('/fire-service/{id}/create-event', 'FireServiceController@createEvent');
+
 /* Municipality admin: volunteer teams */
 $router->get('/teams', 'TeamController@index');
 $router->get('/teams/create', 'TeamController@create');
@@ -231,6 +236,7 @@ $router->post('/push/unsubscribe', 'PushController@unsubscribe');
 $router->get('/cron/shift-reminders', 'CronController@shiftReminders');
 $router->get('/cron/cleanup', 'CronController@cleanup');
 $router->get('/cron/mail-queue', 'CronController@processMailQueue');
+$router->get('/cron/fire-service', 'CronController@fireService');
 
 /* Super admin */
 $router->get('/admin/dashboard', 'AdminController@dashboard');

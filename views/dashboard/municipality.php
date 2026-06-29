@@ -21,6 +21,26 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
   <?php endif; ?>
 </div>
 
+<?php if (!empty($fireCreteAlert['total'])): ?>
+<div class="alert alert-danger shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4" role="alert">
+  <div>
+    <div class="fw-bold"><i class="bi bi-fire me-1"></i>Συμβάντα Πυροσβεστικής στην Κρήτη</div>
+    <div class="small">
+      <?= (int) $fireCreteAlert['total'] ?> τρέχοντα συμβάντα.
+      <?php foreach (($fireCreteAlert['by_status'] ?? []) as $st => $cnt): ?>
+        <span class="badge text-bg-light text-danger border ms-1"><?= e($st) ?>: <?= (int) $cnt ?></span>
+      <?php endforeach; ?>
+      <?php if (!empty($fireCreteAlert['fetch']['fetched_at'])): ?>
+        <span class="ms-1">Τελευταία λήψη: <?= e(gr_datetime($fireCreteAlert['fetch']['fetched_at'])) ?></span>
+      <?php endif; ?>
+    </div>
+  </div>
+  <a href="<?= e(url('/fire-service?region=' . rawurlencode('ΠΕΡΙΦΕΡΕΙΑ ΚΡΗΤΗΣ'))) ?>" class="btn btn-light btn-sm fw-semibold">
+    Προβολή <i class="bi bi-arrow-right"></i>
+  </a>
+</div>
+<?php endif; ?>
+
 <!-- ── Row 1: 8 stat cards ───────────────────────────────── -->
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">

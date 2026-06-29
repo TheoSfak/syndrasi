@@ -135,6 +135,15 @@ class DashboardController
         /* ── Overview (global volunteer hours) ── */
         $overview = StatsService::municipalityOverview($mid, $year);
 
+        $fireCreteAlert = ['total' => 0, 'by_status' => [], 'latest' => [], 'fetch' => null];
+        if (current_role() === 'municipality_admin') {
+            try {
+                $fireCreteAlert = FireServiceIncidentService::creteAlert();
+            } catch (Throwable $e) {
+                error_log('Fire Service dashboard alert failed: ' . $e->getMessage());
+            }
+        }
+
         $upcoming = dbq(
             "SELECT e.*, c.name AS category_name
              FROM events e LEFT JOIN event_categories c ON c.id=e.category_id
@@ -163,6 +172,7 @@ class DashboardController
             'topTeams'            => $topTeams,
             'upcoming'            => $upcoming,
             'overview'            => $overview,
+            'fireCreteAlert'      => $fireCreteAlert,
             'year'                => $year,
         ]);
     }

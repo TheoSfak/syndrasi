@@ -4,6 +4,19 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.0-beta] — 2026-06-29
+
+### Feature — Συμβάντα Πυροσβεστικής
+
+- Προστέθηκε νέα σελίδα “Συμβάντα Πυροσβεστικής” για municipality admins.
+- Η εφαρμογή τραβά τα επίσημα ενεργά συμβάντα του Πυροσβεστικού Σώματος από την iframe πηγή και τα αποθηκεύει ως 7ήμερο ιστορικό.
+- Προστέθηκαν φίλτρα για Περιφέρεια, Νομό/Π.Ε., κατηγορία, κατάσταση, αναζήτηση και τρέχον snapshot/ιστορικό.
+- Προστέθηκε χειροκίνητο κουμπί “Άμεση ενημέρωση” και cron endpoint `/cron/fire-service` για εκτέλεση κάθε 5 λεπτά.
+- Το dashboard των διαχειριστών δήμου δείχνει κόκκινη ειδοποίηση για τρέχοντα συμβάντα στην Περιφέρεια Κρήτης.
+- Από κάθε συμβάν μπορεί να δημιουργηθεί πρόχειρη δράση SynDrasi για έλεγχο και δημοσίευση από τον admin.
+
+---
+
 ## [0.13.9-beta] — 2026-06-29
 
 ### Feature — Overview μετακινήσεων στο Story map

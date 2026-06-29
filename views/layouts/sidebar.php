@@ -9,6 +9,7 @@ if ($role === 'municipality_admin') {
         ['/mobilizations', 'bi-broadcast-pin',            'Κάλεσμα Έκτακτης Ανάγκης'],
         ['/operations',   'bi-broadcast',                 'Κέντρο Επιχειρήσεων'],
         ['/operations/war-room', 'bi-diagram-3',          'Κέντρο Συντονισμού'],
+        ['/fire-service', 'bi-fire',                       'Συμβάντα Πυροσβεστικής'],
         ['/events',       'bi-calendar-event',            'Δράσεις'],
         ['/events/calendar', 'bi-calendar3',              'Ημερολόγιο'],
         ['/teams',        'bi-people',                    'Εθελοντικές Ομάδες'],
