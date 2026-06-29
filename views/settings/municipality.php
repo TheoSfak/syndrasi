@@ -253,7 +253,7 @@ $tzOptions = [
                 ['event_reminder',         'Υπενθύμιση δράσης',       'Χειροκίνητη, κουμπί «Υπενθύμιση»'],
                 ['event_completed',        'Ολοκλήρωση δράσης',       'Στο command group και στις εγκεκριμένες ομάδες'],
             ];
-            $telegramOnlyTypes = [
+            $opsNotifTypes = [
                 ['photo_request',          'Αίτημα φωτογραφίας',      'Στην ομάδα κατά την ενεργή δράση'],
                 ['video_request',          'Αίτημα βίντεο',           'Στην ομάδα κατά την ενεργή δράση'],
                 ['gps_request',            'Αίτημα στίγματος GPS',    'Στην ομάδα κατά την ενεργή δράση'],
@@ -266,12 +266,16 @@ $tzOptions = [
                 ['shortage_update',        'Ενημέρωση έλλειψης',      'Στην ομάδα'],
                 ['sos_ack',                'Επιβεβαίωση SOS',         'Στην ομάδα'],
             ];
+            $opsTypeKeys = array_map(static function ($row) { return $row[0]; }, $opsNotifTypes);
             $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];
-            // Effective channel: explicit notify_channel_*, else legacy notify_email_* (default email)
-            $channelOf = function ($type) use ($settings) {
+            // Effective channel: explicit notify_channel_*, else legacy notify_email_*.
+            $channelOf = function ($type) use ($settings, $opsTypeKeys) {
                 $ch = $settings['notify_channel_' . $type] ?? null;
                 if (in_array($ch, ['off', 'email', 'sms', 'both'], true)) { return $ch; }
-                return (isset($settings['notify_email_' . $type]) && $settings['notify_email_' . $type] === '0') ? 'off' : 'email';
+                if (isset($settings['notify_email_' . $type])) {
+                    return $settings['notify_email_' . $type] === '0' ? 'off' : 'email';
+                }
+                return in_array($type, $opsTypeKeys, true) ? 'off' : 'email';
             };
             ?>
             <div class="list-group list-group-flush">
@@ -296,18 +300,25 @@ $tzOptions = [
               <?php endforeach; ?>
             </div>
             <div class="border-top mt-3 pt-3">
-              <div class="fw-semibold mb-1"><i class="bi bi-telegram text-info me-1"></i>Telegram για επιχειρησιακές ειδοποιήσεις</div>
-              <p class="small text-muted mb-2">Αυτοί οι τύποι σήμερα στέλνονται in-app/push από την επιχειρησιακή ροή. Εδώ ενεργοποιείτε επιπλέον Telegram.</p>
+              <div class="fw-semibold mb-1"><i class="bi bi-broadcast-pin text-info me-1"></i>Επιχειρησιακές ειδοποιήσεις</div>
+              <p class="small text-muted mb-2">Οι in-app/push ειδοποιήσεις παραμένουν πάντα ενεργές. Εδώ επιλέγετε επιπλέον Email/SMS και Telegram ανά τύπο.</p>
               <div class="list-group list-group-flush">
-                <?php foreach ($telegramOnlyTypes as [$type, $label, $desc]): $tgOn = ($settings['notify_telegram_' . $type] ?? '0') === '1'; ?>
+                <?php foreach ($opsNotifTypes as [$type, $label, $desc]): $cur = $channelOf($type); $tgOn = ($settings['notify_telegram_' . $type] ?? '0') === '1'; ?>
                 <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 gap-3">
                   <div>
                     <div class="fw-semibold small"><?= e($label) ?></div>
                     <div class="small text-muted"><?= e($desc) ?></div>
                   </div>
-                  <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" name="notify_telegram_<?= e($type) ?>" id="tg_<?= e($type) ?>" value="1" <?= $tgOn ? 'checked' : '' ?>>
-                    <label class="form-check-label small" for="tg_<?= e($type) ?>">Telegram</label>
+                  <div class="d-flex flex-wrap justify-content-end align-items-center gap-2">
+                    <select name="notify_channel_<?= e($type) ?>" class="form-select form-select-sm flex-shrink-0" style="width:auto;min-width:140px">
+                      <?php foreach ($channelOpts as $val => $optLabel): ?>
+                      <option value="<?= e($val) ?>" <?= $cur === $val ? 'selected' : '' ?>><?= e($optLabel) ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                    <div class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" name="notify_telegram_<?= e($type) ?>" id="tg_<?= e($type) ?>" value="1" <?= $tgOn ? 'checked' : '' ?>>
+                      <label class="form-check-label small" for="tg_<?= e($type) ?>">Telegram</label>
+                    </div>
                   </div>
                 </div>
                 <?php endforeach; ?>

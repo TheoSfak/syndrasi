@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.9-beta] — 2026-06-29
+
+### Fix — Notification channel settings coverage
+
+- Οι επιχειρησιακές ειδοποιήσεις στις Ρυθμίσεις έχουν πλέον πλήρη επιλογή Email/SMS/Email+SMS/Καμία, εκτός από το ξεχωριστό Telegram toggle.
+- Τα operational flows για αιτήματα φωτογραφίας/βίντεο/GPS, uploads, μηνύματα επιχειρήσεων, GPS received, team silent, shortage update και SOS acknowledgment σέβονται πλέον τα αποθηκευμένα κανάλια Email/SMS/Telegram.
+- Τα operational Email/SMS defaults είναι πλέον `off` όταν δεν υπάρχει explicit ρύθμιση, ώστε να μη σταλούν μαζικά email/SMS από παλιές εγκαταστάσεις χωρίς επιλογή admin.
+- Διορθώθηκε mapping ώστε η εντολή μετακίνησης να γράφεται ως `ops_geo` αντί για `ops_incident`.
+
+---
+
 ## [0.14.8-beta] — 2026-06-29
 
 ### Hotfix — Telegram completion notifications

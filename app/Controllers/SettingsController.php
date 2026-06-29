@@ -217,12 +217,26 @@ class SettingsController
             'shortage_update',
             'sos_ack',
         ];
+        $opsTypes = [
+            'photo_request',
+            'video_request',
+            'gps_request',
+            'photo_uploaded',
+            'video_uploaded',
+            'gps_arrived',
+            'ops_message',
+            'ops_geo',
+            'team_silent',
+            'shortage_update',
+            'sos_ack',
+        ];
 
         $allowed  = ['off', 'email', 'sms', 'both'];
         $settings = [];
         foreach ($types as $t) {
-            $ch = isset($_POST['notify_channel_' . $t]) ? (string) $_POST['notify_channel_' . $t] : 'email';
-            if (!in_array($ch, $allowed, true)) { $ch = 'email'; }
+            $default = in_array($t, $opsTypes, true) ? 'off' : 'email';
+            $ch = isset($_POST['notify_channel_' . $t]) ? (string) $_POST['notify_channel_' . $t] : $default;
+            if (!in_array($ch, $allowed, true)) { $ch = $default; }
             $settings['notify_channel_' . $t] = $ch;
             $settings['notify_telegram_' . $t] = !empty($_POST['notify_telegram_' . $t]) ? '1' : '0';
             // Keep the legacy email flag in sync for backward compatibility
