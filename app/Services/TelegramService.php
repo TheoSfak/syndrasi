@@ -8,6 +8,7 @@
 class TelegramService
 {
     private static $lastError = '';
+    private static $sentInRequest = [];
 
     public static function lastError(): string
     {
@@ -34,6 +35,9 @@ class TelegramService
             if (isset($s['telegram_command_chat_id']) && $s['telegram_command_chat_id'] !== '') {
                 $cfg['command_chat_id'] = $s['telegram_command_chat_id'];
             }
+            if (isset($s['telegram_team_chat_id']) && $s['telegram_team_chat_id'] !== '') {
+                $cfg['team_chat_id'] = $s['telegram_team_chat_id'];
+            }
         }
 
         return $cfg;
@@ -57,6 +61,7 @@ class TelegramService
             'enabled' => env('TELEGRAM_ENABLED', '0') === '1',
             'bot_token' => env('TELEGRAM_BOT_TOKEN', ''),
             'command_chat_id' => env('TELEGRAM_COMMAND_CHAT_ID', ''),
+            'team_chat_id' => env('TELEGRAM_TEAM_CHAT_ID', ''),
         ];
     }
 
@@ -69,12 +74,21 @@ class TelegramService
     public static function sendTeam($teamId, string $title, string $message, $municipalityId = null, ?string $url = null): bool
     {
         $team = VolunteerTeam::find($teamId);
-        if (!$team || empty($team['telegram_chat_id'])) {
-            self::$lastError = 'Η ομάδα δεν έχει Telegram Chat ID.';
+        if (!$team) {
+            self::$lastError = 'Η ομάδα δεν βρέθηκε.';
             return false;
         }
         $mid = $municipalityId ?: ($team['municipality_id'] ?? null);
-        return self::sendToChat(self::resolveConfig($mid), $team['telegram_chat_id'], $title, $message, $url);
+        $cfg = self::resolveConfig($mid);
+        $chatId = trim((string) ($team['telegram_chat_id'] ?? ''));
+        if ($chatId === '') {
+            $chatId = trim((string) ($cfg['team_chat_id'] ?? ''));
+        }
+        if ($chatId === '') {
+            self::$lastError = 'Η ομάδα δεν έχει Telegram Chat ID και δεν υπάρχει κοινό Telegram Chat ID ομάδων.';
+            return false;
+        }
+        return self::sendToChat($cfg, $chatId, $title, $message, $url);
     }
 
     public static function sendToChat(array $cfg, string $chatId, string $title, string $message, ?string $url = null): bool
@@ -94,6 +108,12 @@ class TelegramService
         }
 
         $text = self::formatMessage($title, $message, $url);
+        $dedupeKey = sha1((string) ($cfg['bot_token'] ?? '') . '|' . trim($chatId) . '|' . $text);
+        if (isset(self::$sentInRequest[$dedupeKey])) {
+            return true;
+        }
+        self::$sentInRequest[$dedupeKey] = true;
+
         return self::apiSendMessage((string) $cfg['bot_token'], $chatId, $text);
     }
 

@@ -332,10 +332,12 @@ class SettingsController
 
         $enabled = post_bool('telegram_enabled') ? '1' : '0';
         $commandChatId = post_str('telegram_command_chat_id');
+        $teamChatId = post_str('telegram_team_chat_id');
 
         $settings = [
             'telegram_enabled' => $enabled,
             'telegram_command_chat_id' => $commandChatId,
+            'telegram_team_chat_id' => $teamChatId,
         ];
 
         $token = isset($_POST['telegram_bot_token']) ? trim((string) $_POST['telegram_bot_token']) : '';
@@ -356,16 +358,29 @@ class SettingsController
         requireRole(['municipality_admin']);
         $mid = current_municipality_id();
         $municipality = Municipality::find($mid);
+        $target = isset($_POST['test_target']) ? (string) $_POST['test_target'] : 'command';
+        $cfg = TelegramService::resolveConfig($mid);
 
-        $ok = TelegramService::sendCommand(
-            $mid,
-            'Δοκιμαστικό Telegram SynDrasi',
-            'Η σύνδεση Telegram λειτουργεί για ' . ($municipality['name'] ?? 'τον δήμο') . '.'
-        );
+        if ($target === 'teams') {
+            $ok = TelegramService::sendToChat(
+                $cfg,
+                (string) ($cfg['team_chat_id'] ?? ''),
+                'Δοκιμαστικό Telegram SynDrasi',
+                'Το κοινό Telegram group ομάδων λειτουργεί για ' . ($municipality['name'] ?? 'τον δήμο') . '.'
+            );
+        } else {
+            $ok = TelegramService::sendCommand(
+                $mid,
+                'Δοκιμαστικό Telegram SynDrasi',
+                'Η σύνδεση Telegram command group λειτουργεί για ' . ($municipality['name'] ?? 'τον δήμο') . '.'
+            );
+        }
         audit('municipality_telegram_test', 'municipality', $mid, $ok ? 'success' : 'failed: ' . TelegramService::lastError());
 
         if ($ok) {
-            flash_set('success', 'Το δοκιμαστικό Telegram στάλθηκε στο command chat.');
+            flash_set('success', $target === 'teams'
+                ? 'Το δοκιμαστικό Telegram στάλθηκε στο κοινό group ομάδων.'
+                : 'Το δοκιμαστικό Telegram στάλθηκε στο command chat.');
         } else {
             flash_set('danger', 'Αποτυχία αποστολής Telegram: ' . (TelegramService::lastError() ?: 'άγνωστο σφάλμα'));
         }

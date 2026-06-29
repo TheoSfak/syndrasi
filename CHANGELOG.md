@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.10-beta] — 2026-06-29
+
+### Feature — Shared Telegram group for teams
+
+- Προστέθηκε πεδίο «Κοινό Chat ID ομάδων / εθελοντών» στις ρυθμίσεις Telegram, ώστε ένας δήμος να μπορεί να χρησιμοποιεί ένα ενιαίο Telegram group για όλες τις εθελοντικές ομάδες και τους admins.
+- Τα team-facing Telegram notifications χρησιμοποιούν πρώτα το ειδικό Chat ID ομάδας, αλλιώς κάνουν fallback στο κοινό Chat ID ομάδων.
+- Προστέθηκε dedupe ανά request ώστε broadcast ειδοποιήσεις προς πολλές ομάδες να μην εμφανίζονται πολλές φορές στο ίδιο κοινό Telegram group.
+- Προστέθηκαν ξεχωριστά test buttons για Command group και κοινό group ομάδων.
+- Διορθώθηκαν οι οδηγίες ώστε να εξηγούν ότι μπορεί να χρησιμοποιηθεί το ίδιο `chat.id` και στα δύο πεδία όταν υπάρχει ένα ενιαίο group.
+
+---
+
 ## [0.14.9-beta] — 2026-06-29
 
 ### Fix — Notification channel settings coverage

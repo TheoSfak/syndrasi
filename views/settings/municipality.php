@@ -437,6 +437,7 @@ $tzOptions = [
       $tgEnabled = !empty($telegramEffective['enabled']);
       $tgTokenSet = !empty($telegramEffective['bot_token']);
       $tgCommandChat = $telegramEffective['command_chat_id'] ?? '';
+      $tgTeamChat = $telegramEffective['team_chat_id'] ?? '';
     ?>
     <div class="row g-4">
       <div class="col-lg-7">
@@ -462,6 +463,11 @@ $tzOptions = [
               <input type="text" name="telegram_command_chat_id" class="form-control" value="<?= e($tgCommandChat) ?>" placeholder="π.χ. -1001234567890">
               <div class="form-text">Group/channel όπου θα πηγαίνουν ειδοποιήσεις προς τον δήμο/φορέα.</div>
             </div>
+            <div class="col-12">
+              <label class="form-label">Κοινό Chat ID ομάδων / εθελοντών</label>
+              <input type="text" name="telegram_team_chat_id" class="form-control" value="<?= e($tgTeamChat) ?>" placeholder="π.χ. -1001234567890">
+              <div class="form-text">Group όπου μπορούν να είναι μέσα όλες οι εθελοντικές ομάδες και οι admins. Χρησιμοποιείται για ειδοποιήσεις προς ομάδες όταν η ομάδα δεν έχει δικό της Telegram Chat ID.</div>
+            </div>
           </div>
           <div class="card-footer bg-white">
             <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
@@ -472,10 +478,11 @@ $tzOptions = [
         <div class="card shadow-sm">
           <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> Δοκιμαστικό Telegram</div>
           <div class="card-body">
-            <p class="small text-muted mb-3">Αποθηκεύστε πρώτα τις ρυθμίσεις. Το test στέλνει μήνυμα στο Command Chat ID.</p>
-            <form method="post" action="<?= e(url('/settings/telegram/test')) ?>">
+            <p class="small text-muted mb-3">Αποθηκεύστε πρώτα τις ρυθμίσεις και μετά δοκιμάστε κάθε group.</p>
+            <form method="post" action="<?= e(url('/settings/telegram/test')) ?>" class="d-grid gap-2">
               <?= csrf_field() ?>
-              <button class="btn btn-outline-primary w-100"><i class="bi bi-send me-1"></i>Αποστολή δοκιμαστικού</button>
+              <button class="btn btn-outline-primary" name="test_target" value="command"><i class="bi bi-send me-1"></i>Test Command group</button>
+              <button class="btn btn-outline-info" name="test_target" value="teams"><i class="bi bi-people me-1"></i>Test κοινό group ομάδων</button>
             </form>
           </div>
         </div>
@@ -487,7 +494,7 @@ $tzOptions = [
                 Ανοίξτε το <a href="https://t.me/BotFather" target="_blank" rel="noopener">BotFather</a>, στείλτε <code>/newbot</code> και αντιγράψτε το <strong>Bot Token</strong>.
               </li>
               <li class="mb-2">
-                Δημιουργήστε ή ανοίξτε το Telegram group/channel του δήμου και προσθέστε το bot ως μέλος. Για channels, δώστε στο bot δικαίωμα δημοσίευσης.
+                Δημιουργήστε ή ανοίξτε το Telegram group/channel και προσθέστε το bot ως μέλος. Για channels, δώστε στο bot δικαίωμα δημοσίευσης.
               </li>
               <li class="mb-2">
                 Στείλτε ένα δοκιμαστικό μήνυμα μέσα στο group, π.χ. <code>test syndrasi</code>.
@@ -499,7 +506,7 @@ $tzOptions = [
                 Βρείτε το <code>chat.id</code>. Συνήθως τα group/channel IDs είναι αρνητικά, π.χ. <code>-1001234567890</code>.
               </li>
               <li class="mb-2">
-                Βάλτε αυτό το ID στο πεδίο <strong>Command / Δήμος Chat ID</strong> και πατήστε <strong>Αποθήκευση</strong>.
+                Αν αυτό είναι το group του δήμου/φορέα, βάλτε το ID στο <strong>Command / Δήμος Chat ID</strong>. Αν είναι το κοινό group όπου θα είναι μέσα όλες οι εθελοντικές ομάδες, βάλτε το και στο <strong>Κοινό Chat ID ομάδων / εθελοντών</strong>. Μπορεί να είναι το ίδιο ID και στα δύο πεδία.
               </li>
               <li>
                 Πατήστε <strong>Αποστολή δοκιμαστικού</strong>. Αν το μήνυμα εμφανιστεί στο group, το Telegram είναι έτοιμο.
@@ -507,7 +514,8 @@ $tzOptions = [
             </ol>
             <div class="border-top pt-3">
               <div class="fw-semibold text-body mb-2">Groups ομάδων</div>
-              <p>Για κάθε εθελοντική ομάδα που θέλετε να λαμβάνει Telegram, φτιάξτε/ανοίξτε το δικό της group, προσθέστε το ίδιο bot, πάρτε το <code>chat.id</code> με τον ίδιο τρόπο και βάλτε το στο πεδίο <strong>Εθελοντικές Ομάδες → Επεξεργασία → Telegram Chat ID ομάδας</strong>.</p>
+              <p>Αν θέλετε ένα κοινό group για όλους τους εθελοντές/admins, βάλτε το <code>chat.id</code> στο <strong>Κοινό Chat ID ομάδων / εθελοντών</strong> και αφήστε κενά τα επιμέρους Telegram Chat ID των ομάδων.</p>
+              <p class="mb-0">Το πεδίο <strong>Εθελοντικές Ομάδες → Επεξεργασία → Telegram Chat ID ομάδας</strong> χρειάζεται μόνο αν κάποια ομάδα έχει δικό της ξεχωριστό Telegram group και θέλετε τα μηνύματά της να πηγαίνουν εκεί αντί για το κοινό group.</p>
             </div>
             <div class="border-top pt-3 mt-3">
               <div class="fw-semibold text-body mb-2">Χρήσιμα links</div>
