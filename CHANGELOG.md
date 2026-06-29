@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.8-beta] — 2026-06-29
+
+### Hotfix — Telegram completion notifications
+
+- Διορθώθηκε η ολοκλήρωση δράσης ώστε να καλεί κανονικά τις ειδοποιήσεις `event_completed`.
+- Όταν είναι ενεργό το Telegram για «Ολοκλήρωση δράσης», αποστέλλεται πλέον και σύνοψη στο command group του δήμου, πέρα από τις ειδοποιήσεις προς τις εγκεκριμένες ομάδες.
+
+---
+
 ## [0.14.7-beta] — 2026-06-29
 
 ### Docs — Telegram getUpdates setup

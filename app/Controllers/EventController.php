@@ -380,7 +380,8 @@ class EventController
         }
         Event::setStatus($event['id'], 'completed');
         audit('event_completed', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η δράση ολοκληρώθηκε.');
+        try { NotificationService::eventCompleted($event); } catch (Throwable $e) { error_log('[EventCompleted] ' . $e->getMessage()); }
+        flash_set('success', 'Η δράση ολοκληρώθηκε και οι ειδοποιήσεις στάλθηκαν.');
         redirect('/operations');
     }
 

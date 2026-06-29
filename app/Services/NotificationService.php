@@ -358,6 +358,14 @@ class NotificationService
                 $tpl['subject'], $tpl['body']
             );
         }
+
+        self::maybeTelegramCommand(
+            $mid,
+            'event_completed',
+            'Ολοκληρώθηκε δράση',
+            'Η δράση "' . $event['title'] . '" μετακινήθηκε στις Ολοκληρωμένες.',
+            self::absoluteUrl('/events/' . (int) $event['id'])
+        );
     }
 
     // ── Shift Scheduling notifications ───────────────────────────────────────
