@@ -89,6 +89,36 @@ class TeamPortalController
         ]);
     }
 
+    public function readiness()
+    {
+        requireRole(['team_admin']);
+        $team = VolunteerTeam::find(current_team_id());
+        render('team/readiness', [
+            'pageTitle'        => 'Ετοιμότητα Ομάδας',
+            'team'             => $team,
+            'readinessOptions' => VolunteerTeam::readinessOptionsForMunicipality(current_municipality_id()),
+        ]);
+    }
+
+    public function saveReadiness()
+    {
+        requireRole(['team_admin']);
+        $team = VolunteerTeam::find(current_team_id());
+        if (!$team) {
+            abort(404, 'Η ομάδα δεν βρέθηκε.');
+        }
+
+        VolunteerTeam::updateReadiness((int) $team['id'], [
+            'has_vehicle'             => post_bool('has_vehicle'),
+            'has_medical_equipment'   => post_bool('has_medical_equipment'),
+            'default_people_capacity' => post_int('default_people_capacity') ?: null,
+            'readiness_items_json'    => $this->readinessItemsJson(),
+        ]);
+        audit('team_readiness_updated', 'volunteer_team', (int) $team['id']);
+        flash_set('success', 'Η ετοιμότητα της ομάδας ενημερώθηκε.');
+        redirect('/team/readiness');
+    }
+
     /* --------------------------------------------------------------- Events */
 
     public function events()
@@ -174,6 +204,7 @@ class TeamPortalController
             'event'                => $event,
             'team'                 => $team,
             'application'          => $application,
+            'ownMatch'             => $team ? TeamMissionMatcher::scoreTeam($event, $team, $application ?: null) : null,
             'myReport'             => $myReport,
             'myDebrief'            => $myDebrief,
             'teamMembers'          => $teamMembers,
@@ -1100,5 +1131,38 @@ class TeamPortalController
             redirect('/team/operations/events/' . $event['id']);
         }
         return ['event' => $event, 'application' => $application];
+    }
+
+    private function readinessItemsJson(): ?string
+    {
+        $items = [];
+        $posted = $_POST['readiness_items'] ?? [];
+        if (is_array($posted)) {
+            foreach ($posted as $item) {
+                $items[] = trim((string) $item);
+            }
+        }
+
+        $extra = preg_split('/\r\n|\r|\n/', (string) ($_POST['readiness_items_extra'] ?? ''));
+        foreach ($extra ?: [] as $item) {
+            $items[] = trim((string) $item);
+        }
+
+        $clean = [];
+        $seen = [];
+        foreach ($items as $item) {
+            $item = preg_replace('/\s+/', ' ', $item);
+            if ($item === '') {
+                continue;
+            }
+            $key = mb_strtolower($item, 'UTF-8');
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $clean[] = mb_substr($item, 0, 120, 'UTF-8');
+        }
+
+        return $clean ? json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
     }
 }

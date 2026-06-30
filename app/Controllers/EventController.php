@@ -231,6 +231,9 @@ class EventController
         )->fetchAll();
         $shifts    = EventShift::forEvent($event['id']);
         $shiftApps = EventShift::applicationsForEvent($event['id']);
+        $teamMatches = current_role() === 'municipality_admin'
+            ? TeamMissionMatcher::rankedTeamsForEvent($event, VolunteerTeam::forMunicipality((int) $event['municipality_id'], true))
+            : [];
         render('events/show', [
             'pageTitle'    => $event['title'],
             'event'        => $event,
@@ -238,6 +241,7 @@ class EventController
             'reports'      => $reports,
             'shifts'       => $shifts,
             'shiftApps'    => $shiftApps,
+            'teamMatches'  => $teamMatches,
             'terms'        => authority_context((int) $event['municipality_id']),
         ]);
     }

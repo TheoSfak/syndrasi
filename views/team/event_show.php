@@ -116,6 +116,31 @@ if (!empty($event['requested_items_json'])) {
   </div>
 
   <div class="col-lg-5">
+    <?php if (!empty($ownMatch)): ?>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-stars me-1"></i> Match ομάδας</span>
+          <span class="badge text-bg-<?= e($ownMatch['level_class']) ?>"><?= (int) $ownMatch['score'] ?>%</span>
+        </div>
+        <div class="card-body">
+          <div class="fw-semibold mb-2"><?= e($ownMatch['level']) ?></div>
+          <?php if (!empty($ownMatch['missing'])): ?>
+            <div class="small text-muted mb-2">Λείπουν ή δεν έχουν δηλωθεί:</div>
+            <div class="d-flex flex-wrap gap-1 mb-3">
+              <?php foreach (array_slice($ownMatch['missing'], 0, 8) as $missing): ?>
+                <span class="badge text-bg-warning text-dark border"><?= e($missing) ?></span>
+              <?php endforeach; ?>
+              <?php if (count($ownMatch['missing']) > 8): ?><span class="badge text-bg-light border">+<?= count($ownMatch['missing']) - 8 ?></span><?php endif; ?>
+            </div>
+            <a class="btn btn-sm btn-outline-primary" href="<?= e(url('/team/readiness')) ?>">
+              <i class="bi bi-clipboard2-check me-1"></i>Ενημέρωση ετοιμότητας
+            </a>
+          <?php else: ?>
+            <div class="small text-success"><i class="bi bi-check-circle me-1"></i>Η ομάδα καλύπτει όλα τα βασικά ζητούμενα.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <?php if (in_array($event['status'], ['closed', 'completed'], true) && ($application['status'] ?? '') === 'approved'): ?>
       <?php if (!$myDebrief): ?>

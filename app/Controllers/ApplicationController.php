@@ -25,6 +25,12 @@ class ApplicationController
         // attach short team history for the review screen
         foreach ($applications as $k => $app) {
             $applications[$k]['history'] = EventApplication::teamHistorySummary($app['team_id']);
+            $applications[$k]['match'] = TeamMissionMatcher::scoreTeam($event, [
+                'has_vehicle'             => $app['team_has_vehicle'] ?? 0,
+                'has_medical_equipment'   => $app['team_has_medical'] ?? 0,
+                'default_people_capacity' => $app['team_default_people_capacity'] ?? 0,
+                'readiness_items_json'    => $app['team_readiness_items_json'] ?? null,
+            ], $app);
         }
 
         render('applications/index', [

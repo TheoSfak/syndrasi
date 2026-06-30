@@ -179,6 +179,8 @@ $router->get('/reports/pdf/annual/{id}',            'ReportController@pdfAnnual'
 
 /* Team admin */
 $router->get('/team/dashboard', 'TeamPortalController@dashboard');
+$router->get('/team/readiness', 'TeamPortalController@readiness');
+$router->post('/team/readiness', 'TeamPortalController@saveReadiness');
 $router->get('/team/events', 'TeamPortalController@events');
 $router->get('/team/events/{id}', 'TeamPortalController@showEvent');
 $router->post('/team/events/{id}/apply', 'TeamPortalController@apply');

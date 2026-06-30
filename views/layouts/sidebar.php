@@ -14,7 +14,7 @@ if ($role === 'municipality_admin') {
         ['/operations',   'bi-broadcast',                 'Κέντρο Επιχειρήσεων'],
         ['/operations/war-room', 'bi-diagram-3',          'Κέντρο Συντονισμού'],
         ['/fire-service', 'bi-fire',                       'Συμβάντα Πυροσβεστικής'],
-        ['/notification-center', 'bi-bell-pulse',          'Έλεγχος Ειδοποιήσεων'],
+        ['/notification-center', 'bi-bell-fill',           'Έλεγχος Ειδοποιήσεων'],
         ['/events',       'bi-calendar-event',            $eventMenuLabel],
         ['/events/calendar', 'bi-calendar3',              'Ημερολόγιο'],
         ['/teams',        'bi-people',                    $teamMenuLabel],
@@ -35,6 +35,7 @@ if ($role === 'municipality_admin') {
 } elseif ($role === 'team_admin') {
     $menus = [
         ['/team/dashboard', 'bi-speedometer2', 'Πίνακας Ελέγχου'],
+        ['/team/readiness', 'bi-clipboard2-check', 'Ετοιμότητα Ομάδας'],
         ['/team/events', 'bi-calendar-event', $eventMenuLabel],
         ['/team/applications', 'bi-inbox', 'Οι Δηλώσεις μας'],
         ['/team/members', 'bi-people', 'Μέλη Ομάδας'],

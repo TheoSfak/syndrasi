@@ -77,6 +77,29 @@ $hasPending  = count($pendingApps) > 0;
               <?php if ($a['offered_vehicle']): ?><span class="badge text-bg-light text-dark border"><i class="bi bi-truck me-1"></i>Όχημα</span><?php endif; ?>
               <?php if ($a['offered_medical_equipment']): ?><span class="badge text-bg-light text-dark border"><i class="bi bi-heart-pulse me-1"></i>Υγειονομικός εξοπλισμός</span><?php endif; ?>
             </div>
+            <?php if (!empty($a['match'])): ?>
+              <div class="border rounded p-2 bg-light mb-2" style="max-width:720px">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                  <span class="badge text-bg-<?= e($a['match']['level_class']) ?>">
+                    <?= (int) $a['match']['score'] ?>% match
+                  </span>
+                  <span class="small fw-semibold"><?= e($a['match']['level']) ?></span>
+                </div>
+                <?php if (!empty($a['match']['missing'])): ?>
+                  <div class="small text-muted">
+                    Λείπουν:
+                    <?php foreach (array_slice($a['match']['missing'], 0, 6) as $missing): ?>
+                      <span class="badge text-bg-warning text-dark border"><?= e($missing) ?></span>
+                    <?php endforeach; ?>
+                    <?php if (count($a['match']['missing']) > 6): ?>
+                      <span class="badge text-bg-light border">+<?= count($a['match']['missing']) - 6 ?></span>
+                    <?php endif; ?>
+                  </div>
+                <?php else: ?>
+                  <div class="small text-success"><i class="bi bi-check-circle me-1"></i>Καλύπτει όλα τα βασικά ζητούμενα.</div>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
             <?php if ($a['comment']): ?>
               <div class="small"><i class="bi bi-chat-left-text me-1"></i><?= e($a['comment']) ?></div>
             <?php endif; ?>

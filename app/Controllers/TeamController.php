@@ -16,7 +16,12 @@ class TeamController
     public function create()
     {
         requireRole(['municipality_admin']);
-        render('teams/form', ['pageTitle' => 'Νέα Ομάδα', 'team' => null]);
+        $mid = current_municipality_id();
+        render('teams/form', [
+            'pageTitle'        => 'Νέα Ομάδα',
+            'team'             => null,
+            'readinessOptions' => VolunteerTeam::readinessOptionsForMunicipality($mid),
+        ]);
     }
 
     public function store()
@@ -71,7 +76,11 @@ class TeamController
     {
         requireRole(['municipality_admin']);
         $team = $this->findOwn($id);
-        render('teams/form', ['pageTitle' => 'Επεξεργασία Ομάδας', 'team' => $team]);
+        render('teams/form', [
+            'pageTitle'        => 'Επεξεργασία Ομάδας',
+            'team'             => $team,
+            'readinessOptions' => VolunteerTeam::readinessOptionsForMunicipality((int) $team['municipality_id']),
+        ]);
     }
 
     public function assistants($id)
@@ -156,8 +165,42 @@ class TeamController
             'has_vehicle'             => post_bool('has_vehicle'),
             'has_medical_equipment'   => post_bool('has_medical_equipment'),
             'default_people_capacity' => post_int('default_people_capacity') ?: null,
+            'readiness_items_json'    => $this->readinessItemsJson(),
             'notes'                   => post_str('notes') ?: null,
             'status'                  => post_str('status') === 'inactive' ? 'inactive' : 'active',
         ];
+    }
+
+    private function readinessItemsJson(): ?string
+    {
+        $items = [];
+        $posted = $_POST['readiness_items'] ?? [];
+        if (is_array($posted)) {
+            foreach ($posted as $item) {
+                $items[] = trim((string) $item);
+            }
+        }
+
+        $extra = preg_split('/\r\n|\r|\n/', (string) ($_POST['readiness_items_extra'] ?? ''));
+        foreach ($extra ?: [] as $item) {
+            $items[] = trim((string) $item);
+        }
+
+        $clean = [];
+        $seen = [];
+        foreach ($items as $item) {
+            $item = preg_replace('/\s+/', ' ', $item);
+            if ($item === '') {
+                continue;
+            }
+            $key = mb_strtolower($item, 'UTF-8');
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $clean[] = mb_substr($item, 0, 120, 'UTF-8');
+        }
+
+        return $clean ? json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
     }
 }

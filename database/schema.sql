@@ -88,6 +88,7 @@ CREATE TABLE volunteer_teams (
   has_vehicle TINYINT(1) NOT NULL DEFAULT 0,
   has_medical_equipment TINYINT(1) NOT NULL DEFAULT 0,
   default_people_capacity INT NULL,
+  readiness_items_json TEXT NULL,
   notes TEXT NULL,
   status ENUM('active','inactive') NOT NULL DEFAULT 'active',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

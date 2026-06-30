@@ -21,7 +21,9 @@ class EventApplication
     {
         return dbq(
             'SELECT ea.*, t.name AS team_name, t.type AS team_type, t.phone AS team_phone,
-                    t.has_vehicle AS team_has_vehicle, t.has_medical_equipment AS team_has_medical
+                    t.has_vehicle AS team_has_vehicle, t.has_medical_equipment AS team_has_medical,
+                    t.default_people_capacity AS team_default_people_capacity,
+                    t.readiness_items_json AS team_readiness_items_json
              FROM event_applications ea
              JOIN volunteer_teams t ON t.id = ea.team_id
              WHERE ea.event_id = :eid

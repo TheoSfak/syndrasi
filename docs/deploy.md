@@ -1,7 +1,7 @@
 # SynDrasi Deploy Notes
 
 Last updated: 2026-06-30  
-Current release line: `0.15.8-beta`
+Current release line: `0.15.9-beta`
 
 This file summarizes what has been built so far in the recent SynDrasi work cycle and what must be checked when deploying to production.
 
@@ -24,6 +24,7 @@ SynDrasi now includes:
 - Notification Control Center for municipality admins, with unified email/SMS/Telegram/push/in-app history.
 - Multi-agency authority profiles: superadmin chooses Δήμος, Πολιτική Προστασία, Πυροσβεστική or Λιμενικό, with dynamic Δράσεις/Αποστολές terminology and per-authority mission categories.
 - Mission Playbooks for all non-municipality agency mission categories, with form autofill, editable requested items, operational checklist, ready messages, and debrief prompts.
+- Team readiness profiles and mission match scoring, so admins can see recommended teams and gaps against each mission's playbook/requested items.
 
 The GitHub Actions idea for fetching the Civil Protection fire-risk map was removed in `0.14.19-beta` because it was not reliable enough for production.
 

@@ -4,6 +4,20 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.9-beta] — 2026-06-30
+
+### Feature — Team readiness matching
+
+- Προστέθηκε migration `036_team_readiness_profiles.sql`.
+- Οι ομάδες αποκτούν Προφίλ Επιχειρησιακής Ετοιμότητας με τυπική δύναμη, όχημα, υγειονομικό και checklist δυνατοτήτων/εξοπλισμού από τα playbooks.
+- Προστέθηκε σελίδα αρχηγού ομάδας `Ετοιμότητα Ομάδας` για self-service ενημέρωση δυνατοτήτων.
+- Προστέθηκε `TeamMissionMatcher` που βγάζει match score με βάση άτομα, όχημα, υγειονομικό και ζητούμενα αντικείμενα αποστολής.
+- Ο admin βλέπει προτεινόμενες ομάδες μέσα στην αποστολή και match score στις δηλώσεις συμμετοχής.
+- Η ομάδα βλέπει το δικό της match στην αποστολή και τι λείπει/δεν έχει δηλωθεί.
+- Διορθώθηκε το sidebar icon του `Έλεγχος Ειδοποιήσεων`.
+
+---
+
 ## [0.15.8-beta] — 2026-06-30
 
 ### Feature — Playbook requested items

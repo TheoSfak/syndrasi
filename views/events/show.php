@@ -364,6 +364,41 @@ if (!empty($event['requested_items_json'])) {
       </div>
     <?php endif; ?>
 
+    <?php if (current_role() === 'municipality_admin' && !empty($teamMatches)): ?>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-stars me-1"></i> Προτεινόμενες ομάδες</span>
+          <span class="badge text-bg-light border"><?= count($teamMatches) ?></span>
+        </div>
+        <div class="list-group list-group-flush">
+          <?php foreach (array_slice($teamMatches, 0, 5) as $tm): ?>
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <div class="fw-semibold"><?= e($tm['name']) ?></div>
+                  <div class="small text-muted">
+                    <?= $tm['default_people_capacity'] ? (int) $tm['default_people_capacity'] . ' άτομα' : 'Χωρίς δηλωμένη δύναμη' ?>
+                    <?= $tm['has_vehicle'] ? ' · όχημα' : '' ?>
+                    <?= $tm['has_medical_equipment'] ? ' · υγειον.' : '' ?>
+                  </div>
+                </div>
+                <span class="badge text-bg-<?= e($tm['match']['level_class']) ?>"><?= (int) $tm['match']['score'] ?>%</span>
+              </div>
+              <?php if (!empty($tm['match']['missing'])): ?>
+                <div class="small text-muted mt-2">
+                  Λείπουν:
+                  <?php foreach (array_slice($tm['match']['missing'], 0, 4) as $missing): ?>
+                    <span class="badge text-bg-warning text-dark border"><?= e($missing) ?></span>
+                  <?php endforeach; ?>
+                  <?php if (count($tm['match']['missing']) > 4): ?><span class="badge text-bg-light border">+<?= count($tm['match']['missing']) - 4 ?></span><?php endif; ?>
+                </div>
+              <?php endif; ?>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <div class="card shadow-sm">
       <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
         <span><i class="bi bi-file-earmark-text me-1"></i> Αναφορές <?= e($eventSingularLc) ?></span>
