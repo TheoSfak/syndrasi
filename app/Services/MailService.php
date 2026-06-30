@@ -53,6 +53,17 @@ class MailService
                     'body'  => (string) $body,
                 ]
             );
+            $queueId = (int) db()->lastInsertId();
+            NotificationDelivery::record([
+                'municipality_id' => $municipalityId,
+                'channel' => 'email',
+                'status' => 'queued',
+                'recipient_label' => (string) $toName,
+                'recipient_address' => (string) $toEmail,
+                'title' => (string) $subject,
+                'message' => (string) $body,
+                'external_ref' => 'mail_queue:' . $queueId,
+            ]);
             self::$dbQueued = true;
         } catch (Throwable $e) {
             // DB table not yet created — fall back to PHP-array + shutdown.
@@ -187,9 +198,11 @@ class MailService
                 if ($ok) {
                     dbq("UPDATE mail_queue SET sent_at = NOW(), error_msg = NULL WHERE id = :id",
                         ['id' => $m['id']]);
+                    NotificationDelivery::markExternalRef('mail_queue:' . (int) $m['id'], 'sent', (int) $m['attempts'] + 1, null);
                 } else {
                     dbq("UPDATE mail_queue SET error_msg = :err WHERE id = :id",
                         ['err' => self::$lastError, 'id' => $m['id']]);
+                    NotificationDelivery::markExternalRef('mail_queue:' . (int) $m['id'], 'failed', (int) $m['attempts'] + 1, self::$lastError);
                 }
             }
         } catch (Throwable $e) {

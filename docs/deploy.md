@@ -1,7 +1,7 @@
 # SynDrasi Deploy Notes
 
 Last updated: 2026-06-30  
-Current release line: `0.15.3-beta`
+Current release line: `0.15.4-beta`
 
 This file summarizes what has been built so far in the recent SynDrasi work cycle and what must be checked when deploying to production.
 
@@ -21,6 +21,7 @@ SynDrasi now includes:
 - Demo volunteer email sanitization for production safety.
 - Municipality email history/statistics tab with clear-history action.
 - Deterministic demo team/member email scheme and `Syndrasi2026` team password.
+- Notification Control Center for municipality admins, with unified email/SMS/Telegram/push/in-app history.
 
 The GitHub Actions idea for fetching the Civil Protection fire-risk map was removed in `0.14.19-beta` because it was not reliable enough for production.
 
@@ -279,6 +280,32 @@ Capabilities:
 - Shows sent, pending, failed, last 24h, last 7d, recent rows, daily totals, and frequent recipients.
 - Municipality admin can delete all email history for their municipality after typing `DELETE`.
 
+## 9. Notification Control Center
+
+Main routes:
+
+- `GET /notification-center`
+- `POST /notification-center/mail/{id}/retry`
+- `POST /notification-center/clear`
+
+Main files:
+
+- `app/Controllers/NotificationCenterController.php`
+- `app/Models/NotificationDelivery.php`
+- `views/notification_center/index.php`
+- `database/migrations/031_notification_delivery_log.sql`
+
+Capabilities:
+
+- Municipality admin menu item: `Έλεγχος Ειδοποιήσεων`.
+- Unified operational history across email, SMS, Telegram, push, and in-app notifications.
+- Filters by channel, status, date range, and free text.
+- Shows recipient, address, message/title, attempts, status, time, team/event context, and delivery errors.
+- Email retries reset the selected `mail_queue` row back to pending/queued state.
+- Clear-history action can delete all notification history, external delivery history, or only in-app history for the current municipality after typing `DELETE`.
+- New outgoing SMS, Telegram, push, and queued email sends are written to `notification_deliveries`.
+- Legacy email history that predates the delivery log still appears through `mail_queue`.
+
 ## Database Migrations To Ensure Applied
 
 Recent relevant migrations:
@@ -291,6 +318,7 @@ Recent relevant migrations:
 - `028_fire_risk_map_notifications.sql`
 - `029_sanitize_demo_volunteer_emails.sql`
 - `030_demo_team_email_scheme_and_password.sql`
+- `031_notification_delivery_log.sql`
 
 After update, run migrations from Superadmin -> Maintenance/Migrations or the existing migration runner.
 
@@ -374,6 +402,8 @@ After deploying a release:
 17. Verify demo volunteer emails are sanitized in production after migrations run.
 18. Open Settings -> Ιστορικό Email and confirm email counters/recent rows load; do not clear production history unless intentionally requested.
 19. Verify team-admin demo login such as `omada1@syndrasi.local` / `Syndrasi2026` works after migrations run.
+20. Open `/notification-center`, confirm channel cards and recent rows load, send a test email/SMS/Telegram/push event, and confirm a delivery row appears.
+21. Use retry only on a test failed/queued email and confirm it resets to queued; do not clear production history unless intentionally requested.
 
 ## Release Process
 
@@ -395,5 +425,5 @@ For every deployable change:
 
 Latest release at the time this file was written:
 
-- `v0.15.3-beta`
-- Purpose: deterministic demo team/member emails and team password.
+- `v0.15.4-beta`
+- Purpose: Notification Control Center with unified delivery history, filters, retry, and clear-history actions.

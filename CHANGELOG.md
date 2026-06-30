@@ -4,6 +4,19 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.4-beta] — 2026-06-30
+
+### Feature — Notification Control Center
+
+- Προστέθηκε νέο admin menu item «Έλεγχος Ειδοποιήσεων» στο `/notification-center`.
+- Προστέθηκε migration `031_notification_delivery_log.sql` με ενιαίο delivery log για email, SMS, Telegram και push.
+- Το κέντρο δείχνει στατιστικά, φίλτρα ανά κανάλι/κατάσταση/ημερομηνία, παραλήπτη, μήνυμα, προσπάθειες και σφάλματα.
+- Το email queue συνδέεται πλέον με delivery status: queued, sent, failed, μαζί με retry για email που δεν έφυγαν.
+- Καταγράφονται νέες προσπάθειες SMS, Telegram και push, συμπεριλαμβανομένων παραλείψεων όταν λείπει push subscription ή Telegram chat.
+- Προστέθηκε διαγραφή ιστορικού για όλα τα κανάλια ή μόνο in-app ειδοποιήσεις, scoped στον τρέχοντα δήμο και με επιβεβαίωση `DELETE`.
+
+---
+
 ## [0.15.3-beta] — 2026-06-30
 
 ### Data safety — deterministic demo team emails/passwords

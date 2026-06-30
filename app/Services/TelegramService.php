@@ -68,7 +68,20 @@ class TelegramService
     public static function sendCommand($municipalityId, string $title, string $message, ?string $url = null): bool
     {
         $cfg = self::resolveConfig($municipalityId);
-        return self::sendToChat($cfg, $cfg['command_chat_id'] ?? '', $title, $message, $url);
+        $chatId = (string) ($cfg['command_chat_id'] ?? '');
+        $ok = self::sendToChat($cfg, $chatId, $title, $message, $url);
+        NotificationDelivery::record([
+            'municipality_id' => $municipalityId,
+            'channel' => 'telegram',
+            'status' => $ok ? 'sent' : 'failed',
+            'recipient_label' => 'Κέντρο διοίκησης',
+            'recipient_address' => $chatId,
+            'title' => $title,
+            'message' => $message,
+            'attempts' => 1,
+            'error_msg' => $ok ? null : self::$lastError,
+        ]);
+        return $ok;
     }
 
     public static function sendTeam($teamId, string $title, string $message, $municipalityId = null, ?string $url = null): bool
@@ -86,9 +99,33 @@ class TelegramService
         }
         if ($chatId === '') {
             self::$lastError = 'Η ομάδα δεν έχει Telegram Chat ID και δεν υπάρχει κοινό Telegram Chat ID ομάδων.';
+            NotificationDelivery::record([
+                'municipality_id' => $mid,
+                'channel' => 'telegram',
+                'status' => 'failed',
+                'team_id' => (int) $teamId,
+                'recipient_label' => $team['name'] ?? 'Ομάδα',
+                'title' => $title,
+                'message' => $message,
+                'attempts' => 1,
+                'error_msg' => self::$lastError,
+            ]);
             return false;
         }
-        return self::sendToChat($cfg, $chatId, $title, $message, $url);
+        $ok = self::sendToChat($cfg, $chatId, $title, $message, $url);
+        NotificationDelivery::record([
+            'municipality_id' => $mid,
+            'channel' => 'telegram',
+            'status' => $ok ? 'sent' : 'failed',
+            'team_id' => (int) $teamId,
+            'recipient_label' => $team['name'] ?? 'Ομάδα',
+            'recipient_address' => $chatId,
+            'title' => $title,
+            'message' => $message,
+            'attempts' => 1,
+            'error_msg' => $ok ? null : self::$lastError,
+        ]);
+        return $ok;
     }
 
     public static function sendToChat(array $cfg, string $chatId, string $title, string $message, ?string $url = null): bool

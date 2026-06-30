@@ -212,14 +212,62 @@ class NotificationService
      */
     private static function sendPush(int $userId, string $title, string $body, string $urgency = 'normal'): void
     {
+        $user = null;
         try {
+            $user = dbq(
+                'SELECT id, municipality_id, team_id, name, email FROM users WHERE id = :uid LIMIT 1',
+                ['uid' => $userId]
+            )->fetch() ?: null;
             $subs = dbq('SELECT * FROM push_subscriptions WHERE user_id = :uid', ['uid' => $userId])->fetchAll();
-            if (!$subs) { return; }
-            $payload = ['title' => $title, 'body' => $body, 'url' => '/notifications'];
-            foreach ($subs as $sub) {
-                WebPushService::send($sub, $payload, 86400, $urgency);
+            if (!$subs) {
+                NotificationDelivery::record([
+                    'municipality_id' => $user['municipality_id'] ?? null,
+                    'channel' => 'push',
+                    'status' => 'skipped',
+                    'recipient_user_id' => $userId,
+                    'team_id' => $user['team_id'] ?? null,
+                    'recipient_label' => $user['name'] ?? null,
+                    'recipient_address' => $user['email'] ?? null,
+                    'title' => $title,
+                    'message' => $body,
+                    'error_msg' => 'Δεν υπάρχει ενεργή push συνδρομή για τον χρήστη.',
+                ]);
+                return;
             }
+            $payload = ['title' => $title, 'body' => $body, 'url' => '/notifications'];
+            $ok = 0;
+            foreach ($subs as $sub) {
+                if (WebPushService::send($sub, $payload, 86400, $urgency)) {
+                    $ok++;
+                }
+            }
+            NotificationDelivery::record([
+                'municipality_id' => $user['municipality_id'] ?? null,
+                'channel' => 'push',
+                'status' => $ok > 0 ? 'sent' : 'failed',
+                'recipient_user_id' => $userId,
+                'team_id' => $user['team_id'] ?? null,
+                'recipient_label' => $user['name'] ?? null,
+                'recipient_address' => $user['email'] ?? null,
+                'title' => $title,
+                'message' => $body,
+                'attempts' => count($subs),
+                'error_msg' => $ok > 0 ? null : 'Απέτυχε η αποστολή σε όλες τις push συνδρομές.',
+            ]);
         } catch (Throwable $e) {
+            NotificationDelivery::record([
+                'municipality_id' => $user['municipality_id'] ?? null,
+                'channel' => 'push',
+                'status' => 'failed',
+                'recipient_user_id' => $userId,
+                'team_id' => $user['team_id'] ?? null,
+                'recipient_label' => $user['name'] ?? null,
+                'recipient_address' => $user['email'] ?? null,
+                'title' => $title,
+                'message' => $body,
+                'attempts' => 1,
+                'error_msg' => $e->getMessage(),
+            ]);
             error_log('[WebPush] sendPush error for user ' . $userId . ': ' . $e->getMessage());
         }
     }
@@ -553,13 +601,42 @@ class NotificationService
                         : (($email !== '' && isset($usersByEmail[$email])) ? $usersByEmail[$email] : null);
             if ($pushUserId) {
                 try {
-                    WebPushService::sendToUser($pushUserId, [
+                    $pushOk = WebPushService::sendToUser($pushUserId, [
                         'title' => $title,
                         'body'  => $sev . ' — πατήστε για να απαντήσετε.',
                         'url'   => '/m/' . $t['token'],
                     ]);
-                    $pushed = true;
+                    $pushed = $pushOk > 0;
+                    $pushUser = dbq(
+                        'SELECT id, municipality_id, team_id, name, email FROM users WHERE id = :uid LIMIT 1',
+                        ['uid' => $pushUserId]
+                    )->fetch() ?: null;
+                    NotificationDelivery::record([
+                        'municipality_id' => $mid,
+                        'channel' => 'push',
+                        'status' => $pushOk > 0 ? 'sent' : 'skipped',
+                        'recipient_user_id' => $pushUserId,
+                        'team_id' => $pushUser['team_id'] ?? null,
+                        'recipient_label' => $pushUser['name'] ?? ($t['full_name'] ?? null),
+                        'recipient_address' => $pushUser['email'] ?? ($t['email'] ?? null),
+                        'title' => $title,
+                        'message' => $sev . ' — πατήστε για να απαντήσετε.',
+                        'attempts' => 1,
+                        'error_msg' => $pushOk > 0 ? null : 'Δεν υπάρχει ενεργή push συνδρομή ή απέτυχε η αποστολή.',
+                    ]);
                 } catch (Throwable $e) {
+                    NotificationDelivery::record([
+                        'municipality_id' => $mid,
+                        'channel' => 'push',
+                        'status' => 'failed',
+                        'recipient_user_id' => $pushUserId,
+                        'recipient_label' => $t['full_name'] ?? null,
+                        'recipient_address' => $t['email'] ?? null,
+                        'title' => $title,
+                        'message' => $sev . ' — πατήστε για να απαντήσετε.',
+                        'attempts' => 1,
+                        'error_msg' => $e->getMessage(),
+                    ]);
                     error_log('[Mobilize] push failed: ' . $e->getMessage());
                 }
             }

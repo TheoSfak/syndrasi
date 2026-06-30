@@ -48,6 +48,9 @@ $router->get('/notifications', 'NotificationController@index');
 $router->get('/notifications/poll', 'NotificationController@poll');
 $router->post('/notifications/{id}/read', 'NotificationController@markRead');
 $router->post('/notifications/read-all', 'NotificationController@markAllRead');
+$router->get('/notification-center', 'NotificationCenterController@index');
+$router->post('/notification-center/mail/{id}/retry', 'NotificationCenterController@retryEmail');
+$router->post('/notification-center/clear', 'NotificationCenterController@clearHistory');
 
 /* Municipality admin: dashboard */
 $router->get('/dashboard', 'DashboardController@municipality');

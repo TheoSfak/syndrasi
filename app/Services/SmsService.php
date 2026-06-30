@@ -58,23 +58,41 @@ class SmsService
         }
 
         $cfg = self::resolveConfig($municipalityId);
+        $ok = false;
         try {
             switch ($cfg['driver']) {
                 case 'smsbox':
-                    return self::sendSmsbox($cfg, $phone, $message);
+                    $ok = self::sendSmsbox($cfg, $phone, $message);
+                    break;
                 case 'http':
-                    return self::sendHttp($cfg, $phone, $message);
+                    $ok = self::sendHttp($cfg, $phone, $message);
+                    break;
                 case 'none':
-                    return false;
+                    self::$lastError = 'Το SMS κανάλι είναι απενεργοποιημένο.';
+                    $ok = false;
+                    break;
                 case 'log':
                 default:
-                    return self::sendLog($phone, $message);
+                    $ok = self::sendLog($phone, $message);
+                    break;
             }
         } catch (Throwable $e) {
             self::$lastError = $e->getMessage();
             error_log('SMS failed: ' . $e->getMessage());
-            return false;
+            $ok = false;
         }
+
+        NotificationDelivery::record([
+            'municipality_id' => $municipalityId,
+            'channel' => 'sms',
+            'status' => $ok ? 'sent' : 'failed',
+            'recipient_address' => $phone,
+            'title' => mb_substr(strip_tags($message), 0, 120),
+            'message' => $message,
+            'attempts' => 1,
+            'error_msg' => $ok ? null : self::$lastError,
+        ]);
+        return $ok;
     }
 
     /** Keep digits and a leading +; assume Greek (+30) for bare 10-digit numbers. */
