@@ -1,6 +1,10 @@
 <?php
 $role = current_role();
 $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$midForTerms = function_exists('current_municipality_id') ? current_municipality_id() : null;
+$authorityTerms = $midForTerms ? authority_context($midForTerms) : authority_defaults('municipality');
+$eventMenuLabel = $authorityTerms['event_plural'] ?? 'Δράσεις';
+$teamMenuLabel = $authorityTerms['team_plural'] ?? 'Εθελοντικές Ομάδες';
 
 $menus = [];
 if ($role === 'municipality_admin') {
@@ -11,9 +15,9 @@ if ($role === 'municipality_admin') {
         ['/operations/war-room', 'bi-diagram-3',          'Κέντρο Συντονισμού'],
         ['/fire-service', 'bi-fire',                       'Συμβάντα Πυροσβεστικής'],
         ['/notification-center', 'bi-bell-pulse',          'Έλεγχος Ειδοποιήσεων'],
-        ['/events',       'bi-calendar-event',            'Δράσεις'],
+        ['/events',       'bi-calendar-event',            $eventMenuLabel],
         ['/events/calendar', 'bi-calendar3',              'Ημερολόγιο'],
-        ['/teams',        'bi-people',                    'Εθελοντικές Ομάδες'],
+        ['/teams',        'bi-people',                    $teamMenuLabel],
         ['/applications', 'bi-inbox',                     'Δηλώσεις Συμμετοχής'],
         ['/statistics',   'bi-bar-chart',                 'Στατιστικά & Τάσεις'],
         ['/awards',       'bi-trophy',                    'Επιβράβευση Ομάδων'],
@@ -26,12 +30,12 @@ if ($role === 'municipality_admin') {
         ['/mobilizations', 'bi-broadcast-pin', 'Κάλεσμα Έκτακτης Ανάγκης'],
         ['/operations', 'bi-broadcast',     'Κέντρο Επιχειρήσεων'],
         ['/operations/war-room', 'bi-diagram-3', 'Κέντρο Συντονισμού'],
-        ['/events',     'bi-calendar-event','Δράσεις'],
+        ['/events',     'bi-calendar-event', $eventMenuLabel],
     ];
 } elseif ($role === 'team_admin') {
     $menus = [
         ['/team/dashboard', 'bi-speedometer2', 'Πίνακας Ελέγχου'],
-        ['/team/events', 'bi-calendar-event', 'Δράσεις'],
+        ['/team/events', 'bi-calendar-event', $eventMenuLabel],
         ['/team/applications', 'bi-inbox', 'Οι Δηλώσεις μας'],
         ['/team/members', 'bi-people', 'Μέλη Ομάδας'],
         ['/team/statistics', 'bi-bar-chart', 'Στατιστικά Ομάδας'],
@@ -39,7 +43,7 @@ if ($role === 'municipality_admin') {
 } elseif ($role === 'super_admin') {
     $menus = [
         ['/admin/dashboard', 'bi-speedometer2', 'Πίνακας Ελέγχου'],
-        ['/admin/municipalities', 'bi-building', 'Δήμοι'],
+        ['/admin/municipalities', 'bi-building', 'Φορείς'],
         ['/admin/teams', 'bi-shield-check', 'Ομάδες & Εθελοντές'],
         ['/admin/users', 'bi-people', 'Χρήστες'],
         ['/admin/settings', 'bi-gear', 'Ρυθμίσεις'],

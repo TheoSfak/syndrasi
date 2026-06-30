@@ -1,7 +1,13 @@
+<?php
+$terms = $terms ?? authority_context();
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Κλειστές Δράσεις</h1>
-    <p class="text-muted small mb-0">Δράσεις που έληξαν — εκκρεμεί αρχειοθέτηση και τελικές διορθώσεις.</p>
+    <h1 class="h3 mb-0">Κλειστές <?= e($eventPlural) ?></h1>
+    <p class="text-muted small mb-0"><?= e($eventPlural) ?> που έληξαν — εκκρεμεί αρχειοθέτηση και τελικές διορθώσεις.</p>
   </div>
 </div>
 
@@ -12,14 +18,14 @@
 </ul>
 
 <?php if (!$events): ?>
-  <div class="alert alert-success">Δεν υπάρχουν κλειστές δράσεις προς αρχειοθέτηση.</div>
+  <div class="alert alert-success">Δεν υπάρχουν κλειστές <?= e($eventPluralLc) ?> προς αρχειοθέτηση.</div>
 <?php else: ?>
   <div class="card shadow-sm">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>Δράση</th>
+            <th><?= e($eventSingular) ?></th>
             <th>Ημερομηνία</th>
             <th class="text-center">Εγκεκρ. Ομάδες</th>
             <th></th>

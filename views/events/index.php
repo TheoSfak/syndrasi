@@ -1,10 +1,16 @@
+<?php
+$terms = $terms ?? authority_context();
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
-  <h1 class="h3 mb-0">Δράσεις</h1>
+  <h1 class="h3 mb-0"><?= e($eventPlural) ?></h1>
   <?php if (current_role() === 'municipality_admin'): ?>
-    <a href="<?= e(url('/events/create')) ?>" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Νέα Δράση</a>
+    <a href="<?= e(url('/events/create')) ?>" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i><?= e($terms['event_new'] ?? 'Νέα Δράση') ?></a>
   <?php endif; ?>
 </div>
-<p class="text-muted">Όλες οι δράσεις του δήμου.</p>
+<p class="text-muted">Όλες οι <?= e($eventPluralLc) ?> του φορέα.</p>
 
 <form class="card shadow-sm mb-3" method="get" action="<?= e(url('/events')) ?>">
   <div class="card-body row g-2 align-items-end">
@@ -47,12 +53,12 @@
 
 <div class="card shadow-sm">
   <?php if (!$events): ?>
-    <div class="card-body text-muted">Δεν βρέθηκαν δράσεις με αυτά τα κριτήρια.</div>
+    <div class="card-body text-muted">Δεν βρέθηκαν <?= e($eventPluralLc) ?> με αυτά τα κριτήρια.</div>
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-hover mb-0">
         <thead>
-          <tr><th>Δράση</th><th>Κατηγορία</th><th>Ημερομηνία</th><th>Κατάσταση</th><th>Δηλώσεις</th><th class="text-end">Ενέργειες</th></tr>
+          <tr><th><?= e($eventSingular) ?></th><th>Τύπος</th><th>Ημερομηνία</th><th>Κατάσταση</th><th>Δηλώσεις</th><th class="text-end">Ενέργειες</th></tr>
         </thead>
         <tbody>
           <?php foreach ($events as $ev): ?>

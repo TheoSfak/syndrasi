@@ -97,7 +97,7 @@ class PublicEventController
             'publicMode' => true,
             'storyToken' => $tok,
             'logo'       => $munSettings['branding_logo_url'] ?? null,
-            'orgLabel'   => MunicipalitySetting::orgLabelShort($munSettings),
+            'orgLabel'   => org_term('short_name', (int) $event['municipality_id']),
         ], false);
     }
 

@@ -97,8 +97,9 @@ class AdminController
     {
         requireRole(['super_admin']);
         render('municipalities/index', [
-            'pageTitle'      => 'Δήμοι',
+            'pageTitle'      => 'Φορείς',
             'municipalities' => Municipality::all(),
+            'authorityOptions' => authority_options(),
         ]);
     }
 
@@ -107,11 +108,18 @@ class AdminController
         requireRole(['super_admin']);
         $name = post_str('name');
         if ($name === '') {
-            flash_set('danger', 'Το όνομα του δήμου είναι υποχρεωτικό.');
+            flash_set('danger', 'Το όνομα του φορέα είναι υποχρεωτικό.');
             redirect('/admin/municipalities');
         }
+        $authorityType = normalize_authority_type(post_str('authority_type', 'municipality'));
+        $defaults = authority_defaults($authorityType);
+        $officialName = post_str('official_name');
+        $shortName = post_str('short_name');
         $id = Municipality::create([
             'name' => $name,
+            'authority_type' => $authorityType,
+            'official_name' => $officialName !== '' ? $officialName : $defaults['prefix'] . ' ' . $name,
+            'short_name' => $shortName !== '' ? $shortName : $defaults['short'],
             'city' => post_str('city') ?: null,
             'address' => post_str('address') ?: null,
             'email' => post_str('email') ?: null,
@@ -119,7 +127,7 @@ class AdminController
             'status' => 'active',
         ]);
         audit('municipality_created', 'municipality', $id, $name);
-        flash_set('success', 'Ο δήμος δημιουργήθηκε.');
+        flash_set('success', 'Ο φορέας δημιουργήθηκε.');
         redirect('/admin/municipalities');
     }
 
@@ -128,15 +136,22 @@ class AdminController
         requireRole(['super_admin']);
         $m = Municipality::find($id);
         if (!$m) {
-            abort(404, 'Ο δήμος δεν βρέθηκε.');
+            abort(404, 'Ο φορέας δεν βρέθηκε.');
         }
         $name = post_str('name');
         if ($name === '') {
-            flash_set('danger', 'Το όνομα του δήμου είναι υποχρεωτικό.');
+            flash_set('danger', 'Το όνομα του φορέα είναι υποχρεωτικό.');
             redirect('/admin/municipalities');
         }
+        $authorityType = normalize_authority_type(post_str('authority_type', $m['authority_type'] ?? 'municipality'));
+        $defaults = authority_defaults($authorityType);
+        $officialName = post_str('official_name');
+        $shortName = post_str('short_name');
         Municipality::update($m['id'], [
             'name' => $name,
+            'authority_type' => $authorityType,
+            'official_name' => $officialName !== '' ? $officialName : $defaults['prefix'] . ' ' . $name,
+            'short_name' => $shortName !== '' ? $shortName : $defaults['short'],
             'city' => post_str('city') ?: null,
             'address' => post_str('address') ?: null,
             'email' => post_str('email') ?: null,
@@ -144,7 +159,7 @@ class AdminController
             'status' => post_str('status') === 'inactive' ? 'inactive' : 'active',
         ]);
         audit('municipality_updated', 'municipality', $m['id'], $name);
-        flash_set('success', 'Ο δήμος ενημερώθηκε.');
+        flash_set('success', 'Ο φορέας ενημερώθηκε.');
         redirect('/admin/municipalities');
     }
 
@@ -153,14 +168,14 @@ class AdminController
         requireRole(['super_admin']);
         $m = Municipality::find($id);
         if (!$m) {
-            abort(404, 'Ο δήμος δεν βρέθηκε.');
+            abort(404, 'Ο φορέας δεν βρέθηκε.');
         }
         dbq(
             "UPDATE municipalities SET status = IF(status = 'active', 'inactive', 'active') WHERE id = :id",
             ['id' => $m['id']]
         );
         audit('municipality_status_toggled', 'municipality', $m['id']);
-        flash_set('success', 'Η κατάσταση του δήμου άλλαξε.');
+        flash_set('success', 'Η κατάσταση του φορέα άλλαξε.');
         redirect('/admin/municipalities');
     }
 
@@ -169,7 +184,7 @@ class AdminController
     {
         requireRole(['super_admin']);
         $m = Municipality::find($id);
-        if (!$m) { abort(404, 'Ο δήμος δεν βρέθηκε.'); }
+        if (!$m) { abort(404, 'Ο φορέας δεν βρέθηκε.'); }
 
         $users = dbq(
             'SELECT u.*, t.name AS team_name FROM users u
@@ -200,6 +215,8 @@ class AdminController
         render('municipalities/show', [
             'pageTitle' => $m['name'],
             'm'         => $m,
+            'authorityOptions' => authority_options(),
+            'authorityContext' => authority_context((int) $m['id']),
             'users'     => $users,
             'teams'     => $teams,
             'stats'     => $stats,

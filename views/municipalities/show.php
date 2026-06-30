@@ -11,15 +11,23 @@ $roleBadge = [
     'event_operator'   => 'info',
     'team_admin'       => 'success',
 ];
+$authorityOptions = $authorityOptions ?? authority_options();
+$authorityContext = $authorityContext ?? authority_context((int) $m['id']);
+$eventPlural = $authorityContext['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
 ?>
 
 <!-- Header -->
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
   <div>
     <a href="<?= e(url('/admin/municipalities')) ?>" class="text-muted small text-decoration-none">
-      <i class="bi bi-chevron-left"></i> Δήμοι
+      <i class="bi bi-chevron-left"></i> Φορείς
     </a>
-    <h1 class="h3 mb-0 mt-1"><?= e($m['name']) ?></h1>
+    <h1 class="h3 mb-0 mt-1"><?= e($m['official_name'] ?: ($authorityContext['official_name'] ?? $m['name'])) ?></h1>
+    <div class="small text-muted mt-1">
+      <?= e(($authorityOptions[$m['authority_type'] ?? 'municipality']['label'] ?? 'Δήμος')) ?>
+      <?php if (!empty($m['short_name'])): ?> · <?= e($m['short_name']) ?><?php endif; ?>
+    </div>
     <?php if ($m['city']): ?>
       <p class="text-muted mb-0 small"><i class="bi bi-geo-alt me-1"></i><?= e($m['city']) ?></p>
     <?php endif; ?>
@@ -36,7 +44,7 @@ $roleBadge = [
     <form method="post" action="<?= e(url('/admin/municipalities/' . $m['id'] . '/toggle')) ?>">
       <?= csrf_field() ?>
       <button type="submit" class="btn btn-sm btn-outline-<?= $m['status'] === 'active' ? 'warning' : 'success' ?>"
-              onclick="return confirm('Αλλαγή κατάστασης δήμου;')">
+              onclick="return confirm('Αλλαγή κατάστασης φορέα;')">
         <i class="bi bi-toggle-<?= $m['status'] === 'active' ? 'on' : 'off' ?> me-1"></i>
         <?= $m['status'] === 'active' ? 'Απενεργοποίηση' : 'Ενεργοποίηση' ?>
       </button>
@@ -50,14 +58,14 @@ $roleBadge = [
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-warning-subtle text-warning mb-2"><i class="bi bi-calendar-event"></i></div>
       <div class="stat-value"><?= (int) $stats['events_total'] ?></div>
-      <div class="text-muted small">Δράσεις συνολικά</div>
+      <div class="text-muted small"><?= e($eventPlural) ?> συνολικά</div>
     </div></div>
   </div>
   <div class="col-6 col-md-4 col-xl-2">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-success-subtle text-success mb-2"><i class="bi bi-broadcast"></i></div>
       <div class="stat-value"><?= (int) $stats['events_active'] ?></div>
-      <div class="text-muted small">Ενεργές δράσεις</div>
+      <div class="text-muted small">Ενεργές <?= e($eventPluralLc) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-md-4 col-xl-2">
@@ -152,7 +160,7 @@ $roleBadge = [
   <div class="col-lg-4 d-flex flex-column gap-4">
     <!-- Municipality info -->
     <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στοιχεία Δήμου</div>
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στοιχεία Φορέα</div>
       <ul class="list-group list-group-flush small">
         <?php if ($m['city']): ?>
           <li class="list-group-item"><i class="bi bi-geo me-2 text-muted"></i><?= e($m['city']) ?></li>
@@ -199,13 +207,29 @@ $roleBadge = [
       <?= csrf_field() ?>
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Επεξεργασία Δήμου</h5>
+          <h5 class="modal-title">Επεξεργασία Φορέα</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label fw-semibold">Όνομα <span class="text-danger">*</span></label>
             <input type="text" name="name" class="form-control" value="<?= e($m['name']) ?>" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Τύπος φορέα</label>
+            <select name="authority_type" class="form-select">
+              <?php foreach ($authorityOptions as $type => $opt): ?>
+                <option value="<?= e($type) ?>" <?= ($m['authority_type'] ?? 'municipality') === $type ? 'selected' : '' ?>><?= e($opt['label']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Πλήρες εμφανιζόμενο όνομα</label>
+            <input type="text" name="official_name" class="form-control" value="<?= e($m['official_name'] ?? '') ?>" placeholder="π.χ. Πυροσβεστική Ηρακλείου">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Σύντομο όνομα</label>
+            <input type="text" name="short_name" class="form-control" value="<?= e($m['short_name'] ?? '') ?>" placeholder="π.χ. Πυρ/κή">
           </div>
           <div class="mb-3">
             <label class="form-label">Πόλη</label>

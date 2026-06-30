@@ -17,12 +17,14 @@ class EventController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $mid    = current_municipality_id();
+        $terms  = authority_context($mid);
         $events = Event::forMunicipalityByStatuses($mid, ['open', 'review', 'confirmed', 'active']);
         render('events/active', [
-            'pageTitle' => 'Ενεργές Δράσεις',
+            'pageTitle' => 'Ενεργές ' . $terms['event_plural'],
             'events'    => $events,
             'templates' => EventTemplate::forMunicipality($mid),
             'tabCounts' => Event::statusCounts($mid),
+            'terms'     => $terms,
         ]);
     }
 
@@ -62,12 +64,13 @@ class EventController
         $nextMonth = date('Y-m', $nextTs);
 
         render('events/calendar', [
-            'pageTitle'  => 'Ημερολόγιο Δράσεων',
+            'pageTitle'  => 'Ημερολόγιο ' . org_term('event_plural', $mid),
             'events'     => $events,
             'year'       => $year,
             'month'      => $month,
             'prevMonth'  => $prevMonth,
             'nextMonth'  => $nextMonth,
+            'terms'      => authority_context($mid),
         ]);
     }
 
@@ -76,10 +79,12 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $mid    = current_municipality_id();
+        $terms  = authority_context($mid);
         $events = Event::forMunicipalityByStatuses($mid, ['draft']);
         render('events/drafts', [
-            'pageTitle' => 'Πρόχειρες Δράσεις',
+            'pageTitle' => 'Πρόχειρες ' . $terms['event_plural'],
             'events'    => $events,
+            'terms'     => $terms,
         ]);
     }
 
@@ -88,11 +93,13 @@ class EventController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $mid    = current_municipality_id();
+        $terms  = authority_context($mid);
         $events = Event::forMunicipalityByStatuses($mid, ['closed']);
         render('events/closed', [
-            'pageTitle' => 'Κλειστές Δράσεις',
+            'pageTitle' => 'Κλειστές ' . $terms['event_plural'],
             'events'    => $events,
             'tabCounts' => Event::statusCounts($mid),
+            'terms'     => $terms,
         ]);
     }
 
@@ -104,14 +111,16 @@ class EventController
         $q      = isset($_GET['q']) ? trim($_GET['q']) : '';
         $from   = isset($_GET['from']) ? trim($_GET['from']) : '';
         $to     = isset($_GET['to']) ? trim($_GET['to']) : '';
+        $terms  = authority_context($mid);
         $events = Event::forMunicipalityByStatuses($mid, ['completed'], ['q' => $q, 'from' => $from, 'to' => $to]);
         render('events/completed', [
-            'pageTitle' => 'Ολοκληρωμένες Δράσεις',
+            'pageTitle' => 'Ολοκληρωμένες ' . $terms['event_plural'],
             'events'    => $events,
             'q'         => $q,
             'from'      => $from,
             'to'        => $to,
             'tabCounts' => Event::statusCounts($mid),
+            'terms'     => $terms,
         ]);
     }
 
@@ -121,6 +130,7 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $mid = current_municipality_id();
+        $terms = authority_context($mid);
 
         // Optional prefill from a saved template (?template=ID)
         $prefill = null;
@@ -146,11 +156,12 @@ class EventController
         }
 
         render('events/form', [
-            'pageTitle'           => 'Νέα Δράση',
+            'pageTitle'           => $terms['event_new'],
             'event'               => $prefill,
             'templateId'          => $templateId,
-            'categories'          => Event::categories(),
+            'categories'          => Event::categories($mid),
             'defaultInstructions' => MunicipalitySetting::get($mid, 'event_default_instructions', ''),
+            'terms'               => $terms,
         ]);
     }
 
@@ -194,9 +205,11 @@ class EventController
             $event = Event::find($id);
             NotificationService::eventPublished($event);
             audit('event_published', 'event', $id);
-            flash_set('success', 'Η δράση δημιουργήθηκε και δημοσιεύθηκε στις ομάδες.');
+            $terms = authority_context((int) $data['municipality_id']);
+            flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' δημιουργήθηκε και δημοσιεύθηκε στις ομάδες.');
         } else {
-            flash_set('success', 'Η δράση αποθηκεύτηκε ως πρόχειρη.');
+            $terms = authority_context((int) $data['municipality_id']);
+            flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' αποθηκεύτηκε ως πρόχειρη.');
         }
         redirect('/events/' . $id);
     }
@@ -223,6 +236,7 @@ class EventController
             'reports'      => $reports,
             'shifts'       => $shifts,
             'shiftApps'    => $shiftApps,
+            'terms'        => authority_context((int) $event['municipality_id']),
         ]);
     }
 
@@ -230,10 +244,12 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent($id);
+        $terms = authority_context((int) $event['municipality_id']);
         render('events/form', [
-            'pageTitle'  => 'Επεξεργασία Δράσης',
+            'pageTitle'  => 'Επεξεργασία ' . $terms['event_singular'],
             'event'      => $event,
-            'categories' => Event::categories(),
+            'categories' => Event::categories((int) $event['municipality_id']),
+            'terms'      => $terms,
         ]);
     }
 
@@ -247,7 +263,8 @@ class EventController
         }
         Event::update($event['id'], $data);
         audit('event_updated', 'event', $event['id'], $data['title']);
-        flash_set('success', 'Η δράση ενημερώθηκε.');
+        $terms = authority_context((int) $event['municipality_id']);
+        flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' ενημερώθηκε.');
         redirect('/events/' . $event['id']);
     }
 
@@ -257,15 +274,17 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent((int)$id);
+        $terms = authority_context((int) $event['municipality_id']);
+        $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if ($event['status'] !== 'draft') {
-            flash_set('danger', 'Μόνο πρόχειρες δράσεις μπορούν να δημοσιευθούν.');
+            flash_set('danger', 'Μόνο πρόχειρες ' . $terms['event_plural_lc'] . ' μπορούν να δημοσιευθούν.');
             redirect('/events/' . $event['id']);
         }
         Event::markPublished($event['id']);
         $event = Event::find($event['id']);
         try { NotificationService::eventPublished($event); } catch (Throwable $e) { error_log($e); }
         audit('event_published', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η δράση δημοσιεύθηκε και οι ομάδες ειδοποιήθηκαν.');
+        flash_set('success', 'Η ' . $eventLc . ' δημοσιεύθηκε και οι ομάδες ειδοποιήθηκαν.');
         redirect('/events/' . $event['id']);
     }
 
@@ -274,13 +293,15 @@ class EventController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $event = Event::findForCurrent((int)$id);
+        $terms = authority_context((int) $event['municipality_id']);
+        $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'active')) {
-            flash_set('danger', 'Η δράση δεν μπορεί να ενεργοποιηθεί από αυτή την κατάσταση.');
+            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να ενεργοποιηθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'active');
         audit('event_activated', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η δράση ενεργοποιήθηκε.');
+        flash_set('success', 'Η ' . $eventLc . ' ενεργοποιήθηκε.');
         redirect('/operations/events/' . $event['id']);
     }
 
@@ -317,7 +338,7 @@ class EventController
             'download'  => true,
             'absHost'   => $absHost,
             'logo'      => $munSettings['branding_logo_url'] ?? null,
-            'orgLabel'  => MunicipalitySetting::orgLabelShort($munSettings),
+            'orgLabel'  => org_term('short_name', (int) $event['municipality_id']),
         ], false);
     }
 
@@ -351,7 +372,7 @@ class EventController
             'story'     => StoryService::build((int) $event['id']),
             'public'    => $public,
             'logo'      => $munSettings['branding_logo_url'] ?? null,
-            'orgLabel'  => MunicipalitySetting::orgLabelShort($munSettings),
+            'orgLabel'  => org_term('short_name', (int) $event['municipality_id']),
         ], false); // standalone — clean presentation / print
     }
 
@@ -359,14 +380,16 @@ class EventController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $event = Event::findForCurrent((int)$id);
+        $terms = authority_context((int) $event['municipality_id']);
+        $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'closed')) {
-            flash_set('danger', 'Η δράση δεν μπορεί να κλείσει από αυτή την κατάσταση.');
+            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να κλείσει από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'closed');
         audit('event_closed', 'event', $event['id'], $event['title']);
         try { NotificationService::eventClosed($event); } catch (Throwable $e) { error_log('[EventClosed] ' . $e->getMessage()); }
-        flash_set('success', 'Η δράση έκλεισε. Οι ομάδες ειδοποιήθηκαν για το debrief — συμπληρώστε και τον Απολογισμό Δήμου παρακάτω.');
+        flash_set('success', 'Η ' . $eventLc . ' έκλεισε. Οι ομάδες ειδοποιήθηκαν για το debrief — συμπληρώστε και τον απολογισμό φορέα παρακάτω.');
         redirect('/events/' . $event['id'] . '/debriefs');
     }
 
@@ -374,14 +397,16 @@ class EventController
     {
         requireRole(['municipality_admin', 'event_operator']);
         $event = Event::findForCurrent((int)$id);
+        $terms = authority_context((int) $event['municipality_id']);
+        $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'completed')) {
-            flash_set('danger', 'Η δράση δεν μπορεί να ολοκληρωθεί από αυτή την κατάσταση.');
+            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να ολοκληρωθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'completed');
         audit('event_completed', 'event', $event['id'], $event['title']);
         try { NotificationService::eventCompleted($event); } catch (Throwable $e) { error_log('[EventCompleted] ' . $e->getMessage()); }
-        flash_set('success', 'Η δράση ολοκληρώθηκε και οι ειδοποιήσεις στάλθηκαν.');
+        flash_set('success', 'Η ' . $eventLc . ' ολοκληρώθηκε και οι ειδοποιήσεις στάλθηκαν.');
         redirect('/operations');
     }
 
@@ -389,8 +414,9 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent((int) $id);
+        $terms = authority_context((int) $event['municipality_id']);
         if (!in_array($event['status'], ['open', 'review', 'confirmed', 'active'], true)) {
-            flash_set('danger', 'Δεν μπορεί να σταλεί υπενθύμιση για δράση σε αυτή την κατάσταση.');
+            flash_set('danger', 'Δεν μπορεί να σταλεί υπενθύμιση για ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' σε αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
 
@@ -411,14 +437,16 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent((int) $id);
+        $terms = authority_context((int) $event['municipality_id']);
+        $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'cancelled')) {
-            flash_set('danger', 'Η δράση δεν μπορεί να ακυρωθεί από αυτή την κατάσταση.');
+            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να ακυρωθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
 
         Event::setStatus($event['id'], 'cancelled');
         audit('event_cancelled', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η δράση ακυρώθηκε.');
+        flash_set('success', 'Η ' . $eventLc . ' ακυρώθηκε.');
         redirect('/events');
     }
 
@@ -427,14 +455,16 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent((int)$id);
+        $terms = authority_context((int) $event['municipality_id']);
+        $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'completed')) {
-            flash_set('danger', 'Η δράση δεν μπορεί να αρχειοθετηθεί από αυτή την κατάσταση.');
+            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να αρχειοθετηθεί από αυτή την κατάσταση.');
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'completed');
         audit('event_archived', 'event', $event['id'], $event['title']);
         try { NotificationService::eventCompleted($event); } catch (Throwable $e) { error_log('[EventArchiveCompleted] ' . $e->getMessage()); }
-        flash_set('success', 'Η δράση αρχειοθετήθηκε, μετακινήθηκε στις Ολοκληρωμένες και οι ειδοποιήσεις στάλθηκαν.');
+        flash_set('success', 'Η ' . $eventLc . ' αρχειοθετήθηκε, μετακινήθηκε στις Ολοκληρωμένες και οι ειδοποιήσεις στάλθηκαν.');
         redirect('/events/completed');
     }
 
@@ -465,8 +495,9 @@ class EventController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent($id);
+        $terms = authority_context((int) $event['municipality_id']);
         if ($event['status'] !== 'closed') {
-            flash_set('warning', 'Μόνο κλειστές δράσεις επιτρέπουν αρχειοθέτηση.');
+            flash_set('warning', 'Μόνο κλειστές ' . $terms['event_plural_lc'] . ' επιτρέπουν αρχειοθέτηση.');
             redirect('/events/' . $event['id']);
         }
 
@@ -591,7 +622,8 @@ class EventController
 
         $newId = Event::create($data);
         audit('event_cloned', 'event', $newId, 'cloned from #' . $event['id'] . ': ' . $event['title']);
-        flash_set('success', 'Η δράση αντιγράφηκε ως πρόχειρο. Ενημερώστε τις ημερομηνίες και δημοσιεύστε.');
+        $terms = authority_context((int) $event['municipality_id']);
+        flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' αντιγράφηκε ως πρόχειρο. Ενημερώστε τις ημερομηνίες και δημοσιεύστε.');
         redirect('/events/' . $newId . '/edit');
     }
 
@@ -673,7 +705,7 @@ class EventController
             );
         }
         audit('municipality_debrief_saved', 'event', (int) $event['id']);
-        flash_set('success', 'Ο απολογισμός του δήμου αποθηκεύτηκε.');
+        flash_set('success', 'Ο απολογισμός φορέα αποθηκεύτηκε.');
         redirect('/events/' . $event['id'] . '/debriefs');
     }
 

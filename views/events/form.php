@@ -12,20 +12,25 @@ $dtVal = function ($key) use ($event) {
     if ($event && !empty($event[$key])) return date('Y-m-d\TH:i', strtotime($event[$key]));
     return '';
 };
+$terms = $terms ?? authority_context();
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventNew = $terms['event_new'] ?? 'Νέα Δράση';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
 ?>
-<h1 class="h3 mb-1"><?= $isEdit ? 'Επεξεργασία Δράσης' : 'Νέα Δράση' ?></h1>
-<p class="text-muted">Συμπληρώστε τα στοιχεία της δράσης. Τα πεδία με * είναι υποχρεωτικά.</p>
+<h1 class="h3 mb-1"><?= e($isEdit ? 'Επεξεργασία ' . $eventSingular : $eventNew) ?></h1>
+<p class="text-muted">Συμπληρώστε τα στοιχεία της <?= e($eventSingularLc) ?>. Τα πεδία με * είναι υποχρεωτικά.</p>
 
 <form method="post" action="<?= e(url($isEdit ? '/events/' . $event['id'] . '/update' : '/events/store')) ?>" class="card shadow-sm">
   <?= csrf_field() ?>
   <?php if (!empty($templateId)): ?><input type="hidden" name="template_id" value="<?= (int) $templateId ?>"><?php endif; ?>
   <div class="card-body row g-3">
     <div class="col-md-8">
-      <label class="form-label">Τίτλος *</label>
+      <label class="form-label">Τίτλος <?= e($eventSingularLc) ?> *</label>
       <input type="text" name="title" class="form-control" required value="<?= e($v('title')) ?>">
     </div>
     <div class="col-md-4">
-      <label class="form-label">Κατηγορία</label>
+      <label class="form-label">Τύπος <?= e($eventSingularLc) ?></label>
       <select name="category_id" class="form-select">
         <option value="">— Επιλέξτε —</option>
         <?php foreach ($categories as $c): ?>
@@ -117,7 +122,7 @@ $dtVal = function ($key) use ($event) {
     <?php else: ?>
       <button class="btn btn-outline-secondary" type="submit" name="action" value="draft"><i class="bi bi-file-earmark me-1"></i>Αποθήκευση ως πρόχειρη</button>
       <button class="btn btn-primary" type="submit" name="action" value="publish"
-              onclick="return confirm('Η δράση θα δημοσιευθεί και όλες οι ενεργές ομάδες θα ειδοποιηθούν. Συνέχεια;')">
+              onclick="return confirm('Η <?= e($eventSingularLc) ?> θα δημοσιευθεί και όλες οι ενεργές ομάδες θα ειδοποιηθούν. Συνέχεια;')">
         <i class="bi bi-megaphone me-1"></i>Δημοσίευση στις ομάδες
       </button>
     <?php endif; ?>

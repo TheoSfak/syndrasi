@@ -1,7 +1,7 @@
 <?php
 $roleLabels = [
     'super_admin'        => 'Διαχειριστής Πλατφόρμας',
-    'municipality_admin' => 'Διαχειριστής Δήμου',
+    'municipality_admin' => 'Διαχειριστής Φορέα',
     'team_admin'         => 'Υπεύθυνος Ομάδας',
     'event_operator'     => 'Χειριστής Δράσεων',
 ];
@@ -44,7 +44,7 @@ $teamsByMuni = $teamsByMuni ?? [];
       </div>
       <div class="col-md-3">
         <select id="filterMuni" class="form-select form-select-sm">
-          <option value="">Όλοι οι δήμοι</option>
+          <option value="">Όλοι οι φορείς</option>
           <?php foreach ($municipalities as $mun): ?>
             <option value="<?= (int) $mun['id'] ?>"><?= e($mun['name']) ?></option>
           <?php endforeach; ?>
@@ -63,7 +63,7 @@ $teamsByMuni = $teamsByMuni ?? [];
         <tr>
           <th>Όνομα / Email</th>
           <th>Ρόλος</th>
-          <th>Δήμος / Ομάδα</th>
+          <th>Φορέας / Ομάδα</th>
           <th>Κατάσταση</th>
           <th class="text-muted small">Τελ. σύνδεση</th>
           <th class="text-end"></th>
@@ -170,7 +170,7 @@ $teamsByMuni = $teamsByMuni ?? [];
           </select>
         </div>
         <div class="mt-2" id="newMuniWrap">
-          <label class="form-label fw-semibold">Δήμος</label>
+          <label class="form-label fw-semibold">Φορέας</label>
           <select name="municipality_id" id="newMuni" class="form-select" onchange="syncTeamDropdown('newMuni','newTeam','newRole')">
             <option value="">— Επιλέξτε —</option>
             <?php foreach ($municipalities as $mun): ?>
@@ -181,7 +181,7 @@ $teamsByMuni = $teamsByMuni ?? [];
         <div class="mt-2" id="newTeamWrap" style="display:none">
           <label class="form-label fw-semibold">Ομάδα (για υπεύθυνο ομάδας)</label>
           <select name="team_id" id="newTeam" class="form-select">
-            <option value="">— Επιλέξτε δήμο πρώτα —</option>
+            <option value="">— Επιλέξτε φορέα πρώτα —</option>
           </select>
         </div>
         <div class="mt-2">
@@ -231,7 +231,7 @@ $teamsByMuni = $teamsByMuni ?? [];
           </select>
         </div>
         <div class="mt-2" id="editMuniWrap">
-          <label class="form-label fw-semibold">Δήμος</label>
+          <label class="form-label fw-semibold">Φορέας</label>
           <select name="municipality_id" id="editMuni" class="form-select" onchange="syncTeamDropdown('editMuni','editTeam','editRole')">
             <option value="">— Επιλέξτε —</option>
             <?php foreach ($municipalities as $mun): ?>

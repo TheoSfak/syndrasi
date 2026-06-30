@@ -9,6 +9,10 @@ $monthNames = [
     7 => 'Ιούλιος',    8 => 'Αύγουστος',    9 => 'Σεπτέμβριος',
    10 => 'Οκτώβριος', 11 => 'Νοέμβριος',   12 => 'Δεκέμβριος',
 ];
+$terms = $terms ?? authority_context();
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
 
 /* Build per-day event index (key = "Y-m-d") */
 $byDay = [];
@@ -178,12 +182,12 @@ $evJson = json_encode(array_map(fn($e) => [
 <!-- ── Header row ──────────────────────────────────────────────────────── -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Ημερολόγιο Δράσεων</h1>
-    <p class="text-muted small mb-0">Κλικ σε δράση για λεπτομέρειες.</p>
+    <h1 class="h3 mb-0">Ημερολόγιο <?= e($eventPlural) ?></h1>
+    <p class="text-muted small mb-0">Κλικ σε <?= e($eventSingularLc) ?> για λεπτομέρειες.</p>
   </div>
   <?php if (current_role() === 'municipality_admin'): ?>
   <a href="<?= e(url('/events/create')) ?>" class="btn btn-primary">
-    <i class="bi bi-plus-lg me-1"></i>Νέα Δράση
+    <i class="bi bi-plus-lg me-1"></i><?= e($terms['event_new'] ?? 'Νέα Δράση') ?>
   </a>
   <?php endif; ?>
 </div>

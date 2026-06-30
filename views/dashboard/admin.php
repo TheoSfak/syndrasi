@@ -5,7 +5,7 @@
   </div>
   <div class="d-flex gap-2">
     <a href="<?= e(url('/admin/municipalities')) ?>" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-building me-1"></i>Δήμοι
+      <i class="bi bi-building me-1"></i>Φορείς
     </a>
     <a href="<?= e(url('/admin/users')) ?>" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-people me-1"></i>Χρήστες
@@ -23,7 +23,7 @@
       <div class="card-body">
         <div class="stat-icon bg-primary-subtle text-primary mb-2"><i class="bi bi-building"></i></div>
         <div class="stat-value"><?= (int) $counts['municipalities'] ?></div>
-        <div class="text-muted small">Δήμοι
+        <div class="text-muted small">Φορείς
           <span class="badge text-bg-success ms-1"><?= (int) $counts['active_municipalities'] ?> ενεργοί</span>
         </div>
       </div>
@@ -52,7 +52,7 @@
       <div class="card-body">
         <div class="stat-icon bg-warning-subtle text-warning mb-2"><i class="bi bi-calendar-event"></i></div>
         <div class="stat-value"><?= (int) $counts['events'] ?></div>
-        <div class="text-muted small">Δράσεις συνολικά</div>
+        <div class="text-muted small">Αποστολές/δράσεις συνολικά</div>
       </div>
     </div>
   </div>

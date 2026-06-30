@@ -1,22 +1,28 @@
+<?php
+$terms = $terms ?? authority_context();
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Πρόχειρες Δράσεις</h1>
-    <p class="text-muted small mb-0">Δράσεις που δεν έχουν δημοσιευτεί ακόμα στις ομάδες.</p>
+    <h1 class="h3 mb-0">Πρόχειρες <?= e($eventPlural) ?></h1>
+    <p class="text-muted small mb-0"><?= e($eventPlural) ?> που δεν έχουν δημοσιευτεί ακόμα στις ομάδες.</p>
   </div>
   <div class="d-flex gap-2">
     <a href="<?= e(url('/events')) ?>" class="btn btn-sm btn-outline-secondary">
       <i class="bi bi-arrow-left me-1"></i>Ενεργές
     </a>
     <a href="<?= e(url('/events/create')) ?>" class="btn btn-sm btn-primary">
-      <i class="bi bi-plus-lg me-1"></i>Νέα Δράση
+      <i class="bi bi-plus-lg me-1"></i><?= e($terms['event_new'] ?? 'Νέα Δράση') ?>
     </a>
   </div>
 </div>
 
 <?php if (!$events): ?>
   <div class="alert alert-info">
-    Δεν υπάρχουν πρόχειρες δράσεις.
-    <a href="<?= e(url('/events/create')) ?>">Δημιουργήστε μια νέα δράση.</a>
+    Δεν υπάρχουν πρόχειρες <?= e($eventPluralLc) ?>.
+    <a href="<?= e(url('/events/create')) ?>">Δημιουργήστε μία νέα <?= e(mb_strtolower($eventSingular)) ?>.</a>
   </div>
 <?php else: ?>
   <div class="card shadow-sm">
@@ -24,7 +30,7 @@
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>Δράση</th>
+            <th><?= e($eventSingular) ?></th>
             <th>Προγραμματισμένη για</th>
             <th>Δημιουργήθηκε</th>
             <th></th>

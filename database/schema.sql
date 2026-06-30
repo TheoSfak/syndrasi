@@ -44,6 +44,9 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE municipalities (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  authority_type ENUM('municipality','civil_protection','fire_service','coast_guard') NOT NULL DEFAULT 'municipality',
+  official_name VARCHAR(255) NULL,
+  short_name VARCHAR(80) NULL,
   city VARCHAR(255) NULL,
   address VARCHAR(255) NULL,
   email VARCHAR(255) NULL,
@@ -94,8 +97,11 @@ CREATE TABLE volunteer_teams (
 -- ------------------------------------------------------------
 CREATE TABLE event_categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  authority_type ENUM('municipality','civil_protection','fire_service','coast_guard') NOT NULL DEFAULT 'municipality',
   name VARCHAR(150) NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_event_category_authority_name (authority_type, name),
+  INDEX idx_event_categories_authority (authority_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -332,10 +338,36 @@ CREATE TABLE app_settings (
 
 -- ------------------------------------------------------------
 -- Default categories
-INSERT INTO event_categories (name) VALUES
-('Πολιτιστική εκδήλωση'),
-('Συναυλία'),
-('Αθλητική δράση'),
-('Κοινωνική δράση'),
-('Εορταστική δράση'),
-('Άλλη δράση');
+INSERT INTO event_categories (authority_type, name) VALUES
+('municipality', 'Πολιτιστική εκδήλωση'),
+('municipality', 'Συναυλία'),
+('municipality', 'Αθλητική δράση'),
+('municipality', 'Κοινωνική δράση'),
+('municipality', 'Εορταστική δράση'),
+('municipality', 'Περιβαλλοντική δράση'),
+('municipality', 'Υποστήριξη εκδήλωσης'),
+('municipality', 'Έκτακτη ανάγκη'),
+('municipality', 'Άλλη δράση'),
+('fire_service', 'Πυρκαγιά δασική'),
+('fire_service', 'Πυρκαγιά αστική'),
+('fire_service', 'Απεγκλωβισμός'),
+('fire_service', 'Τροχαίο'),
+('fire_service', 'Παροχή βοήθειας'),
+('fire_service', 'Έρευνα αγνοουμένου'),
+('fire_service', 'Πλημμυρικό συμβάν'),
+('fire_service', 'Επιφυλακή / κάλυψη περιοχής'),
+('civil_protection', 'Σεισμός'),
+('civil_protection', 'Πλημμύρα'),
+('civil_protection', 'Κακοκαιρία'),
+('civil_protection', 'Εκκένωση'),
+('civil_protection', 'Διανομή ειδών ανάγκης'),
+('civil_protection', 'Υποστήριξη καταυλισμού'),
+('civil_protection', 'Έλεγχος υποδομών'),
+('civil_protection', 'Συντονισμός εθελοντών'),
+('coast_guard', 'Θαλάσσια διάσωση'),
+('coast_guard', 'Έρευνα στη θάλασσα'),
+('coast_guard', 'Ρύπανση'),
+('coast_guard', 'Ναυτικό ατύχημα'),
+('coast_guard', 'Απεγκλωβισμός σκάφους'),
+('coast_guard', 'Υποστήριξη λιμένα'),
+('coast_guard', 'Μεταφορά / συνδρομή');

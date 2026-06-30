@@ -1,7 +1,7 @@
 # SynDrasi Deploy Notes
 
 Last updated: 2026-06-30  
-Current release line: `0.15.4-beta`
+Current release line: `0.15.5-beta`
 
 This file summarizes what has been built so far in the recent SynDrasi work cycle and what must be checked when deploying to production.
 
@@ -22,6 +22,7 @@ SynDrasi now includes:
 - Municipality email history/statistics tab with clear-history action.
 - Deterministic demo team/member email scheme and `Syndrasi2026` team password.
 - Notification Control Center for municipality admins, with unified email/SMS/Telegram/push/in-app history.
+- Multi-agency authority profiles: superadmin chooses Δήμος, Πολιτική Προστασία, Πυροσβεστική or Λιμενικό, with dynamic Δράσεις/Αποστολές terminology and per-authority mission categories.
 
 The GitHub Actions idea for fetching the Civil Protection fire-risk map was removed in `0.14.19-beta` because it was not reliable enough for production.
 

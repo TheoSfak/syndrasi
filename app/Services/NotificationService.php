@@ -22,6 +22,21 @@ class NotificationService
         ];
     }
 
+    private static function eventTerms($municipalityId): array
+    {
+        $terms = authority_context((int) $municipalityId);
+        $singular = $terms['event_singular'] ?? 'Δράση';
+        $singularLc = mb_strtolower($singular, 'UTF-8');
+
+        return [
+            'singular' => $singular,
+            'singular_lc' => $singularLc,
+            'plural' => $terms['event_plural'] ?? 'Δράσεις',
+            'plural_lc' => $terms['event_plural_lc'] ?? 'δράσεις',
+            'org_short' => $terms['short_name'] ?? $terms['short'] ?? 'Φορέας',
+        ];
+    }
+
     private static function defaultChannelFor(string $type): string
     {
         return in_array($type, self::operationalChannelTypes(), true) ? 'off' : 'email';
@@ -279,10 +294,11 @@ class NotificationService
     {
         $teams = VolunteerTeam::forMunicipality($event['municipality_id'], true);
         $mid   = $event['municipality_id'];
+        $et    = self::eventTerms($mid);
 
         // In-app notification (short)
-        $inAppTitle   = 'Νέα δράση: ' . $event['title'];
-        $inAppMessage = 'Δημοσιεύθηκε νέα δράση. Συνδεθείτε για να δηλώσετε συμμετοχή.';
+        $inAppTitle   = 'Νέα ' . $et['singular_lc'] . ': ' . $event['title'];
+        $inAppMessage = 'Δημοσιεύθηκε νέα ' . $et['singular_lc'] . '. Συνδεθείτε για να δηλώσετε συμμετοχή.';
 
         // Email body via template
         $tpl = EmailTemplate::resolve($mid, 'event_published', [
@@ -290,6 +306,9 @@ class NotificationService
             'event_category' => $event['category_name'] ?? '—',
             'event_date'     => gr_datetime($event['start_datetime']),
             'event_location' => $event['location_name'] ?: '—',
+            'event_label'    => $et['singular'],
+            'event_label_lc' => $et['singular_lc'],
+            'org_short'      => $et['org_short'],
         ]);
 
         foreach ($teams as $team) {
@@ -306,12 +325,15 @@ class NotificationService
     public static function applicationSubmitted(array $event, array $team, $offeredPeople)
     {
         $mid = $event['municipality_id'];
+        $et  = self::eventTerms($mid);
 
         $inAppTitle   = 'Νέα δήλωση συμμετοχής: ' . $event['title'];
         $inAppMessage = 'Η ομάδα "' . $team['name'] . '" δήλωσε συμμετοχή με ' . (int) $offeredPeople . ' άτομα.';
 
         $tpl = EmailTemplate::resolve($mid, 'application_submitted', [
             'event_title'    => $event['title'],
+            'event_label'    => $et['singular'],
+            'event_label_lc' => $et['singular_lc'],
             'team_name'      => $team['name'],
             'offered_people' => (int) $offeredPeople,
         ]);
@@ -328,12 +350,15 @@ class NotificationService
     public static function applicationApproved(array $event, array $application)
     {
         $mid = $event['municipality_id'];
+        $et  = self::eventTerms($mid);
 
-        $inAppTitle   = 'Εγκρίθηκε η συμμετοχή σας στη δράση';
-        $inAppMessage = 'Η συμμετοχή της ομάδας εγκρίθηκε για τη δράση "' . $event['title'] . '" με ' . (int) $application['approved_people'] . ' άτομα.';
+        $inAppTitle   = 'Εγκρίθηκε η συμμετοχή σας στη ' . $et['singular_lc'];
+        $inAppMessage = 'Η συμμετοχή της ομάδας εγκρίθηκε για τη ' . $et['singular_lc'] . ' "' . $event['title'] . '" με ' . (int) $application['approved_people'] . ' άτομα.';
 
         $tpl = EmailTemplate::resolve($mid, 'application_approved', [
             'event_title'     => $event['title'],
+            'event_label'     => $et['singular'],
+            'event_label_lc'  => $et['singular_lc'],
             'event_date'      => gr_date($event['start_datetime']),
             'event_time'      => gr_time($event['start_datetime']),
             'event_location'  => $event['location_name'] ?: '—',
@@ -352,13 +377,16 @@ class NotificationService
     public static function applicationRejected(array $event, array $application, $reason = '')
     {
         $mid = $event['municipality_id'];
+        $et  = self::eventTerms($mid);
 
         $inAppTitle   = 'Απάντηση στη δήλωση συμμετοχής σας';
-        $inAppMessage = 'Η δήλωση συμμετοχής για τη δράση "' . $event['title'] . '" δεν εγκρίθηκε.';
+        $inAppMessage = 'Η δήλωση συμμετοχής για τη ' . $et['singular_lc'] . ' "' . $event['title'] . '" δεν εγκρίθηκε.';
 
-        $reasonLine = $reason !== '' ? "\nΣχόλιο δήμου: " . $reason . "\n" : '';
+        $reasonLine = $reason !== '' ? "\nΣχόλιο " . $et['org_short'] . ": " . $reason . "\n" : '';
         $tpl = EmailTemplate::resolve($mid, 'application_rejected', [
             'event_title'      => $event['title'],
+            'event_label'      => $et['singular'],
+            'event_label_lc'   => $et['singular_lc'],
             'rejection_reason' => $reasonLine,
         ]);
 
@@ -374,12 +402,15 @@ class NotificationService
     public static function shortageReported(array $event, array $team, $typeLabel, $severityLabel, $shortageTitle)
     {
         $mid = $event['municipality_id'];
+        $et  = self::eventTerms($mid);
 
         $inAppTitle   = 'Αναφορά έλλειψης: ' . $event['title'];
         $inAppMessage = 'Η ομάδα "' . $team['name'] . '" ανέφερε έλλειψη (' . $typeLabel . ', ' . $severityLabel . ').';
 
         $tpl = EmailTemplate::resolve($mid, 'shortage_reported', [
             'event_title'       => $event['title'],
+            'event_label'       => $et['singular'],
+            'event_label_lc'    => $et['singular_lc'],
             'team_name'         => $team['name'],
             'shortage_type'     => $typeLabel,
             'shortage_severity' => $severityLabel,
@@ -399,14 +430,17 @@ class NotificationService
     {
         $applications = EventApplication::approvedForEvent($event['id']);
         $mid          = $event['municipality_id'];
+        $et           = self::eventTerms($mid);
 
-        $inAppTitle = 'Υπενθύμιση δράσης: ' . $event['title'];
+        $inAppTitle = 'Υπενθύμιση ' . $et['singular_lc'] . ': ' . $event['title'];
 
         foreach ($applications as $app) {
-            $inAppMessage = 'Υπενθύμιση για τη δράση "' . $event['title'] . '" στις ' . gr_datetime($event['start_datetime']) . '.';
+            $inAppMessage = 'Υπενθύμιση για τη ' . $et['singular_lc'] . ' "' . $event['title'] . '" στις ' . gr_datetime($event['start_datetime']) . '.';
 
             $tpl = EmailTemplate::resolve($mid, 'event_reminder', [
                 'event_title'     => $event['title'],
+                'event_label'     => $et['singular'],
+                'event_label_lc'  => $et['singular_lc'],
                 'event_date'      => gr_date($event['start_datetime']),
                 'event_time'      => gr_time($event['start_datetime']),
                 'event_location'  => $event['location_name'] ?: '—',
@@ -429,12 +463,15 @@ class NotificationService
     {
         $applications = EventApplication::approvedForEvent($event['id']);
         $mid          = $event['municipality_id'];
+        $et           = self::eventTerms($mid);
 
-        $inAppTitle   = 'Debrief δράσης: ' . $event['title'];
-        $inAppMessage = 'Η δράση ολοκληρώθηκε. Συμπληρώστε το Post-Event Debrief της ομάδας σας.';
+        $inAppTitle   = 'Debrief ' . $et['singular_lc'] . ': ' . $event['title'];
+        $inAppMessage = 'Η ' . $et['singular_lc'] . ' ολοκληρώθηκε. Συμπληρώστε το Post-Event Debrief της ομάδας σας.';
 
         $tpl = EmailTemplate::resolve($mid, 'event_closed', [
             'event_title' => $event['title'],
+            'event_label' => $et['singular'],
+            'event_label_lc' => $et['singular_lc'],
         ]);
 
         foreach ($applications as $app) {
@@ -452,12 +489,15 @@ class NotificationService
     {
         $applications = EventApplication::approvedForEvent($event['id']);
         $mid          = $event['municipality_id'];
+        $et           = self::eventTerms($mid);
 
-        $inAppTitle   = 'Ολοκληρώθηκε η δράση: ' . $event['title'];
+        $inAppTitle   = 'Ολοκληρώθηκε η ' . $et['singular_lc'] . ': ' . $event['title'];
         $inAppMessage = 'Παρακαλούμε υποβάλετε τη σύντομη αναφορά της ομάδας σας.';
 
         $tpl = EmailTemplate::resolve($mid, 'event_completed', [
             'event_title' => $event['title'],
+            'event_label' => $et['singular'],
+            'event_label_lc' => $et['singular_lc'],
         ]);
 
         foreach ($applications as $app) {
@@ -484,6 +524,7 @@ class NotificationService
     public static function shiftApplicationSubmitted(array $event, array $shift, array $team, $offeredPeople)
     {
         $mid = $event['municipality_id'];
+        $et  = self::eventTerms($mid);
         $inAppTitle   = 'Δήλωση βάρδιας: ' . $event['title'];
         $inAppMessage = 'Η ομάδα "' . $team['name'] . '" δήλωσε βάρδια «' . $shift['name'] . '» με ' . (int) $offeredPeople . ' άτομα.';
         self::notifyMunicipality($mid, $event['id'], $inAppTitle, $inAppMessage, 'application_submitted');
@@ -518,7 +559,7 @@ class NotificationService
 
         $inAppTitle = 'Υπενθύμιση βάρδιας: ' . $shift['name'];
         foreach ($apps as $app) {
-            $msg = 'Υπενθύμιση: η βάρδια «' . $shift['name'] . '» ξεκινά στις ' . gr_time($shift['start_datetime']) . '. Δράση: ' . $event['title'] . '.';
+            $msg = 'Υπενθύμιση: η βάρδια «' . $shift['name'] . '» ξεκινά στις ' . gr_time($shift['start_datetime']) . '. ' . $et['singular'] . ': ' . $event['title'] . '.';
             self::notifyTeam($app['team_id'], $event['id'], $inAppTitle, $msg, 'event_reminder', $mid);
         }
         return count($apps);
@@ -532,6 +573,7 @@ class NotificationService
     public static function notifyMembersAssigned(array $event, array $memberIds, $commanderId, $applicationId)
     {
         $mid = $event['municipality_id'];
+        $et  = self::eventTerms($mid);
 
         if (!self::shouldSendEmail($mid, 'application_approved')) {
             return;
@@ -546,12 +588,14 @@ class NotificationService
             $isCommander   = ((int) $memberId === (int) $commanderId);
             $role          = $isCommander ? 'Mission Υπεύθυνος' : 'Μέλος ομάδας';
             $commanderNote = $isCommander
-                ? "Ως Mission Υπεύθυνος, εσύ θα είσαι υπεύθυνος για την αποστολή στίγματος και ενημερώσεων κατά τη διάρκεια της δράσης.\n\n"
+                ? "Ως Mission Υπεύθυνος, εσύ θα είσαι υπεύθυνος για την αποστολή στίγματος και ενημερώσεων κατά τη διάρκεια της " . $et['singular_lc'] . ".\n\n"
                 : '';
 
             $tpl = EmailTemplate::resolve($mid, 'member_assigned', [
                 'member_name'    => $member['full_name'],
                 'event_title'    => $event['title'],
+                'event_label'    => $et['singular'],
+                'event_label_lc' => $et['singular_lc'],
                 'event_start'    => gr_datetime($event['start_datetime']),
                 'event_end'      => gr_datetime($event['end_datetime']),
                 'event_location' => $event['location_name'] ?: ($event['address'] ?: '—'),
@@ -693,26 +737,29 @@ class NotificationService
     /** Admin asked a team for a photo — notify the team (in-app + push). */
     public static function photoRequested(array $event, array $team)
     {
+        $et = self::eventTerms((int) $event['municipality_id']);
         $title = 'Αίτημα φωτογραφίας';
-        $msg   = 'Ο δήμος ζητά φωτογραφία για τη δράση «' . $event['title'] . '».';
+        $msg   = $et['org_short'] . ' ζητά φωτογραφία για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '».';
         self::notifyTeam((int) $team['id'], (int) $event['id'], $title, $msg, 'photo_request', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
     }
 
     /** Commander asks a team for a live GPS fix — notify the team (in-app + push). */
     public static function gpsRequested(array $event, array $team)
     {
+        $et = self::eventTerms((int) $event['municipality_id']);
         $title = 'Αίτημα στίγματος GPS';
-        $msg   = 'Ο δήμος ζητά το στίγμα GPS σας για τη δράση «' . $event['title'] . '».';
+        $msg   = $et['org_short'] . ' ζητά το στίγμα GPS σας για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '».';
         self::notifyTeam((int) $team['id'], (int) $event['id'], $title, $msg, 'gps_request', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
     }
 
     /** Team uploaded a photo — notify municipality admins (in-app + push). */
     public static function photoUploaded(array $event, int $teamId)
     {
+        $et    = self::eventTerms((int) $event['municipality_id']);
         $team  = VolunteerTeam::find($teamId);
         $tname = $team['name'] ?? ('#' . $teamId);
         $title = 'Νέα φωτογραφία ομάδας';
-        $msg   = 'Η ομάδα «' . $tname . '» έστειλε φωτογραφία για τη δράση «' . $event['title'] . '».';
+        $msg   = 'Η ομάδα «' . $tname . '» έστειλε φωτογραφία για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '».';
         self::notifyMunicipality((int) $event['municipality_id'], (int) $event['id'], $title, $msg, 'photo_uploaded', null, null, self::absoluteUrl('/operations/events/' . (int) $event['id']));
     }
 
@@ -720,8 +767,9 @@ class NotificationService
     /** Commander asks a team for a short video — notify the team (in-app + push). */
     public static function videoRequested(array $event, array $team, ?string $instructions = null)
     {
+        $et = self::eventTerms((int) $event['municipality_id']);
         $title = 'Αίτημα βίντεο';
-        $msg   = 'Ο δήμος ζητά σύντομο βίντεο για τη δράση «' . $event['title'] . '».'
+        $msg   = $et['org_short'] . ' ζητά σύντομο βίντεο για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '».'
                . ($instructions ? ' Οδηγίες: ' . $instructions : '');
         self::notifyTeam((int) $team['id'], (int) $event['id'], $title, $msg, 'video_request', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
     }
@@ -729,10 +777,11 @@ class NotificationService
     /** Team uploaded a video — notify municipality admins (in-app + push). */
     public static function videoUploaded(array $event, int $teamId)
     {
+        $et    = self::eventTerms((int) $event['municipality_id']);
         $team  = VolunteerTeam::find($teamId);
         $tname = $team['name'] ?? ('#' . $teamId);
         $title = 'Νέο βίντεο ομάδας';
-        $msg   = 'Η ομάδα «' . $tname . '» έστειλε βίντεο για τη δράση «' . $event['title'] . '».';
+        $msg   = 'Η ομάδα «' . $tname . '» έστειλε βίντεο για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '».';
         self::notifyMunicipality((int) $event['municipality_id'], (int) $event['id'], $title, $msg, 'video_uploaded', null, null, self::absoluteUrl('/operations/events/' . (int) $event['id']));
     }
 
@@ -745,11 +794,12 @@ class NotificationService
     public static function sosRaised(array $alert, array $event, array $team)
     {
         $mid     = (int) $event['municipality_id'];
+        $et      = self::eventTerms($mid);
         $tname   = $team['name'] ?? 'Ομάδα';
         $title   = '🆘 SOS — ' . $tname;
         $hasGeo  = !empty($alert['latitude']) && !empty($alert['longitude']);
         $note    = !empty($alert['note']) ? ' Σημείωση: ' . $alert['note'] : '';
-        $msg     = 'Η ομάδα «' . $tname . '» εξέπεμψε SOS στη δράση «' . $event['title'] . '».' . $note;
+        $msg     = 'Η ομάδα «' . $tname . '» εξέπεμψε SOS στη ' . $et['singular_lc'] . ' «' . $event['title'] . '».' . $note;
         $link    = self::absoluteUrl('/operations/events/' . $event['id']);
         $geoTxt  = $hasGeo ? (' Θέση: ' . $alert['latitude'] . ',' . $alert['longitude'] . '.') : '';
         $sms     = 'SOS! ' . $tname . ' — ' . $event['title'] . '.' . $geoTxt . ' ' . $link;
@@ -780,8 +830,9 @@ class NotificationService
     /** Command acknowledged a team's SOS — close the loop back to the team. */
     public static function sosAcknowledged(array $alert, array $event)
     {
+        $et = self::eventTerms((int) $event['municipality_id']);
         $title = 'Το SOS σας ελήφθη';
-        $msg   = 'Ο δήμος έλαβε το SOS σας για τη δράση «' . $event['title'] . '» και ανταποκρίνεται.';
+        $msg   = $et['org_short'] . ' έλαβε το SOS σας για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '» και ανταποκρίνεται.';
         self::notifyTeam((int) $alert['team_id'], (int) $event['id'], $title, $msg, 'sos_ack', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
     }
 
@@ -792,7 +843,8 @@ class NotificationService
     public static function commandMessage(array $event, array $teamIds, string $kind, string $body)
     {
         $mid   = (int) $event['municipality_id'];
-        $title = $kind === 'order' ? 'Εντολή δήμου' : 'Μήνυμα δήμου';
+        $et    = self::eventTerms($mid);
+        $title = $kind === 'order' ? 'Εντολή ' . $et['org_short'] : 'Μήνυμα ' . $et['org_short'];
         $msg   = mb_substr(trim($body), 0, 200);
         $forced = $kind === 'order';
         $link = self::absoluteUrl('/team/operations/events/' . (int) $event['id']);
@@ -828,7 +880,8 @@ class NotificationService
     public static function commandGeoMessage(array $event, array $teamIds, string $pointKind, string $body, $lat, $lng)
     {
         $mid    = (int) $event['municipality_id'];
-        $titles = ['move' => 'Εντολή μετάβασης', 'incident' => '⚠️ Περιστατικό', 'poi' => 'Σημείο δήμου'];
+        $et     = self::eventTerms($mid);
+        $titles = ['move' => 'Εντολή μετάβασης', 'incident' => '⚠️ Περιστατικό', 'poi' => 'Σημείο ' . $et['org_short']];
         $title  = $titles[$pointKind] ?? 'Σημείο δήμου';
         $msg    = mb_substr(trim($body), 0, 200);
         $maps   = ($lat !== null && $lng !== null) ? ('https://www.google.com/maps?q=' . $lat . ',' . $lng) : '';

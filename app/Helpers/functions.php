@@ -215,6 +215,131 @@ function current_team_id()
         ? (int) $_SESSION['team_id'] : null;
 }
 
+/* --------------------------------------------------------- Authority terms */
+
+function authority_options(): array
+{
+    return [
+        'municipality' => [
+            'label' => 'Δήμος',
+            'prefix' => 'Δήμος',
+            'short' => 'Δήμος',
+            'icon' => '🏛️',
+            'event_singular' => 'Δράση',
+            'event_plural' => 'Δράσεις',
+            'event_plural_lc' => 'δράσεις',
+            'event_new' => 'Νέα Δράση',
+            'team_plural' => 'Εθελοντικές Ομάδες',
+            'team_singular' => 'Εθελοντική Ομάδα',
+            'admin_role' => 'Διαχειριστής Δήμου',
+        ],
+        'civil_protection' => [
+            'label' => 'Πολιτική Προστασία',
+            'prefix' => 'Πολιτική Προστασία',
+            'short' => 'Πολ. Προστ.',
+            'icon' => '🛡️',
+            'event_singular' => 'Αποστολή',
+            'event_plural' => 'Αποστολές',
+            'event_plural_lc' => 'αποστολές',
+            'event_new' => 'Νέα Αποστολή',
+            'team_plural' => 'Ομάδες Πολιτικής Προστασίας',
+            'team_singular' => 'Ομάδα Πολιτικής Προστασίας',
+            'admin_role' => 'Διαχειριστής Φορέα',
+        ],
+        'fire_service' => [
+            'label' => 'Πυροσβεστική',
+            'prefix' => 'Πυροσβεστική',
+            'short' => 'Πυρ/κή',
+            'icon' => '🚒',
+            'event_singular' => 'Αποστολή',
+            'event_plural' => 'Αποστολές',
+            'event_plural_lc' => 'αποστολές',
+            'event_new' => 'Νέα Αποστολή',
+            'team_plural' => 'Ομάδες / Κλιμάκια',
+            'team_singular' => 'Ομάδα / Κλιμάκιο',
+            'admin_role' => 'Διαχειριστής Φορέα',
+        ],
+        'coast_guard' => [
+            'label' => 'Λιμενικό',
+            'prefix' => 'Λιμενικό',
+            'short' => 'Λιμενικό',
+            'icon' => '⚓',
+            'event_singular' => 'Αποστολή',
+            'event_plural' => 'Αποστολές',
+            'event_plural_lc' => 'αποστολές',
+            'event_new' => 'Νέα Αποστολή',
+            'team_plural' => 'Ομάδες Διάσωσης',
+            'team_singular' => 'Ομάδα Διάσωσης',
+            'admin_role' => 'Διαχειριστής Φορέα',
+        ],
+    ];
+}
+
+function normalize_authority_type($type): string
+{
+    return array_key_exists((string) $type, authority_options()) ? (string) $type : 'municipality';
+}
+
+function authority_defaults(string $type): array
+{
+    $options = authority_options();
+    return $options[normalize_authority_type($type)];
+}
+
+function authority_context($municipalityId = null): array
+{
+    $mid = $municipalityId !== null ? (int) $municipalityId : current_municipality_id();
+    $fallbackName = '';
+    $type = 'municipality';
+    $official = '';
+    $short = '';
+
+    if ($mid) {
+        try {
+            $row = dbq(
+                'SELECT name, authority_type, official_name, short_name FROM municipalities WHERE id = :id LIMIT 1',
+                ['id' => $mid]
+            )->fetch();
+            if ($row) {
+                $fallbackName = (string) ($row['name'] ?? '');
+                $type = normalize_authority_type($row['authority_type'] ?? 'municipality');
+                $official = trim((string) ($row['official_name'] ?? ''));
+                $short = trim((string) ($row['short_name'] ?? ''));
+            }
+        } catch (Throwable $e) {
+            try {
+                $settings = MunicipalitySetting::all($mid);
+                $fallbackName = (string) (dbq('SELECT name FROM municipalities WHERE id = :id LIMIT 1', ['id' => $mid])->fetchColumn() ?: '');
+                $type = normalize_authority_type($settings['org_type'] ?? 'municipality');
+                $official = trim((string) ($settings['org_name'] ?? ''));
+                $short = trim((string) ($settings['org_name_short'] ?? ''));
+            } catch (Throwable $inner) { /* use defaults */ }
+        }
+    }
+
+    $defs = authority_defaults($type);
+    if ($official === '') {
+        $official = $fallbackName !== '' ? $defs['prefix'] . ' ' . $fallbackName : $defs['prefix'];
+    }
+    if ($short === '') {
+        $short = $defs['short'];
+    }
+
+    return array_merge($defs, [
+        'authority_type' => $type,
+        'municipality_id' => $mid,
+        'base_name' => $fallbackName,
+        'official_name' => $official,
+        'short_name' => $short,
+    ]);
+}
+
+function org_term(string $key, $municipalityId = null): string
+{
+    $ctx = authority_context($municipalityId);
+    return (string) ($ctx[$key] ?? '');
+}
+
 /** Route name of the dashboard for the current role. */
 function role_home()
 {

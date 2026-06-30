@@ -19,18 +19,21 @@ class EmailTemplate
     {
         return [
             'event_published' => [
-                'label'     => 'Νέα δράση δημοσιεύτηκε',
+                'label'     => 'Νέα αποστολή/δράση δημοσιεύτηκε',
                 'icon'      => 'bi-megaphone',
-                'subject'   => 'Νέα δράση: {event_title}',
+                'subject'   => 'Νέα {event_label_lc}: {event_title}',
                 'body'      =>
-                    "Δημοσιεύθηκε νέα δράση από τον δήμο.\n\n" .
-                    "Δράση:      {event_title}\n" .
+                    "Δημοσιεύθηκε νέα {event_label_lc} από {org_short}.\n\n" .
+                    "{event_label}:      {event_title}\n" .
                     "Κατηγορία:  {event_category}\n" .
                     "Ημερομηνία: {event_date}\n" .
                     "Τοποθεσία:  {event_location}\n\n" .
                     "Συνδεθείτε στην πλατφόρμα SynDrasi για να δηλώσετε συμμετοχή.",
                 'vars'      => [
-                    'event_title'    => 'Τίτλος δράσης',
+                    'event_title'    => 'Τίτλος αποστολής/δράσης',
+                    'event_label'    => 'Όρος αποστολής/δράσης',
+                    'event_label_lc' => 'Όρος με μικρά',
+                    'org_short'      => 'Σύντομο όνομα φορέα',
                     'event_category' => 'Κατηγορία',
                     'event_date'     => 'Ημερομηνία & ώρα',
                     'event_location' => 'Τοποθεσία',
@@ -43,29 +46,33 @@ class EmailTemplate
                 'icon'      => 'bi-inbox-fill',
                 'subject'   => 'Νέα δήλωση συμμετοχής: {event_title}',
                 'body'      =>
-                    "Η ομάδα \"{team_name}\" δήλωσε συμμετοχή στη δράση \"{event_title}\" με {offered_people} άτομα.\n\n" .
+                    "Η ομάδα \"{team_name}\" δήλωσε συμμετοχή στη {event_label_lc} \"{event_title}\" με {offered_people} άτομα.\n\n" .
                     "Συνδεθείτε στην πλατφόρμα SynDrasi για Εγκρίσεις.",
                 'vars'      => [
-                    'event_title'    => 'Τίτλος δράσης',
+                    'event_title'    => 'Τίτλος αποστολής/δράσης',
+                    'event_label'    => 'Όρος αποστολής/δράσης',
+                    'event_label_lc' => 'Όρος με μικρά',
                     'team_name'      => 'Όνομα ομάδας',
                     'offered_people' => 'Αριθμός ατόμων που δηλώθηκαν',
                 ],
-                'recipient' => 'Διαχειριστές δήμου',
+                'recipient' => 'Διαχειριστές φορέα',
             ],
 
             'application_approved' => [
                 'label'     => 'Έγκριση συμμετοχής',
                 'icon'      => 'bi-check-circle-fill',
-                'subject'   => 'Εγκρίθηκε η συμμετοχή σας στη δράση',
+                'subject'   => 'Εγκρίθηκε η συμμετοχή σας στη {event_label_lc}',
                 'body'      =>
-                    "Η συμμετοχή της ομάδας σας εγκρίθηκε για τη δράση:\n{event_title}\n\n" .
+                    "Η συμμετοχή της ομάδας σας εγκρίθηκε για τη {event_label_lc}:\n{event_title}\n\n" .
                     "Ημερομηνία:         {event_date}\n" .
                     "Ώρα προσέλευσης:    {event_time}\n" .
                     "Εγκεκριμένα άτομα: {approved_people}\n" .
                     "Τοποθεσία:          {event_location}\n\n" .
                     "Παρακαλούμε συνδεθείτε στην πλατφόρμα SynDrasi για περισσότερες πληροφορίες.",
                 'vars'      => [
-                    'event_title'     => 'Τίτλος δράσης',
+                    'event_title'     => 'Τίτλος αποστολής/δράσης',
+                    'event_label'     => 'Όρος αποστολής/δράσης',
+                    'event_label_lc'  => 'Όρος με μικρά',
                     'event_date'      => 'Ημερομηνία',
                     'event_time'      => 'Ώρα έναρξης',
                     'event_location'  => 'Τοποθεσία',
@@ -79,11 +86,13 @@ class EmailTemplate
                 'icon'      => 'bi-x-circle',
                 'subject'   => 'Απάντηση στη δήλωση συμμετοχής σας',
                 'body'      =>
-                    "Η δήλωση συμμετοχής της ομάδας σας για τη δράση \"{event_title}\" δεν εγκρίθηκε.\n" .
+                    "Η δήλωση συμμετοχής της ομάδας σας για τη {event_label_lc} \"{event_title}\" δεν εγκρίθηκε.\n" .
                     "{rejection_reason}\n" .
                     "Ευχαριστούμε για τη διαθεσιμότητά σας.",
                 'vars'      => [
-                    'event_title'      => 'Τίτλος δράσης',
+                    'event_title'      => 'Τίτλος αποστολής/δράσης',
+                    'event_label'      => 'Όρος αποστολής/δράσης',
+                    'event_label_lc'   => 'Όρος με μικρά',
                     'rejection_reason' => 'Αιτιολογία απόρριψης (κενό αν δεν δόθηκε)',
                 ],
                 'recipient' => 'Διαχειριστής ομάδας',
@@ -94,34 +103,38 @@ class EmailTemplate
                 'icon'      => 'bi-exclamation-triangle',
                 'subject'   => 'Αναφορά έλλειψης: {event_title}',
                 'body'      =>
-                    "Η ομάδα \"{team_name}\" ανέφερε έλλειψη στη δράση \"{event_title}\".\n\n" .
+                    "Η ομάδα \"{team_name}\" ανέφερε έλλειψη στη {event_label_lc} \"{event_title}\".\n\n" .
                     "Τύπος:      {shortage_type}\n" .
                     "Σοβαρότητα: {shortage_severity}\n" .
                     "Τίτλος:     {shortage_title}\n\n" .
                     "Δείτε την Επιχειρησιακή Σελίδα για περισσότερα.",
                 'vars'      => [
-                    'event_title'       => 'Τίτλος δράσης',
+                    'event_title'       => 'Τίτλος αποστολής/δράσης',
+                    'event_label'       => 'Όρος αποστολής/δράσης',
+                    'event_label_lc'    => 'Όρος με μικρά',
                     'team_name'         => 'Όνομα ομάδας',
                     'shortage_type'     => 'Τύπος έλλειψης',
                     'shortage_severity' => 'Σοβαρότητα',
                     'shortage_title'    => 'Τίτλος αναφοράς',
                 ],
-                'recipient' => 'Διαχειριστές δήμου',
+                'recipient' => 'Διαχειριστές φορέα',
             ],
 
             'event_reminder' => [
-                'label'     => 'Υπενθύμιση δράσης',
+                'label'     => 'Υπενθύμιση αποστολής/δράσης',
                 'icon'      => 'bi-alarm',
-                'subject'   => 'Υπενθύμιση δράσης: {event_title}',
+                'subject'   => 'Υπενθύμιση {event_label_lc}: {event_title}',
                 'body'      =>
-                    "Υπενθύμιση για την επερχόμενη δράση:\n{event_title}\n\n" .
+                    "Υπενθύμιση για την επερχόμενη {event_label_lc}:\n{event_title}\n\n" .
                     "Ημερομηνία:         {event_date}\n" .
                     "Ώρα προσέλευσης:    {event_time}\n" .
                     "Εγκεκριμένα άτομα: {approved_people}\n" .
                     "Τοποθεσία:          {event_location}\n\n" .
                     "Παρακαλούμε συνδεθείτε στην πλατφόρμα SynDrasi για περισσότερες πληροφορίες.",
                 'vars'      => [
-                    'event_title'     => 'Τίτλος δράσης',
+                    'event_title'     => 'Τίτλος αποστολής/δράσης',
+                    'event_label'     => 'Όρος αποστολής/δράσης',
+                    'event_label_lc'  => 'Όρος με μικρά',
                     'event_date'      => 'Ημερομηνία',
                     'event_time'      => 'Ώρα έναρξης',
                     'event_location'  => 'Τοποθεσία',
@@ -131,27 +144,44 @@ class EmailTemplate
             ],
 
             'event_completed' => [
-                'label'     => 'Κλείσιμο δράσης — υποβολή αναφοράς',
+                'label'     => 'Κλείσιμο αποστολής/δράσης — υποβολή αναφοράς',
                 'icon'      => 'bi-flag',
-                'subject'   => 'Ολοκληρώθηκε η δράση: {event_title}',
+                'subject'   => 'Ολοκληρώθηκε η {event_label_lc}: {event_title}',
                 'body'      =>
-                    "Η δράση \"{event_title}\" ολοκληρώθηκε.\n\n" .
+                    "Η {event_label_lc} \"{event_title}\" ολοκληρώθηκε.\n\n" .
                     "Παρακαλούμε συνδεθείτε στην πλατφόρμα SynDrasi και υποβάλετε τη σύντομη αναφορά της ομάδας σας.",
                 'vars'      => [
-                    'event_title' => 'Τίτλος δράσης',
+                    'event_title' => 'Τίτλος αποστολής/δράσης',
+                    'event_label' => 'Όρος αποστολής/δράσης',
+                    'event_label_lc' => 'Όρος με μικρά',
+                ],
+                'recipient' => 'Διαχειριστής ομάδας',
+            ],
+
+            'event_closed' => [
+                'label'     => 'Debrief αποστολής/δράσης',
+                'icon'      => 'bi-clipboard-check',
+                'subject'   => 'Debrief {event_label_lc}: {event_title}',
+                'body'      =>
+                    "Η {event_label_lc} \"{event_title}\" έκλεισε επιχειρησιακά.\n\n" .
+                    "Παρακαλούμε συμπληρώστε το Post-Event Debrief της ομάδας σας.",
+                'vars'      => [
+                    'event_title' => 'Τίτλος αποστολής/δράσης',
+                    'event_label' => 'Όρος αποστολής/δράσης',
+                    'event_label_lc' => 'Όρος με μικρά',
                 ],
                 'recipient' => 'Διαχειριστής ομάδας',
             ],
 
             'member_assigned' => [
-                'label'     => 'Ορισμός μέλους σε δράση',
+                'label'     => 'Ορισμός μέλους σε αποστολή/δράση',
                 'icon'      => 'bi-person-check',
-                'subject'   => 'Ορίστηκες για δράση: {event_title}',
+                'subject'   => 'Ορίστηκες για {event_label_lc}: {event_title}',
                 'body'      =>
                     "Αγαπητέ/ή {member_name},\n\n" .
                     "Ο/Η διαχειριστής της ομάδας σας σε έχει συμπεριλάβει στη δήλωση συμμετοχής " .
-                    "για την παρακάτω δράση:\n\n" .
-                    "Δράση:      {event_title}\n" .
+                    "για την παρακάτω {event_label_lc}:\n\n" .
+                    "{event_label}:      {event_title}\n" .
                     "Ημερομηνία: {event_start}\n" .
                     "Λήξη:       {event_end}\n" .
                     "Τοποθεσία:  {event_location}\n" .
@@ -161,7 +191,9 @@ class EmailTemplate
                     "— SynDrasi",
                 'vars'      => [
                     'member_name'    => 'Όνομα μέλους',
-                    'event_title'    => 'Τίτλος δράσης',
+                    'event_title'    => 'Τίτλος αποστολής/δράσης',
+                    'event_label'    => 'Όρος αποστολής/δράσης',
+                    'event_label_lc' => 'Όρος με μικρά',
                     'event_start'    => 'Ημερομηνία & ώρα έναρξης',
                     'event_end'      => 'Ημερομηνία & ώρα λήξης',
                     'event_location' => 'Τοποθεσία',

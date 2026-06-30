@@ -1,3 +1,10 @@
+<?php
+$terms = $terms ?? authority_context((int) ($event['municipality_id'] ?? 0));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$orgShort = $terms['short_name'] ?? $terms['short'] ?? 'Φορέας';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-start mb-1 gap-2">
   <div>
     <h1 class="h3 mb-1"><?= e($event['title']) ?> <?= status_badge($event['status']) ?></h1>
@@ -14,7 +21,7 @@
 
       <?php if (in_array($event['status'], ['draft','review'], true)): ?>
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/publish')) ?>"
-              onsubmit="return confirm('Η δράση θα δημοσιευθεί και όλες οι ενεργές ομάδες θα ειδοποιηθούν. Συνέχεια;')">
+              onsubmit="return confirm('Η <?= e($eventSingularLc) ?> θα δημοσιευθεί και όλες οι ενεργές ομάδες θα ειδοποιηθούν. Συνέχεια;')">
           <?= csrf_field() ?>
           <button class="btn btn-primary"><i class="bi bi-megaphone me-1"></i>Δημοσίευση</button>
         </form>
@@ -22,9 +29,9 @@
 
       <?php if (in_array($event['status'], ['open','review','confirmed'], true)): ?>
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/activate')) ?>"
-              onsubmit="return confirm('Η δράση θα γίνει ενεργή (ημέρα διεξαγωγής). Συνέχεια;')">
+              onsubmit="return confirm('Η <?= e($eventSingularLc) ?> θα γίνει ενεργή (ημέρα διεξαγωγής). Συνέχεια;')">
           <?= csrf_field() ?>
-          <button class="btn btn-warning"><i class="bi bi-broadcast me-1"></i>Έναρξη δράσης</button>
+          <button class="btn btn-warning"><i class="bi bi-broadcast me-1"></i>Έναρξη <?= e($eventSingularLc) ?></button>
         </form>
       <?php endif; ?>
 
@@ -42,9 +49,9 @@
 
       <?php if (in_array($event['status'], ['open','review','confirmed','active'], true)): ?>
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/close')) ?>"
-              onsubmit="return confirm('Η δράση θα κλειστεί και οι ομάδες θα ειδοποιηθούν να υποβάλουν αναφορά. Συνέχεια;')">
+              onsubmit="return confirm('Η <?= e($eventSingularLc) ?> θα κλειστεί και οι ομάδες θα ειδοποιηθούν να υποβάλουν αναφορά. Συνέχεια;')">
           <?= csrf_field() ?>
-          <button class="btn btn-danger"><i class="bi bi-lock me-1"></i>Κλείσιμο δράσης</button>
+          <button class="btn btn-danger"><i class="bi bi-lock me-1"></i>Κλείσιμο <?= e($eventSingularLc) ?></button>
         </form>
       <?php endif; ?>
 
@@ -53,25 +60,25 @@
           <i class="bi bi-clipboard-check me-1"></i>Απολογισμός-Στοιχεία
         </a>
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/archive')) ?>"
-              onsubmit="return confirm('Η δράση θα ολοκληρωθεί οριστικά και θα μετακινηθεί στις Ολοκληρωμένες. Συνέχεια;')">
+              onsubmit="return confirm('Η <?= e($eventSingularLc) ?> θα ολοκληρωθεί οριστικά και θα μετακινηθεί στις Ολοκληρωμένες. Συνέχεια;')">
           <?= csrf_field() ?>
           <button class="btn btn-success"><i class="bi bi-archive me-1"></i>Ολοκλήρωση</button>
         </form>
       <?php endif; ?>
 
       <?php if (in_array($event['status'], ['closed','completed'], true)): ?>
-        <a class="btn btn-info" href="<?= e(url('/events/' . $event['id'] . '/story')) ?>" target="_blank"><i class="bi bi-easel2 me-1"></i>Παρουσίαση Δράσης</a>
+        <a class="btn btn-info" href="<?= e(url('/events/' . $event['id'] . '/story')) ?>" target="_blank"><i class="bi bi-easel2 me-1"></i>Παρουσίαση <?= e($eventSingular) ?></a>
       <?php endif; ?>
 
       <?php if ($event['status'] === 'completed'): ?>
         <a class="btn btn-outline-primary" href="<?= e(url('/events/' . $event['id'] . '/debriefs')) ?>">
-          <i class="bi bi-clipboard2-data me-1"></i>Απολογισμός Δράσης
+          <i class="bi bi-clipboard2-data me-1"></i>Απολογισμός <?= e($eventSingular) ?>
         </a>
       <?php endif; ?>
 
       <?php if (!in_array($event['status'], ['closed','completed','cancelled'], true)): ?>
         <form method="post" action="<?= e(url('/events/' . $event['id'] . '/cancel')) ?>"
-              onsubmit="return confirm('Η δράση θα ακυρωθεί. Είστε σίγουροι;')">
+              onsubmit="return confirm('Η <?= e($eventSingularLc) ?> θα ακυρωθεί. Είστε σίγουροι;')">
           <?= csrf_field() ?>
           <button class="btn btn-outline-secondary"><i class="bi bi-x-circle me-1"></i>Ακύρωση</button>
         </form>
@@ -79,7 +86,7 @@
 
       <!-- Clone button — always available to municipality_admin -->
       <form method="post" action="<?= e(url('/events/' . $event['id'] . '/clone')) ?>"
-            onsubmit="return confirm('Θα δημιουργηθεί αντίγραφο αυτής της δράσης ως πρόχειρο. Συνέχεια;')">
+            onsubmit="return confirm('Θα δημιουργηθεί αντίγραφο αυτής της <?= e($eventSingularLc) ?> ως πρόχειρο. Συνέχεια;')">
         <?= csrf_field() ?>
         <button class="btn btn-outline-secondary"><i class="bi bi-copy me-1"></i>Κλωνοποίηση</button>
       </form>
@@ -125,7 +132,7 @@
 <div class="row g-4 mt-1">
   <div class="col-lg-7">
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white fw-semibold">Στοιχεία δράσης</div>
+      <div class="card-header bg-white fw-semibold">Στοιχεία <?= e($eventSingularLc) ?></div>
       <div class="card-body">
         <?php if ($event['description']): ?><p><?= nl2br(e($event['description'])) ?></p><?php endif; ?>
         <dl class="row mb-0">
@@ -151,7 +158,7 @@
         <?php endif; ?>
       </div>
       <?php if (!$applications): ?>
-        <div class="card-body text-muted">Δεν υπάρχουν ακόμη δηλώσεις συμμετοχής για αυτή τη δράση.</div>
+        <div class="card-body text-muted">Δεν υπάρχουν ακόμη δηλώσεις συμμετοχής για αυτή τη <?= e($eventSingularLc) ?>.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table mb-0">
@@ -223,7 +230,7 @@
       <?php endif; ?>
 
       <?php if (!$shifts): ?>
-        <div class="card-body text-muted"><i class="bi bi-info-circle me-1"></i> Δεν έχουν οριστεί βάρδιες για αυτή τη δράση.</div>
+        <div class="card-body text-muted"><i class="bi bi-info-circle me-1"></i> Δεν έχουν οριστεί βάρδιες για αυτή τη <?= e($eventSingularLc) ?>.</div>
       <?php else: ?>
         <?php
           // Index shift applications by shift_id for quick lookup
@@ -344,7 +351,7 @@
 
     <div class="card shadow-sm">
       <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-file-earmark-text me-1"></i> Αναφορές δράσης</span>
+        <span><i class="bi bi-file-earmark-text me-1"></i> Αναφορές <?= e($eventSingularLc) ?></span>
       </div>
       <?php if (empty($reports)): ?>
         <div class="card-body text-muted small">Δεν υπάρχουν αναφορές ακόμη.</div>
@@ -353,7 +360,7 @@
           <?php foreach ($reports as $r): ?>
           <div class="list-group-item">
             <div class="fw-semibold small">
-              <i class="bi bi-people me-1 text-primary"></i><?= e($r['team_name'] ?? 'Δήμος') ?>
+              <i class="bi bi-people me-1 text-primary"></i><?= e($r['team_name'] ?? $orgShort) ?>
               <span class="text-muted fw-normal">· <?= e(gr_datetime($r['created_at'])) ?></span>
             </div>
             <div class="small text-muted mt-1">

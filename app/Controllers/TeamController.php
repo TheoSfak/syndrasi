@@ -7,8 +7,10 @@ class TeamController
     public function index()
     {
         requireRole(['municipality_admin']);
-        $teams = VolunteerTeam::forMunicipality(current_municipality_id());
-        render('teams/index', ['pageTitle' => 'Εθελοντικές Ομάδες', 'teams' => $teams]);
+        $mid = current_municipality_id();
+        $terms = authority_context($mid);
+        $teams = VolunteerTeam::forMunicipality($mid);
+        render('teams/index', ['pageTitle' => $terms['team_plural'], 'teams' => $teams, 'terms' => $terms]);
     }
 
     public function create()

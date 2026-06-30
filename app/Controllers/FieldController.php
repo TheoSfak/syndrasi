@@ -85,8 +85,8 @@ class FieldController
             'photoRequest' => $photoRequest,
             'gpsRequest'   => $gpsRequest,
             'videoRequest' => $videoRequest,
-            'orgLabel'     => MunicipalitySetting::orgLabelShort($munSettings),
-            'orgIcon'      => MunicipalitySetting::orgIcon($munSettings),
+            'orgLabel'     => org_term('short_name', (int) $app['municipality_id']),
+            'orgIcon'      => org_term('icon', (int) $app['municipality_id']),
         ], false); // standalone, no app layout / no login chrome
     }
 

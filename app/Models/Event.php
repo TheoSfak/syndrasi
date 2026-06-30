@@ -189,8 +189,21 @@ class Event
 
     // --------------------------------------------------------- Static helpers
 
-    public static function categories(): array
+    public static function categories($municipalityId = null): array
     {
+        if ($municipalityId) {
+            try {
+                $type = authority_context((int) $municipalityId)['authority_type'] ?? 'municipality';
+                return dbq(
+                    'SELECT id, name FROM event_categories
+                     WHERE authority_type = :type
+                     ORDER BY name ASC',
+                    ['type' => normalize_authority_type($type)]
+                )->fetchAll();
+            } catch (Throwable $e) {
+                // Older DB before migration 032: fall through to legacy list.
+            }
+        }
         return dbq('SELECT id, name FROM event_categories ORDER BY name ASC')->fetchAll();
     }
 

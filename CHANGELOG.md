@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.5-beta] — 2026-06-30
+
+### Feature — Multi-agency authority types and mission terminology
+
+- Προστέθηκε superadmin-owned τύπος φορέα: Δήμος, Πολιτική Προστασία, Πυροσβεστική ή Λιμενικό.
+- Η ονομασία/σύντομη ονομασία φορέα μεταφέρθηκε από τις Ρυθμίσεις Δήμου στη διαχείριση Φορέων του superadmin.
+- Οι βασικές λίστες, φόρμες, sidebar labels, notifications και email defaults χρησιμοποιούν δυναμικά «Δράσεις» ή «Αποστολές» ανά τύπο φορέα.
+- Προστέθηκαν ξεχωριστές default κατηγορίες αποστολών για Πυροσβεστική, Πολιτική Προστασία και Λιμενικό.
+- Προστέθηκε migration `032_authority_types_and_mission_categories.sql` και ενημερώθηκε το base schema για fresh installs.
+
+---
+
 ## [0.15.4-beta] — 2026-06-30
 
 ### Feature — Notification Control Center

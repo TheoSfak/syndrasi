@@ -1,8 +1,14 @@
+<?php
+$terms = $terms ?? authority_context();
+$teamPlural = $terms['team_plural'] ?? 'Εθελοντικές Ομάδες';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$authorityLabel = $terms['official_name'] ?? $terms['label'] ?? 'φορέα';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
-  <h1 class="h3 mb-0">Εθελοντικές Ομάδες</h1>
+  <h1 class="h3 mb-0"><?= e($teamPlural) ?></h1>
   <a href="<?= e(url('/teams/create')) ?>" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Νέα Ομάδα</a>
 </div>
-<p class="text-muted">Οι εθελοντικές, διασωστικές και υγειονομικές ομάδες του δήμου.</p>
+<p class="text-muted">Οι ομάδες που μπορούν να αναλάβουν <?= e($eventPluralLc) ?> για <?= e($authorityLabel) ?>.</p>
 
 <div class="card shadow-sm">
   <?php if (!$teams): ?>

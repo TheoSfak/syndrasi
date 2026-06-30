@@ -1,3 +1,8 @@
+<?php
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+?>
 <h1 class="h3 mb-1"><?= e($event['title']) ?> <?= status_badge($event['status']) ?></h1>
 <p class="text-muted">
   <?= e(gr_datetime($event['start_datetime'])) ?> – <?= e(gr_datetime($event['end_datetime'])) ?>
@@ -7,7 +12,7 @@
 <div class="row g-4">
   <div class="col-lg-7">
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white fw-semibold">Στοιχεία δράσης</div>
+      <div class="card-header bg-white fw-semibold">Στοιχεία <?= e($eventSingularLc) ?></div>
       <div class="card-body">
         <?php if ($event['description']): ?><p><?= nl2br(e($event['description'])) ?></p><?php endif; ?>
         <dl class="row mb-0">
@@ -35,7 +40,7 @@
     <?php if ($shifts): ?>
     <div id="tab-shifts" class="card shadow-sm">
       <div class="card-header bg-white fw-semibold">
-        <i class="bi bi-clock-history me-1"></i> Βάρδιες δράσης
+        <i class="bi bi-clock-history me-1"></i> Βάρδιες <?= e($eventSingularLc) ?>
         <span class="badge bg-primary ms-1"><?= count($shifts) ?></span>
       </div>
       <div class="list-group list-group-flush">

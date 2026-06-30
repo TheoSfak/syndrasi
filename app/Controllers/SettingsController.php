@@ -1,6 +1,6 @@
 <?php
 /**
- * SynDrasi - Per-municipality settings (Ρυθμίσεις Δήμου).
+ * SynDrasi - Per-authority settings.
  */
 class SettingsController
 {
@@ -21,7 +21,7 @@ class SettingsController
         }
 
         render('settings/municipality', [
-            'pageTitle'            => 'Ρυθμίσεις Δήμου',
+            'pageTitle'            => 'Ρυθμίσεις Φορέα',
             'municipality'         => $municipality,
             'settings'             => $settings,
             'effective'            => $effective,
@@ -110,7 +110,7 @@ class SettingsController
             $user['name'],
             'Δοκιμαστικό email SynDrasi',
             "Αυτό είναι ένα δοκιμαστικό μήνυμα από την πλατφόρμα SynDrasi.\n\n"
-            . 'Δήμος: ' . $municipality['name'] . "\n"
+            . 'Φορέας: ' . (authority_context($mid)['official_name'] ?? $municipality['name']) . "\n"
             . 'Τρόπος αποστολής: ' . $effective['driver'] . "\n"
             . 'Ημερομηνία: ' . gr_datetime(date('Y-m-d H:i:s')) . "\n\n"
             . 'Αν λάβατε αυτό το μήνυμα, οι ρυθμίσεις email λειτουργούν σωστά.',
@@ -586,40 +586,8 @@ class SettingsController
     public function saveOrganisation()
     {
         requireRole(['municipality_admin']);
-        $mid          = current_municipality_id();
-        $municipality = Municipality::find($mid);
-
-        $validTypes = ['municipality', 'civil_protection', 'fire_service', 'coast_guard', 'custom'];
-        $type = post_str('org_type');
-        if (!in_array($type, $validTypes, true)) {
-            $type = 'municipality';
-        }
-
-        $name      = post_str('org_name');
-        $nameShort = post_str('org_name_short');
-        $cityName  = $municipality['name'] ?? '';
-
-        if ($name === '') {
-            $prefixes = ['municipality'=>'Δήμος','civil_protection'=>'Πολιτική Προστασία',
-                         'fire_service'=>'Πυροσβεστική','coast_guard'=>'Λιμενικό','custom'=>''];
-            $prefix = $prefixes[$type] ?? 'Δήμος';
-            $name   = $cityName !== '' ? $prefix . ' ' . $cityName : $prefix;
-        }
-        if ($nameShort === '') {
-            $shorts = ['municipality'=>'Δήμος','civil_protection'=>'Πολ.Προστ.',
-                       'fire_service'=>'Πυρ/κή','coast_guard'=>'Λιμενικό','custom'=>$name];
-            $nameShort = $shorts[$type] ?? 'Δήμος';
-        }
-
-        MunicipalitySetting::setMany($mid, [
-            'org_type'       => $type,
-            'org_name'       => $name,
-            'org_name_short' => $nameShort,
-        ]);
-        audit('municipality_org_updated', 'municipality', $mid, 'type:' . $type);
-
-        flash_set('success', 'Το προφίλ οργανισμού αποθηκεύτηκε.');
-        redirect('/settings#tab-organisation');
+        flash_set('warning', 'Ο τύπος και η ονομασία φορέα ορίζονται πλέον μόνο από τον Super Admin.');
+        redirect('/settings');
     }
 
     private static function mailHistoryForMunicipality(int $municipalityId): array

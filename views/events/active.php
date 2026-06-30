@@ -1,7 +1,13 @@
+<?php
+$terms = $terms ?? authority_context();
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Ενεργές Δράσεις</h1>
-    <p class="text-muted small mb-0">Δράσεις σε εξέλιξη ή αναμονή έναρξης.</p>
+    <h1 class="h3 mb-0">Ενεργές <?= e($eventPlural) ?></h1>
+    <p class="text-muted small mb-0"><?= e($eventPlural) ?> σε εξέλιξη ή αναμονή έναρξης.</p>
   </div>
   <div class="d-flex gap-2">
     <a href="<?= e(url('/events/calendar')) ?>" class="btn btn-sm btn-outline-secondary">
@@ -30,7 +36,7 @@
     </div>
     <?php endif; ?>
     <a href="<?= e(url('/events/create')) ?>" class="btn btn-sm btn-primary">
-      <i class="bi bi-plus-lg me-1"></i>Νέα Δράση
+        <i class="bi bi-plus-lg me-1"></i><?= e($terms['event_new'] ?? 'Νέα Δράση') ?>
     </a>
   </div>
 </div>
@@ -43,14 +49,14 @@
 </ul>
 
 <?php if (!$events): ?>
-  <div class="alert alert-info">Δεν υπάρχουν ενεργές δράσεις αυτή τη στιγμή.</div>
+  <div class="alert alert-info">Δεν υπάρχουν ενεργές <?= e($eventPluralLc) ?> αυτή τη στιγμή.</div>
 <?php else: ?>
   <div class="card shadow-sm">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>Δράση</th>
+            <th><?= e($eventSingular) ?></th>
             <th>Ημερομηνία</th>
             <th>Κατάσταση</th>
             <th class="text-center">Δηλώσεις</th>

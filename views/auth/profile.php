@@ -15,15 +15,15 @@
             <?php
             $roles = [
                 'super_admin' => 'Διαχειριστής Πλατφόρμας',
-                'municipality_admin' => 'Διαχειριστής Δήμου',
+                'municipality_admin' => 'Διαχειριστής Φορέα',
                 'team_admin' => 'Υπεύθυνος Ομάδας',
-                'event_operator' => 'Χειριστής Δράσεων',
+                'event_operator' => 'Χειριστής Επιχειρήσεων',
             ];
             echo e(isset($roles[$user['role']]) ? $roles[$user['role']] : $user['role']);
             ?>
           </dd>
           <?php if ($municipality): ?>
-            <dt class="col-sm-4">Δήμος</dt><dd class="col-sm-8"><?= e($municipality['name']) ?></dd>
+            <dt class="col-sm-4">Φορέας</dt><dd class="col-sm-8"><?= e($municipality['official_name'] ?: $municipality['name']) ?></dd>
           <?php endif; ?>
           <?php if ($team): ?>
             <dt class="col-sm-4">Ομάδα</dt><dd class="col-sm-8"><?= e($team['name']) ?></dd>
