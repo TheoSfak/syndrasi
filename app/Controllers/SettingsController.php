@@ -28,6 +28,7 @@ class SettingsController
             'telegramEffective'    => $telegramEffective,
             'emailTemplates'       => $emailTemplates,
             'emailTemplateValues'  => $emailTemplateValues,
+            'mailHistory'          => self::mailHistoryForMunicipality($mid),
         ]);
     }
 
@@ -127,6 +128,26 @@ class SettingsController
             flash_set('danger', 'Αποτυχία αποστολής: ' . (MailService::$lastError ?: 'Άγνωστο σφάλμα.'));
         }
         redirect('/settings');
+    }
+
+    public function clearMailHistory()
+    {
+        requireRole(['municipality_admin']);
+        $mid = current_municipality_id();
+
+        if (post_str('confirm') !== 'DELETE') {
+            flash_set('danger', 'Για διαγραφή ιστορικού email πληκτρολογήστε DELETE.');
+            redirect('/settings#tab-mail-history');
+        }
+
+        try {
+            $deleted = dbq('DELETE FROM mail_queue WHERE municipality_id = :mid', ['mid' => $mid])->rowCount();
+            audit('municipality_mail_history_cleared', 'municipality', $mid, ['deleted' => $deleted]);
+            flash_set('success', 'Διαγράφηκαν ' . (int) $deleted . ' εγγραφές ιστορικού email.');
+        } catch (Throwable $e) {
+            flash_set('danger', 'Δεν ήταν δυνατή η διαγραφή ιστορικού email: ' . $e->getMessage());
+        }
+        redirect('/settings#tab-mail-history');
     }
 
     /* ── Map defaults ─────────────────────────────────────────────────── */
@@ -599,5 +620,86 @@ class SettingsController
 
         flash_set('success', 'Το προφίλ οργανισμού αποθηκεύτηκε.');
         redirect('/settings#tab-organisation');
+    }
+
+    private static function mailHistoryForMunicipality(int $municipalityId): array
+    {
+        $empty = [
+            'available' => true,
+            'stats' => ['total' => 0, 'sent' => 0, 'pending' => 0, 'failed' => 0, 'last_24h' => 0, 'last_7d' => 0],
+            'recent' => [],
+            'daily' => [],
+            'recipients' => [],
+            'error' => null,
+        ];
+
+        try {
+            $stats = dbq(
+                "SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN sent_at IS NOT NULL THEN 1 ELSE 0 END) AS sent,
+                    SUM(CASE WHEN sent_at IS NULL AND attempts < 3 THEN 1 ELSE 0 END) AS pending,
+                    SUM(CASE WHEN sent_at IS NULL AND attempts >= 3 THEN 1 ELSE 0 END) AS failed,
+                    SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) AS last_24h,
+                    SUM(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 ELSE 0 END) AS last_7d
+                 FROM mail_queue
+                 WHERE municipality_id = :mid",
+                ['mid' => $municipalityId]
+            )->fetch() ?: [];
+
+            $recent = dbq(
+                "SELECT id, to_email, to_name, subject, created_at, attempts, last_attempt, sent_at, error_msg
+                 FROM mail_queue
+                 WHERE municipality_id = :mid
+                 ORDER BY created_at DESC, id DESC
+                 LIMIT 50",
+                ['mid' => $municipalityId]
+            )->fetchAll();
+
+            $daily = dbq(
+                "SELECT DATE(created_at) AS day,
+                        COUNT(*) AS total,
+                        SUM(CASE WHEN sent_at IS NOT NULL THEN 1 ELSE 0 END) AS sent,
+                        SUM(CASE WHEN sent_at IS NULL AND attempts >= 3 THEN 1 ELSE 0 END) AS failed
+                 FROM mail_queue
+                 WHERE municipality_id = :mid
+                   AND created_at >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+                 GROUP BY DATE(created_at)
+                 ORDER BY day DESC",
+                ['mid' => $municipalityId]
+            )->fetchAll();
+
+            $recipients = dbq(
+                "SELECT to_email, COUNT(*) AS total,
+                        SUM(CASE WHEN sent_at IS NOT NULL THEN 1 ELSE 0 END) AS sent,
+                        MAX(created_at) AS last_created_at
+                 FROM mail_queue
+                 WHERE municipality_id = :mid
+                 GROUP BY to_email
+                 ORDER BY total DESC, last_created_at DESC
+                 LIMIT 20",
+                ['mid' => $municipalityId]
+            )->fetchAll();
+
+            return [
+                'available' => true,
+                'stats' => [
+                    'total' => (int) ($stats['total'] ?? 0),
+                    'sent' => (int) ($stats['sent'] ?? 0),
+                    'pending' => (int) ($stats['pending'] ?? 0),
+                    'failed' => (int) ($stats['failed'] ?? 0),
+                    'last_24h' => (int) ($stats['last_24h'] ?? 0),
+                    'last_7d' => (int) ($stats['last_7d'] ?? 0),
+                ],
+                'recent' => $recent,
+                'daily' => $daily,
+                'recipients' => $recipients,
+                'error' => null,
+            ];
+        } catch (Throwable $e) {
+            $empty['available'] = false;
+            $empty['error'] = $e->getMessage();
+            return $empty;
+        }
     }
 }

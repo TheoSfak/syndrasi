@@ -223,6 +223,7 @@ $router->post('/team/members/{id}/assistant/revoke', 'TeamMemberController@revok
 $router->get('/settings', 'SettingsController@index');
 $router->post('/settings/mail', 'SettingsController@saveMail');
 $router->post('/settings/mail/test', 'SettingsController@testMail');
+$router->post('/settings/mail/history/clear', 'SettingsController@clearMailHistory');
 $router->post('/settings/map', 'SettingsController@saveMap');
 $router->post('/settings/awards', 'SettingsController@saveAwards');
 $router->post('/settings/notifications', 'SettingsController@saveNotifications');

@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.2-beta] — 2026-06-30
+
+### Feature — Municipality email history dashboard
+
+- Προστέθηκε νέα καρτέλα «Ιστορικό Email» στις Ρυθμίσεις Δήμου.
+- Εμφανίζει στατιστικά αποστολών από το `mail_queue`: σύνολο, επιτυχημένα, pending, αποτυχημένα, τελευταίο 24ωρο και τελευταίες 7 ημέρες.
+- Προστέθηκαν πίνακες με πρόσφατα email, ημερήσια σύνολα και συχνότερους παραλήπτες.
+- Προστέθηκε κουμπί διαγραφής όλου του ιστορικού email για τον συγκεκριμένο δήμο με επιβεβαίωση `DELETE`.
+
+---
+
 ## [0.15.1-beta] — 2026-06-30
 
 ### Data safety — sanitize demo volunteer emails

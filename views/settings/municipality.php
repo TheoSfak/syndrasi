@@ -19,6 +19,14 @@ $notifyOn = function ($key) use ($settings) {
     return $settings[$key] === '1';
 };
 $driver = $v('mail_driver');
+$mailHistory = $mailHistory ?? [
+    'available' => false,
+    'stats' => ['total' => 0, 'sent' => 0, 'pending' => 0, 'failed' => 0, 'last_24h' => 0, 'last_7d' => 0],
+    'recent' => [],
+    'daily' => [],
+    'recipients' => [],
+    'error' => null,
+];
 
 $tzOptions = [
     'Europe/Athens'    => 'Αθήνα (UTC+2/+3)',
@@ -35,6 +43,7 @@ $tzOptions = [
 <ul class="nav nav-tabs mb-4" id="settingsTabs">
   <li class="nav-item"><a class="nav-link" href="#tab-organisation"   data-bs-toggle="tab"><i class="bi bi-building me-1"></i>Οργανισμός</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-mail"           data-bs-toggle="tab"><i class="bi bi-envelope me-1"></i>Email</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-mail-history"    data-bs-toggle="tab"><i class="bi bi-clock-history me-1"></i>Ιστορικό Email</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-map"            data-bs-toggle="tab"><i class="bi bi-map me-1"></i>Χάρτης</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-awards"         data-bs-toggle="tab"><i class="bi bi-trophy me-1"></i>Βραβεία</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-notifications"  data-bs-toggle="tab"><i class="bi bi-bell me-1"></i>Ειδοποιήσεις</a></li>
@@ -138,6 +147,151 @@ $tzOptions = [
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Email history -->
+  <div class="tab-pane fade" id="tab-mail-history">
+    <?php
+      $mhStats = $mailHistory['stats'] ?? [];
+      $mailStatus = function ($row) {
+          if (!empty($row['sent_at'])) {
+              return ['success', 'Στάλθηκε'];
+          }
+          if ((int) ($row['attempts'] ?? 0) >= 3) {
+              return ['danger', 'Απέτυχε'];
+          }
+          return ['warning', 'Σε αναμονή'];
+      };
+    ?>
+    <?php if (empty($mailHistory['available'])): ?>
+      <div class="alert alert-warning">
+        <div class="fw-semibold">Το ιστορικό email δεν είναι διαθέσιμο.</div>
+        <div class="small"><?= e($mailHistory['error'] ?? 'Δεν βρέθηκε ο πίνακας mail_queue.') ?></div>
+      </div>
+    <?php else: ?>
+      <div class="row g-3 mb-3">
+        <?php foreach ([
+          ['Σύνολο', 'total', 'envelope'],
+          ['Στάλθηκαν', 'sent', 'send-check'],
+          ['Σε αναμονή', 'pending', 'hourglass-split'],
+          ['Απέτυχαν', 'failed', 'exclamation-octagon'],
+          ['Τελευταίο 24ωρο', 'last_24h', 'clock'],
+          ['Τελευταίες 7 ημέρες', 'last_7d', 'calendar-week'],
+        ] as [$label, $key, $icon]): ?>
+          <div class="col-sm-6 col-lg-2">
+            <div class="card shadow-sm h-100">
+              <div class="card-body py-3">
+                <div class="small text-muted"><i class="bi bi-<?= e($icon) ?> me-1"></i><?= e($label) ?></div>
+                <div class="fs-4 fw-bold"><?= (int) ($mhStats[$key] ?? 0) ?></div>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-xl-8">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div class="fw-semibold"><i class="bi bi-envelope-paper me-1"></i>Πρόσφατα email</div>
+              <span class="small text-muted">Τελευταίες 50 εγγραφές του δήμου</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Παραλήπτης</th>
+                    <th>Θέμα</th>
+                    <th>Κατάσταση</th>
+                    <th>Δημιουργήθηκε</th>
+                    <th>Προσπάθειες</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if (empty($mailHistory['recent'])): ?>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Δεν υπάρχει ιστορικό email για αυτόν τον δήμο.</td></tr>
+                  <?php else: ?>
+                    <?php foreach ($mailHistory['recent'] as $row): ?>
+                      <?php [$badge, $label] = $mailStatus($row); ?>
+                      <tr>
+                        <td>
+                          <div class="fw-semibold small"><?= e($row['to_email']) ?></div>
+                          <?php if (!empty($row['to_name'])): ?><div class="text-muted small"><?= e($row['to_name']) ?></div><?php endif; ?>
+                        </td>
+                        <td>
+                          <div class="small"><?= e(mb_substr((string) $row['subject'], 0, 90)) ?></div>
+                          <?php if (!empty($row['error_msg'])): ?><div class="text-danger small"><?= e(mb_substr((string) $row['error_msg'], 0, 120)) ?></div><?php endif; ?>
+                        </td>
+                        <td><span class="badge text-bg-<?= e($badge) ?>"><?= e($label) ?></span></td>
+                        <td class="small text-muted"><?= e(gr_datetime($row['created_at'])) ?></td>
+                        <td class="small"><?= (int) $row['attempts'] ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-4">
+          <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-bar-chart me-1"></i>Ανά ημέρα</div>
+            <div class="table-responsive">
+              <table class="table table-sm mb-0">
+                <thead class="table-light"><tr><th>Ημέρα</th><th>Σύνολο</th><th>OK</th><th>Fail</th></tr></thead>
+                <tbody>
+                  <?php if (empty($mailHistory['daily'])): ?>
+                    <tr><td colspan="4" class="text-muted text-center py-3">Δεν υπάρχουν στοιχεία.</td></tr>
+                  <?php else: ?>
+                    <?php foreach ($mailHistory['daily'] as $day): ?>
+                      <tr>
+                        <td class="small"><?= e(gr_date($day['day'])) ?></td>
+                        <td><?= (int) $day['total'] ?></td>
+                        <td class="text-success"><?= (int) $day['sent'] ?></td>
+                        <td class="text-danger"><?= (int) $day['failed'] ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-person-lines-fill me-1"></i>Συχνότεροι παραλήπτες</div>
+            <ul class="list-group list-group-flush">
+              <?php if (empty($mailHistory['recipients'])): ?>
+                <li class="list-group-item text-muted small">Δεν υπάρχουν παραλήπτες.</li>
+              <?php else: ?>
+                <?php foreach ($mailHistory['recipients'] as $r): ?>
+                  <li class="list-group-item d-flex justify-content-between gap-2">
+                    <span class="small text-truncate" title="<?= e($r['to_email']) ?>"><?= e($r['to_email']) ?></span>
+                    <span class="badge text-bg-light border"><?= (int) $r['total'] ?></span>
+                  </li>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </ul>
+          </div>
+
+          <div class="card shadow-sm border-danger">
+            <div class="card-header bg-white text-danger fw-semibold"><i class="bi bi-trash me-1"></i>Διαγραφή ιστορικού</div>
+            <div class="card-body">
+              <p class="small text-muted">Διαγράφει όλες τις εγγραφές `mail_queue` αυτού του δήμου, μαζί με επιτυχημένες, αποτυχημένες και pending αποστολές.</p>
+              <form method="post" action="<?= e(url('/settings/mail/history/clear')) ?>"
+                    onsubmit="return confirm('Να διαγραφεί οριστικά όλο το ιστορικό email αυτού του δήμου;');">
+                <?= csrf_field() ?>
+                <label class="form-label small fw-semibold">Πληκτρολογήστε DELETE</label>
+                <input type="text" name="confirm" class="form-control mb-2" placeholder="DELETE" autocomplete="off">
+                <button class="btn btn-outline-danger w-100" type="submit">
+                  <i class="bi bi-trash me-1"></i>Διαγραφή όλου του ιστορικού
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
   </div>
 
   <!-- Map defaults -->

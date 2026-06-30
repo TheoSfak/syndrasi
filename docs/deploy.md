@@ -1,7 +1,7 @@
 # SynDrasi Deploy Notes
 
 Last updated: 2026-06-30  
-Current release line: `0.15.1-beta`
+Current release line: `0.15.2-beta`
 
 This file summarizes what has been built so far in the recent SynDrasi work cycle and what must be checked when deploying to production.
 
@@ -19,6 +19,7 @@ SynDrasi now includes:
 - Civil Protection fire-risk map Telegram alerts with manual upload fallback.
 - Fire Service incident -> emergency mobilization flow.
 - Demo volunteer email sanitization for production safety.
+- Municipality email history/statistics tab with clear-history action.
 
 The GitHub Actions idea for fetching the Civil Protection fire-risk map was removed in `0.14.19-beta` because it was not reliable enough for production.
 
@@ -259,6 +260,24 @@ Capabilities:
 - The existing mobilization fan-out sends personal response links through the configured channels.
 - Admin is redirected to the live mobilization board to watch volunteer replies.
 
+## 8. Municipality Email History
+
+Main route:
+
+- `POST /settings/mail/history/clear`
+
+Main files:
+
+- `app/Controllers/SettingsController.php`
+- `views/settings/municipality.php`
+
+Capabilities:
+
+- Municipality admin can open Settings -> Ιστορικό Email.
+- Shows totals for all queued/deferred emails of that municipality.
+- Shows sent, pending, failed, last 24h, last 7d, recent rows, daily totals, and frequent recipients.
+- Municipality admin can delete all email history for their municipality after typing `DELETE`.
+
 ## Database Migrations To Ensure Applied
 
 Recent relevant migrations:
@@ -349,6 +368,7 @@ After deploying a release:
 15. Verify no duplicate Telegram is sent for the same fire-risk date.
 16. On `/fire-service`, open "Κινητοποίηση" from a current incident, select teams/capabilities, send in a test municipality, and confirm the live mobilization board opens with targeted volunteers.
 17. Verify demo volunteer emails are sanitized in production after migrations run.
+18. Open Settings -> Ιστορικό Email and confirm email counters/recent rows load; do not clear production history unless intentionally requested.
 
 ## Release Process
 
@@ -370,5 +390,5 @@ For every deployable change:
 
 Latest release at the time this file was written:
 
-- `v0.15.1-beta`
-- Purpose: sanitize demo volunteer emails in production via migration.
+- `v0.15.2-beta`
+- Purpose: add municipality email history/statistics and clear-history action.
