@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.7-beta] — 2026-06-30
+
+### Data — Complete non-municipality mission playbooks
+
+- Προστέθηκε migration `034_complete_non_municipality_playbooks.sql`.
+- Καλύπτονται πλέον όλες οι κατηγορίες αποστολών για Πυροσβεστική, Πολιτική Προστασία και Λιμενικό.
+- Το verification δείχνει 8/8 playbooks για Πυροσβεστική, 8/8 για Πολιτική Προστασία και 7/7 για Λιμενικό.
+- Οι κατηγορίες Δήμου παραμένουν χωρίς playbooks, όπως ζητήθηκε.
+
+---
+
 ## [0.15.6-beta] — 2026-06-30
 
 ### Feature — Mission Playbooks
