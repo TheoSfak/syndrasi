@@ -166,6 +166,80 @@ class FireServiceIncidentService
         return $id;
     }
 
+    public static function mobilizationReviewData(int $incidentId, int $municipalityId): array
+    {
+        $incident = self::find($incidentId);
+        if (!$incident) { throw new RuntimeException('Το συμβάν δεν βρέθηκε.'); }
+        if ((int) ($incident['is_current'] ?? 0) !== 1) {
+            throw new RuntimeException('Το συμβάν δεν είναι πλέον στο τρέχον snapshot.');
+        }
+
+        $title = mb_substr(self::mobilizationTitle($incident), 0, 255);
+        $description = self::mobilizationDescription($incident);
+        return [
+            'incident' => $incident,
+            'title' => $title,
+            'description' => $description,
+            'severity' => self::mobilizationSeverity($incident),
+            'location_name' => self::incidentLocationName($incident),
+            'teams' => self::mobilizationTeams($municipalityId),
+            'existing' => self::existingActiveMobilization($municipalityId, $title, $description),
+        ];
+    }
+
+    public static function createMobilization(int $incidentId, int $municipalityId, int $userId, array $options = []): array
+    {
+        $incident = self::find($incidentId);
+        if (!$incident) { throw new RuntimeException('Το συμβάν δεν βρέθηκε.'); }
+        if ((int) ($incident['is_current'] ?? 0) !== 1) {
+            throw new RuntimeException('Το συμβάν δεν είναι πλέον στο τρέχον snapshot.');
+        }
+
+        $teamIds = array_key_exists('team_ids', $options)
+            ? array_values(array_unique(array_map('intval', (array) $options['team_ids'])))
+            : null;
+        $requireVehicle = !empty($options['require_vehicle']);
+        $requireMedical = !empty($options['require_medical']);
+        $members = self::mobilizationTargetMembers($municipalityId, $teamIds, $requireVehicle, $requireMedical);
+        if (!$members) {
+            throw new RuntimeException('Δεν βρέθηκαν ενεργά μέλη εθελοντικών ομάδων με τα επιλεγμένα κριτήρια.');
+        }
+
+        $title = mb_substr(self::mobilizationTitle($incident), 0, 255);
+        $description = self::mobilizationDescription($incident);
+        $existing = self::existingActiveMobilization($municipalityId, $title, $description);
+        if ($existing) {
+            return [
+                'mobilization_id' => (int) $existing['id'],
+                'targeted' => (int) $existing['targeted'],
+                'existing' => true,
+            ];
+        }
+
+        $mobId = Mobilization::create([
+            'municipality_id' => $municipalityId,
+            'created_by' => $userId,
+            'event_id' => null,
+            'title' => $title,
+            'description' => $description,
+            'severity' => self::mobilizationSeverity($incident),
+            'location_name' => self::incidentLocationName($incident),
+            'latitude' => null,
+            'longitude' => null,
+            'status' => 'active',
+        ]);
+
+        $targets = MobilizationResponse::seedTargets($mobId, $members);
+        $mob = Mobilization::find($mobId);
+        NotificationService::mobilize($mob, $targets);
+
+        return [
+            'mobilization_id' => $mobId,
+            'targeted' => count($targets),
+            'existing' => false,
+        ];
+    }
+
     public static function parse(string $html): array
     {
         $out = [];
@@ -351,6 +425,124 @@ class FireServiceIncidentService
             $parts[] = mb_substr((string) $incident['raw_text'], 0, 500);
         }
         return implode("\n", $parts);
+    }
+
+    private static function mobilizationTeams(int $municipalityId): array
+    {
+        return dbq(
+            "SELECT vt.id, vt.name, vt.type, vt.contact_person, vt.has_vehicle,
+                    vt.has_medical_equipment, vt.default_people_capacity,
+                    COUNT(tm.id) AS active_members
+             FROM volunteer_teams vt
+             LEFT JOIN team_members tm ON tm.team_id = vt.id AND tm.status = 'active'
+             WHERE vt.municipality_id = :mid AND vt.status = 'active'
+             GROUP BY vt.id, vt.name, vt.type, vt.contact_person, vt.has_vehicle,
+                      vt.has_medical_equipment, vt.default_people_capacity
+             ORDER BY vt.name",
+            ['mid' => $municipalityId]
+        )->fetchAll();
+    }
+
+    private static function mobilizationTargetMembers(int $municipalityId, ?array $teamIds, bool $requireVehicle, bool $requireMedical): array
+    {
+        if (is_array($teamIds) && count($teamIds) === 0) {
+            return [];
+        }
+
+        $sql = "SELECT tm.*, vt.name AS team_name
+                FROM team_members tm
+                JOIN volunteer_teams vt ON vt.id = tm.team_id
+                WHERE tm.municipality_id = :mid
+                  AND tm.status = 'active'
+                  AND vt.status = 'active'";
+        $params = ['mid' => $municipalityId];
+
+        if (is_array($teamIds)) {
+            $placeholders = [];
+            foreach ($teamIds as $idx => $teamId) {
+                $key = 'team' . $idx;
+                $placeholders[] = ':' . $key;
+                $params[$key] = (int) $teamId;
+            }
+            $sql .= ' AND tm.team_id IN (' . implode(',', $placeholders) . ')';
+        }
+        if ($requireVehicle) {
+            $sql .= ' AND vt.has_vehicle = 1';
+        }
+        if ($requireMedical) {
+            $sql .= ' AND vt.has_medical_equipment = 1';
+        }
+        $sql .= ' ORDER BY vt.name, tm.full_name';
+
+        return dbq($sql, $params)->fetchAll();
+    }
+
+    private static function existingActiveMobilization(int $municipalityId, string $title, string $description): ?array
+    {
+        return dbq(
+            "SELECT mob.id,
+                    (SELECT COUNT(*) FROM mobilization_responses r WHERE r.mobilization_id = mob.id) AS targeted
+             FROM mobilizations mob
+             WHERE mob.municipality_id = :mid
+               AND mob.status IN ('open','active')
+               AND mob.title = :title
+               AND mob.description = :description
+             ORDER BY mob.id DESC
+             LIMIT 1",
+            ['mid' => $municipalityId, 'title' => $title, 'description' => $description]
+        )->fetch() ?: null;
+    }
+
+    private static function mobilizationTitle(array $incident): string
+    {
+        $place = $incident['location_text'] ?: $incident['area_text'] ?: $incident['municipality'] ?: 'Πυροσβεστικό συμβάν';
+        return 'Κινητοποίηση: ' . $place;
+    }
+
+    private static function mobilizationDescription(array $incident): string
+    {
+        $lines = [
+            'Πηγή: Πυροσβεστικό Σώμα',
+            'Κατηγορία: ' . ($incident['category'] ?: '—'),
+            'Κατάσταση: ' . ($incident['status_label'] ?: '—'),
+            'Περιοχή: ' . trim(($incident['region'] ?: '') . ' / ' . ($incident['regional_unit'] ?: ''), ' /'),
+        ];
+        $location = self::incidentLocationName($incident);
+        if ($location !== '') {
+            $lines[] = 'Τοποθεσία: ' . $location;
+        }
+        if (!empty($incident['raw_text'])) {
+            $lines[] = '';
+            $lines[] = (string) $incident['raw_text'];
+        }
+        $lines[] = '';
+        $lines[] = 'Δημιουργήθηκε άμεσα από τα Συμβάντα Πυροσβεστικής για επιβεβαίωση διαθεσιμότητας εθελοντών.';
+        return implode("\n", $lines);
+    }
+
+    private static function mobilizationSeverity(array $incident): string
+    {
+        $status = (string) ($incident['status_label'] ?? '');
+        $category = (string) ($incident['category'] ?? '');
+        if ($status === 'ΣΕ ΕΞΕΛΙΞΗ' && str_contains($category, 'ΔΑΣΙΚΕΣ')) {
+            return 'critical';
+        }
+        if ($status === 'ΣΕ ΕΞΕΛΙΞΗ') {
+            return 'high';
+        }
+        if ($status === 'ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ') {
+            return 'medium';
+        }
+        return 'low';
+    }
+
+    private static function incidentLocationName(array $incident): string
+    {
+        return trim(implode(' - ', array_filter([
+            $incident['municipality'] ?? '',
+            $incident['area_text'] ?? '',
+            $incident['location_text'] ?? '',
+        ], fn($v) => trim((string) $v) !== '')), " -");
     }
 
     private static function absoluteUrl(string $path): string

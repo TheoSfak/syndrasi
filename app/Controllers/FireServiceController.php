@@ -59,4 +59,51 @@ class FireServiceController
             redirect('/fire-service');
         }
     }
+
+    public function mobilizeReview($id)
+    {
+        requireRole(['municipality_admin']);
+        try {
+            $data = FireServiceIncidentService::mobilizationReviewData((int) $id, current_municipality_id());
+            render('fire_service/mobilize_review', [
+                'pageTitle' => 'Έλεγχος Κινητοποίησης',
+                'incidentId' => (int) $id,
+                'incident' => $data['incident'],
+                'title' => $data['title'],
+                'description' => $data['description'],
+                'severity' => $data['severity'],
+                'locationName' => $data['location_name'],
+                'teams' => $data['teams'],
+                'existing' => $data['existing'],
+            ]);
+        } catch (Throwable $e) {
+            flash_set('danger', $e->getMessage());
+            redirect('/fire-service');
+        }
+    }
+
+    public function mobilize($id)
+    {
+        requireRole(['municipality_admin']);
+        try {
+            $teamIds = (isset($_POST['team_ids']) && is_array($_POST['team_ids']))
+                ? array_map('intval', $_POST['team_ids'])
+                : [];
+            $result = FireServiceIncidentService::createMobilization((int) $id, current_municipality_id(), current_user_id(), [
+                'team_ids' => $teamIds,
+                'require_vehicle' => post_str('require_vehicle') === '1',
+                'require_medical' => post_str('require_medical') === '1',
+            ]);
+            audit('fire_service_mobilization_created', 'fire_service_incident', (int) $id, $result);
+            if (!empty($result['existing'])) {
+                flash_set('info', 'Υπάρχει ήδη ενεργό κάλεσμα για αυτό το συμβάν. Ανοίγει ο ζωντανός πίνακας.');
+            } else {
+                flash_set('success', 'Ξεκίνησε κάλεσμα έκτακτης ανάγκης σε ' . (int) $result['targeted'] . ' εθελοντές.');
+            }
+            redirect('/mobilizations/' . (int) $result['mobilization_id']);
+        } catch (Throwable $e) {
+            flash_set('danger', $e->getMessage());
+            redirect('/fire-service');
+        }
+    }
 }

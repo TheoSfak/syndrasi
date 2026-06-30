@@ -56,6 +56,8 @@ $router->get('/dashboard', 'DashboardController@municipality');
 $router->get('/fire-service', 'FireServiceController@index');
 $router->post('/fire-service/sync', 'FireServiceController@sync');
 $router->post('/fire-service/{id}/create-event', 'FireServiceController@createEvent');
+$router->get('/fire-service/{id}/mobilize', 'FireServiceController@mobilizeReview');
+$router->post('/fire-service/{id}/mobilize', 'FireServiceController@mobilize');
 
 /* Municipality admin: volunteer teams */
 $router->get('/teams', 'TeamController@index');

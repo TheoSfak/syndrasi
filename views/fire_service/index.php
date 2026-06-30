@@ -159,6 +159,11 @@ $cronUrl = url('/cron/fire-service');
               </td>
               <td class="small text-muted"><?= e(gr_datetime($i['last_seen_at'])) ?></td>
               <td class="text-end">
+                <?php if ((int) $i['is_current'] === 1): ?>
+                  <a href="<?= e(url('/fire-service/' . (int) $i['id'] . '/mobilize')) ?>" class="btn btn-sm btn-danger mb-1">
+                    <i class="bi bi-broadcast-pin"></i> Κινητοποίηση
+                  </a>
+                <?php endif; ?>
                 <?php if (!empty($i['created_event_id'])): ?>
                   <a href="<?= e(url('/events/' . (int) $i['created_event_id'] . '/edit')) ?>" class="btn btn-sm btn-outline-success">
                     Άνοιγμα δράσης

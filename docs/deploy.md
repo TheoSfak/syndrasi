@@ -1,7 +1,7 @@
 # SynDrasi Deploy Notes
 
 Last updated: 2026-06-30  
-Current release line: `0.14.20-beta`
+Current release line: `0.15.0-beta`
 
 This file summarizes what has been built so far in the recent SynDrasi work cycle and what must be checked when deploying to production.
 
@@ -17,6 +17,7 @@ SynDrasi now includes:
 - Team assistant chief accounts.
 - Superadmin overview of all teams and volunteers.
 - Civil Protection fire-risk map Telegram alerts with manual upload fallback.
+- Fire Service incident -> emergency mobilization flow.
 
 The GitHub Actions idea for fetching the Civil Protection fire-risk map was removed in `0.14.19-beta` because it was not reliable enough for production.
 
@@ -87,6 +88,7 @@ Capabilities:
 - Cron endpoint intended every 5 minutes.
 - Dashboard red alert for current Crete incidents.
 - Create draft SynDrasi action from an incident.
+- Start an emergency mobilization directly from a current incident.
 - Telegram notifications for Crete incidents in statuses:
   - `ΣΕ ΕΞΕΛΙΞΗ`
   - `ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ`
@@ -235,6 +237,27 @@ Important known limitation:
 - The reliable fallback currently is manual upload or a future external fetcher that posts to `/cron/fire-risk-map/ingest`.
 - GitHub Actions fetcher was tried and removed.
 
+## 7. Fire Service Incident Mobilization
+
+Main route:
+
+- `GET /fire-service/{id}/mobilize`
+- `POST /fire-service/{id}/mobilize`
+
+Main files:
+
+- `app/Controllers/FireServiceController.php`
+- `app/Services/FireServiceIncidentService.php`
+- `views/fire_service/index.php`
+
+Capabilities:
+
+- Municipality admin can press "Κινητοποίηση" on a current Fire Service incident.
+- Admin reviews the incident, active teams, selected teams, and capability filters before sending.
+- SynDrasi creates an active emergency mobilization with incident title, description, location, and inferred severity.
+- The existing mobilization fan-out sends personal response links through the configured channels.
+- Admin is redirected to the live mobilization board to watch volunteer replies.
+
 ## Database Migrations To Ensure Applied
 
 Recent relevant migrations:
@@ -320,6 +343,7 @@ After deploying a release:
 13. Run fire-risk map "Έλεγχος τώρα".
 14. If automatic fetch fails, upload a map image manually and confirm Telegram output.
 15. Verify no duplicate Telegram is sent for the same fire-risk date.
+16. On `/fire-service`, open "Κινητοποίηση" from a current incident, select teams/capabilities, send in a test municipality, and confirm the live mobilization board opens with targeted volunteers.
 
 ## Release Process
 
@@ -341,5 +365,5 @@ For every deployable change:
 
 Latest release at the time this file was written:
 
-- `v0.14.20-beta`
-- Purpose: add this deploy snapshot/handoff document.
+- `v0.15.0-beta`
+- Purpose: start emergency mobilization directly from current Fire Service incidents.
