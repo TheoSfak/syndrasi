@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.3-beta] — 2026-06-30
+
+### Data safety — deterministic demo team emails/passwords
+
+- Προστέθηκε migration `030_demo_team_email_scheme_and_password.sql`.
+- Οι αρχηγοί ομάδων/team admins αποκτούν demo email μορφής `omada1@syndrasi.local`, `omada2@syndrasi.local` κ.λπ., με εξαίρεση τα whitelisted πραγματικά emails.
+- Τα μέλη roster αποκτούν demo email ανά ομάδα και σειρά, π.χ. `omada1_1@syndrasi.local`, `omada1_2@syndrasi.local`, `omada2_1@syndrasi.local`.
+- Τα login accounts αρχηγών/linked members παίρνουν password `Syndrasi2026`.
+- Ενημερώθηκε το demo seed ώστε οι αρχηγοί ομάδων να χρησιμοποιούν το ίδιο scheme.
+
+---
+
 ## [0.15.2-beta] — 2026-06-30
 
 ### Feature — Municipality email history dashboard

@@ -1,7 +1,7 @@
 # SynDrasi Deploy Notes
 
 Last updated: 2026-06-30  
-Current release line: `0.15.2-beta`
+Current release line: `0.15.3-beta`
 
 This file summarizes what has been built so far in the recent SynDrasi work cycle and what must be checked when deploying to production.
 
@@ -20,6 +20,7 @@ SynDrasi now includes:
 - Fire Service incident -> emergency mobilization flow.
 - Demo volunteer email sanitization for production safety.
 - Municipality email history/statistics tab with clear-history action.
+- Deterministic demo team/member email scheme and `Syndrasi2026` team password.
 
 The GitHub Actions idea for fetching the Civil Protection fire-risk map was removed in `0.14.19-beta` because it was not reliable enough for production.
 
@@ -289,10 +290,13 @@ Recent relevant migrations:
 - `027_fire_service_telegram_notifications.sql`
 - `028_fire_risk_map_notifications.sql`
 - `029_sanitize_demo_volunteer_emails.sql`
+- `030_demo_team_email_scheme_and_password.sql`
 
 After update, run migrations from Superadmin -> Maintenance/Migrations or the existing migration runner.
 
 Migration `029` replaces volunteer/team/admin demo recipients with non-deliverable `@syndrasi.local` addresses, preserving only `theodore.sfakianakis@gmail.com` and `irmaiden@gmail.com`.
+
+Migration `030` changes demo team accounts to `omada{team_id}@syndrasi.local`, roster member emails to `omada{team_id}_{n}@syndrasi.local`, and team/linked member login passwords to `Syndrasi2026`.
 
 ## Production Settings Checklist
 
@@ -369,6 +373,7 @@ After deploying a release:
 16. On `/fire-service`, open "Κινητοποίηση" from a current incident, select teams/capabilities, send in a test municipality, and confirm the live mobilization board opens with targeted volunteers.
 17. Verify demo volunteer emails are sanitized in production after migrations run.
 18. Open Settings -> Ιστορικό Email and confirm email counters/recent rows load; do not clear production history unless intentionally requested.
+19. Verify team-admin demo login such as `omada1@syndrasi.local` / `Syndrasi2026` works after migrations run.
 
 ## Release Process
 
@@ -390,5 +395,5 @@ For every deployable change:
 
 Latest release at the time this file was written:
 
-- `v0.15.2-beta`
-- Purpose: add municipality email history/statistics and clear-history action.
+- `v0.15.3-beta`
+- Purpose: deterministic demo team/member emails and team password.
