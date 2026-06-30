@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.1-beta] — 2026-06-30
+
+### Data safety — sanitize demo volunteer emails
+
+- Προστέθηκε migration `029_sanitize_demo_volunteer_emails.sql` που αντικαθιστά email εθελοντών, μελών ομάδων, team admins, team contact emails, mail queue recipients και reset emails με μη παραδοτέες demo διευθύνσεις.
+- Διατηρούνται ανέπαφα μόνο τα `theodore.sfakianakis@gmail.com` και `irmaiden@gmail.com`.
+- Ενημερώθηκε και το `database/seed.sql` ώστε μελλοντικά demo imports να μη φέρνουν πραγματικά/παραδοτέα volunteer emails.
+
+---
+
 ## [0.15.0-beta] — 2026-06-30
 
 ### Feature — Fire Service incident mobilization

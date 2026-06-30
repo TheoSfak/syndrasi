@@ -1,7 +1,7 @@
 # SynDrasi Deploy Notes
 
 Last updated: 2026-06-30  
-Current release line: `0.15.0-beta`
+Current release line: `0.15.1-beta`
 
 This file summarizes what has been built so far in the recent SynDrasi work cycle and what must be checked when deploying to production.
 
@@ -18,6 +18,7 @@ SynDrasi now includes:
 - Superadmin overview of all teams and volunteers.
 - Civil Protection fire-risk map Telegram alerts with manual upload fallback.
 - Fire Service incident -> emergency mobilization flow.
+- Demo volunteer email sanitization for production safety.
 
 The GitHub Actions idea for fetching the Civil Protection fire-risk map was removed in `0.14.19-beta` because it was not reliable enough for production.
 
@@ -268,8 +269,11 @@ Recent relevant migrations:
 - `026_telegram_notifications.sql`
 - `027_fire_service_telegram_notifications.sql`
 - `028_fire_risk_map_notifications.sql`
+- `029_sanitize_demo_volunteer_emails.sql`
 
 After update, run migrations from Superadmin -> Maintenance/Migrations or the existing migration runner.
+
+Migration `029` replaces volunteer/team/admin demo recipients with non-deliverable `@syndrasi.local` addresses, preserving only `theodore.sfakianakis@gmail.com` and `irmaiden@gmail.com`.
 
 ## Production Settings Checklist
 
@@ -344,6 +348,7 @@ After deploying a release:
 14. If automatic fetch fails, upload a map image manually and confirm Telegram output.
 15. Verify no duplicate Telegram is sent for the same fire-risk date.
 16. On `/fire-service`, open "Κινητοποίηση" from a current incident, select teams/capabilities, send in a test municipality, and confirm the live mobilization board opens with targeted volunteers.
+17. Verify demo volunteer emails are sanitized in production after migrations run.
 
 ## Release Process
 
@@ -365,5 +370,5 @@ For every deployable change:
 
 Latest release at the time this file was written:
 
-- `v0.15.0-beta`
-- Purpose: start emergency mobilization directly from current Fire Service incidents.
+- `v0.15.1-beta`
+- Purpose: sanitize demo volunteer emails in production via migration.
