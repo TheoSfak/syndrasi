@@ -58,7 +58,7 @@ class EventPlaybook
 
     private static function normalise(array $row): array
     {
-        foreach (['capabilities_json', 'checklist_json', 'messages_json', 'debrief_questions_json'] as $key) {
+        foreach (['capabilities_json', 'requested_items_json', 'checklist_json', 'messages_json', 'debrief_questions_json'] as $key) {
             $decoded = json_decode((string) ($row[$key] ?? ''), true);
             $row[str_replace('_json', '', $key)] = is_array($decoded) ? array_values($decoded) : [];
         }
@@ -69,7 +69,11 @@ class EventPlaybook
         $row['require_vehicle'] = (int) ($row['require_vehicle'] ?? 0);
         $row['require_medical'] = (int) ($row['require_medical'] ?? 0);
 
-        unset($row['capabilities_json'], $row['checklist_json'], $row['messages_json'], $row['debrief_questions_json']);
+        if (!$row['requested_items'] && $row['capabilities']) {
+            $row['requested_items'] = $row['capabilities'];
+        }
+
+        unset($row['capabilities_json'], $row['requested_items_json'], $row['checklist_json'], $row['messages_json'], $row['debrief_questions_json']);
         return $row;
     }
 }

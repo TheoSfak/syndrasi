@@ -150,6 +150,7 @@ class EventController
                     'requested_people'            => $tpl['requested_people'],
                     'requested_vehicle'           => $tpl['requested_vehicle'],
                     'requested_medical_equipment' => $tpl['requested_medical_equipment'],
+                    'requested_items_json'        => null,
                     'instructions'                => $tpl['instructions'],
                 ];
             }
@@ -617,6 +618,7 @@ class EventController
             'requested_people'            => $event['requested_people'],
             'requested_vehicle'           => $event['requested_vehicle'],
             'requested_medical_equipment' => $event['requested_medical_equipment'],
+            'requested_items_json'        => $event['requested_items_json'] ?? null,
             'instructions'                => $event['instructions'],
             'status'                      => 'draft',
             'created_by'                  => current_user_id(),
@@ -810,7 +812,41 @@ class EventController
             'requested_people'            => max(0, post_int('requested_people')),
             'requested_vehicle'           => post_bool('requested_vehicle'),
             'requested_medical_equipment' => post_bool('requested_medical_equipment'),
+            'requested_items_json'        => $this->requestedItemsJson(),
             'instructions'                => post_str('instructions') ?: null,
         ];
+    }
+
+    private function requestedItemsJson(): ?string
+    {
+        $items = [];
+        $posted = $_POST['requested_items'] ?? [];
+        if (is_array($posted)) {
+            foreach ($posted as $item) {
+                $items[] = trim((string) $item);
+            }
+        }
+
+        $extra = preg_split('/\r\n|\r|\n/', (string) ($_POST['requested_items_extra'] ?? ''));
+        foreach ($extra ?: [] as $item) {
+            $items[] = trim((string) $item);
+        }
+
+        $clean = [];
+        $seen = [];
+        foreach ($items as $item) {
+            $item = preg_replace('/\s+/', ' ', $item);
+            if ($item === '') {
+                continue;
+            }
+            $key = mb_strtolower($item, 'UTF-8');
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $clean[] = mb_substr($item, 0, 120, 'UTF-8');
+        }
+
+        return $clean ? json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
     }
 }

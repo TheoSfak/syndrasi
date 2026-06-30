@@ -4,6 +4,11 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
 $eventPlural = $terms['event_plural'] ?? 'Δράσεις';
 $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
 $orgShort = $terms['short_name'] ?? $terms['short'] ?? 'Φορέας';
+$requestedItems = [];
+if (!empty($event['requested_items_json'])) {
+    $decodedItems = json_decode((string) $event['requested_items_json'], true);
+    $requestedItems = is_array($decodedItems) ? array_values(array_filter(array_map('trim', $decodedItems), fn($item) => $item !== '')) : [];
+}
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-start mb-1 gap-2">
   <div>
@@ -140,6 +145,16 @@ $orgShort = $terms['short_name'] ?? $terms['short'] ?? 'Φορέας';
           <dt class="col-sm-4">Ζητούμενα άτομα</dt><dd class="col-sm-8"><?= (int) $event['requested_people'] ?></dd>
           <dt class="col-sm-4">Όχημα</dt><dd class="col-sm-8"><?= $event['requested_vehicle'] ? 'Απαιτείται' : 'Δεν απαιτείται' ?></dd>
           <dt class="col-sm-4">Υγειονομικός εξοπλισμός</dt><dd class="col-sm-8"><?= $event['requested_medical_equipment'] ? 'Απαιτείται' : 'Δεν απαιτείται' ?></dd>
+          <?php if ($requestedItems): ?>
+            <dt class="col-sm-4">Ζητούμενα αντικείμενα</dt>
+            <dd class="col-sm-8">
+              <div class="d-flex flex-wrap gap-1">
+                <?php foreach ($requestedItems as $item): ?>
+                  <span class="badge text-bg-light border"><?= e($item) ?></span>
+                <?php endforeach; ?>
+              </div>
+            </dd>
+          <?php endif; ?>
           <?php if ($event['instructions']): ?>
             <dt class="col-sm-4">Οδηγίες</dt><dd class="col-sm-8"><?= nl2br(e($event['instructions'])) ?></dd>
           <?php endif; ?>

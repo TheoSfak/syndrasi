@@ -213,17 +213,20 @@ class Event
         if (empty($data['public_token'])) {
             $data['public_token'] = bin2hex(random_bytes(16));
         }
+        if (!array_key_exists('requested_items_json', $data)) {
+            $data['requested_items_json'] = null;
+        }
         dbq(
             "INSERT INTO events
              (municipality_id, category_id, title, description, location_name, address,
               latitude, longitude, start_datetime, end_datetime,
               requested_people, requested_vehicle, requested_medical_equipment,
-              instructions, status, created_by, public_token)
+              requested_items_json, instructions, status, created_by, public_token)
              VALUES
              (:municipality_id, :category_id, :title, :description, :location_name, :address,
               :latitude, :longitude, :start_datetime, :end_datetime,
               :requested_people, :requested_vehicle, :requested_medical_equipment,
-              :instructions, :status, :created_by, :public_token)",
+              :requested_items_json, :instructions, :status, :created_by, :public_token)",
             $data
         );
         return (int) db()->lastInsertId();
@@ -245,6 +248,7 @@ class Event
                  requested_people = :requested_people,
                  requested_vehicle = :requested_vehicle,
                  requested_medical_equipment = :requested_medical_equipment,
+                 requested_items_json = :requested_items_json,
                  instructions = :instructions
              WHERE id = :id",
             array_merge($data, ['id' => $id])

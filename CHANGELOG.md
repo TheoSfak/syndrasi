@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.8-beta] — 2026-06-30
+
+### Feature — Playbook requested items
+
+- Προστέθηκε migration `035_playbook_requested_items.sql`.
+- Τα αντικείμενα/μέσα που προτείνει κάθε playbook γίνονται πλέον δομημένα «Ζητούμενα αντικείμενα» στην αποστολή.
+- Η φόρμα αποστολής τα προγεμίζει ενεργά από το πρωτόκολλο, επιτρέπει απενεργοποίηση ανά αντικείμενο και δέχεται έξτρα αντικείμενα από τον admin.
+- Τα τελικά ζητούμενα αντικείμενα εμφανίζονται στα στοιχεία αποστολής για admin και team portal.
+
+---
+
 ## [0.15.7-beta] — 2026-06-30
 
 ### Data — Complete non-municipality mission playbooks

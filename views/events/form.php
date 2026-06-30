@@ -18,6 +18,15 @@ $eventNew = $terms['event_new'] ?? 'Νέα Δράση';
 $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
 $playbooksByCategory = $playbooksByCategory ?? [];
+$requestedItems = [];
+$oldRequestedItems = old('requested_items', null);
+if (is_array($oldRequestedItems)) {
+    $requestedItems = array_values(array_filter(array_map('trim', $oldRequestedItems), fn($item) => $item !== ''));
+} elseif ($event && !empty($event['requested_items_json'])) {
+    $decodedItems = json_decode((string) $event['requested_items_json'], true);
+    $requestedItems = is_array($decodedItems) ? array_values(array_filter(array_map('trim', $decodedItems), fn($item) => $item !== '')) : [];
+}
+$requestedItemsExtra = old('requested_items_extra', '');
 ?>
 <h1 class="h3 mb-1"><?= e($isEdit ? 'Επεξεργασία ' . $eventSingular : $eventNew) ?></h1>
 <p class="text-muted">Συμπληρώστε τα στοιχεία της <?= e($eventSingularLc) ?>. Τα πεδία με * είναι υποχρεωτικά.</p>
@@ -122,17 +131,35 @@ $playbooksByCategory = $playbooksByCategory ?? [];
       </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-lg-4">
       <label class="form-label">Ζητούμενα άτομα</label>
       <input type="number" name="requested_people" id="reqPeople" min="0" class="form-control" value="<?= e($v('requested_people', 0)) ?>">
     </div>
-    <div class="col-md-4 d-flex align-items-center">
+    <div class="col-lg-8">
+      <label class="form-label d-flex align-items-center justify-content-between gap-2">
+        <span>Ζητούμενα αντικείμενα</span>
+        <span class="badge text-bg-light border" id="reqItemsCount"><?= count($requestedItems) ?></span>
+      </label>
+      <div class="border rounded p-2 bg-light">
+        <div class="d-flex flex-wrap gap-2 mb-2" id="requestedItemsBox">
+          <?php foreach ($requestedItems as $idx => $item): ?>
+            <label class="badge rounded-pill text-bg-primary d-inline-flex align-items-center gap-1 py-2 px-3" for="req_item_existing_<?= (int) $idx ?>">
+              <input class="form-check-input mt-0 req-item-cb" type="checkbox" name="requested_items[]" id="req_item_existing_<?= (int) $idx ?>" value="<?= e($item) ?>" checked>
+              <?= e($item) ?>
+            </label>
+          <?php endforeach; ?>
+        </div>
+        <textarea name="requested_items_extra" id="requestedItemsExtra" class="form-control form-control-sm" rows="2" placeholder="Έξτρα αντικείμενα, ένα ανά γραμμή"><?= e($requestedItemsExtra) ?></textarea>
+      </div>
+      <div class="form-text">Τα αντικείμενα του playbook έρχονται προ-ενεργοποιημένα. Ξετσεκάρετε όσα δεν χρειάζονται ή προσθέστε νέα.</div>
+    </div>
+    <div class="col-md-6 d-flex align-items-center">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="requested_vehicle" id="reqVehicle" value="1" <?= $v('requested_vehicle') ? 'checked' : '' ?>>
         <label class="form-check-label" for="reqVehicle">Απαιτείται όχημα</label>
       </div>
     </div>
-    <div class="col-md-4 d-flex align-items-center">
+    <div class="col-md-6 d-flex align-items-center">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="requested_medical_equipment" id="reqMedical" value="1" <?= $v('requested_medical_equipment') ? 'checked' : '' ?>>
         <label class="form-check-label" for="reqMedical">Απαιτείται υγειονομικός εξοπλισμός</label>
@@ -175,6 +202,9 @@ $playbooksByCategory = $playbooksByCategory ?? [];
   const reqVehicle = document.getElementById('reqVehicle');
   const reqMedical = document.getElementById('reqMedical');
   const instructionsField = document.getElementById('instructionsField');
+  const requestedItemsBox = document.getElementById('requestedItemsBox');
+  const requestedItemsExtra = document.getElementById('requestedItemsExtra');
+  const reqItemsCount = document.getElementById('reqItemsCount');
 
   function selectedPlaybook() {
     return categorySelect && categorySelect.value ? playbooks[categorySelect.value] : null;
@@ -198,7 +228,8 @@ $playbooksByCategory = $playbooksByCategory ?? [];
     playbookTitle.textContent = pb.title || 'Playbook';
     playbookSummary.textContent = 'Προτείνει ' + (pb.default_people || 0) + ' άτομα'
       + (parseInt(pb.require_vehicle || 0) ? ', όχημα' : '')
-      + (parseInt(pb.require_medical || 0) ? ', υγειονομικό εξοπλισμό' : '');
+      + (parseInt(pb.require_medical || 0) ? ', υγειονομικό εξοπλισμό' : '')
+      + ((pb.requested_items || []).length ? ', ' + pb.requested_items.length + ' αντικείμενα' : '');
     playbookCaps.innerHTML = '';
     (pb.capabilities || []).forEach(function (cap) {
       const span = document.createElement('span');
@@ -211,6 +242,45 @@ $playbooksByCategory = $playbooksByCategory ?? [];
     playbookBox.classList.remove('d-none');
   }
 
+  function selectedRequestedItemsCount() {
+    const checked = requestedItemsBox ? requestedItemsBox.querySelectorAll('.req-item-cb:checked').length : 0;
+    const extra = requestedItemsExtra && requestedItemsExtra.value.trim()
+      ? requestedItemsExtra.value.split(/\r?\n/).filter(function (line) { return line.trim() !== ''; }).length
+      : 0;
+    return checked + extra;
+  }
+
+  function syncRequestedItemsCount() {
+    if (reqItemsCount) reqItemsCount.textContent = selectedRequestedItemsCount();
+  }
+
+  function paintRequestedItems(items) {
+    if (!requestedItemsBox) return;
+    requestedItemsBox.innerHTML = '';
+    (items || []).forEach(function (item, idx) {
+      const clean = String(item || '').trim();
+      if (!clean) return;
+      const id = 'req_item_pb_' + idx + '_' + clean.replace(/\W+/g, '_').slice(0, 20);
+      const label = document.createElement('label');
+      label.className = 'badge rounded-pill text-bg-primary d-inline-flex align-items-center gap-1 py-2 px-3';
+      label.setAttribute('for', id);
+
+      const input = document.createElement('input');
+      input.className = 'form-check-input mt-0 req-item-cb';
+      input.type = 'checkbox';
+      input.name = 'requested_items[]';
+      input.id = id;
+      input.value = clean;
+      input.checked = true;
+      input.addEventListener('change', syncRequestedItemsCount);
+
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(' ' + clean));
+      requestedItemsBox.appendChild(label);
+    });
+    syncRequestedItemsCount();
+  }
+
   function applyPlaybook(force) {
     const pb = selectedPlaybook();
     if (!pb) return;
@@ -219,6 +289,9 @@ $playbooksByCategory = $playbooksByCategory ?? [];
     if (force || !reqVehicle.checked) reqVehicle.checked = parseInt(pb.require_vehicle || 0) === 1;
     if (force || !reqMedical.checked) reqMedical.checked = parseInt(pb.require_medical || 0) === 1;
     if (force || !instructionsField.value.trim()) instructionsField.value = pb.instructions || '';
+    if (force || (requestedItemsBox && requestedItemsBox.querySelectorAll('.req-item-cb').length === 0)) {
+      paintRequestedItems(pb.requested_items || pb.capabilities || []);
+    }
   }
 
   if (categorySelect) {
@@ -230,7 +303,15 @@ $playbooksByCategory = $playbooksByCategory ?? [];
   if (applyPlaybookBtn) {
     applyPlaybookBtn.addEventListener('click', function () { applyPlaybook(true); });
   }
+  if (requestedItemsBox) {
+    requestedItemsBox.querySelectorAll('.req-item-cb').forEach(function (cb) {
+      cb.addEventListener('change', syncRequestedItemsCount);
+    });
+  }
+  if (requestedItemsExtra) requestedItemsExtra.addEventListener('input', syncRequestedItemsCount);
   renderPlaybook();
+  if (!isEdit && selectedPlaybook()) applyPlaybook(false);
+  syncRequestedItemsCount();
 
   const urlInput    = document.getElementById('mapsUrlInput');
   const latField    = document.getElementById('latField');
