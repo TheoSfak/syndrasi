@@ -4,6 +4,18 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.6-beta] — 2026-06-30
+
+### Feature — Mission Playbooks
+
+- Προστέθηκε migration `033_event_playbooks.sql` με operational playbooks ανά κατηγορία αποστολής.
+- Η φόρμα νέας αποστολής εμφανίζει playbook preview και μπορεί να εφαρμόσει αυτόματα προτεινόμενα άτομα, όχημα, υγειονομικό εξοπλισμό και οδηγίες.
+- Το Επιχειρησιακό Κέντρο εμφανίζει checklist, απαιτούμενες δυνατότητες και έτοιμα μηνύματα playbook.
+- Το checklist αποθηκεύει την κατάσταση ανά αποστολή στο browser για γρήγορη επιχειρησιακή χρήση.
+- Το team debrief δείχνει ερωτήσεις προσαρμοσμένες στο playbook της αποστολής.
+
+---
+
 ## [0.15.5-beta] — 2026-06-30
 
 ### Feature — Multi-agency authority types and mission terminology

@@ -6,6 +6,7 @@
  */
 $d = $debrief ?? [];
 $rating = (int) ($d['organization_rating'] ?? 3);
+$playbook = $playbook ?? null;
 ?>
 <div class="container py-4" style="max-width:780px">
 
@@ -76,6 +77,18 @@ $rating = (int) ($d['organization_rating'] ?? 3);
           <textarea name="incidents_description" rows="3" class="form-control"
                     placeholder="Αναφέρετε λεπτομέρειες για τυχόν συμβάντα…"><?= e($d['incidents_description'] ?? '') ?></textarea>
         </div>
+
+        <?php if (!empty($playbook['debrief_questions'])): ?>
+        <div class="alert alert-light border mb-4">
+          <div class="fw-semibold mb-2"><i class="bi bi-journal-check me-1 text-primary"></i>Ερωτήσεις playbook</div>
+          <ul class="mb-0 small">
+            <?php foreach ($playbook['debrief_questions'] as $question): ?>
+              <li><?= e($question) ?></li>
+            <?php endforeach; ?>
+          </ul>
+          <div class="form-text mt-2">Χρησιμοποιήστε τις παραπάνω ερωτήσεις για να συμπληρώσετε τα πεδία αξιολόγησης.</div>
+        </div>
+        <?php endif; ?>
 
         <!-- Section 3: Rating -->
         <h6 class="text-uppercase text-muted mb-3 fw-semibold" style="letter-spacing:.05em">

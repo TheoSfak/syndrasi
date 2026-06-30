@@ -77,6 +77,7 @@ class OperationController
             'config'     => ['map_refresh_seconds' => 20],
             'orgLabel'   => org_term('short_name', $mid),
             'orgIcon'    => org_term('icon', $mid),
+            'playbook'   => EventPlaybook::forEvent($event),
         ]);
     }
 

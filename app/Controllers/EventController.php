@@ -160,6 +160,7 @@ class EventController
             'event'               => $prefill,
             'templateId'          => $templateId,
             'categories'          => Event::categories($mid),
+            'playbooksByCategory' => EventPlaybook::forMunicipality($mid),
             'defaultInstructions' => MunicipalitySetting::get($mid, 'event_default_instructions', ''),
             'terms'               => $terms,
         ]);
@@ -246,10 +247,11 @@ class EventController
         $event = Event::findForCurrent($id);
         $terms = authority_context((int) $event['municipality_id']);
         render('events/form', [
-            'pageTitle'  => 'Επεξεργασία ' . $terms['event_singular'],
-            'event'      => $event,
-            'categories' => Event::categories((int) $event['municipality_id']),
-            'terms'      => $terms,
+            'pageTitle'           => 'Επεξεργασία ' . $terms['event_singular'],
+            'event'               => $event,
+            'categories'          => Event::categories((int) $event['municipality_id']),
+            'playbooksByCategory' => EventPlaybook::forMunicipality((int) $event['municipality_id']),
+            'terms'               => $terms,
         ]);
     }
 

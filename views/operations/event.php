@@ -7,6 +7,7 @@ $startTs   = strtotime($event['start_datetime']) * 1000;
 $defLat    = (float)($mapDefLat  ?: $event['latitude']  ?: 35.3387);
 $defLng    = (float)($mapDefLng  ?: $event['longitude'] ?: 25.1442);
 $defZoom   = (int)($mapDefZoom  ?: 13);
+$playbook  = $playbook ?? null;
 ?>
 <style>
 body.ops-dark { background:#0a0f1a !important; background-attachment:fixed !important; }
@@ -126,6 +127,12 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
 .cmsg-order   { align-self:flex-end;  background:rgba(245,158,11,.16);border:1px solid rgba(245,158,11,.5); }
 .cmsg-status  { align-self:flex-start;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.45);font-weight:700; }
 .cmsg-meta { font-size:.66rem;opacity:.7;margin-top:2px; }
+.playbook-check { display:flex;align-items:flex-start;gap:.45rem;padding:.32rem 0;border-bottom:1px solid rgba(0,0,0,.06); }
+.playbook-check:last-child { border-bottom:0; }
+.playbook-check input { margin-top:.2rem; }
+.playbook-check.done span { text-decoration:line-through;opacity:.58; }
+body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
+.playbook-msg-btn { text-align:left;white-space:normal; }
 </style>
 
 <!-- ═══════════ COMMAND HEADER ═══════════ -->
@@ -196,6 +203,55 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
         <span class="badge bg-warning text-dark" id="pendingAppsBadge">0</span>
       </div>
       <div class="card-body p-2" id="pendingAppsBox"></div>
+    </div>
+  </div>
+<?php endif; ?>
+
+<?php if (!empty($playbook)): ?>
+  <!-- FULL WIDTH: Mission playbook -->
+  <div class="col-12">
+    <div class="card" style="border:1.5px solid rgba(13,110,253,.35)">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span><i class="bi bi-journal-check me-1 text-primary"></i><strong><?= e($playbook['title']) ?></strong></span>
+        <div class="d-flex flex-wrap gap-1">
+          <?php if (!empty($playbook['default_people'])): ?><span class="badge text-bg-light border"><?= (int) $playbook['default_people'] ?> άτομα</span><?php endif; ?>
+          <?php if (!empty($playbook['require_vehicle'])): ?><span class="badge text-bg-light border"><i class="bi bi-truck me-1"></i>Όχημα</span><?php endif; ?>
+          <?php if (!empty($playbook['require_medical'])): ?><span class="badge text-bg-light border"><i class="bi bi-heart-pulse me-1"></i>Υγειονομικό</span><?php endif; ?>
+        </div>
+      </div>
+      <div class="card-body py-3">
+        <div class="row g-3">
+          <div class="col-lg-5">
+            <div class="small text-muted mb-1">Operational checklist</div>
+            <div id="playbookChecklist">
+              <?php foreach (($playbook['checklist'] ?? []) as $idx => $item): ?>
+                <label class="playbook-check" data-pb-index="<?= (int) $idx ?>">
+                  <input type="checkbox" class="form-check-input js-pb-check">
+                  <span><?= e($item) ?></span>
+                </label>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <div class="col-lg-3">
+            <div class="small text-muted mb-1">Δυνατότητες</div>
+            <div class="d-flex flex-wrap gap-1">
+              <?php foreach (($playbook['capabilities'] ?? []) as $cap): ?>
+                <span class="badge text-bg-secondary"><?= e($cap) ?></span>
+              <?php endforeach; ?>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="small text-muted mb-1">Έτοιμα μηνύματα</div>
+            <div class="d-grid gap-1">
+              <?php foreach (($playbook['messages'] ?? []) as $msg): ?>
+                <button type="button" class="btn btn-sm btn-outline-primary playbook-msg-btn js-pb-msg" data-message="<?= e($msg) ?>">
+                  <i class="bi bi-chat-left-text me-1"></i><?= e($msg) ?>
+                </button>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 <?php endif; ?>
@@ -529,6 +585,7 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   var ORG_LABEL  = <?= json_encode($orgLabel ?? 'Δήμος') ?>;
   var ORG_ICON   = <?= json_encode($orgIcon  ?? '🏛️') ?>;
   var IS_ADMIN   = <?= json_encode(current_role() === 'municipality_admin') ?>;
+  var PLAYBOOK   = <?= json_encode($playbook ?: null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
   /* ─── Countdown ─── */
   var cdEl    = document.getElementById('countdown');
@@ -1427,6 +1484,35 @@ body.ops-dark .board-row:hover { background:rgba(255,255,255,.04); }
   document.getElementById('cmsgSendMsg').addEventListener('click', function(){ sendCmsg('message'); });
   document.getElementById('cmsgSendOrder').addEventListener('click', function(){ sendCmsg('order'); });
   document.getElementById('cmsgBody').addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); sendCmsg('message'); } });
+
+  /* ─── Mission playbook helpers ─── */
+  (function(){
+    if (!PLAYBOOK) return;
+    var key = 'syndrasi.playbook.' + EID;
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch(e) { saved = {}; }
+
+    document.querySelectorAll('.js-pb-check').forEach(function(cb){
+      var row = cb.closest('.playbook-check');
+      var idx = row ? row.dataset.pbIndex : '';
+      cb.checked = saved[idx] === true;
+      if (row) row.classList.toggle('done', cb.checked);
+      cb.addEventListener('change', function(){
+        saved[idx] = cb.checked;
+        if (row) row.classList.toggle('done', cb.checked);
+        localStorage.setItem(key, JSON.stringify(saved));
+      });
+    });
+
+    document.querySelectorAll('.js-pb-msg').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var input = document.getElementById('cmsgBody');
+        if (!input) return;
+        input.value = btn.dataset.message || btn.textContent.trim();
+        input.focus();
+      });
+    });
+  })();
 
   /* ─── Team video: open in isolated modal (poll-safe) + delete ─── */
   (function(){

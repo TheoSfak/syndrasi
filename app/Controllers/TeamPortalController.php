@@ -1034,6 +1034,7 @@ class TeamPortalController
             'event'       => $event,
             'application' => $application,
             'debrief'     => $debrief,
+            'playbook'    => EventPlaybook::forEvent($event),
         ]);
     }
 
