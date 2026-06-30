@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.14.20-beta] — 2026-06-30
+
+### Docs — Deploy snapshot
+
+- Προστέθηκε `docs/deploy.md` με σύνοψη των πρόσφατων features, routes, migrations, cron commands, production settings και smoke tests.
+- Το αρχείο λειτουργεί ως πρακτικό handoff/deploy checklist για Story, Πυροσβεστική, Telegram, βοηθούς αρχηγού, superadmin overview και fire-risk map fallback.
+
+---
+
 ## [0.14.19-beta] — 2026-06-30
 
 ### Revert — Remove GitHub fire-risk fetcher
