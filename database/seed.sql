@@ -6,10 +6,10 @@
 --   superadmin@syndrasi.gr  -> Super Admin
 --   admin@dimos.gr          -> Municipality Admin (Δήμος Ηρακλείου)
 --   operator@dimos.gr       -> Event Operator
---   omada1@syndrasi.gr      -> Team Admin (Ελληνική Ομάδα Διάσωσης Κρήτης)
---   omada2@syndrasi.gr      -> Team Admin (Εθελοντές Σαμαρείτες)
---   omada3@syndrasi.gr      -> Team Admin (Ομάδα Πολιτικής Προστασίας)
---   omada4@syndrasi.gr      -> Team Admin (Διασώστες Κρήτης)
+--   demo-user-1@syndrasi.local -> Team Admin (Ελληνική Ομάδα Διάσωσης Κρήτης)
+--   demo-user-2@syndrasi.local -> Team Admin (Εθελοντές Σαμαρείτες)
+--   demo-user-3@syndrasi.local -> Team Admin (Ομάδα Πολιτικής Προστασίας)
+--   demo-user-4@syndrasi.local -> Team Admin (Διασώστες Κρήτης)
 -- ============================================================
 
 USE syndrasi;
@@ -21,10 +21,10 @@ INSERT INTO municipalities (id, name, city, address, email, phone, status) VALUE
 -- ------------------------------------------------------------ Teams
 INSERT INTO volunteer_teams
 (id, municipality_id, name, type, contact_person, email, phone, address, has_vehicle, has_medical_equipment, default_people_capacity, notes, status) VALUES
-(1, 1, 'Ελληνική Ομάδα Διάσωσης Κρήτης', 'Διασωστική', 'Γιώργος Παπαδάκης', 'omada1@syndrasi.gr', '6940000001', 'Ηράκλειο', 1, 1, 15, 'Έμπειρη ομάδα με πλήρη εξοπλισμό.', 'active'),
-(2, 1, 'Εθελοντές Σαμαρείτες Ερυθρού Σταυρού', 'Υγειονομική', 'Μαρία Βλαχάκη', 'omada2@syndrasi.gr', '6940000002', 'Ηράκλειο', 1, 1, 12, 'Εξειδίκευση σε πρώτες βοήθειες.', 'active'),
-(3, 1, 'Ομάδα Εθελοντών Πολιτικής Προστασίας', 'Πολιτική Προστασία', 'Νίκος Μανωλάκης', 'omada3@syndrasi.gr', '6940000003', 'Ηράκλειο', 1, 0, 20, NULL, 'active'),
-(4, 1, 'Διασώστες Κρήτης', 'Διασωστική', 'Ελένη Σταυρακάκη', 'omada4@syndrasi.gr', '6940000004', 'Ηράκλειο', 0, 1, 8, NULL, 'active');
+(1, 1, 'Ελληνική Ομάδα Διάσωσης Κρήτης', 'Διασωστική', 'Γιώργος Παπαδάκης', 'demo-team-1@syndrasi.local', '6940000001', 'Ηράκλειο', 1, 1, 15, 'Έμπειρη ομάδα με πλήρη εξοπλισμό.', 'active'),
+(2, 1, 'Εθελοντές Σαμαρείτες Ερυθρού Σταυρού', 'Υγειονομική', 'Μαρία Βλαχάκη', 'demo-team-2@syndrasi.local', '6940000002', 'Ηράκλειο', 1, 1, 12, 'Εξειδίκευση σε πρώτες βοήθειες.', 'active'),
+(3, 1, 'Ομάδα Εθελοντών Πολιτικής Προστασίας', 'Πολιτική Προστασία', 'Νίκος Μανωλάκης', 'demo-team-3@syndrasi.local', '6940000003', 'Ηράκλειο', 1, 0, 20, NULL, 'active'),
+(4, 1, 'Διασώστες Κρήτης', 'Διασωστική', 'Ελένη Σταυρακάκη', 'demo-team-4@syndrasi.local', '6940000004', 'Ηράκλειο', 0, 1, 8, NULL, 'active');
 
 -- ------------------------------------------------------------ Users
 -- password for all: Syndrasi!2026
@@ -32,10 +32,10 @@ INSERT INTO users (id, municipality_id, team_id, name, email, phone, password_ha
 (1, NULL, NULL, 'Διαχειριστής Πλατφόρμας', 'superadmin@syndrasi.gr', '6945139015', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'super_admin', 'active'),
 (2, 1, NULL, 'Κώστας Δημητρίου', 'admin@dimos.gr', '2813409100', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'municipality_admin', 'active'),
 (3, 1, NULL, 'Άννα Καραγιάννη', 'operator@dimos.gr', '2813409101', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'event_operator', 'active'),
-(4, 1, 1, 'Γιώργος Παπαδάκης', 'omada1@syndrasi.gr', '6940000001', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active'),
-(5, 1, 2, 'Μαρία Βλαχάκη', 'omada2@syndrasi.gr', '6940000002', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active'),
-(6, 1, 3, 'Νίκος Μανωλάκης', 'omada3@syndrasi.gr', '6940000003', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active'),
-(7, 1, 4, 'Ελένη Σταυρακάκη', 'omada4@syndrasi.gr', '6940000004', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active');
+(4, 1, 1, 'Γιώργος Παπαδάκης', 'demo-user-1@syndrasi.local', '6940000001', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active'),
+(5, 1, 2, 'Μαρία Βλαχάκη', 'demo-user-2@syndrasi.local', '6940000002', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active'),
+(6, 1, 3, 'Νίκος Μανωλάκης', 'demo-user-3@syndrasi.local', '6940000003', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active'),
+(7, 1, 4, 'Ελένη Σταυρακάκη', 'demo-user-4@syndrasi.local', '6940000004', '$2y$10$36mrwix3K3wjYsTs7ZRIbO6NlLnZBy/T69VzZ1YwOp47K9P/pm/72', 'team_admin', 'active');
 
 -- ------------------------------------------------------------ Events
 -- Past completed events, one active today, open future events, one draft.
