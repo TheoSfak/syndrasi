@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.11-beta] — 2026-07-01
+
+### Fix — Telegram supergroup migration
+
+- Διορθώθηκε αποτυχία Telegram όταν ένα group έχει μετατραπεί σε supergroup (`migrate_to_chat_id`).
+- Το σύστημα ξαναδοκιμάζει αυτόματα με το νέο supergroup Chat ID και ενημερώνει τις αποθηκευμένες ρυθμίσεις command/team chat όπου γίνεται.
+- Το δοκιμαστικό Telegram ενημερώνει πλέον το κοινό Chat ID ομάδων όταν εντοπίζεται migration και εμφανίζει καθαρό μήνυμα στον admin.
+
+---
+
 ## [0.15.9-beta] — 2026-06-30
 
 ### Feature — Team readiness matching

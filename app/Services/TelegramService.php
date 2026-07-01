@@ -8,11 +8,17 @@
 class TelegramService
 {
     private static $lastError = '';
+    private static $lastMigratedChatId = null;
     private static $sentInRequest = [];
 
     public static function lastError(): string
     {
         return self::$lastError;
+    }
+
+    public static function lastMigratedChatId(): ?string
+    {
+        return self::$lastMigratedChatId;
     }
 
     public static function resolveConfig($municipalityId = null): array
@@ -70,12 +76,18 @@ class TelegramService
         $cfg = self::resolveConfig($municipalityId);
         $chatId = (string) ($cfg['command_chat_id'] ?? '');
         $ok = self::sendToChat($cfg, $chatId, $title, $message, $url);
+        $sentChatId = self::$lastMigratedChatId ?: $chatId;
+        if ($ok && self::$lastMigratedChatId) {
+            MunicipalitySetting::setMany($municipalityId, [
+                'telegram_command_chat_id' => self::$lastMigratedChatId,
+            ]);
+        }
         NotificationDelivery::record([
             'municipality_id' => $municipalityId,
             'channel' => 'telegram',
             'status' => $ok ? 'sent' : 'failed',
             'recipient_label' => 'Κέντρο διοίκησης',
-            'recipient_address' => $chatId,
+            'recipient_address' => $sentChatId,
             'title' => $title,
             'message' => $message,
             'attempts' => 1,
@@ -97,6 +109,7 @@ class TelegramService
         if ($chatId === '') {
             $chatId = trim((string) ($cfg['team_chat_id'] ?? ''));
         }
+        $usedTeamOwnChat = trim((string) ($team['telegram_chat_id'] ?? '')) !== '';
         if ($chatId === '') {
             self::$lastError = 'Η ομάδα δεν έχει Telegram Chat ID και δεν υπάρχει κοινό Telegram Chat ID ομάδων.';
             NotificationDelivery::record([
@@ -113,13 +126,26 @@ class TelegramService
             return false;
         }
         $ok = self::sendToChat($cfg, $chatId, $title, $message, $url);
+        $sentChatId = self::$lastMigratedChatId ?: $chatId;
+        if ($ok && self::$lastMigratedChatId) {
+            if ($usedTeamOwnChat) {
+                dbq(
+                    'UPDATE volunteer_teams SET telegram_chat_id = :chat WHERE id = :id',
+                    ['chat' => self::$lastMigratedChatId, 'id' => (int) $teamId]
+                );
+            } elseif ($mid) {
+                MunicipalitySetting::setMany($mid, [
+                    'telegram_team_chat_id' => self::$lastMigratedChatId,
+                ]);
+            }
+        }
         NotificationDelivery::record([
             'municipality_id' => $mid,
             'channel' => 'telegram',
             'status' => $ok ? 'sent' : 'failed',
             'team_id' => (int) $teamId,
             'recipient_label' => $team['name'] ?? 'Ομάδα',
-            'recipient_address' => $chatId,
+            'recipient_address' => $sentChatId,
             'title' => $title,
             'message' => $message,
             'attempts' => 1,
@@ -131,6 +157,7 @@ class TelegramService
     public static function sendToChat(array $cfg, string $chatId, string $title, string $message, ?string $url = null): bool
     {
         self::$lastError = '';
+        self::$lastMigratedChatId = null;
         if (empty($cfg['enabled'])) {
             self::$lastError = 'Το Telegram είναι απενεργοποιημένο.';
             return false;
@@ -151,7 +178,12 @@ class TelegramService
         }
         self::$sentInRequest[$dedupeKey] = true;
 
-        return self::apiSendMessage((string) $cfg['bot_token'], $chatId, $text);
+        $ok = self::apiSendMessage((string) $cfg['bot_token'], $chatId, $text);
+        if ($ok && self::$lastMigratedChatId) {
+            $migratedDedupeKey = sha1((string) ($cfg['bot_token'] ?? '') . '|' . self::$lastMigratedChatId . '|' . $text);
+            self::$sentInRequest[$migratedDedupeKey] = true;
+        }
+        return $ok;
     }
 
     private static function formatMessage(string $title, string $message, ?string $url = null): string
@@ -168,7 +200,7 @@ class TelegramService
         return $text;
     }
 
-    private static function apiSendMessage(string $token, string $chatId, string $text): bool
+    private static function apiSendMessage(string $token, string $chatId, string $text, bool $allowMigrationRetry = true): bool
     {
         $endpoint = 'https://api.telegram.org/bot' . rawurlencode($token) . '/sendMessage';
         $payload = [
@@ -198,6 +230,20 @@ class TelegramService
         $json = json_decode((string) $resp, true);
         if ($code >= 400 || !is_array($json) || empty($json['ok'])) {
             $desc = is_array($json) && isset($json['description']) ? (string) $json['description'] : ('HTTP ' . $code);
+            $migratedChatId = is_array($json) && isset($json['parameters']['migrate_to_chat_id'])
+                ? (string) $json['parameters']['migrate_to_chat_id']
+                : '';
+            if ($allowMigrationRetry && $migratedChatId !== '' && $migratedChatId !== trim($chatId)) {
+                self::$lastMigratedChatId = $migratedChatId;
+                if (self::apiSendMessage($token, $migratedChatId, $text, false)) {
+                    self::$lastError = '';
+                    return true;
+                }
+            }
+            if ($migratedChatId !== '') {
+                self::$lastError = 'Το Telegram group έγινε supergroup. Αντικαταστήστε το Chat ID με: ' . $migratedChatId;
+                return false;
+            }
             self::$lastError = 'Telegram API: ' . $desc;
             return false;
         }

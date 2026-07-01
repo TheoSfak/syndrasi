@@ -455,6 +455,11 @@ class SettingsController
                 'Δοκιμαστικό Telegram SynDrasi',
                 'Το κοινό Telegram group ομάδων λειτουργεί για ' . $orgName . '.'
             );
+            if ($ok && TelegramService::lastMigratedChatId()) {
+                MunicipalitySetting::setMany($mid, [
+                    'telegram_team_chat_id' => TelegramService::lastMigratedChatId(),
+                ]);
+            }
         } else {
             $ok = TelegramService::sendCommand(
                 $mid,
@@ -465,9 +470,13 @@ class SettingsController
         audit('municipality_telegram_test', 'municipality', $mid, $ok ? 'success' : 'failed: ' . TelegramService::lastError());
 
         if ($ok) {
-            flash_set('success', $target === 'teams'
+            $message = $target === 'teams'
                 ? 'Το δοκιμαστικό Telegram στάλθηκε στο κοινό group ομάδων.'
-                : 'Το δοκιμαστικό Telegram στάλθηκε στο command chat.');
+                : 'Το δοκιμαστικό Telegram στάλθηκε στο command chat.';
+            if (TelegramService::lastMigratedChatId()) {
+                $message .= ' Το παλιό group είχε μετατραπεί σε supergroup και το Chat ID ενημερώθηκε αυτόματα σε ' . TelegramService::lastMigratedChatId() . '.';
+            }
+            flash_set('success', $message);
         } else {
             flash_set('danger', 'Αποτυχία αποστολής Telegram: ' . (TelegramService::lastError() ?: 'άγνωστο σφάλμα'));
         }
