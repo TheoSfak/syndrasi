@@ -961,9 +961,10 @@ class OperationController
 
         // Initial snapshot rendered server-side so the page is useful before SSE.
         $snapshot = $this->buildWarRoomSnapshot($mid);
+        $terms = authority_context($mid);
 
         render('operations/war-room', [
-            'pageTitle'  => 'Κέντρο Συντονισμού — Όλες οι Δράσεις',
+            'pageTitle'  => 'Κέντρο Συντονισμού — Όλες οι ' . ($terms['event_plural'] ?? 'Δράσεις'),
             'snapshot'   => $snapshot,
             'mapDefLat'  => $munSettings['map_lat']  ?? '38.0',
             'mapDefLng'  => $munSettings['map_lng']  ?? '23.7',

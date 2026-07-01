@@ -1,10 +1,14 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3 mb-0">Μέλη Ομάδας</h1>
   <a href="<?= e(url('/team/members/create')) ?>" class="btn btn-primary btn-sm">
     <i class="bi bi-person-plus me-1"></i>Νέο Μέλος
   </a>
 </div>
-<p class="text-muted small">Κατάλογος εθελοντών της ομάδας <strong><?= e($team['name'] ?? '') ?></strong>. Τα μέλη ορίζονται κατά τη δήλωση συμμετοχής σε δράσεις.</p>
+<p class="text-muted small">Κατάλογος εθελοντών της ομάδας <strong><?= e($team['name'] ?? '') ?></strong>. Τα μέλη ορίζονται κατά τη δήλωση συμμετοχής σε <?= e($eventPluralLc) ?>.</p>
 <?php if (empty($canManageAssistants)): ?>
   <div class="alert alert-info small">
     Έχετε πλήρη πρόσβαση διαχείρισης ομάδας ως Βοηθός Αρχηγού. Ο ορισμός ή η αφαίρεση άλλων βοηθών γίνεται μόνο από τον αρχηγό της ομάδας.

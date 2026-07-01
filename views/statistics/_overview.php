@@ -1,8 +1,14 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+?>
 <div class="row g-3 mb-4">
   <div class="col-6 col-lg-2">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-value"><?= (int) $overview['events_with_coverage'] ?></div>
-      <div class="text-muted small">Δράσεις με κάλυψη</div>
+      <div class="text-muted small"><?= e($eventPlural) ?> με κάλυψη</div>
     </div></div>
   </div>
   <div class="col-6 col-lg-2">
@@ -40,7 +46,7 @@
 <div class="row g-4 mb-4">
   <div class="col-lg-7">
     <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-semibold">Δράσεις ανά μήνα</div>
+      <div class="card-header bg-white fw-semibold"><?= e($eventPlural) ?> ανά μήνα</div>
       <div class="card-body">
         <canvas id="eventsByMonthChart" height="120"
                 data-values="<?= e(json_encode(array_values($byMonth))) ?>"></canvas>
@@ -49,10 +55,10 @@
   </div>
   <div class="col-lg-5">
     <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-semibold">Δράσεις ανά κατηγορία</div>
+      <div class="card-header bg-white fw-semibold"><?= e($eventPlural) ?> ανά κατηγορία</div>
       <div class="card-body">
         <?php if (!$catYear): ?>
-          <div class="text-muted">Δεν υπάρχουν ολοκληρωμένες δράσεις για το <?= (int) $year ?>.</div>
+          <div class="text-muted">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> για το <?= (int) $year ?>.</div>
         <?php else: ?>
           <canvas id="eventsByCategoryChart" height="220"
                   data-labels="<?= e(json_encode(array_column($catYear, 'category'), JSON_UNESCAPED_UNICODE)) ?>"
@@ -76,7 +82,7 @@
     <div class="table-responsive">
       <table class="table table-hover mb-0">
         <thead>
-          <tr><th>#</th><th>Ομάδα</th><th>Δράσεις</th><th>Ώρες εθελοντισμού</th><th>Συμμετοχές</th><th>Συνέπεια</th><th>Μέση απόκριση</th><th></th></tr>
+          <tr><th>#</th><th>Ομάδα</th><th><?= e($eventPlural) ?></th><th>Ώρες εθελοντισμού</th><th>Συμμετοχές</th><th>Συνέπεια</th><th>Μέση απόκριση</th><th></th></tr>
         </thead>
         <tbody>
           <?php foreach ($ranking as $i => $r): ?>

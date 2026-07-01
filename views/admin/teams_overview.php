@@ -65,9 +65,9 @@ $query = (string) ($filters['q'] ?? '');
 <form method="get" action="<?= e(url('/admin/teams')) ?>" class="card shadow-sm mb-4">
   <div class="card-body row g-2 align-items-end">
     <div class="col-md-3">
-      <label class="form-label small fw-semibold">Δήμος</label>
+      <label class="form-label small fw-semibold">Φορέας</label>
       <select name="municipality_id" class="form-select form-select-sm">
-        <option value="">Όλοι οι δήμοι</option>
+        <option value="">Όλοι οι φορείς</option>
         <?php foreach ($municipalities as $mun): ?>
           <option value="<?= (int) $mun['id'] ?>" <?= $selectedMunicipality === (int) $mun['id'] ? 'selected' : '' ?>><?= e($mun['name']) ?></option>
         <?php endforeach; ?>
@@ -109,7 +109,7 @@ $query = (string) ($filters['q'] ?? '');
       <thead class="table-light">
         <tr>
           <th>Ομάδα</th>
-          <th>Δήμος</th>
+          <th>Φορέας</th>
           <th>Υπεύθυνος</th>
           <th>Επικοινωνία</th>
           <th>Δυνατότητες</th>
@@ -171,7 +171,7 @@ $query = (string) ($filters['q'] ?? '');
       <thead class="table-light">
         <tr>
           <th>Εθελοντής</th>
-          <th>Δήμος</th>
+          <th>Φορέας</th>
           <th>Ομάδα</th>
           <th>Επικοινωνία</th>
           <th>Ρόλος / ΑΜ ΠΠ</th>

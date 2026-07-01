@@ -6,6 +6,8 @@
  */
 $eid      = (int) $event['id'];
 $approved = (int) $application['approved_people'];
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
 $isActive = ($event['status'] === 'active');
 
 $checkinStatus = $lastCheckin ? $lastCheckin['status'] : null;
@@ -62,7 +64,7 @@ $isDeparted    = $checkinStatus === 'departed';
   <?php endif; ?>
 
   <?php if (!$isActive): ?>
-    <div class="alert alert-warning text-center">Η δράση δεν είναι ενεργή αυτή τη στιγμή.</div>
+    <div class="alert alert-warning text-center">Η <?= e($eventSingularLc) ?> δεν είναι ενεργή αυτή τη στιγμή.</div>
   <?php endif; ?>
 
   <div class="qr-card">

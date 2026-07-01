@@ -8,6 +8,8 @@ $statusClass = function ($status) {
     ][$status] ?? 'secondary';
 };
 $cronUrl = url('/cron/fire-service');
+$terms = authority_context(current_municipality_id());
+$eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
 ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
@@ -166,13 +168,13 @@ $cronUrl = url('/cron/fire-service');
                 <?php endif; ?>
                 <?php if (!empty($i['created_event_id'])): ?>
                   <a href="<?= e(url('/events/' . (int) $i['created_event_id'] . '/edit')) ?>" class="btn btn-sm btn-outline-success">
-                    Άνοιγμα δράσης
+                    Άνοιγμα <?= e($eventSingularLc) ?>
                   </a>
                 <?php else: ?>
                   <form method="post" action="<?= e(url('/fire-service/' . (int) $i['id'] . '/create-event')) ?>" class="d-inline">
                     <?= csrf_field() ?>
                     <button class="btn btn-sm btn-outline-danger" type="submit">
-                      <i class="bi bi-plus-lg"></i> Δημιουργία δράσης
+                      <i class="bi bi-plus-lg"></i> Δημιουργία <?= e($eventSingularLc) ?>
                     </button>
                   </form>
                 <?php endif; ?>

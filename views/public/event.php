@@ -1,3 +1,9 @@
+<?php
+$terms = authority_context((int) ($event['municipality_id'] ?? 0));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$orgName = $terms['official_name'] ?? ($event['municipality_name'] ?? 'Φορέας');
+$orgIcon = $terms['icon'] ?? '🏛';
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -48,10 +54,10 @@
   <?php if ($logo): ?>
     <img src="<?= e($logo) ?>" alt="Logo">
   <?php else: ?>
-    <span style="font-size:1.5rem">🏛</span>
+    <span style="font-size:1.5rem"><?= e($orgIcon) ?></span>
   <?php endif; ?>
   <div>
-    <div class="name"><?= e($event['municipality_name']) ?></div>
+    <div class="name"><?= e($orgName) ?></div>
     <div class="sub">Εθελοντικός Συντονισμός</div>
   </div>
   <div class="ms-auto">
@@ -65,7 +71,7 @@
 <div class="hero">
   <div class="container" style="max-width:680px">
     <div class="status-pill">
-      <?= e($event['category_name'] ?? 'Εθελοντική Δράση') ?>
+      <?= e($event['category_name'] ?? ('Εθελοντική ' . $eventSingular)) ?>
     </div>
     <h1><?= e($event['title']) ?></h1>
     <div class="sub">
@@ -205,7 +211,7 @@
 </div><!-- /container -->
 
 <footer>
-  Δράση του <strong><?= e($event['municipality_name']) ?></strong> μέσω SynDrasi
+  <?= e($eventSingular) ?> του φορέα <strong><?= e($orgName) ?></strong> μέσω SynDrasi
   &nbsp;·&nbsp; Αυτή η σελίδα είναι δημόσια προβολή — χωρίς προσωπικά δεδομένα.
 </footer>
 

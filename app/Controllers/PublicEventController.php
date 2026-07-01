@@ -42,6 +42,7 @@ class PublicEventController
 
         // Municipality branding
         $mid  = (int) $event['municipality_id'];
+        $terms = authority_context($mid);
         $logo = dbq(
             "SELECT setting_value FROM municipality_settings
              WHERE municipality_id = :mid AND setting_key = 'branding_logo_url' LIMIT 1",
@@ -49,7 +50,7 @@ class PublicEventController
         )->fetchColumn() ?: null;
 
         render('public/event', [
-            'pageTitle'     => $event['title'] . ' — ' . $event['municipality_name'],
+            'pageTitle'     => $event['title'] . ' — ' . ($terms['official_name'] ?? $event['municipality_name']),
             'event'         => $event,
             'approvedTeams' => $approvedTeams,
             'logo'          => $logo,
@@ -66,7 +67,7 @@ class PublicEventController
         </head><body class="bg-light d-flex align-items-center justify-content-center" style="min-height:100vh">
         <div class="text-center p-5">
           <div class="fs-1 mb-3">🔍</div>
-          <h1 class="h3">Η δράση δεν βρέθηκε</h1>
+          <h1 class="h3">Η σελίδα δεν βρέθηκε</h1>
           <p class="text-muted">Ο σύνδεσμος μπορεί να έχει λήξει ή να είναι λανθασμένος.</p>
         </div></body></html>';
         exit;

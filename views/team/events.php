@@ -1,5 +1,12 @@
-<h1 class="h3 mb-1">Δράσεις</h1>
-<p class="text-muted">Ενεργές δράσεις του δήμου και ιστορικό συμμετοχών της ομάδας σας.</p>
+<?php
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$orgLabel = $terms['short_name'] ?? 'Φορέας';
+?>
+<h1 class="h3 mb-1"><?= e($eventPlural) ?></h1>
+<p class="text-muted">Ενεργές <?= e($eventPluralLc) ?> του φορέα (<?= e($orgLabel) ?>) και ιστορικό συμμετοχών της ομάδας σας.</p>
 
 <!-- Nav pills -->
 <ul class="nav nav-pills mb-3 small" id="eventsNav">
@@ -23,7 +30,7 @@
   <div class="tab-pane fade show active" id="tab-active">
     <?php if (!$events): ?>
       <div class="card shadow-sm"><div class="card-body text-muted">
-        Δεν υπάρχουν διαθέσιμες δράσεις αυτή τη στιγμή.
+        Δεν υπάρχουν διαθέσιμες <?= e($eventPluralLc) ?> αυτή τη στιγμή.
       </div></div>
     <?php else: ?>
       <div class="row g-3">
@@ -73,14 +80,14 @@
   <!-- Κλειστές / Ολοκληρωμένες -->
   <div class="tab-pane fade" id="tab-closed">
     <?php if (!$closedEvents): ?>
-      <div class="card shadow-sm"><div class="card-body text-muted">Δεν υπάρχουν κλειστές δράσεις με συμμετοχή της ομάδας σας.</div></div>
+      <div class="card shadow-sm"><div class="card-body text-muted">Δεν υπάρχουν κλειστές <?= e($eventPluralLc) ?> με συμμετοχή της ομάδας σας.</div></div>
     <?php else: ?>
       <div class="card shadow-sm">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
-                <th>Δράση</th>
+                <th><?= e($eventSingular) ?></th>
                 <th>Ημερομηνία</th>
                 <th class="text-center">Άτομα</th>
                 <th>Κατάσταση</th>

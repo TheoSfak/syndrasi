@@ -1,3 +1,9 @@
+<?php
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$orgLabel = $terms['short_name'] ?? 'Φορέας';
+?>
 <div class="d-flex flex-wrap align-items-start gap-3 mb-3">
   <div class="flex-grow-1">
     <h1 class="h3 mb-1">Επιχειρησιακές Ενέργειες <?= status_badge($event['status']) ?></h1>
@@ -19,7 +25,7 @@
 
 <?php if ($event['status'] !== 'active'): ?>
   <div class="alert alert-warning">
-    Η δράση δεν είναι ενεργή αυτή τη στιγμή. Οι επιχειρησιακές ενέργειες είναι διαθέσιμες όταν ο δήμος ενεργοποιήσει τη δράση.
+    Η <?= e($eventSingularLc) ?> δεν είναι ενεργή αυτή τη στιγμή. Οι επιχειρησιακές ενέργειες είναι διαθέσιμες όταν <?= e($orgLabel) ?> την ενεργοποιήσει.
   </div>
 <?php endif; ?>
 
@@ -51,13 +57,13 @@
   </div>
   <div class="col-lg-7">
     <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-dots me-1"></i> Επικοινωνία με τον δήμο</div>
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-dots me-1"></i> Επικοινωνία · <?= e($orgLabel) ?></div>
       <div class="card-body d-flex flex-column">
         <div id="msgList" class="flex-grow-1 mb-2" style="max-height:260px;overflow-y:auto;min-height:120px">
           <div class="text-muted small text-center py-3">Φόρτωση…</div>
         </div>
         <div class="input-group">
-          <input type="text" id="msgInput" class="form-control" placeholder="Μήνυμα προς τον δήμο…" maxlength="500">
+          <input type="text" id="msgInput" class="form-control" placeholder="Μήνυμα προς <?= e($orgLabel) ?>…" maxlength="500">
           <button class="btn btn-primary" id="msgSend" type="button"><i class="bi bi-send"></i></button>
         </div>
       </div>
@@ -80,7 +86,7 @@
   </div>
 </div>
 
-<!-- Χάρτης Δράσης (θέση ομάδας + σημείο δράσης) -->
+<!-- Χάρτης αποστολής/δράσης (θέση ομάδας + σημείο) -->
 <?php
 $evLat = isset($event['latitude'])  && $event['latitude']  !== null && $event['latitude']  !== '' ? (float) $event['latitude']  : null;
 $evLng = isset($event['longitude']) && $event['longitude'] !== null && $event['longitude'] !== '' ? (float) $event['longitude'] : null;
@@ -89,7 +95,7 @@ $tLng  = $lastPing && $lastPing['longitude'] !== null ? (float) $lastPing['longi
 ?>
 <div class="card shadow-sm mb-4">
   <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-map me-1 text-success"></i> Χάρτης Δράσης</span>
+    <span><i class="bi bi-map me-1 text-success"></i> Χάρτης <?= e($eventSingular) ?></span>
     <?php if ($lastPing): ?><span class="small text-muted">Τελευταίο στίγμα: <?= e(gr_time($lastPing['created_at'])) ?></span>
     <?php else: ?><span class="small text-muted">Στείλτε στίγμα για να φανεί η θέση σας</span><?php endif; ?>
   </div>
@@ -105,7 +111,7 @@ window.addEventListener('load', function () {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
   var b = [];
   if (evLat !== null) {
-    L.marker([evLat, evLng]).addTo(map).bindPopup('<b>Σημείο δράσης</b><br><?= e(addslashes($event['location_name'] ?: $event['title'])) ?>');
+    L.marker([evLat, evLng]).addTo(map).bindPopup('<b>Σημείο <?= e(addslashes($eventSingularLc)) ?></b><br><?= e(addslashes($event['location_name'] ?: $event['title'])) ?>');
     b.push([evLat, evLng]);
   }
   if (tLat !== null) {
@@ -126,11 +132,11 @@ window.addEventListener('load', function () {
     <?php if ($photoRequest): ?>
       <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-camera-fill fs-5"></i>
-        <div><strong>Ο δήμος ζήτησε φωτογραφία</strong> για αυτή τη δράση. Τραβήξτε ή ανεβάστε μία παρακάτω.</div>
+        <div><strong><?= e($orgLabel) ?> ζήτησε φωτογραφία</strong> για αυτή τη <?= e($eventSingularLc) ?>. Τραβήξτε ή ανεβάστε μία παρακάτω.</div>
       </div>
     <?php endif; ?>
-    <h2 class="h5 mb-1"><i class="bi bi-camera me-1 text-info"></i>Αποστολή Φωτογραφίας στον δήμο</h2>
-    <p class="small text-muted">Εμφανίζεται στον επιχειρησιακό χάρτη του δήμου στο σημείο που τραβήχτηκε (αν επιτρέψετε τοποθεσία).</p>
+    <h2 class="h5 mb-1"><i class="bi bi-camera me-1 text-info"></i>Αποστολή Φωτογραφίας προς <?= e($orgLabel) ?></h2>
+    <p class="small text-muted">Εμφανίζεται στον επιχειρησιακό χάρτη του φορέα στο σημείο που τραβήχτηκε (αν επιτρέψετε τοποθεσία).</p>
     <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/photo')) ?>" enctype="multipart/form-data" id="photoForm">
       <?= csrf_field() ?>
       <input type="hidden" name="latitude" id="photoLat">
@@ -200,10 +206,10 @@ window.addEventListener('load', function () {
         <i class="bi bi-geo-alt display-6 text-primary"></i>
         <h2 class="h5 mt-2">Αποστολή Στίγματος</h2>
         <?php if (!empty($gpsRequest)): ?>
-          <div class="alert alert-info py-2 small mb-2"><i class="bi bi-geo-alt-fill me-1"></i>Ο δήμος ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».</div>
+          <div class="alert alert-info py-2 small mb-2"><i class="bi bi-geo-alt-fill me-1"></i><?= e($orgLabel) ?> ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».</div>
         <?php endif; ?>
         <p class="small text-muted">
-          Στείλτε τη θέση της ομάδας σας στον δήμο. Το στίγμα στέλνεται μόνο όταν πατήσετε το κουμπί.
+          Στείλτε τη θέση της ομάδας σας προς <?= e($orgLabel) ?>. Το στίγμα στέλνεται μόνο όταν πατήσετε το κουμπί.
         </p>
         <?php if ($lastPing): ?>
           <p class="small text-success mb-2"><i class="bi bi-check-circle me-1"></i>Τελευταίο στίγμα: <?= e(gr_datetime($lastPing['created_at'])) ?></p>
@@ -247,7 +253,7 @@ window.addEventListener('load', function () {
             <i class="bi bi-check2 me-1"></i>Παρών με ελλείψεις
           </button>
           <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/checkin')) ?>"
-                onsubmit="return confirm('Δήλωση αποχώρησης της ομάδας από τη δράση;')">
+                onsubmit="return confirm(<?= e(json_encode('Δήλωση αποχώρησης της ομάδας από τη ' . $eventSingularLc . ';', JSON_UNESCAPED_UNICODE)) ?>)">
             <?= csrf_field() ?>
             <input type="hidden" name="status" value="departed">
             <button class="btn btn-outline-dark btn-op" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
@@ -264,7 +270,7 @@ window.addEventListener('load', function () {
   <div class="card-header bg-white fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i> Αναφορά Έλλειψης</div>
   <div class="card-body">
     <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/shortage')) ?>"
-          onsubmit="return confirm('Να σταλεί η αναφορά έλλειψης στον δήμο;')">
+          onsubmit="return confirm(<?= e(json_encode('Να σταλεί η αναφορά έλλειψης προς ' . $orgLabel . ';', JSON_UNESCAPED_UNICODE)) ?>)">
       <?= csrf_field() ?>
       <div class="row g-2">
         <div class="col-md-4">
@@ -305,7 +311,7 @@ window.addEventListener('load', function () {
 </div>
 
 <div class="card shadow-sm" id="opShortageCard"<?= $shortages ? '' : ' style="display:none"' ?>>
-  <div class="card-header bg-white fw-semibold">Οι αναφορές μας για αυτή τη δράση</div>
+  <div class="card-header bg-white fw-semibold">Οι αναφορές μας για αυτή τη <?= e($eventSingularLc) ?></div>
   <ul class="list-group list-group-flush" id="opShortageList">
     <?php foreach ($shortages as $s): ?>
       <li class="list-group-item small">
@@ -326,6 +332,8 @@ window.addEventListener('load', function () {
   var CSRF = window.csrfToken || '';
   var EID  = <?= (int) $event['id'] ?>;
   var IS_ACTIVE = <?= $opsActive ? 'true' : 'false' ?>;
+  var ORG_LABEL = <?= json_encode($orgLabel, JSON_UNESCAPED_UNICODE) ?>;
+  var EVENT_LC = <?= json_encode($eventSingularLc, JSON_UNESCAPED_UNICODE) ?>;
 
   function postJSON(path, body) {
     return fetch(BASE + path, {
@@ -341,7 +349,7 @@ window.addEventListener('load', function () {
   var sosBanner = document.getElementById('sosBanner');
   if (sosBtn) {
     sosBtn.addEventListener('click', function () {
-      if (!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ο δήμος ότι κινδυνεύετε. Συνέχεια;')) return;
+      if (!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ' + ORG_LABEL + ' ότι κινδυνεύετε. Συνέχεια;')) return;
       sosBtn.disabled = true;
       var send = function (lat, lng, acc) {
         postJSON('/team/operations/events/' + EID + '/sos', { latitude: lat, longitude: lng, accuracy: acc })
@@ -392,7 +400,7 @@ window.addEventListener('load', function () {
       var align = fromCmd ? '' : 'text-end';
       var bg = m.kind === 'order' ? 'bg-warning-subtle border border-warning'
              : (m.kind === 'status' ? 'bg-success-subtle' : (fromCmd ? 'bg-primary-subtle' : 'bg-light'));
-      var who = fromCmd ? 'Δήμος' : (m.sender_name || 'Ομάδα');
+      var who = fromCmd ? ORG_LABEL : (m.sender_name || 'Ομάδα');
       var t = (m.created_at || '').substr(11, 5);
       var html = '<div class="' + align + ' mb-2"><div class="d-inline-block text-start p-2 rounded ' + bg + '" style="max-width:90%">' +
                  (m.kind === 'order' ? '<strong>📋 ΕΝΤΟΛΗ:</strong> ' : '') + esc(m.body || '');
@@ -416,10 +424,10 @@ window.addEventListener('load', function () {
     sosBanner.style.display = 'block';
     if (sos.status === 'acknowledged') {
       sosBanner.className = 'alert alert-info mt-2 mb-0 py-2 small';
-      sosBanner.innerHTML = '<i class="bi bi-check2-all"></i> Το SOS ελήφθη από τον δήμο' + (sos.ack_name ? ' (' + esc(sos.ack_name) + ')' : '') + ' — έρχεται βοήθεια.';
+      sosBanner.innerHTML = '<i class="bi bi-check2-all"></i> Το SOS ελήφθη από ' + esc(ORG_LABEL) + (sos.ack_name ? ' (' + esc(sos.ack_name) + ')' : '') + ' — έρχεται βοήθεια.';
     } else {
       sosBanner.className = 'alert alert-danger mt-2 mb-0 py-2 small';
-      sosBanner.innerHTML = '<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης από τον δήμο…';
+      sosBanner.innerHTML = '<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης από ' + esc(ORG_LABEL) + '…';
     }
     if (sosBtn) sosBtn.disabled = true;
   }
@@ -430,10 +438,10 @@ window.addEventListener('load', function () {
     if (!pending.length) { orderBannerEl.innerHTML = ''; orderBannerEl.style.display = 'none'; return; }
     orderBannerEl.style.display = '';
     orderBannerEl.innerHTML = pending.map(function (m) {
-      var who = m.sender_name || 'Δήμος';
+      var who = m.sender_name || ORG_LABEL;
       var t = (m.created_at || '').substr(11, 5);
       var isInc = m.point_kind === 'incident';
-      var head = isInc ? '⚠️ ΠΕΡΙΣΤΑΤΙΚΟ' : (m.point_kind === 'move' ? '➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ' : 'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var head = isInc ? '⚠️ ΠΕΡΙΣΤΑΤΙΚΟ' : (m.point_kind === 'move' ? '➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ' : 'ΕΝΤΟΛΗ ΑΠΟ ' + ORG_LABEL);
       var cls  = isInc ? 'alert-danger border-danger' : 'alert-warning border-warning';
       var dir  = (m.latitude != null && m.longitude != null)
         ? '<a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener" class="btn btn-primary"><i class="bi bi-geo-alt-fill me-1"></i>Οδηγίες</a>' : '';
@@ -491,7 +499,7 @@ window.addEventListener('load', function () {
     if (!msgs.length) { roomList.innerHTML = '<div class="text-muted small text-center py-3">Κανένα μήνυμα ακόμη.</div>'; return; }
     roomList.innerHTML = msgs.map(function (m) {
       var cmd = m.sender_role === 'command';
-      var who = cmd ? 'Δήμος' : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
+      var who = cmd ? ORG_LABEL : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
       var t = (m.created_at || '').substr(11, 5);
       var bg = cmd ? 'bg-primary-subtle' : 'bg-light';
       var align = cmd ? '' : 'text-end';

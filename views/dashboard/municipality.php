@@ -4,6 +4,10 @@ $hoursChange = $hoursLastMonth > 0
     : ($hoursThisMonth > 0 ? 100 : 0);
 $monthLabels = json_encode(array_column($monthlyTrend, 'label'));
 $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 ?>
 
 <!-- Page header -->
@@ -15,7 +19,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
   <?php if ($draftEvents > 0): ?>
   <div class="draft-alert d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
-    <span class="fw-semibold small"><?= $draftEvents ?> πρόχειρες δράσεις</span>
+    <span class="fw-semibold small"><?= $draftEvents ?> πρόχειρες <?= e($eventPluralLc) ?></span>
     <a href="<?= e(url('/events/drafts')) ?>" class="btn btn-sm btn-warning ms-2">Προβολή</a>
   </div>
   <?php endif; ?>
@@ -47,7 +51,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
     <div class="ds-card g-teal h-100">
       <div class="ds-icon"><i class="bi bi-calendar-check"></i></div>
       <div class="ds-val count-up" data-target="<?= $openEvents ?>"><?= $openEvents ?></div>
-      <div class="ds-lbl">Ανοιχτές Δράσεις</div>
+      <div class="ds-lbl">Ανοιχτές <?= e($eventPlural) ?></div>
     </div>
   </div>
   <div class="col-6 col-md-3">
@@ -102,7 +106,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
     <div class="ds-card g-rose h-100">
       <div class="ds-icon"><i class="bi bi-broadcast"></i></div>
       <div class="ds-val count-up" data-target="<?= count($activeToday) ?>"><?= count($activeToday) ?></div>
-      <div class="ds-lbl">Δράσεις σε Εξέλιξη</div>
+      <div class="ds-lbl"><?= e($eventPlural) ?> σε Εξέλιξη</div>
       <div class="ds-sub"><?= count($openShortages) ?> ανοιχτές ελλείψεις</div>
     </div>
   </div>
@@ -123,7 +127,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
   <div class="col-lg-7">
     <div class="card border-0 shadow-sm h-100" style="border-radius:1rem;">
       <div class="card-body p-4">
-        <div class="section-hd">Μηνιαία Τάση Δράσεων (τελευταίοι 6 μήνες)</div>
+        <div class="section-hd">Μηνιαία Τάση <?= e($eventPlural) ?> (τελευταίοι 6 μήνες)</div>
         <canvas id="monthlyChart" height="80"></canvas>
       </div>
     </div>
@@ -131,7 +135,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
   <div class="col-lg-5">
     <div class="card border-0 shadow-sm h-100" style="border-radius:1rem;">
       <div class="card-body p-4">
-        <div class="section-hd">Κατανομή Δράσεων <?= $year ?></div>
+        <div class="section-hd">Κατανομή <?= e($eventPlural) ?> <?= $year ?></div>
         <div class="d-flex flex-column gap-2 mt-2">
           <?php
           $stColors = [
@@ -160,7 +164,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
           </div>
           <?php endforeach; ?>
           <?php if (!$totalSt): ?>
-            <p class="text-muted small">Δεν υπάρχουν δράσεις για το <?= $year ?>.</p>
+            <p class="text-muted small">Δεν υπάρχουν <?= e($eventPluralLc) ?> για το <?= $year ?>.</p>
           <?php endif; ?>
         </div>
       </div>
@@ -176,7 +180,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
         <div class="section-hd">Top 5 Ομάδες <?= $year ?> — Ώρες Εθελοντισμού</div>
         <?php if ($topTeams): ?>
         <table class="table top-teams-tbl table-borderless mb-0">
-          <thead><tr><th>#</th><th>Ομάδα</th><th class="text-end">Δράσεις</th><th class="text-end">Ώρες</th></tr></thead>
+          <thead><tr><th>#</th><th>Ομάδα</th><th class="text-end"><?= e($eventPlural) ?></th><th class="text-end">Ώρες</th></tr></thead>
           <tbody>
           <?php foreach ($topTeams as $i => $t): ?>
             <tr>
@@ -198,7 +202,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
           </tbody>
         </table>
         <?php else: ?>
-          <p class="text-muted small">Δεν υπάρχουν ολοκληρωμένες δράσεις φέτος.</p>
+          <p class="text-muted small">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> φέτος.</p>
         <?php endif; ?>
       </div>
     </div>
@@ -209,7 +213,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
       <div class="card-body p-4">
         <div class="section-hd" style="--c-primary:#e11d48">
           <span class="badge bg-danger me-1" style="font-size:.65rem;animation:pulse-dot 1.5s infinite;">LIVE</span>
-          Δράσεις σε Εξέλιξη
+          <?= e($eventPlural) ?> σε Εξέλιξη
         </div>
         <?php foreach ($activeToday as $a): ?>
         <div class="d-flex justify-content-between align-items-center border-bottom py-2">
@@ -248,7 +252,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
       <div class="text-center text-muted p-4">
         <i class="bi bi-check-circle-fill fs-1 text-success mb-2 d-block"></i>
         <div class="fw-semibold">Όλα καλά!</div>
-        <div class="small">Δεν υπάρχουν ενεργές δράσεις ή ανοιχτές ελλείψεις.</div>
+        <div class="small">Δεν υπάρχουν ενεργές <?= e($eventPluralLc) ?> ή ανοιχτές ελλείψεις.</div>
       </div>
     </div>
     <?php endif; ?>
@@ -259,7 +263,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
 <?php if ($upcoming): ?>
 <div class="card border-0 shadow-sm mb-4" style="border-radius:1rem;">
   <div class="card-body p-4">
-    <div class="section-hd">Επερχόμενες Δράσεις</div>
+    <div class="section-hd">Επερχόμενες <?= e($eventPlural) ?></div>
     <div class="row g-2">
       <?php foreach ($upcoming as $u): ?>
       <div class="col-md-6 col-lg-4">
@@ -291,7 +295,7 @@ $monthCounts = json_encode(array_column($monthlyTrend, 'count'));
     data: {
       labels: <?= $monthLabels ?>,
       datasets: [{
-        label: 'Δράσεις',
+        label: <?= json_encode($eventPlural, JSON_UNESCAPED_UNICODE) ?>,
         data: <?= $monthCounts ?>,
         backgroundColor: 'rgba(13,148,136,.75)',
         borderColor: '#0d9488',

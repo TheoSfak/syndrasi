@@ -4,6 +4,13 @@
  */
 class ReportController
 {
+    private function terms(): array
+    {
+        $ctx = authority_context(current_municipality_id());
+        $ctx['event_singular_lc'] = mb_strtolower($ctx['event_singular'] ?? 'Δράση', 'UTF-8');
+        return $ctx;
+    }
+
     public function index()
     {
         requireRole(['municipality_admin']);
@@ -39,6 +46,7 @@ class ReportController
     {
         requireRole(['municipality_admin']);
         $event = Event::findForCurrent($eventId);
+        $terms = $this->terms();
         $apps = EventApplication::forEvent($event['id']);
         $rows = [];
         foreach ($apps as $a) {
@@ -52,7 +60,7 @@ class ReportController
         }
         audit('export', 'event_applications', $event['id']);
         CsvService::download('syndrasi-event-' . $event['id'] . '-applications.csv',
-            ['Ομάδα', 'Κατάσταση', 'Προσφερόμενα άτομα', 'Εγκεκριμένα άτομα', 'Όχημα', 'Υγειονομικός εξοπλισμός', 'Υποβλήθηκε', 'Σχόλιο ομάδας', 'Σχόλιο δήμου'],
+            ['Ομάδα', 'Κατάσταση', 'Προσφερόμενα άτομα', 'Εγκεκριμένα άτομα', 'Όχημα', 'Υγειονομικός εξοπλισμός', 'Υποβλήθηκε', 'Σχόλιο ομάδας', 'Σχόλιο ' . ($terms['short_name'] ?? 'φορέα')],
             $rows
         );
     }
@@ -101,6 +109,8 @@ class ReportController
     {
         requireRole(['municipality_admin']);
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+        $terms = $this->terms();
+        $eventPlural = $terms['event_plural'] ?? 'Δράσεις';
         $ranking = StatsService::teamRanking(current_municipality_id(), $year);
         $rows = [];
         foreach ($ranking as $i => $r) {
@@ -114,7 +124,7 @@ class ReportController
         }
         audit('export', 'team_statistics', null, 'year: ' . $year);
         CsvService::download('syndrasi-team-statistics-' . $year . '.csv',
-            ['#', 'Ομάδα', 'Τύπος', 'Δράσεις', 'Ώρες εθελοντισμού', 'Συμμετοχές εθελοντών', 'Συνέπεια', 'Μέση απόκριση (λεπτά)'],
+            ['#', 'Ομάδα', 'Τύπος', $eventPlural, 'Ώρες εθελοντισμού', 'Συμμετοχές εθελοντών', 'Συνέπεια', 'Μέση απόκριση (λεπτά)'],
             $rows
         );
     }
@@ -123,10 +133,11 @@ class ReportController
     {
         requireRole(['municipality_admin']);
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+        $terms = $this->terms();
         $o = StatsService::municipalityOverview(current_municipality_id(), $year);
         $rows = [
             ['Έτος', $o['year']],
-            ['Δράσεις με κάλυψη', $o['events_with_coverage']],
+            [($terms['event_plural'] ?? 'Δράσεις') . ' με κάλυψη', $o['events_with_coverage']],
             ['Ενεργές εθελοντικές ομάδες', $o['active_teams']],
             ['Συνολικές συμμετοχές εθελοντών', $o['participations']],
             ['Συνολικές ώρες εθελοντισμού', str_replace('.', ',', (string) $o['volunteer_hours'])],
@@ -143,6 +154,9 @@ class ReportController
         requireRole(['municipality_admin']);
         $mid  = current_municipality_id();
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+        $terms = $this->terms();
+        $eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+        $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
         $s    = MunicipalitySetting::all($mid);
         $thresholds = [
             'bronze_events' => isset($s['award_bronze_events']) ? (int) $s['award_bronze_events'] : 5,
@@ -154,7 +168,7 @@ class ReportController
         $rows = [];
         $labels = [
             'best_contribution' => 'Καλύτερη Προσφορά (ώρες εθελοντισμού)',
-            'most_active'       => 'Πιο Δραστήρια Ομάδα (αριθμός δράσεων)',
+            'most_active'       => 'Πιο Δραστήρια Ομάδα (αριθμός ' . $eventPluralLc . ')',
             'most_consistent'   => 'Μεγαλύτερη Συνέπεια',
             'fastest_response'  => 'Ταχύτερη Απόκριση',
         ];
@@ -170,10 +184,10 @@ class ReportController
         $rows[] = [];
         $rows[] = ['Πλήρης κατάταξη', '', '', ''];
         foreach ($awards['ranking'] as $i => $r) {
-            $rows[] = [($i+1).'. '.$r['team_name'], $r['events_count'].' δράσεις', str_replace('.', ',', (string)$r['volunteer_hours']).' ώρες', ''];
+            $rows[] = [($i+1).'. '.$r['team_name'], $r['events_count'] . ' ' . $eventPluralLc, str_replace('.', ',', (string)$r['volunteer_hours']).' ώρες', ''];
         }
         audit('export', 'awards', null, 'year: '.$year);
-        CsvService::download('syndrasi-awards-'.$year.'.csv', ['Βραβείο','Ομάδα','Δράσεις','Ώρες'], $rows);
+        CsvService::download('syndrasi-awards-'.$year.'.csv', ['Βραβείο','Ομάδα',$eventPlural,'Ώρες'], $rows);
     }
 
     /* ─── PDF print views (standalone HTML, render with $withLayout=false) ─ */

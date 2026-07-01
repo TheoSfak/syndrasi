@@ -51,8 +51,10 @@ class FireServiceController
         requireRole(['municipality_admin']);
         try {
             $eventId = FireServiceIncidentService::createEventDraft((int) $id, current_municipality_id(), current_user_id());
+            $terms = authority_context(current_municipality_id());
+            $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
             audit('fire_service_event_created', 'fire_service_incident', (int) $id, ['event_id' => $eventId]);
-            flash_set('success', 'Δημιουργήθηκε πρόχειρη δράση από το συμβάν. Ελέγξτε τα στοιχεία πριν από δημοσίευση.');
+            flash_set('success', 'Δημιουργήθηκε πρόχειρη ' . $eventSingularLc . ' από το συμβάν. Ελέγξτε τα στοιχεία πριν από δημοσίευση.');
             redirect('/events/' . $eventId . '/edit');
         } catch (Throwable $e) {
             flash_set('danger', $e->getMessage());

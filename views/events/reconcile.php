@@ -1,3 +1,10 @@
+<?php
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$eventPluralDone = $terms['event_plural'] === 'Δράσεις' ? 'Ολοκληρωμένες' : 'Ολοκληρωμένες ' . ($terms['event_plural'] ?? 'Αποστολές');
+$orgLabel = $terms['short_name'] ?? 'Φορέας';
+?>
 <div class="d-flex align-items-center mb-3 gap-2">
   <a href="<?= e(url('/events/' . $event['id'])) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
   <div>
@@ -9,7 +16,7 @@
 <div class="alert alert-info small">
   <i class="bi bi-info-circle me-1"></i>
   Καταχωρήστε τα πραγματικά δεδομένα κάθε ομάδας και επιλέξτε ποια μέλη παρευρέθηκαν.
-  Μετά την αποθήκευση, πατήστε <strong>«Ολοκλήρωση»</strong> από τη σελίδα της δράσης.
+  Μετά την αποθήκευση, πατήστε <strong>«Ολοκλήρωση»</strong> από τη σελίδα της <?= e($eventSingularLc) ?>.
 </div>
 
 <div class="row g-4">
@@ -105,15 +112,15 @@
           </div>
         <?php endforeach; ?>
       <?php else: ?>
-        <div class="alert alert-warning">Δεν υπάρχουν εγκεκριμένες ομάδες για αυτή τη δράση.</div>
+        <div class="alert alert-warning">Δεν υπάρχουν εγκεκριμένες ομάδες για αυτή τη <?= e($eventSingularLc) ?>.</div>
       <?php endif; ?>
 
       <!-- Municipality notes -->
       <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white fw-semibold"><i class="bi bi-journal-text me-1"></i> Σημειώσεις Δήμου</div>
+        <div class="card-header bg-white fw-semibold"><i class="bi bi-journal-text me-1"></i> Σημειώσεις <?= e($orgLabel) ?></div>
         <div class="card-body">
           <textarea name="reconciliation_notes" class="form-control" rows="4"
-                    placeholder="Γενικές παρατηρήσεις για τη δράση, ανακοίνωση αποτελεσμάτων κλπ."><?= e($event['reconciliation_notes'] ?? '') ?></textarea>
+                    placeholder="Γενικές παρατηρήσεις για τη <?= e($eventSingularLc) ?>, ανακοίνωση αποτελεσμάτων κλπ."><?= e($event['reconciliation_notes'] ?? '') ?></textarea>
         </div>
       </div>
 
@@ -121,14 +128,14 @@
         <button type="submit" class="btn btn-primary">
           <i class="bi bi-save me-1"></i>Αποθήκευση στοιχείων
         </button>
-        <a href="<?= e(url('/events/' . $event['id'])) ?>" class="btn btn-outline-secondary">Πίσω στη δράση</a>
+        <a href="<?= e(url('/events/' . $event['id'])) ?>" class="btn btn-outline-secondary">Πίσω στη <?= e($eventSingularLc) ?></a>
       </div>
     </form>
   </div>
 
   <div class="col-lg-4">
     <div class="card shadow-sm mb-3">
-      <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στοιχεία Δράσης</div>
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στοιχεία <?= e($eventSingular) ?></div>
       <div class="card-body small">
         <dl class="row mb-0">
           <dt class="col-6">Έναρξη</dt><dd class="col-6"><?= e(gr_datetime($event['start_datetime'])) ?></dd>
@@ -150,10 +157,10 @@
     <div class="card shadow-sm">
       <div class="card-header bg-white fw-semibold text-success"><i class="bi bi-archive me-1"></i> Ολοκλήρωση</div>
       <div class="card-body small text-muted">
-        <p>Αφού αποθηκεύσετε τα στοιχεία παραπάνω, πατήστε το κουμπί <strong>«Ολοκλήρωση»</strong> από τη σελίδα της δράσης.</p>
-        <p>Μετά την αρχειοθέτηση η δράση μετακινείται στις <strong>Ολοκληρωμένες</strong> και δεν μπορεί να τροποποιηθεί.</p>
+        <p>Αφού αποθηκεύσετε τα στοιχεία παραπάνω, πατήστε το κουμπί <strong>«Ολοκλήρωση»</strong> από τη σελίδα της <?= e($eventSingularLc) ?>.</p>
+        <p>Μετά την αρχειοθέτηση η <?= e($eventSingularLc) ?> μετακινείται στις <strong><?= e($eventPluralDone) ?></strong> και δεν μπορεί να τροποποιηθεί.</p>
         <a href="<?= e(url('/events/' . $event['id'])) ?>" class="btn btn-success btn-sm w-100 mt-1">
-          <i class="bi bi-archive me-1"></i>Πήγαινε στη δράση →
+          <i class="bi bi-archive me-1"></i>Πήγαινε στη <?= e($eventSingularLc) ?> →
         </a>
       </div>
     </div>

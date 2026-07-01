@@ -129,7 +129,9 @@ class ShiftController
 
         $event = Event::find($eventId);
         if (!$event || !in_array($event['status'], ['open', 'review', 'confirmed', 'active'], true)) {
-            abort(403, 'Η δράση δεν είναι διαθέσιμη για δήλωση.');
+            $terms = authority_context($event['municipality_id'] ?? current_municipality_id());
+            $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
+            abort(403, 'Η ' . $eventSingularLc . ' δεν είναι διαθέσιμη για δήλωση.');
         }
         $shift  = EventShift::findForCurrent($shiftId);
         $teamId = current_team_id();

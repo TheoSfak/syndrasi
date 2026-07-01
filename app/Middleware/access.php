@@ -35,9 +35,9 @@ function requireMunicipalityAccess($municipalityId)
     }
     if ((int) $municipalityId !== (int) current_municipality_id()) {
         if (wants_json()) {
-            json_out(['success' => false, 'message' => 'Δεν έχετε πρόσβαση σε αυτόν τον δήμο.'], 403);
+            json_out(['success' => false, 'message' => 'Δεν έχετε πρόσβαση σε αυτόν τον φορέα.'], 403);
         }
-        abort(403, 'Δεν έχετε πρόσβαση στα δεδομένα αυτού του δήμου.');
+        abort(403, 'Δεν έχετε πρόσβαση στα δεδομένα αυτού του φορέα.');
     }
 }
 

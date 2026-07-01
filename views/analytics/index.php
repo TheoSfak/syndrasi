@@ -1,6 +1,9 @@
 <?php
 /* ── Advanced Analytics & Trends ─────────────────────────────────────────── */
 $thisYear = (int) date('Y');
+$terms = authority_context(current_municipality_id());
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 
 $labels = array_map('strval', $years);
 $evSeries   = []; $hrSeries = []; $ptSeries = []; $rsSeries = [];
@@ -28,7 +31,7 @@ $delta = function ($cur, $prev) {
 $mLabels = ['Ιαν','Φεβ','Μαρ','Απρ','Μάι','Ιουν','Ιουλ','Αυγ','Σεπ','Οκτ','Νοε','Δεκ'];
 
 $kpis = [
-    ['Δράσεις',        (int) $cur['events'],        (int) $prev['events'],        'bi-calendar-event', false],
+    [$eventPlural,     (int) $cur['events'],        (int) $prev['events'],        'bi-calendar-event', false],
     ['Συμμετοχές',     (int) $cur['participations'], (int) $prev['participations'],'bi-people',         false],
     ['Εθελοντικές ώρες', round((float)$cur['hours'],1), round((float)$prev['hours'],1), 'bi-clock-history', false],
     ['Μέσος χρόνος ανταπόκρισης',
@@ -96,7 +99,7 @@ $kpis = [
       <div class="card-header fw-semibold"><i class="bi bi-pie-chart me-1 text-primary"></i>Ανά κατηγορία (<?= (int)$years[0] ?>–<?= (int)end($years) ?>)</div>
       <div class="card-body">
         <?php if (empty($byCategory)): ?>
-          <div class="text-muted small text-center py-4">Δεν υπάρχουν ολοκληρωμένες δράσεις στο διάστημα.</div>
+          <div class="text-muted small text-center py-4">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> στο διάστημα.</div>
         <?php else: ?>
           <canvas id="catChart" height="200"></canvas>
         <?php endif; ?>
@@ -109,7 +112,7 @@ $kpis = [
   <!-- Monthly compare -->
   <div class="col-lg-7">
     <div class="card h-100">
-      <div class="card-header fw-semibold"><i class="bi bi-calendar3 me-1 text-primary"></i>Δράσεις ανά μήνα · <?= (int)$focus ?> vs <?= (int)$focus - 1 ?></div>
+      <div class="card-header fw-semibold"><i class="bi bi-calendar3 me-1 text-primary"></i><?= e($eventPlural) ?> ανά μήνα · <?= (int)$focus ?> vs <?= (int)$focus - 1 ?></div>
       <div class="card-body"><canvas id="monthChart" height="150"></canvas></div>
     </div>
   </div>
@@ -173,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
     data: {
       labels: YEARS,
       datasets: [
-        { type:'bar',  label:'Δράσεις', data:EVENTS, backgroundColor:'rgba(59,130,246,.5)', yAxisID:'y', order:2 },
+        { type:'bar',  label:<?= json_encode($eventPlural, JSON_UNESCAPED_UNICODE) ?>, data:EVENTS, backgroundColor:'rgba(59,130,246,.5)', yAxisID:'y', order:2 },
         { type:'line', label:'Εθελοντικές ώρες', data:HOURS, borderColor:teal, backgroundColor:tealL, tension:.3, fill:true, yAxisID:'y1', order:1 },
         { type:'line', label:'Συμμετοχές', data:PARTS, borderColor:amber, tension:.3, yAxisID:'y1', order:0 }
       ]
@@ -181,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
     options: {
       responsive:true, interaction:{mode:'index',intersect:false},
       scales:{
-        y:{ position:'left', beginAtZero:true, title:{display:true,text:'Δράσεις'} },
+        y:{ position:'left', beginAtZero:true, title:{display:true,text:<?= json_encode($eventPlural, JSON_UNESCAPED_UNICODE) ?>} },
         y1:{ position:'right', beginAtZero:true, grid:{drawOnChartArea:false}, title:{display:true,text:'Ώρες / Συμμετοχές'} }
       }
     }
@@ -190,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (document.getElementById('catChart') && CATL.length) {
     new Chart(document.getElementById('catChart'), {
       type:'bar',
-      data:{ labels:CATL, datasets:[{ label:'Δράσεις', data:CATE, backgroundColor:'rgba(13,148,136,.6)' }] },
+      data:{ labels:CATL, datasets:[{ label:<?= json_encode($eventPlural, JSON_UNESCAPED_UNICODE) ?>, data:CATE, backgroundColor:'rgba(13,148,136,.6)' }] },
       options:{ indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{precision:0}}} }
     });
   }

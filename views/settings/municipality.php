@@ -7,7 +7,12 @@
 .org-preview-box{background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:12px 14px;}
 </style>
 
-<?php $authorityContext = authority_context((int) $municipality['id']); ?>
+<?php
+$authorityContext = authority_context((int) $municipality['id']);
+$orgShort = $authorityContext['short_name'] ?? 'φορέας';
+$eventSingularLc = mb_strtolower($authorityContext['event_singular'] ?? 'Δράση', 'UTF-8');
+$eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
+?>
 <h1 class="h3 mb-1">Ρυθμίσεις Φορέα</h1>
 <p class="text-muted mb-3"><?= e($authorityContext['official_name'] ?? $municipality['name']) ?></p>
 
@@ -194,7 +199,7 @@ $tzOptions = [
           <div class="card shadow-sm">
             <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
               <div class="fw-semibold"><i class="bi bi-envelope-paper me-1"></i>Πρόσφατα email</div>
-              <span class="small text-muted">Τελευταίες 50 εγγραφές του δήμου</span>
+              <span class="small text-muted">Τελευταίες 50 εγγραφές του φορέα</span>
             </div>
             <div class="table-responsive">
               <table class="table table-sm align-middle mb-0">
@@ -209,7 +214,7 @@ $tzOptions = [
                 </thead>
                 <tbody>
                   <?php if (empty($mailHistory['recent'])): ?>
-                    <tr><td colspan="5" class="text-center text-muted py-4">Δεν υπάρχει ιστορικό email για αυτόν τον δήμο.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Δεν υπάρχει ιστορικό email για αυτόν τον φορέα.</td></tr>
                   <?php else: ?>
                     <?php foreach ($mailHistory['recent'] as $row): ?>
                       <?php [$badge, $label] = $mailStatus($row); ?>
@@ -277,9 +282,9 @@ $tzOptions = [
           <div class="card shadow-sm border-danger">
             <div class="card-header bg-white text-danger fw-semibold"><i class="bi bi-trash me-1"></i>Διαγραφή ιστορικού</div>
             <div class="card-body">
-              <p class="small text-muted">Διαγράφει όλες τις εγγραφές `mail_queue` αυτού του δήμου, μαζί με επιτυχημένες, αποτυχημένες και pending αποστολές.</p>
+              <p class="small text-muted">Διαγράφει όλες τις εγγραφές `mail_queue` αυτού του φορέα (<?= e($orgShort) ?>), μαζί με επιτυχημένες, αποτυχημένες και pending αποστολές.</p>
               <form method="post" action="<?= e(url('/settings/mail/history/clear')) ?>"
-                    onsubmit="return confirm('Να διαγραφεί οριστικά όλο το ιστορικό email αυτού του δήμου;');">
+                    onsubmit="return confirm(<?= e(json_encode('Να διαγραφεί οριστικά όλο το ιστορικό email αυτού του φορέα;', JSON_UNESCAPED_UNICODE)) ?>);">
                 <?= csrf_field() ?>
                 <label class="form-label small fw-semibold">Πληκτρολογήστε DELETE</label>
                 <input type="text" name="confirm" class="form-control mb-2" placeholder="DELETE" autocomplete="off">
@@ -302,7 +307,7 @@ $tzOptions = [
           <?= csrf_field() ?>
           <div class="card-header bg-white fw-semibold"><i class="bi bi-geo-alt me-1"></i> Προεπιλογές Επιχειρησιακού Χάρτη</div>
           <div class="card-body row g-3">
-            <p class="text-muted small mb-0">Κέντρο και ζουμ χάρτη όταν μια δράση δεν έχει καταχωρημένες συντεταγμένες.</p>
+            <p class="text-muted small mb-0">Κέντρο και ζουμ χάρτη όταν μια <?= e($eventSingularLc) ?> δεν έχει καταχωρημένες συντεταγμένες.</p>
             <div class="col-md-6">
               <label class="form-label">Γεωγρ. πλάτος (lat)</label>
               <input type="text" name="map_lat" class="form-control" value="<?= e($v('map_lat')) ?>" placeholder="π.χ. 35.3387">
@@ -352,23 +357,23 @@ $tzOptions = [
             <div class="col-md-4">
               <label class="form-label">🥉 Χάλκινη</label>
               <input type="number" name="award_bronze_events" min="1" class="form-control" value="<?= e($v('award_bronze_events', '5')) ?>">
-              <div class="form-text">ελάχ. δράσεις</div>
+              <div class="form-text">ελάχ. <?= e($eventPluralLc) ?></div>
             </div>
             <div class="col-md-4">
               <label class="form-label">🥈 Ασημένια</label>
               <input type="number" name="award_silver_events" min="1" class="form-control" value="<?= e($v('award_silver_events', '10')) ?>">
-              <div class="form-text">ελάχ. δράσεις</div>
+              <div class="form-text">ελάχ. <?= e($eventPluralLc) ?></div>
             </div>
             <div class="col-md-4">
               <label class="form-label">🥇 Χρυσή</label>
               <input type="number" name="award_gold_events" min="1" class="form-control" value="<?= e($v('award_gold_events', '20')) ?>">
-              <div class="form-text">ελάχ. δράσεις</div>
+              <div class="form-text">ελάχ. <?= e($eventPluralLc) ?></div>
             </div>
             <div class="col-12"><hr class="my-1"></div>
             <div class="col-md-8">
-              <label class="form-label">Ελάχ. δράσεις για Συνέπεια & Απόκριση</label>
+              <label class="form-label">Ελάχ. <?= e($eventPluralLc) ?> για Συνέπεια & Απόκριση</label>
               <input type="number" name="award_min_events" min="1" class="form-control" value="<?= e($v('award_min_events', '3')) ?>">
-              <div class="form-text">Ομάδες με λιγότερες δράσεις δεν λαμβάνουν αυτά τα ποιοτικά βραβεία.</div>
+              <div class="form-text">Ομάδες με λιγότερες <?= e($eventPluralLc) ?> δεν λαμβάνουν αυτά τα ποιοτικά βραβεία.</div>
             </div>
           </div>
           <div class="card-footer bg-white">
@@ -676,7 +681,7 @@ $tzOptions = [
                 <input class="form-check-input" type="checkbox" name="telegram_enabled" id="telegramEnabled" value="1" <?= $tgEnabled ? 'checked' : '' ?>>
                 <label class="form-check-label fw-semibold" for="telegramEnabled">Ενεργοποίηση Telegram αποστολών</label>
               </div>
-              <div class="form-text">Αφορά command group δήμου και group/channel ομάδων. Τα προσωπικά Telegram DM δεν είναι μέρος αυτού του MVP.</div>
+              <div class="form-text">Αφορά command group φορέα και group/channel ομάδων. Τα προσωπικά Telegram DM δεν είναι μέρος αυτού του MVP.</div>
             </div>
             <div class="col-12">
               <label class="form-label">Bot Token</label>
@@ -685,9 +690,9 @@ $tzOptions = [
               <div class="form-text"><?= $tgTokenSet ? 'Υπάρχει ήδη αποθηκευμένο token. Συμπληρώστε μόνο για αλλαγή.' : 'Δημιουργείται από το BotFather.' ?></div>
             </div>
             <div class="col-12">
-              <label class="form-label">Command / Δήμος Chat ID</label>
+              <label class="form-label">Command / Φορέας Chat ID</label>
               <input type="text" name="telegram_command_chat_id" class="form-control" value="<?= e($tgCommandChat) ?>" placeholder="π.χ. -1001234567890">
-              <div class="form-text">Group/channel όπου θα πηγαίνουν ειδοποιήσεις προς τον δήμο/φορέα.</div>
+              <div class="form-text">Group/channel όπου θα πηγαίνουν ειδοποιήσεις προς τον φορέα.</div>
             </div>
             <div class="col-12">
               <label class="form-label">Κοινό Chat ID ομάδων / εθελοντών</label>
@@ -732,7 +737,7 @@ $tzOptions = [
                 Βρείτε το <code>chat.id</code>. Συνήθως τα group/channel IDs είναι αρνητικά, π.χ. <code>-1001234567890</code>.
               </li>
               <li class="mb-2">
-                Αν αυτό είναι το group του δήμου/φορέα, βάλτε το ID στο <strong>Command / Δήμος Chat ID</strong>. Αν είναι το κοινό group όπου θα είναι μέσα όλες οι εθελοντικές ομάδες, βάλτε το και στο <strong>Κοινό Chat ID ομάδων / εθελοντών</strong>. Μπορεί να είναι το ίδιο ID και στα δύο πεδία.
+                Αν αυτό είναι το group του φορέα, βάλτε το ID στο <strong>Command / Φορέας Chat ID</strong>. Αν είναι το κοινό group όπου θα είναι μέσα όλες οι εθελοντικές ομάδες, βάλτε το και στο <strong>Κοινό Chat ID ομάδων / εθελοντών</strong>. Μπορεί να είναι το ίδιο ID και στα δύο πεδία.
               </li>
               <li>
                 Πατήστε <strong>Αποστολή δοκιμαστικού</strong>. Αν το μήνυμα εμφανιστεί στο group, το Telegram είναι έτοιμο.
@@ -763,7 +768,7 @@ $tzOptions = [
       <div class="col-lg-7">
         <form method="post" action="<?= e(url('/settings/event-defaults')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-plus me-1"></i> Προεπιλογές Δράσεων</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-plus me-1"></i> Προεπιλογές <?= e($authorityContext['event_plural'] ?? 'Δράσεων') ?></div>
           <div class="card-body row g-3">
             <div class="col-md-5">
               <label class="form-label">Προθεσμία δηλώσεων</label>
@@ -772,13 +777,13 @@ $tzOptions = [
                        value="<?= e($v('event_application_deadline_days', '0')) ?>">
                 <span class="input-group-text">ημέρες πριν</span>
               </div>
-              <div class="form-text">0 = χωρίς προθεσμία. Εμφανίζεται ως υπενθύμιση στη φόρμα δράσης.</div>
+              <div class="form-text">0 = χωρίς προθεσμία. Εμφανίζεται ως υπενθύμιση στη φόρμα <?= e($eventSingularLc) ?>.</div>
             </div>
             <div class="col-12">
               <label class="form-label">Προεπιλεγμένες οδηγίες ομάδων</label>
               <textarea name="event_default_instructions" class="form-control" rows="4"
                         placeholder="π.χ. Προσέλευση 30 λεπτά πριν την έναρξη. Υποχρεωτική στολή ομάδας."><?= e($v('event_default_instructions')) ?></textarea>
-              <div class="form-text">Προ-συμπληρώνεται στο πεδίο «Οδηγίες» κάθε νέας δράσης. Μπορείτε να το αλλάξετε ανά δράση.</div>
+              <div class="form-text">Προ-συμπληρώνεται στο πεδίο «Οδηγίες» κάθε νέας <?= e($eventSingularLc) ?>. Μπορείτε να το αλλάξετε ανά <?= e($eventSingularLc) ?>.</div>
             </div>
           </div>
           <div class="card-footer bg-white">
@@ -798,7 +803,7 @@ $tzOptions = [
           <div class="card-header bg-white fw-semibold"><i class="bi bi-palette me-1"></i> Εμφάνιση & Ζώνη Ώρας</div>
           <div class="card-body row g-3">
             <div class="col-12">
-              <label class="form-label">URL λογότυπου δήμου</label>
+              <label class="form-label">URL λογότυπου φορέα</label>
               <input type="url" name="branding_logo_url" class="form-control"
                      value="<?= e($v('branding_logo_url')) ?>"
                      placeholder="https://www.dimos.gr/logo.png">
@@ -1016,7 +1021,7 @@ $tzOptions = [
             <p>Κάθε τύπος email έχει ένα <strong>Θέμα</strong> (Subject) και ένα <strong>Σώμα</strong> (Body).</p>
             <p>Χρησιμοποιήστε τα <strong>{placeholders}</strong> για να εισάγετε δυναμικές τιμές που αντικαθίστανται αυτόματα κατά την αποστολή (π.χ. <code>{event_title}</code>).</p>
             <p>Κάντε κλικ σε ένα badge placeholder για εισαγωγή στο cursor του textarea.</p>
-            <p>Τα emails στέλνονται ως <strong>HTML</strong> με αυτόματο wrapper που περιλαμβάνει το λογότυπο του δήμου (από την καρτέλα Εμφάνιση).</p>
+            <p>Τα emails στέλνονται ως <strong>HTML</strong> με αυτόματο wrapper που περιλαμβάνει το λογότυπο του φορέα (από την καρτέλα Εμφάνιση).</p>
             <hr>
             <p class="mb-0">Το κουμπί <strong>Επαναφορά αρχικών</strong> επαναφέρει το default κείμενο — η αλλαγή γίνεται μόνιμη μετά την Αποθήκευση.</p>
           </div>
@@ -1024,7 +1029,7 @@ $tzOptions = [
         <div class="card shadow-sm">
           <div class="card-header bg-white fw-semibold"><i class="bi bi-palette me-1"></i> Branding</div>
           <div class="card-body small text-muted">
-            <p class="mb-1">Το λογότυπο και το όνομα του δήμου εμφανίζονται αυτόματα στην κεφαλίδα κάθε email.</p>
+            <p class="mb-1">Το λογότυπο και το όνομα του φορέα εμφανίζονται αυτόματα στην κεφαλίδα κάθε email.</p>
             <a href="#tab-branding" class="tpl-switch-tab">Ρύθμιση λογότυπου →</a>
           </div>
         </div>

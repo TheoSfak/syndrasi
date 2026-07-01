@@ -44,7 +44,9 @@ class Event
     {
         $event = self::find($id);
         if (!$event) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            $terms = authority_context(current_municipality_id());
+            $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
+            abort(404, 'Η ' . $eventSingularLc . ' δεν βρέθηκε.');
         }
         requireMunicipalityAccess($event['municipality_id']);
         return $event;

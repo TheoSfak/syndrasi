@@ -1,13 +1,20 @@
+<?php
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$orgLabel = $terms['short_name'] ?? 'Φορέας';
+?>
 <h1 class="h3 mb-1">Δηλώσεις Συμμετοχής</h1>
 <p class="text-muted">
-  Δράση: <a href="<?= e(url('/events/' . $event['id'])) ?>" class="fw-semibold text-decoration-none"><?= e($event['title']) ?></a>
+  <?= e($eventSingular) ?>: <a href="<?= e(url('/events/' . $event['id'])) ?>" class="fw-semibold text-decoration-none"><?= e($event['title']) ?></a>
   <?= status_badge($event['status']) ?> · <?= e(gr_datetime($event['start_datetime'])) ?>
   · Ζητούμενα άτομα: <strong><?= (int) $event['requested_people'] ?></strong>
 </p>
 
 <?php if (!$applications): ?>
   <div class="card shadow-sm"><div class="card-body text-muted">
-    Δεν υπάρχουν ακόμη δηλώσεις συμμετοχής για αυτή τη δράση.
+    Δεν υπάρχουν ακόμη δηλώσεις συμμετοχής για αυτή τη <?= e($eventSingularLc) ?>.
   </div></div>
 <?php else: ?>
 
@@ -106,13 +113,13 @@ $hasPending  = count($pendingApps) > 0;
             <?php if (!empty($a['history'])): ?>
               <div class="small text-muted mt-2">
                 <i class="bi bi-clock-history me-1"></i>Ιστορικό ομάδας:
-                <?= (int) $a['history']['events_count'] ?> ολοκληρωμένες δράσεις,
+                <?= (int) $a['history']['events_count'] ?> ολοκληρωμένες <?= e($eventPluralLc) ?>,
                 <?= e(gr_number((float) $a['history']['total_hours'], 1)) ?> ώρες εθελοντισμού
                 · <a href="<?= e(url('/statistics/teams/' . $a['team_id'])) ?>">πλήρη στατιστικά</a>
               </div>
             <?php endif; ?>
             <?php if ($a['admin_comment']): ?>
-              <div class="small mt-2"><strong>Σχόλιο δήμου:</strong> <?= e($a['admin_comment']) ?></div>
+              <div class="small mt-2"><strong>Σχόλιο <?= e($orgLabel) ?>:</strong> <?= e($a['admin_comment']) ?></div>
             <?php endif; ?>
           </div>
         </div>

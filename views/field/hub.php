@@ -11,6 +11,10 @@ $evLat = (isset($app['latitude'])  && $app['latitude']  !== null && $app['latitu
 $evLng = (isset($app['longitude']) && $app['longitude'] !== null && $app['longitude'] !== '') ? (float) $app['longitude'] : null;
 $tLat  = (!empty($lastPing) && $lastPing['latitude']  !== null) ? (float) $lastPing['latitude']  : null;
 $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastPing['longitude'] : null;
+$terms = authority_context((int) ($app['municipality_id'] ?? 0));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
 ?>
 <!DOCTYPE html>
 <html lang="el">
@@ -92,7 +96,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   <?php endforeach; ?>
 
   <?php if (!$isActive): ?>
-  <div class="inactive"><i class="bi bi-hourglass-split"></i> Η δράση δεν είναι ενεργή αυτή τη στιγμή.</div>
+  <div class="inactive"><i class="bi bi-hourglass-split"></i> Η <?= e($eventSingularLc) ?> δεν είναι ενεργή αυτή τη στιγμή.</div>
   <?php endif; ?>
 
   <!-- Pinned orders -->
@@ -107,7 +111,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   <div>
     <button class="sos-btn" id="sosBtn" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-exclamation-octagon-fill sos-ico"></i>
-      <div style="flex:1"><div class="sos-lbl">SOS — ΚΙΝΔΥΝΟΣ</div><div class="sos-sub">Άμεση κλήση βοήθειας στον δήμο</div></div>
+      <div style="flex:1"><div class="sos-lbl">SOS — ΚΙΝΔΥΝΟΣ</div><div class="sos-sub">Άμεση κλήση βοήθειας προς <?= e($orgLabel) ?></div></div>
     </button>
     <div class="sos-banner" id="sosBanner" role="alert" aria-live="assertive" style="display:none"></div>
   </div>
@@ -115,11 +119,11 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   <!-- Στίγμα -->
   <div class="card">
     <div id="gpsReqBanner" style="margin:14px 14px 0;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($gpsRequest) ? 'block' : 'none' ?>">
-      <i class="bi bi-geo-alt-fill me-1"></i> Ο δήμος ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».
+      <i class="bi bi-geo-alt-fill me-1"></i> <?= e($orgLabel) ?> ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».
     </div>
     <button class="big-btn" id="locBtn" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-geo-alt-fill big-ico"></i>
-      <div style="flex:1"><div class="big-lbl">Αποστολή Στίγματος</div><div class="big-sub">Στείλτε τη θέση σας στον δήμο</div></div>
+      <div style="flex:1"><div class="big-lbl">Αποστολή Στίγματος</div><div class="big-sub">Στείλτε τη θέση σας προς <?= e($orgLabel) ?></div></div>
       <i class="bi bi-chevron-right" style="opacity:.5"></i>
     </button>
     <div id="locRes" style="padding:10px 18px 14px"></div>
@@ -127,7 +131,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
 
   <!-- Map -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-map"></i> Χάρτης Δράσης</div>
+    <div class="hdr"><i class="bi bi-map"></i> Χάρτης <?= e($eventSingular) ?></div>
     <div id="teamMap" style="height:240px;background:#0a1414"></div>
   </div>
 
@@ -147,7 +151,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   <div class="card">
     <div class="hdr"><i class="bi bi-camera"></i> Αποστολή φωτογραφίας</div>
     <div id="photoReqBanner" style="margin:0 14px 8px;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($photoRequest) ? 'block' : 'none' ?>">
-      <i class="bi bi-camera-fill me-1"></i> Ο δήμος ζήτησε φωτογραφία — τραβήξτε/ανεβάστε μία παρακάτω.
+      <i class="bi bi-camera-fill me-1"></i> <?= e($orgLabel) ?> ζήτησε φωτογραφία — τραβήξτε/ανεβάστε μία παρακάτω.
     </div>
     <form method="post" action="<?= e(url('/f/' . $token . '/photo')) ?>" enctype="multipart/form-data" id="photoForm">
       <?= csrf_field() ?>
@@ -163,7 +167,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   <div class="card">
     <div class="hdr"><i class="bi bi-camera-video"></i> Αποστολή βίντεο</div>
     <div id="videoReqBanner" style="margin:0 14px 8px;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($videoRequest) ? 'block' : 'none' ?>">
-      <i class="bi bi-camera-video-fill me-1"></i> <span id="videoReqText"><?= (!empty($videoRequest) && !empty($videoRequest['instructions'])) ? e($videoRequest['instructions']) : 'Ο δήμος ζήτησε σύντομο βίντεο — τραβήξτε/ανεβάστε ένα παρακάτω.' ?></span>
+      <i class="bi bi-camera-video-fill me-1"></i> <span id="videoReqText"><?= (!empty($videoRequest) && !empty($videoRequest['instructions'])) ? e($videoRequest['instructions']) : e($orgLabel) . ' ζήτησε σύντομο βίντεο — τραβήξτε/ανεβάστε ένα παρακάτω.' ?></span>
     </div>
 
     <div id="vidIdle" style="padding:0 14px 14px">
@@ -198,7 +202,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   </div>
   <!-- Comms (read + ack + compose) -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-chat-dots"></i> Επικοινωνία · <?= e($orgLabel ?? 'Δήμος') ?></div>
+    <div class="hdr"><i class="bi bi-chat-dots"></i> Επικοινωνία · <?= e($orgLabel) ?></div>
     <div class="msg-list" id="msgList"><div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Φόρτωση…</div></div>
     <div style="display:flex;gap:8px;padding:0 14px 14px">
       <input type="text" id="msgInput" maxlength="500" placeholder="Μήνυμα προς <?= e($orgLabel ?? 'τον Δήμο') ?>…"
@@ -213,7 +217,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
             style="width:100%;padding:22px 20px;background:#1a1111;border:none;border-radius:18px;color:#f87171;cursor:pointer;display:flex;align-items:center;gap:16px;text-align:left" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-exclamation-triangle" style="font-size:34px;flex-shrink:0"></i>
       <div style="flex:1"><div style="font-size:18px;font-weight:800;color:#e8f5f4">Αναφορά Έλλειψης</div>
-        <div style="font-size:12px;color:#f87171;margin-top:2px">Ειδοποιήστε άμεσα τον δήμο</div></div>
+        <div style="font-size:12px;color:#f87171;margin-top:2px">Ειδοποιήστε άμεσα <?= e($orgLabel) ?></div></div>
       <i class="bi bi-chevron-right" id="shortageArrow" style="opacity:.5;transition:transform .2s"></i>
     </button>
     <div id="shortageForm" style="display:none;border-top:1px solid #2a1818">
@@ -249,7 +253,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
           <textarea name="description" rows="2" placeholder="Επιπλέον λεπτομέρειες…"
                     style="background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:15px;padding:12px 14px;outline:none;width:100%;resize:none"></textarea>
         </div>
-        <button type="submit" onclick="return confirm('Αποστολή αναφοράς έλλειψης στον δήμο;')"
+        <button type="submit" onclick="return confirm('Αποστολή αναφοράς έλλειψης προς <?= e(addslashes($orgLabel)) ?>;')"
                 style="background:#b91c1c;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;padding:16px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
           <i class="bi bi-send-fill"></i> Αποστολή Αναφοράς
         </button>
@@ -274,7 +278,8 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
   'use strict';
   var BASE = window.baseUrl || '', CSRF = window.csrfToken || '';
   var TOKEN = '<?= e($token) ?>', IS_ACTIVE = <?= $isActive ? 'true' : 'false' ?>;
-  var ORG_LABEL = <?= json_encode($orgLabel ?? 'Δήμος') ?>;
+  var ORG_LABEL = <?= json_encode($orgLabel, JSON_UNESCAPED_UNICODE) ?>;
+  var EVENT_LC = <?= json_encode($eventSingularLc, JSON_UNESCAPED_UNICODE) ?>;
   var ORG_ICON  = <?= json_encode($orgIcon  ?? '🏛️') ?>;
   function esc(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;}
   function postJSON(p,b){return fetch(BASE+'/f/'+TOKEN+p,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':CSRF,'X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(b||{})}).then(function(r){return r.json();});}
@@ -288,7 +293,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     var map=L.map('teamMap').setView(center,14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
     var b=[];
-    if(evLat!==null){L.marker([evLat,evLng]).addTo(map).bindPopup('Σημείο δράσης');b.push([evLat,evLng]);}
+    if(evLat!==null){L.marker([evLat,evLng]).addTo(map).bindPopup('Σημείο ' + EVENT_LC);b.push([evLat,evLng]);}
     if(tLat!==null){L.circleMarker([tLat,tLng],{radius:9,color:'#22d3ee',fillColor:'#22d3ee',fillOpacity:.85}).addTo(map).bindPopup('Η θέση μας');b.push([tLat,tLng]);}
     if(b.length>1){try{map.fitBounds(b,{padding:[30,30],maxZoom:16});}catch(e){}}
     window.__teamMap=map; window.__teamGeo=L.layerGroup().addTo(map);
@@ -311,7 +316,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     clearTimeout(sosArmTimer);
     sosArmTimer=setTimeout(function(){
       sosArmed=false;
-      if(!sosBtn.disabled){sosBtn.querySelector('.sos-sub').textContent='Άμεση κλήση βοήθειας στον δήμο';}
+      if(!sosBtn.disabled){sosBtn.querySelector('.sos-sub').textContent='Άμεση κλήση βοήθειας προς ' + ORG_LABEL;}
       if(sosBanner&&sosBanner.textContent.indexOf('Επιβεβαίωση SOS')!==-1){sosBanner.style.display='none';}
     },6000);
   }
@@ -320,7 +325,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     clearTimeout(sosArmTimer);sosArmed=false;
     sosBtn.disabled=true;sosBtn.querySelector('.sos-sub').textContent='Λήψη τοποθεσίας…';
     var send=function(la,ln,ac){postJSON('/sos',{latitude:la,longitude:ln,accuracy:ac}).then(function(d){
-      if(d&&d.success){sosBtn.querySelector('.sos-sub').textContent='SOS εστάλη — ο δήμος ειδοποιήθηκε';sosStatus('SOS εστάλη — ο δήμος ειδοποιήθηκε.',true);pollComms();}
+      if(d&&d.success){sosBtn.querySelector('.sos-sub').textContent='SOS εστάλη — ειδοποιήθηκε ' + ORG_LABEL;sosStatus('SOS εστάλη — ειδοποιήθηκε ' + ORG_LABEL + '.',true);pollComms();}
       else{sosBtn.disabled=false;sosBtn.querySelector('.sos-sub').textContent='Αποτυχία — δοκιμάστε ξανά';sosStatus((d&&d.message)||'Το SOS δεν στάλθηκε. Δοκιμάστε ξανά.',false);}
     }).catch(function(){sosBtn.disabled=false;sosBtn.querySelector('.sos-sub').textContent='Σφάλμα σύνδεσης';sosStatus('Σφάλμα σύνδεσης. Ελέγξτε το δίκτυο και δοκιμάστε ξανά.',false);});};
     if(navigator.geolocation){navigator.geolocation.getCurrentPosition(function(p){send(p.coords.latitude,p.coords.longitude,p.coords.accuracy);},function(err){
@@ -435,7 +440,7 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     if(!p.length){orderBanner.innerHTML='';orderBanner.style.display='none';return;}
     orderBanner.style.display='';
     orderBanner.innerHTML=p.map(function(m){var t=(m.created_at||'').substr(11,5);
-      var head=m.point_kind==='incident'?'⚠️ ΠΕΡΙΣΤΑΤΙΚΟ':(m.point_kind==='move'?'➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ':'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var head=m.point_kind==='incident'?'⚠️ ΠΕΡΙΣΤΑΤΙΚΟ':(m.point_kind==='move'?'➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ':'ΕΝΤΟΛΗ ΑΠΟ ' + ORG_LABEL);
       var dir=(m.latitude!=null&&m.longitude!=null)?'<a href="https://www.google.com/maps?q='+parseFloat(m.latitude)+','+parseFloat(m.longitude)+'" target="_blank" rel="noopener" class="order-pin-btn" style="display:block;text-align:center;text-decoration:none;background:#2563eb;color:#fff;margin-bottom:8px"><i class="bi bi-geo-alt-fill"></i> Οδηγίες (Google Maps)</a>':'';
       return '<div class="order-pin"><div class="order-pin-h"><i class="bi bi-megaphone-fill"></i> '+head+'</div><div class="order-pin-b">'+esc(m.body||'')+'</div>'+dir+'<button class="order-pin-btn" onclick="ackOrder('+parseInt(m.id,10)+')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button><div style="font-size:11px;color:#fde68a;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
     }).join('');
@@ -461,9 +466,9 @@ $tLng  = (!empty($lastPing) && $lastPing['longitude'] !== null) ? (float) $lastP
     }).join('');msgList.scrollTop=msgList.scrollHeight;
   }
   function renderSos(sos){
-    if(!sos){sosBanner.style.display='none';if(sosBtn){sosBtn.classList.remove('sos-pulse');sosBtn.disabled=!IS_ACTIVE;if(IS_ACTIVE)sosBtn.querySelector('.sos-sub').textContent='Άμεση κλήση βοήθειας στον δήμο';}return;}
+    if(!sos){sosBanner.style.display='none';if(sosBtn){sosBtn.classList.remove('sos-pulse');sosBtn.disabled=!IS_ACTIVE;if(IS_ACTIVE)sosBtn.querySelector('.sos-sub').textContent='Άμεση κλήση βοήθειας προς ' + ORG_LABEL;}return;}
     sosBanner.style.display='flex';
-    if(sos.status==='acknowledged'){sosBanner.className='sos-banner ack';sosBanner.innerHTML='<i class="bi bi-check2-all"></i> Το SOS ελήφθη από τον δήμο'+(sos.ack_name?' ('+esc(sos.ack_name)+')':'')+' — έρχεται βοήθεια.';sosBtn.classList.remove('sos-pulse');}
+    if(sos.status==='acknowledged'){sosBanner.className='sos-banner ack';sosBanner.innerHTML='<i class="bi bi-check2-all"></i> Το SOS ελήφθη από ' + esc(ORG_LABEL) + (sos.ack_name?' ('+esc(sos.ack_name)+')':'')+' — έρχεται βοήθεια.';sosBtn.classList.remove('sos-pulse');}
     else{sosBanner.className='sos-banner';sosBanner.innerHTML='<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης…';sosBtn.classList.add('sos-pulse');}
     sosBtn.disabled=true;sosBtn.querySelector('.sos-sub').textContent='SOS ενεργό';
   }

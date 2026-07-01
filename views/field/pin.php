@@ -1,4 +1,8 @@
-<?php /* SynDrasi — Field PIN gate (/f/{token}, no login). Standalone page. */ ?>
+<?php
+/* SynDrasi — Field PIN gate (/f/{token}, no login). Standalone page. */
+$terms = authority_context((int) ($app['municipality_id'] ?? 0));
+$eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -26,7 +30,7 @@
 <body>
   <div class="box">
     <div class="logo"><i class="bi bi-shield-lock-fill"></i></div>
-    <h1>Πεδίο δράσης</h1>
+    <h1>Πεδίο <?= e($eventSingularLc) ?></h1>
     <div class="sub"><?= e($app['event_title'] ?? '') ?><br>Εισάγετε το 4ψήφιο PIN που σας στάλθηκε.</div>
 
     <form method="post" action="<?= e(url('/f/' . $token . '/pin')) ?>">

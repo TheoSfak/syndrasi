@@ -1,3 +1,9 @@
+<?php
+$terms = authority_context((int) ($mun['id'] ?? current_municipality_id()));
+$orgName = $terms['official_name'] ?? ($mun['name'] ?? 'Φορέας');
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -154,7 +160,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
         <span style="font-size:48px;opacity:.8">&#127963;</span>
       <?php endif; ?>
       <div>
-        <div class="cover-mun"><?= e($mun['name'] ?? 'Δήμος') ?></div>
+        <div class="cover-mun"><?= e($orgName) ?></div>
         <div class="cover-sub">Εθελοντικός Συντονισμός &amp; Πολιτική Προστασία</div>
       </div>
     </div>
@@ -164,14 +170,14 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       <div class="cover-label">Ετήσια Έκθεση</div>
       <div class="cover-year"><?= $year ?></div>
       <div class="cover-title">Εθελοντισμός<?= "\n" ?><?= $year ?></div>
-      <div class="cover-desc">Ετήσια έκθεση δράσεων, συμμετοχής ομάδων<br>και εθελοντικών ωρών</div>
+      <div class="cover-desc">Ετήσια έκθεση <?= e($eventPluralLc) ?>, συμμετοχής ομάδων<br>και εθελοντικών ωρών</div>
     </div>
 
     <!-- Summary stats -->
     <div class="cover-stats">
       <div class="cover-stat">
         <div class="v"><?= $totalEvents ?></div>
-        <div class="l">Δράσεις</div>
+        <div class="l"><?= e($eventPlural) ?></div>
       </div>
       <div class="cover-stat">
         <div class="v"><?= $totalPeople ?: '—' ?></div>
@@ -201,14 +207,14 @@ $maxMonth = max(array_values($monthly)) ?: 1;
   <div class="page-inner">
     <div class="page-header">
       <div class="section-title"><i>&#128202;</i> Συνολική Εικόνα <?= $year ?></div>
-      <div class="page-meta"><?= e($mun['name'] ?? '') ?> &nbsp;·&nbsp; <?= $year ?></div>
+      <div class="page-meta"><?= e($orgName) ?> &nbsp;·&nbsp; <?= $year ?></div>
     </div>
 
     <!-- KPI cards -->
     <div class="summary-grid">
       <div class="s-card">
         <div class="v"><?= $totalEvents ?></div>
-        <div class="l">Δράσεις</div>
+        <div class="l"><?= e($eventPlural) ?></div>
       </div>
       <div class="s-card">
         <div class="v"><?= $totalTeamSlots ?></div>
@@ -226,7 +232,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
 
     <!-- Monthly chart -->
     <div class="chart-wrap">
-      <div class="chart-title">&#128197; Δράσεις ανά μήνα</div>
+      <div class="chart-title">&#128197; <?= e($eventPlural) ?> ανά μήνα</div>
       <?php for ($m = 1; $m <= 12; $m++): ?>
         <?php $cnt = $monthly[$m]; $pct = $maxMonth > 0 ? round(($cnt / $maxMonth) * 100) : 0; ?>
         <div class="bar-row">
@@ -257,7 +263,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
     <?php endif; ?>
 
     <div class="report-footer">
-      <span><?= e($mun['name'] ?? '') ?> &nbsp;·&nbsp; Εθελοντικός Συντονισμός</span>
+      <span><?= e($orgName) ?> &nbsp;·&nbsp; Εθελοντικός Συντονισμός</span>
       <span>Ετήσια Έκθεση <?= $year ?></span>
     </div>
   </div>
@@ -270,8 +276,8 @@ $maxMonth = max(array_values($monthly)) ?: 1;
 <div class="page">
   <div class="page-inner">
     <div class="page-header">
-      <div class="section-title">&#128203; Κατάλογος Δράσεων <?= $year ?></div>
-      <div class="page-meta"><?= $totalEvents ?> δράσεις</div>
+      <div class="section-title">&#128203; Κατάλογος <?= e($eventPlural) ?> <?= $year ?></div>
+      <div class="page-meta"><?= $totalEvents ?> <?= e($eventPluralLc) ?></div>
     </div>
 
     <?php if ($events): ?>
@@ -308,11 +314,11 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       </tbody>
     </table>
     <?php else: ?>
-      <p style="color:#9ca3af;text-align:center;margin-top:40px">Δεν υπάρχουν ολοκληρωμένες δράσεις για το <?= $year ?>.</p>
+      <p style="color:#9ca3af;text-align:center;margin-top:40px">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> για το <?= $year ?>.</p>
     <?php endif; ?>
 
     <div class="report-footer">
-      <span><?= e($mun['name'] ?? '') ?></span>
+      <span><?= e($orgName) ?></span>
       <span>Ετήσια Έκθεση <?= $year ?> &nbsp;·&nbsp; σελ. 3</span>
     </div>
   </div>
@@ -335,7 +341,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
         <tr>
           <th style="width:40px">#</th>
           <th>Ομάδα</th>
-          <th style="text-align:center">Δράσεις</th>
+          <th style="text-align:center"><?= e($eventPlural) ?></th>
           <th style="text-align:center">Παρουσίες μελών</th>
           <th style="text-align:right">Ώρες</th>
         </tr>
@@ -359,13 +365,13 @@ $maxMonth = max(array_values($monthly)) ?: 1;
     <!-- Total row -->
     <div style="margin-top:16px;padding:10px 12px;background:#f0fdf4;border-radius:6px;display:flex;gap:24px;font-size:11px">
       <span><strong>Σύνολο ωρών:</strong> <?= number_format($totalHours, 1) ?> ώρες</span>
-      <span><strong>Σύνολο δράσεων:</strong> <?= $totalEvents ?></span>
+      <span><strong>Σύνολο <?= e($eventPluralLc) ?>:</strong> <?= $totalEvents ?></span>
       <span><strong>Συμμετοχές ομάδων:</strong> <?= $totalTeamSlots ?></span>
     </div>
 
     <?php else: ?>
       <p style="color:#9ca3af;text-align:center;margin-top:40px">Δεν υπάρχουν δεδομένα συμμετοχής για το <?= $year ?>.<br>
-      <small>Τα δεδομένα ομάδων συμπληρώνονται κατά την αρχειοθέτηση δράσεων.</small></p>
+      <small>Τα δεδομένα ομάδων συμπληρώνονται κατά την αρχειοθέτηση <?= e($eventPluralLc) ?>.</small></p>
     <?php endif; ?>
 
     <!-- Signature area -->
@@ -377,7 +383,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
         </div>
         <div style="flex:1;text-align:center">
           <div style="border-top:1.5px solid #374151;margin:28px 16px 8px"></div>
-          <div style="font-size:10px;color:#6b7280">Δήμαρχος / Αντιδήμαρχος</div>
+          <div style="font-size:10px;color:#6b7280">Εκπρόσωπος Φορέα</div>
         </div>
         <div style="flex:1;text-align:center">
           <div style="border-top:1.5px solid #374151;margin:28px 16px 8px"></div>
@@ -387,7 +393,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
     </div>
 
     <div class="report-footer">
-      <span><?= e($mun['name'] ?? '') ?> &nbsp;·&nbsp; Εκδόθηκε <?= e(gr_date(date('Y-m-d'))) ?></span>
+      <span><?= e($orgName) ?> &nbsp;·&nbsp; Εκδόθηκε <?= e(gr_date(date('Y-m-d'))) ?></span>
       <span>Ετήσια Έκθεση <?= $year ?> &nbsp;·&nbsp; σελ. 4</span>
     </div>
   </div>

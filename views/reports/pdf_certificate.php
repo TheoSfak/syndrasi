@@ -1,3 +1,9 @@
+<?php
+$terms = authority_context((int) ($event['municipality_id'] ?? ($mun['id'] ?? current_municipality_id())));
+$orgName = $terms['official_name'] ?? ($mun['name'] ?? 'Φορέας');
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -155,7 +161,7 @@
 
 <?php if (!$teams): ?>
   <div style="text-align:center;padding:60px;color:#6b7280">
-    Δεν υπάρχουν εγκεκριμένες ομάδες για αυτή τη δράση.
+    Δεν υπάρχουν εγκεκριμένες ομάδες για αυτή τη <?= e($eventSingularLc) ?>.
   </div>
 <?php endif; ?>
 
@@ -175,7 +181,7 @@
         <span style="font-size:36px">🏛</span>
       <?php endif; ?>
       <div>
-        <div class="mun-name"><?= e($mun['name'] ?? 'Δήμος') ?></div>
+        <div class="mun-name"><?= e($orgName) ?></div>
         <div class="mun-sub">Εθελοντικός Συντονισμός &amp; Πολιτική Προστασία</div>
       </div>
       <div style="margin-left:auto">
@@ -188,7 +194,7 @@
     <!-- Certificate label -->
     <div class="cert-headline">Πιστοποιητικό Συμμετοχής</div>
 
-    <div class="cert-title">Συμμετοχή<br>σε Εθελοντική Δράση</div>
+    <div class="cert-title">Συμμετοχή<br>σε Εθελοντική <?= e($eventSingular) ?></div>
 
     <div class="cert-body">
       Πιστοποιείται ότι η εθελοντική ομάδα
@@ -197,7 +203,7 @@
     <div class="cert-team"><?= e($t['team_name']) ?></div>
 
     <div class="cert-body">
-      συμμετείχε στη δράση
+      συμμετείχε στη <?= e($eventSingularLc) ?>
     </div>
 
     <div class="cert-event">«<?= e($event['title']) ?>»</div>
@@ -229,11 +235,11 @@
     <div class="cert-sigs">
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Υπεύθυνος Δράσης</div>
+        <div class="sig-lbl">Υπεύθυνος <?= e($eventSingular) ?></div>
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Δήμαρχος / Εκπρόσωπος</div>
+        <div class="sig-lbl">Εκπρόσωπος Φορέα</div>
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>

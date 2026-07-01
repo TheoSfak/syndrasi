@@ -73,7 +73,7 @@ class AuthController
         if ($user['role'] !== 'super_admin' && $user['municipality_id']) {
             $mun = Municipality::find($user['municipality_id']);
             if (!$mun || $mun['status'] !== 'active') {
-                flash_set('danger', 'Ο δήμος σας δεν είναι ενεργός στην πλατφόρμα.');
+                flash_set('danger', 'Ο φορέας σας δεν είναι ενεργός στην πλατφόρμα.');
                 redirect('/login');
             }
         }

@@ -144,6 +144,8 @@ class FireServiceIncidentService
             . "Κατάσταση: {$incident['status_label']}\n"
             . "Περιοχή: {$incident['region']} / {$incident['regional_unit']}\n\n"
             . $incident['raw_text'];
+        $terms = authority_context($municipalityId);
+        $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
         $id = Event::create([
             'municipality_id' => $municipalityId,
             'category_id' => self::fireCategoryId(),
@@ -158,7 +160,7 @@ class FireServiceIncidentService
             'requested_people' => 0,
             'requested_vehicle' => 0,
             'requested_medical_equipment' => 0,
-            'instructions' => 'Δημιουργήθηκε ως πρόχειρη δράση από συμβάν του Πυροσβεστικού Σώματος. Ελέγξτε τα στοιχεία πριν από δημοσίευση.',
+            'instructions' => 'Δημιουργήθηκε ως πρόχειρη ' . $eventSingularLc . ' από συμβάν του Πυροσβεστικού Σώματος. Ελέγξτε τα στοιχεία πριν από δημοσίευση.',
             'status' => 'draft',
             'created_by' => $userId,
         ]);

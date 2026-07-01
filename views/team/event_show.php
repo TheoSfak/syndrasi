@@ -2,6 +2,7 @@
 $terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
 $eventSingular = $terms['event_singular'] ?? 'Δράση';
 $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$orgLabel = $terms['short_name'] ?? 'Φορέας';
 $requestedItems = [];
 if (!empty($event['requested_items_json'])) {
     $decodedItems = json_decode((string) $event['requested_items_json'], true);
@@ -149,7 +150,7 @@ if (!empty($event['requested_items_json'])) {
             <i class="bi bi-clipboard2-check fs-2 flex-shrink-0" style="opacity:.85"></i>
             <div class="flex-grow-1">
               <div class="fw-bold fs-5 mb-1">Post-Event Debrief</div>
-              <p class="mb-3 small" style="opacity:.9">Η δράση ολοκληρώθηκε. Αφιερώστε 2 λεπτά να καταγράψετε τι πήγε καλά, τι μπορεί να βελτιωθεί και τα αριθμητικά στοιχεία της ομάδας.</p>
+              <p class="mb-3 small" style="opacity:.9">Η <?= e($eventSingularLc) ?> ολοκληρώθηκε. Αφιερώστε 2 λεπτά να καταγράψετε τι πήγε καλά, τι μπορεί να βελτιωθεί και τα αριθμητικά στοιχεία της ομάδας.</p>
               <a href="<?= e(url('/team/events/' . $event['id'] . '/debrief')) ?>"
                  class="btn btn-light fw-semibold" style="color:#6366f1">
                 <i class="bi bi-pencil-square me-1"></i>Συμπλήρωση Debrief
@@ -189,7 +190,7 @@ if (!empty($event['requested_items_json'])) {
 
                 <!-- Member selection -->
                 <label class="form-label fw-semibold">Επιλογή μελών <span class="text-danger">*</span></label>
-                <p class="text-muted small mb-2">Επιλέξτε ποια μέλη θα συμμετέχουν. Τα μέλη με <span class="text-warning fw-bold">⚠</span> έχουν άλλη εγκεκριμένη δράση την ίδια περίοδο.</p>
+                <p class="text-muted small mb-2">Επιλέξτε ποια μέλη θα συμμετέχουν. Τα μέλη με <span class="text-warning fw-bold">⚠</span> έχουν άλλη εγκεκριμένη <?= e($eventSingularLc) ?> την ίδια περίοδο.</p>
 
                 <div class="list-group mb-3" id="memberList">
                   <?php foreach ($teamMembers as $m):
@@ -200,12 +201,12 @@ if (!empty($event['requested_items_json'])) {
                       <input class="form-check-input member-cb flex-shrink-0" type="checkbox"
                              name="member_ids[]" value="<?= (int) $m['id'] ?>"
                              id="mem_<?= $m['id'] ?>"
-                             <?= $isConflict ? 'title="Δεσμευμένο σε άλλη δράση"' : '' ?>>
+                             <?= $isConflict ? 'title="Δεσμευμένο σε άλλη ' . e($eventSingularLc) . '"' : '' ?>>
                       <div class="flex-grow-1">
                         <span class="fw-semibold">
                           <?php if ($m['is_team_admin']): ?><i class="bi bi-shield-fill text-primary me-1" title="Διαχειριστής"></i><?php endif; ?>
                           <?= e($m['full_name']) ?>
-                          <?php if ($isConflict): ?><span class="text-warning ms-1" title="Δεσμευμένο σε άλλη δράση">⚠</span><?php endif; ?>
+                          <?php if ($isConflict): ?><span class="text-warning ms-1" title="Δεσμευμένο σε άλλη <?= e($eventSingularLc) ?>">⚠</span><?php endif; ?>
                         </span>
                         <?php if ($m['role_in_team']): ?><div class="small text-muted"><?= e($m['role_in_team']) ?></div><?php endif; ?>
                       </div>
@@ -216,7 +217,7 @@ if (!empty($event['requested_items_json'])) {
                 <!-- Mission Commander -->
                 <div class="mb-3" id="commanderSection">
                   <label class="form-label fw-semibold">Mission Υπεύθυνος <span class="text-danger">*</span></label>
-                  <p class="text-muted small mb-1">Αυτό το πρόσωπο θα στέλνει στίγμα και ενημερώσεις κατά τη δράση.</p>
+                  <p class="text-muted small mb-1">Αυτό το πρόσωπο θα στέλνει στίγμα και ενημερώσεις κατά τη <?= e($eventSingularLc) ?>.</p>
                   <select name="mission_commander_id" class="form-select" id="commanderSelect" required>
                     <option value="">— Επιλέξτε μέλος —</option>
                     <?php foreach ($teamMembers as $m): ?>
@@ -260,7 +261,7 @@ if (!empty($event['requested_items_json'])) {
         <?php endif; ?>
 
       <?php else: ?>
-        <div class="alert alert-secondary">Η δράση δεν δέχεται δηλώσεις συμμετοχής αυτή τη στιγμή.</div>
+        <div class="alert alert-secondary">Η <?= e($eventSingularLc) ?> δεν δέχεται δηλώσεις συμμετοχής αυτή τη στιγμή.</div>
       <?php endif; ?>
 
     <?php else: ?>
@@ -279,7 +280,7 @@ if (!empty($event['requested_items_json'])) {
             <dt class="col-7">Υποβλήθηκε</dt><dd class="col-5"><?= e(gr_datetime($application['submitted_at'])) ?></dd>
           </dl>
           <?php if ($application['admin_comment']): ?>
-            <div class="alert alert-info mt-3 mb-0 small"><strong>Σχόλιο δήμου:</strong> <?= e($application['admin_comment']) ?></div>
+            <div class="alert alert-info mt-3 mb-0 small"><strong>Σχόλιο <?= e($orgLabel) ?>:</strong> <?= e($application['admin_comment']) ?></div>
           <?php endif; ?>
 
           <!-- Members & commander assigned -->
@@ -378,7 +379,7 @@ if (!empty($event['requested_items_json'])) {
                            name="member_ids[]" value="<?= (int) $m['id'] ?>"
                            id="edit_mem_<?= $m['id'] ?>"
                            <?= $isAssigned ? 'checked' : '' ?>
-                           <?= $isConflict && !$isAssigned ? 'title="Δεσμευμένο σε άλλη δράση"' : '' ?>>
+                           <?= $isConflict && !$isAssigned ? 'title="Δεσμευμένο σε άλλη ' . e($eventSingularLc) . '"' : '' ?>>
                     <div class="flex-grow-1">
                       <span class="fw-semibold">
                         <?php if ($m['is_team_admin']): ?><i class="bi bi-shield-fill text-primary me-1"></i><?php endif; ?>

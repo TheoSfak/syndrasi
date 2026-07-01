@@ -443,6 +443,8 @@ class SettingsController
         requireRole(['municipality_admin']);
         $mid = current_municipality_id();
         $municipality = Municipality::find($mid);
+        $authority = authority_context($mid);
+        $orgName = $authority['official_name'] ?? ($municipality['name'] ?? 'τον φορέα');
         $target = isset($_POST['test_target']) ? (string) $_POST['test_target'] : 'command';
         $cfg = TelegramService::resolveConfig($mid);
 
@@ -451,13 +453,13 @@ class SettingsController
                 $cfg,
                 (string) ($cfg['team_chat_id'] ?? ''),
                 'Δοκιμαστικό Telegram SynDrasi',
-                'Το κοινό Telegram group ομάδων λειτουργεί για ' . ($municipality['name'] ?? 'τον δήμο') . '.'
+                'Το κοινό Telegram group ομάδων λειτουργεί για ' . $orgName . '.'
             );
         } else {
             $ok = TelegramService::sendCommand(
                 $mid,
                 'Δοκιμαστικό Telegram SynDrasi',
-                'Η σύνδεση Telegram command group λειτουργεί για ' . ($municipality['name'] ?? 'τον δήμο') . '.'
+                'Η σύνδεση Telegram command group λειτουργεί για ' . $orgName . '.'
             );
         }
         audit('municipality_telegram_test', 'municipality', $mid, $ok ? 'success' : 'failed: ' . TelegramService::lastError());

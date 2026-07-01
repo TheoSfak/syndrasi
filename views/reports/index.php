@@ -1,3 +1,11 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+$orgLabel = $terms['short_name'] ?? 'φορέα';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
     <h1 class="h3 mb-0">Αναφορές & Εξαγωγές</h1>
@@ -14,7 +22,7 @@
       <div class="list-group list-group-flush">
         <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
            href="<?= e(url('/exports/events')) ?>">
-          Λίστα δράσεων
+          Λίστα <?= e($eventPluralLc) ?>
           <span class="badge text-bg-secondary"><i class="bi bi-filetype-csv"></i> CSV</span>
         </a>
         <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
@@ -24,7 +32,7 @@
         </a>
         <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
            href="<?= e(url('/exports/municipality-statistics')) ?>">
-          Ετήσια στατιστικά δήμου
+          Ετήσια στατιστικά φορέα
           <span class="badge text-bg-secondary"><i class="bi bi-filetype-csv"></i> CSV</span>
         </a>
         <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
@@ -42,7 +50,7 @@
       </div>
       <div class="card-body">
         <p class="text-muted small mb-3">
-          4 σελίδες: εξώφυλλο, μηνιαία ανάλυση, κατάλογος δράσεων και κατάταξη ομάδων. Κατάλληλη για Δημοτικό Συμβούλιο.
+          4 σελίδες: εξώφυλλο, μηνιαία ανάλυση, κατάλογος <?= e($eventPluralLc) ?> και κατάταξη ομάδων. Κατάλληλη για επίσημη παρουσίαση του φορέα.
         </p>
         <?php $curYear = (int) date('Y'); ?>
         <div class="d-flex gap-2 flex-wrap">
@@ -81,16 +89,16 @@
   <div class="col-lg-7">
     <div class="card shadow-sm">
       <div class="card-header bg-white fw-semibold">
-        <i class="bi bi-calendar-event me-1"></i> Αναφορές ανά δράση
+        <i class="bi bi-calendar-event me-1"></i> Αναφορές ανά <?= e($eventSingularLc) ?>
       </div>
       <?php if (!$events): ?>
-        <div class="card-body text-muted">Δεν υπάρχουν δράσεις.</div>
+        <div class="card-body text-muted">Δεν υπάρχουν <?= e($eventPluralLc) ?>.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table table-hover mb-0 align-middle">
             <thead class="table-light">
               <tr>
-                <th>Δράση</th>
+                <th><?= e($eventSingular) ?></th>
                 <th>Ημερομηνία</th>
                 <th>Κατάσταση</th>
                 <th class="text-end">Εξαγωγή</th>
@@ -143,7 +151,7 @@
       <div><i class="bi bi-file-earmark-pdf text-danger me-1"></i><strong>PDF Κάλυψη</strong> — Επίσημη αναφορά ανάπτυξης ομάδων με υπογραφές. Εκτυπώνεται από browser.</div>
       <div><i class="bi bi-award text-success me-1"></i><strong>Πιστοποιητικά</strong> — Μία σελίδα ανά ομάδα, κατάλληλη για επίσημη απονομή.</div>
       <div><i class="bi bi-trophy text-warning me-1"></i><strong>Επιβράβευση</strong> — Τελετή βράβευσης με κάλυψη + κατάταξη.</div>
-      <div><i class="bi bi-file-earmark-bar-graph text-primary me-1"></i><strong>Ετήσια Έκθεση</strong> — 4 σελίδες για Δημοτικό Συμβούλιο: δράσεις, ανάλυση, κατάταξη ομάδων.</div>
+      <div><i class="bi bi-file-earmark-bar-graph text-primary me-1"></i><strong>Ετήσια Έκθεση</strong> — 4 σελίδες για <?= e($orgLabel) ?>: <?= e($eventPluralLc) ?>, ανάλυση, κατάταξη ομάδων.</div>
     </div>
   </div>
 

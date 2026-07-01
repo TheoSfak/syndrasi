@@ -61,7 +61,7 @@
       <div class="card-body">
         <div class="stat-icon bg-primary-subtle text-primary mb-2"><i class="bi bi-calendar-check"></i></div>
         <div class="stat-value"><?= (int) $counts['events_year'] ?></div>
-        <div class="text-muted small">Δράσεις φέτος</div>
+        <div class="text-muted small">Αποστολές/δράσεις φέτος</div>
       </div>
     </div>
   </div>
@@ -81,17 +81,17 @@
   <div class="col-lg-8">
     <div class="card shadow-sm">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <span class="fw-semibold"><i class="bi bi-building me-1"></i> Χρήση ανά δήμο</span>
+        <span class="fw-semibold"><i class="bi bi-building me-1"></i> Χρήση ανά φορέα</span>
         <a href="<?= e(url('/admin/municipalities')) ?>" class="btn btn-sm btn-outline-primary">Διαχείριση</a>
       </div>
       <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
           <thead class="table-light">
             <tr>
-              <th>Δήμος</th>
+              <th>Φορέας</th>
               <th>Κατάσταση</th>
               <th class="text-center">Ομάδες</th>
-              <th class="text-center">Δράσεις</th>
+              <th class="text-center">Αποστολές/δράσεις</th>
               <th class="text-center">Χρήστες</th>
               <th class="text-center">Ώρες εθελ.</th>
               <th></th>
@@ -99,7 +99,7 @@
           </thead>
           <tbody>
             <?php if (!$municipalityUsage): ?>
-              <tr><td colspan="7" class="text-muted py-4 text-center">Δεν υπάρχουν δήμοι.</td></tr>
+              <tr><td colspan="7" class="text-muted py-4 text-center">Δεν υπάρχουν φορείς.</td></tr>
             <?php endif; ?>
             <?php foreach ($municipalityUsage as $m): ?>
               <tr>

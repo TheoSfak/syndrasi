@@ -9,13 +9,16 @@
 $completionRate = $approvedCount > 0
     ? round(($stats['debrief_count'] ?? 0) / $approvedCount * 100)
     : 0;
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
 ?>
 <div class="container py-4">
 
   <!-- Breadcrumb -->
   <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="<?= url('/events') ?>">Δράσεις</a></li>
+      <li class="breadcrumb-item"><a href="<?= url('/events') ?>"><?= e($eventPlural) ?></a></li>
       <li class="breadcrumb-item"><a href="<?= url('/events/' . $event['id']) ?>"><?= e($event['title']) ?></a></li>
       <li class="breadcrumb-item active">Post-Event Debriefs</li>
     </ol>
@@ -78,7 +81,7 @@ $completionRate = $approvedCount > 0
   <!-- Municipality after-action report -->
   <div class="card shadow-sm mb-4 border-start border-4 border-primary">
     <div class="card-header bg-white fw-semibold">
-      <i class="bi bi-clipboard-check me-1"></i> Απολογισμός Δήμου (After-Action)
+      <i class="bi bi-clipboard-check me-1"></i> Απολογισμός Φορέα (After-Action)
       <?php if (!empty($muniReport)): ?><span class="badge text-bg-success ms-1">Αποθηκευμένος</span><?php endif; ?>
     </div>
     <div class="card-body">
@@ -92,7 +95,7 @@ $completionRate = $approvedCount > 0
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Συνολική αξιολόγηση / Σύνοψη</label>
-          <textarea name="summary" class="form-control" rows="3" placeholder="Πώς πήγε η δράση συνολικά, συντονισμός, ανταπόκριση ομάδων…"><?= e($muniReport['summary'] ?? '') ?></textarea>
+          <textarea name="summary" class="form-control" rows="3" placeholder="Πώς πήγε η <?= e($eventSingularLc) ?> συνολικά, συντονισμός, ανταπόκριση ομάδων…"><?= e($muniReport['summary'] ?? '') ?></textarea>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Συμπεράσματα &amp; βελτιώσεις (lessons learned)</label>

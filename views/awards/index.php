@@ -1,3 +1,8 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-1 gap-2">
   <h1 class="h3 mb-0">Επιβράβευση Ομάδων</h1>
   <div class="d-flex align-items-center gap-2">
@@ -19,7 +24,7 @@
 <?php
 $cards = [
     ['key' => 'best_contribution', 'icon' => 'bi-heart-fill', 'color' => 'danger', 'title' => 'Καλύτερη Προσφορά', 'metric' => function ($w) { return gr_number($w['volunteer_hours'], 1) . ' ώρες εθελοντισμού'; }],
-    ['key' => 'most_active', 'icon' => 'bi-lightning-fill', 'color' => 'warning', 'title' => 'Πιο Δραστήρια Ομάδα', 'metric' => function ($w) { return $w['events_count'] . ' δράσεις'; }],
+    ['key' => 'most_active', 'icon' => 'bi-lightning-fill', 'color' => 'warning', 'title' => 'Πιο Δραστήρια Ομάδα', 'metric' => function ($w) use ($eventPluralLc) { return $w['events_count'] . ' ' . $eventPluralLc; }],
     ['key' => 'most_consistent', 'icon' => 'bi-check-circle-fill', 'color' => 'success', 'title' => 'Μεγαλύτερη Συνέπεια', 'metric' => function ($w) { return gr_number($w['consistency_score'], 1) . '% συνέπεια'; }],
     ['key' => 'fastest_response', 'icon' => 'bi-stopwatch-fill', 'color' => 'info', 'title' => 'Ταχύτερη Απόκριση', 'metric' => function ($w) { return gr_number($w['avg_response_minutes']) . ' λεπτά μέση απόκριση'; }],
 ];
@@ -49,7 +54,7 @@ $cards = [
   <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
     <span><i class="bi bi-list-ol me-1"></i> Πλήρης κατάταξη <?= (int) $year ?></span>
     <span class="small text-muted fw-normal">
-      🥉 <?= (int) $t['bronze_events'] ?>+ δράσεις &nbsp;
+      🥉 <?= (int) $t['bronze_events'] ?>+ <?= e($eventPluralLc) ?> &nbsp;
       🥈 <?= (int) $t['silver_events'] ?>+ &nbsp;
       🥇 <?= (int) $t['gold_events'] ?>+
     </span>
@@ -59,7 +64,7 @@ $cards = [
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead><tr><th>#</th><th>Ομάδα</th><th>Δράσεις</th><th>Ώρες εθελοντισμού</th><th>Συνέπεια</th><th>Μέση απόκριση</th></tr></thead>
+        <thead><tr><th>#</th><th>Ομάδα</th><th><?= e($eventPlural) ?></th><th>Ώρες εθελοντισμού</th><th>Συνέπεια</th><th>Μέση απόκριση</th></tr></thead>
         <tbody>
           <?php foreach ($awards['ranking'] as $i => $r): ?>
             <tr>

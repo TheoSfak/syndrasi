@@ -3,6 +3,9 @@
 $defLat   = (float)($mapDefLat  ?: 38.0);
 $defLng   = (float)($mapDefLng  ?: 23.7);
 $defZoom  = (int)  ($mapDefZoom ?: 11);
+$terms = authority_context(current_municipality_id());
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSON_UNESCAPED_UNICODE);
 ?>
 <style>
@@ -36,7 +39,7 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
 <div class="wr-header">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
     <div>
-      <h1 class="h4 mb-1 fw-bold"><i class="bi bi-diagram-3 me-2"></i>Κέντρο Συντονισμού — Όλες οι Δράσεις</h1>
+      <h1 class="h4 mb-1 fw-bold"><i class="bi bi-diagram-3 me-2"></i>Κέντρο Συντονισμού — Όλες οι <?= e($eventPlural) ?></h1>
       <div class="small" style="opacity:.85">Συνολική εικόνα ενεργών επιχειρήσεων σε πραγματικό χρόνο.
         <span id="liveBadge" class="badge bg-success ms-1">◉ LIVE SSE</span>
         <span class="ms-2"><i class="bi bi-clock me-1"></i><span id="wrClock">—</span></span>
@@ -71,6 +74,7 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
   var BASE     = <?= json_encode(url('')) ?>;
   var DEF_LAT  = <?= $defLat ?>, DEF_LNG = <?= $defLng ?>, DEF_ZOOM = <?= $defZoom ?>;
   var INIT     = <?= json_encode(json_decode($initJson, true), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+  var EVENT_PLURAL_LC = <?= json_encode($eventPluralLc, JSON_UNESCAPED_UNICODE) ?>;
 
   var map = L.map('warMap').setView([DEF_LAT, DEF_LNG], DEF_ZOOM);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(map);
@@ -123,7 +127,7 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
   function renderList(d){
     var box = document.getElementById('evList');
     if (!d.events || !d.events.length){
-      box.innerHTML = '<div class="wr-empty"><i class="bi bi-moon-stars fs-3 d-block mb-2"></i>Καμία ενεργή δράση αυτή τη στιγμή.</div>';
+      box.innerHTML = '<div class="wr-empty"><i class="bi bi-moon-stars fs-3 d-block mb-2"></i>Καμία ενεργή ' + EVENT_PLURAL_LC + ' αυτή τη στιγμή.</div>';
       return;
     }
     var html = '';

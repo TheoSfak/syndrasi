@@ -1,7 +1,7 @@
 <?php
 $roleLabels = [
     'super_admin'      => 'Super Admin',
-    'municipality_admin' => 'Διαχ. Δήμου',
+    'municipality_admin' => 'Διαχ. Φορέα',
     'event_operator'   => 'Χειριστής',
     'team_admin'       => 'Διαχ. Ομάδας',
 ];

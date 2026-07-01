@@ -1,3 +1,10 @@
+<?php
+$terms = authority_context((int) ($mun['id'] ?? current_municipality_id()));
+$orgName = $terms['official_name'] ?? ($mun['name'] ?? 'Φορέας');
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -149,7 +156,7 @@
         <span style="font-size:36px">&#127963;</span>
       <?php endif; ?>
       <div>
-        <div class="mun-name"><?= e($mun['name'] ?? 'Δήμος') ?></div>
+        <div class="mun-name"><?= e($orgName) ?></div>
         <div class="mun-sub">Εθελοντικός Συντονισμός &amp; Πολιτική Προστασία</div>
       </div>
       <div style="margin-left:auto">
@@ -157,7 +164,7 @@
       </div>
     </div>
 
-    <div class="cert-headline">Πιστοποιητικό Εθελοντικής Δράσης</div>
+    <div class="cert-headline">Πιστοποιητικό Εθελοντικής <?= e($eventSingular) ?></div>
 
     <div class="cert-title">Βεβαίωση<br>Εθελοντικής Συμμετοχής</div>
 
@@ -173,14 +180,14 @@
     </div>
 
     <div class="cert-body">
-      συμμετείχε σε εθελοντικές δράσεις του Δήμου ως μέλος της ομάδας πολιτικής προστασίας
+      συμμετείχε σε εθελοντικές <?= e($eventPluralLc) ?> του φορέα ως μέλος της ομάδας πολιτικής προστασίας
       με τα παρακάτω συνολικά στοιχεία:
     </div>
 
     <div class="cert-stats">
       <div class="cert-stat">
         <div class="v"><?= (int) $stats['attended_events'] ?></div>
-        <div class="l">Δράσεις</div>
+        <div class="l"><?= e($eventPlural) ?></div>
       </div>
       <div class="cert-stat">
         <div class="v"><?= number_format((float)($stats['total_hours'] ?? 0), 1) ?></div>
@@ -200,7 +207,7 @@
     <table class="cert-events">
       <thead>
         <tr>
-          <th>Δράση</th>
+          <th><?= e($eventSingular) ?></th>
           <th>Ημερομηνία</th>
           <th style="text-align:right">Ώρες</th>
         </tr>
@@ -214,7 +221,7 @@
         </tr>
         <?php endforeach; ?>
         <?php if (count($attended) > 12): ?>
-        <tr><td colspan="3" style="color:#9ca3af;font-style:italic">...και <?= count($attended) - 12 ?> ακόμη δράσεις</td></tr>
+        <tr><td colspan="3" style="color:#9ca3af;font-style:italic">...και <?= count($attended) - 12 ?> ακόμη <?= e($eventPluralLc) ?></td></tr>
         <?php endif; ?>
       </tbody>
     </table>
@@ -228,7 +235,7 @@
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Δήμαρχος / Εκπρόσωπος</div>
+        <div class="sig-lbl">Εκπρόσωπος Φορέα</div>
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>

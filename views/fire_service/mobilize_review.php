@@ -7,6 +7,8 @@ $statusClass = [
 ][$incident['status_label'] ?? ''] ?? 'secondary';
 $totalTeams = count($teams);
 $totalMembers = array_sum(array_map(fn($t) => (int) ($t['active_members'] ?? 0), $teams));
+$terms = authority_context(current_municipality_id());
+$orgLabel = $terms['short_name'] ?? 'φορέα';
 ?>
 
 <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
@@ -113,7 +115,7 @@ $totalMembers = array_sum(array_map(fn($t) => (int) ($t['active_members'] ?? 0),
 
           <div class="border rounded overflow-hidden">
             <?php if (!$teams): ?>
-              <div class="p-3 text-muted small">Δεν υπάρχουν ενεργές ομάδες στον δήμο.</div>
+              <div class="p-3 text-muted small">Δεν υπάρχουν ενεργές ομάδες στον φορέα (<?= e($orgLabel) ?>).</div>
             <?php else: ?>
               <?php foreach ($teams as $team): ?>
                 <?php $members = (int) ($team['active_members'] ?? 0); ?>

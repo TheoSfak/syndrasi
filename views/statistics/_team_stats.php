@@ -1,9 +1,15 @@
-<?php /* Shared team statistics block. Expects: $team, $stats, $history, $year */ ?>
+<?php
+/* Shared team statistics block. Expects: $team, $stats, $history, $year */
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+?>
 <div class="row g-3 mb-4">
   <div class="col-6 col-lg-3">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-value"><?= (int) $stats['events_count'] ?></div>
-      <div class="text-muted small">Δράσεις <?= (int) $year ?></div>
+      <div class="text-muted small"><?= e($eventPlural) ?> <?= (int) $year ?></div>
     </div></div>
   </div>
   <div class="col-6 col-lg-3">
@@ -29,9 +35,9 @@
 <div class="row g-4">
   <div class="col-lg-4">
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white fw-semibold">Κατηγορίες δράσεων</div>
+      <div class="card-header bg-white fw-semibold">Κατηγορίες <?= e($eventPluralLc) ?></div>
       <?php if (!$stats['categories']): ?>
-        <div class="card-body text-muted">Δεν υπάρχουν ολοκληρωμένες δράσεις για το <?= (int) $year ?>.</div>
+        <div class="card-body text-muted">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> για το <?= (int) $year ?>.</div>
       <?php else: ?>
         <ul class="list-group list-group-flush">
           <?php foreach ($stats['categories'] as $c): ?>
@@ -63,13 +69,13 @@
 
   <div class="col-lg-8">
     <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold">Ιστορικό δράσεων <?= (int) $year ?></div>
+      <div class="card-header bg-white fw-semibold">Ιστορικό <?= e($eventPluralLc) ?> <?= (int) $year ?></div>
       <?php if (!$history): ?>
-        <div class="card-body text-muted">Δεν υπάρχουν ολοκληρωμένες δράσεις για αυτό το έτος.</div>
+        <div class="card-body text-muted">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> για αυτό το έτος.</div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table mb-0">
-            <thead><tr><th>Δράση</th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Εγκεκριμένα</th><th>Παρόντα</th><th>Παρουσία</th></tr></thead>
+            <thead><tr><th><?= e($eventSingular) ?></th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Εγκεκριμένα</th><th>Παρόντα</th><th>Παρουσία</th></tr></thead>
             <tbody>
               <?php foreach ($history as $h): ?>
                 <tr>

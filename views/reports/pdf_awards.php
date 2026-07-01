@@ -1,3 +1,9 @@
+<?php
+$terms = authority_context((int) ($mun['id'] ?? current_municipality_id()));
+$orgName = $terms['official_name'] ?? ($mun['name'] ?? 'Φορέας');
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -172,7 +178,7 @@
   <?php else: ?>
     <div style="font-size:48px;margin-bottom:20px">🏛</div>
   <?php endif; ?>
-  <div class="cover-mun"><?= e($mun['name'] ?? '') ?></div>
+  <div class="cover-mun"><?= e($orgName) ?></div>
   <div class="cover-star">⭐</div>
   <div class="cover-title">Επιβράβευση<br>Εθελοντισμού</div>
   <div class="cover-subtitle"><?= (int) $year ?> · Ετήσια Αναγνώριση Εθελοντικών Ομάδων</div>
@@ -185,7 +191,7 @@
     <span class="ph-icon">🏆</span>
     <div>
       <h2>Βραβεία <?= (int) $year ?></h2>
-      <div class="ph-sub"><?= e($mun['name'] ?? '') ?> · Εθελοντικές Ομάδες</div>
+      <div class="ph-sub"><?= e($orgName) ?> · Εθελοντικές Ομάδες</div>
     </div>
   </div>
 
@@ -193,7 +199,7 @@
     <?php
     $awardDefs = [
       'best_contribution' => ['label' => 'Καλύτερη Συνεισφορά', 'sub' => 'Ώρες εθελοντισμού', 'icon' => '💙', 'cls' => 'aw-contribution'],
-      'most_active'       => ['label' => 'Πιο Δραστήρια Ομάδα', 'sub' => 'Αριθμός δράσεων',    'icon' => '💚', 'cls' => 'aw-active'],
+      'most_active'       => ['label' => 'Πιο Δραστήρια Ομάδα', 'sub' => 'Αριθμός ' . $eventPluralLc, 'icon' => '💚', 'cls' => 'aw-active'],
       'most_consistent'   => ['label' => 'Μεγαλύτερη Συνέπεια', 'sub' => 'Συνέπεια παρουσίας', 'icon' => '💜', 'cls' => 'aw-consistent'],
       'fastest_response'  => ['label' => 'Ταχύτερη Απόκριση',   'sub' => 'Χρόνος απόκρισης',   'icon' => '🧡', 'cls' => 'aw-fastest'],
     ];
@@ -210,7 +216,7 @@
           <div class="award-stats">
             <div class="award-stat">
               <strong><?= (int) ($w['events_count'] ?? 0) ?></strong>
-              Δράσεις
+              <?= e($eventPlural) ?>
             </div>
             <div class="award-stat">
               <strong><?= number_format((float) ($w['volunteer_hours'] ?? 0), 1) ?></strong>
@@ -231,7 +237,7 @@
           </div>
         <?php else: ?>
           <div class="award-team">Δεν υπάρχουν αρκετά δεδομένα</div>
-          <div style="font-size:12px;color:#9ca3af">Απαιτούνται ολοκληρωμένες δράσεις.</div>
+          <div style="font-size:12px;color:#9ca3af">Απαιτούνται ολοκληρωμένες <?= e($eventPluralLc) ?>.</div>
         <?php endif; ?>
       </div>
     </div>
@@ -249,7 +255,7 @@
           <th>#</th>
           <th>Ομάδα</th>
           <th>Τύπος</th>
-          <th class="text-center">Δράσεις</th>
+          <th class="text-center"><?= e($eventPlural) ?></th>
           <th class="text-center">Ώρες εθελ.</th>
           <th class="text-center">Εθελοντές</th>
           <th class="text-center">Συνέπεια</th>

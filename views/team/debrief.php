@@ -7,13 +7,17 @@
 $d = $debrief ?? [];
 $rating = (int) ($d['organization_rating'] ?? 3);
 $playbook = $playbook ?? null;
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
 ?>
 <div class="container py-4" style="max-width:780px">
 
   <!-- Breadcrumb -->
   <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="<?= url('/team/events') ?>">Δράσεις</a></li>
+      <li class="breadcrumb-item"><a href="<?= url('/team/events') ?>"><?= e($eventPlural) ?></a></li>
       <li class="breadcrumb-item"><a href="<?= url('/team/events/' . $event['id']) ?>"><?= e($event['title']) ?></a></li>
       <li class="breadcrumb-item active">Post-Event Debrief</li>
     </ol>
@@ -60,7 +64,7 @@ $playbook = $playbook ?? null;
 
         <!-- Section 2: Qualitative -->
         <h6 class="text-uppercase text-muted mb-3 fw-semibold" style="letter-spacing:.05em">
-          <i class="bi bi-chat-square-text-fill me-1 text-success"></i>Αξιολόγηση Δράσης
+          <i class="bi bi-chat-square-text-fill me-1 text-success"></i>Αξιολόγηση <?= e($eventSingular) ?>
         </h6>
         <div class="mb-3">
           <label class="form-label">Τι πήγε καλά;</label>
@@ -95,7 +99,7 @@ $playbook = $playbook ?? null;
           <i class="bi bi-star-fill me-1 text-warning"></i>Βαθμολογία Οργάνωσης
         </h6>
         <div class="mb-3">
-          <label class="form-label d-block">Πώς αξιολογείτε την οργάνωση της δράσης;</label>
+          <label class="form-label d-block">Πώς αξιολογείτε την οργάνωση της <?= e($eventSingularLc) ?>;</label>
           <div class="d-flex gap-2" id="starRow">
             <?php for ($s = 1; $s <= 5; $s++): ?>
               <label class="star-label" title="<?= $s ?> αστέρ<?= $s === 1 ? 'ι' : 'ια' ?>">
@@ -111,7 +115,7 @@ $playbook = $playbook ?? null;
         <div class="mb-4">
           <label class="form-label">Σχόλια <span class="text-muted">(προαιρετικό)</span></label>
           <textarea name="comments" rows="3" class="form-control"
-                    placeholder="Οποιαδήποτε άλλα σχόλια για τη δράση…"><?= e($d['comments'] ?? '') ?></textarea>
+                    placeholder="Οποιαδήποτε άλλα σχόλια για τη <?= e($eventSingularLc) ?>…"><?= e($d['comments'] ?? '') ?></textarea>
         </div>
 
         <div class="d-flex gap-2">

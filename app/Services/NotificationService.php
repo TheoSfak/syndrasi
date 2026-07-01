@@ -512,8 +512,8 @@ class NotificationService
         self::maybeTelegramCommand(
             $mid,
             'event_completed',
-            'Ολοκληρώθηκε δράση',
-            'Η δράση "' . $event['title'] . '" μετακινήθηκε στις Ολοκληρωμένες.',
+            'Ολοκληρώθηκε ' . $et['singular_lc'],
+            'Η ' . $et['singular_lc'] . ' "' . $event['title'] . '" μετακινήθηκε στις Ολοκληρωμένες.',
             self::absoluteUrl('/events/' . (int) $event['id'])
         );
     }
@@ -534,8 +534,9 @@ class NotificationService
     public static function shiftApplicationApproved(array $event, array $app, $approvedPeople)
     {
         $mid  = $event['municipality_id'];
+        $et   = self::eventTerms($mid);
         $inAppTitle   = 'Εγκρίθηκε βάρδια: ' . $app['shift_name'];
-        $inAppMessage = 'Η βάρδια «' . $app['shift_name'] . '» εγκρίθηκε για ' . (int) $approvedPeople . ' άτομα. Δράση: ' . $event['title'] . '.';
+        $inAppMessage = 'Η βάρδια «' . $app['shift_name'] . '» εγκρίθηκε για ' . (int) $approvedPeople . ' άτομα. ' . $et['singular'] . ': ' . $event['title'] . '.';
         self::notifyTeam($app['team_id'], $event['id'], $inAppTitle, $inAppMessage, 'application_approved', $mid);
     }
 
@@ -543,8 +544,9 @@ class NotificationService
     public static function shiftApplicationRejected(array $event, array $app)
     {
         $mid = $event['municipality_id'];
+        $et  = self::eventTerms($mid);
         $inAppTitle   = 'Απορρίφθηκε βάρδια: ' . $app['shift_name'];
-        $inAppMessage = 'Η δήλωση βάρδιας «' . $app['shift_name'] . '» δεν εγκρίθηκε. Δράση: ' . $event['title'] . '.';
+        $inAppMessage = 'Η δήλωση βάρδιας «' . $app['shift_name'] . '» δεν εγκρίθηκε. ' . $et['singular'] . ': ' . $event['title'] . '.';
         self::notifyTeam($app['team_id'], $event['id'], $inAppTitle, $inAppMessage, 'application_rejected', $mid);
     }
 
@@ -552,6 +554,7 @@ class NotificationService
     public static function shiftReminder(array $event, array $shift)
     {
         $mid  = $event['municipality_id'];
+        $et   = self::eventTerms($mid);
         $apps = dbq(
             'SELECT * FROM shift_applications WHERE shift_id = :sid AND status = \'approved\'',
             ['sid' => $shift['id']]
@@ -882,7 +885,7 @@ class NotificationService
         $mid    = (int) $event['municipality_id'];
         $et     = self::eventTerms($mid);
         $titles = ['move' => 'Εντολή μετάβασης', 'incident' => '⚠️ Περιστατικό', 'poi' => 'Σημείο ' . $et['org_short']];
-        $title  = $titles[$pointKind] ?? 'Σημείο δήμου';
+        $title  = $titles[$pointKind] ?? ('Σημείο ' . $et['org_short']);
         $msg    = mb_substr(trim($body), 0, 200);
         $maps   = ($lat !== null && $lng !== null) ? ('https://www.google.com/maps?q=' . $lat . ',' . $lng) : '';
         $forced = in_array($pointKind, ['incident', 'move'], true);
@@ -945,10 +948,11 @@ class NotificationService
     /** Shortage acknowledged/resolved by command — notify the reporting team. */
     public static function shortageHandled(array $shortage, array $event, string $action)
     {
+        $et    = self::eventTerms((int) $event['municipality_id']);
         $verb  = $action === 'resolved' ? 'επιλύθηκε' : 'ελήφθη';
         $title = 'Η έλλειψη ' . $verb;
         $msg   = 'Η αναφορά έλλειψης «' . $shortage['title'] . '» ' . $verb
-               . ' από τον δήμο (δράση «' . $event['title'] . '»).';
+               . ' από ' . $et['org_short'] . ' (' . $et['singular_lc'] . ' «' . $event['title'] . '»).';
         self::notifyTeam((int) $shortage['team_id'], (int) $event['id'], $title, $msg, 'shortage_update', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
     }
 
@@ -959,10 +963,11 @@ class NotificationService
     public static function gpsArrived(array $event, array $team, float $lat, float $lng): void
     {
         $mid   = (int) $event['municipality_id'];
+        $et    = self::eventTerms($mid);
         $tname = $team['name'] ?? 'Ομάδα';
         $maps  = 'https://www.google.com/maps?q=' . round($lat, 6) . ',' . round($lng, 6);
         $title = '📍 Στίγμα ελήφθη: ' . $tname;
-        $msg   = 'Η ομάδα «' . $tname . '» έστειλε GPS για τη δράση «' . $event['title'] . '». ' . $maps;
+        $msg   = 'Η ομάδα «' . $tname . '» έστειλε GPS για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '». ' . $maps;
         self::notifyCommandStaff($mid, (int) $event['id'], $title, $msg, 'gps_arrived', self::absoluteUrl('/operations/events/' . (int) $event['id']), 'high');
     }
 
@@ -973,10 +978,11 @@ class NotificationService
     public static function silentTeam(array $event, array $team, int $minutesSilent): void
     {
         $mid   = (int) $event['municipality_id'];
+        $et    = self::eventTerms($mid);
         $tname = $team['name'] ?? 'Ομάδα';
         $title = '⚠ Ομάδα σε σίγη: ' . $tname;
         $msg   = 'Η ομάδα «' . $tname . '» δεν έχει στείλει στίγμα για ' . $minutesSilent
-               . ' λεπτά (δράση «' . $event['title'] . '»).';
+               . ' λεπτά (' . $et['singular_lc'] . ' «' . $event['title'] . '»).';
         foreach (User::commandStaff($mid) as $u) {
             try {
                 $emailSent = self::maybeEmail($mid, 'team_silent', $u['email'] ?? '', $u['name'] ?? '', $title, $msg);

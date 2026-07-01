@@ -8,6 +8,12 @@ $defLat    = (float)($mapDefLat  ?: $event['latitude']  ?: 35.3387);
 $defLng    = (float)($mapDefLng  ?: $event['longitude'] ?: 25.1442);
 $defZoom   = (int)($mapDefZoom  ?: 13);
 $playbook  = $playbook ?? null;
+$terms     = authority_context((int) $event['municipality_id']);
+$eventSingular   = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$orgLabel  = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
+$orgIcon   = $orgIcon ?? ($terms['icon'] ?? '🏛️');
+$closeConfirm = 'Κλείσιμο: ' . $eventSingular . "\nΘα κλείσει και θα πάει για αρχειοθέτηση.";
 ?>
 <style>
 body.ops-dark { background:#0a0f1a !important; background-attachment:fixed !important; }
@@ -158,9 +164,9 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
         <a class="btn btn-sm btn-outline-light" href="<?= e(url('/operations/events/' . $eid . '/gate-qr')) ?>" target="_blank" title="QR Πύλης — δήλωση παρουσίας"><i class="bi bi-qr-code"></i></a>
         <a class="btn btn-sm btn-outline-light" href="<?= e(url('/events/' . $eid)) ?>"><i class="bi bi-arrow-left"></i></a>
         <form method="post" action="<?= e(url('/events/' . $eid . '/close')) ?>"
-              onsubmit="return confirm('Κλείσιμο δράσης;\nΗ δράση θα κλείσει και θα πάει για αρχειοθέτηση.')">
+              onsubmit="return confirm(<?= e(json_encode($closeConfirm, JSON_UNESCAPED_UNICODE)) ?>)">
           <input type="hidden" name="_token" value="<?= e($csrfToken) ?>">
-          <button class="btn btn-sm btn-danger" title="Κλείσιμο Δράσης"><i class="bi bi-door-closed-fill"></i></button>
+          <button class="btn btn-sm btn-danger" title="Κλείσιμο <?= e($eventSingular) ?>"><i class="bi bi-door-closed-fill"></i></button>
         </form>
       </div>
     </div>
@@ -199,7 +205,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   <div class="col-12" id="pendingAppsRow" style="display:none">
     <div class="card" style="border:1.5px solid #f59e0b">
       <div class="card-header d-flex justify-content-between align-items-center" style="background:rgba(245,158,11,.1)">
-        <span><i class="bi bi-hourglass-split me-1 text-warning"></i><strong>Αιτήσεις Συμμετοχής</strong> <span class="fw-normal small text-muted">— υποβλήθηκαν κατά τη διάρκεια της δράσης</span></span>
+        <span><i class="bi bi-hourglass-split me-1 text-warning"></i><strong>Αιτήσεις Συμμετοχής</strong> <span class="fw-normal small text-muted">— υποβλήθηκαν κατά τη διάρκεια της <?= e($eventSingularLc) ?></span></span>
         <span class="badge bg-warning text-dark" id="pendingAppsBadge">0</span>
       </div>
       <div class="card-body p-2" id="pendingAppsBox"></div>
@@ -262,7 +268,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     <!-- Map -->
     <div class="card mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-map me-1 text-success"></i>Χάρτης Δράσης</span>
+        <span><i class="bi bi-map me-1 text-success"></i>Χάρτης <?= e($eventSingular) ?></span>
         <span class="badge bg-secondary" id="mapBadge">0 ομάδες</span>
       </div>
       <div class="card-body p-0">
@@ -457,7 +463,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   <div class="card-body">
     <div class="msg-thread" id="roomThread" style="max-height:260px"><div class="text-muted small text-center">Κανένα μήνυμα ακόμη.</div></div>
     <div class="input-group input-group-sm mt-2">
-      <input type="text" class="form-control" id="roomInput" maxlength="500" placeholder="Μήνυμα προς όλους (δήμος + όλες οι ομάδες)…">
+      <input type="text" class="form-control" id="roomInput" maxlength="500" placeholder="Μήνυμα προς όλους (<?= e($orgLabel) ?> + όλες οι ομάδες)…">
       <button class="btn btn-success" type="button" id="roomSend"><i class="bi bi-send me-1"></i>Αποστολή</button>
     </div>
   </div>
@@ -582,8 +588,9 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   var DEF_ZOOM   = <?= $defZoom ?>;
   var POLL_MS    = <?= (int)($config['map_refresh_seconds'] ?? 20) * 1000 ?>;
   var BASE       = <?= json_encode(url('')) ?>;
-  var ORG_LABEL  = <?= json_encode($orgLabel ?? 'Δήμος') ?>;
-  var ORG_ICON   = <?= json_encode($orgIcon  ?? '🏛️') ?>;
+  var ORG_LABEL  = <?= json_encode($orgLabel, JSON_UNESCAPED_UNICODE) ?>;
+  var ORG_ICON   = <?= json_encode($orgIcon, JSON_UNESCAPED_UNICODE) ?>;
+  var EVENT_LC   = <?= json_encode($eventSingularLc, JSON_UNESCAPED_UNICODE) ?>;
   var IS_ADMIN   = <?= json_encode(current_role() === 'municipality_admin') ?>;
   var PLAYBOOK   = <?= json_encode($playbook ?: null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
@@ -608,7 +615,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     cdEl.textContent = formatDuration(diff);
     if (diff <= 0) {
       cdEl.textContent = 'ΕΛΗΞΕ';
-      cdLbl.textContent = 'Η δράση ολοκληρώθηκε';
+      cdLbl.textContent = 'Η ' + EVENT_LC + ' ολοκληρώθηκε';
       cdEl.classList.remove('warning', 'urgent');
     } else if (diff < 900000) {          /* < 15 min */
       cdEl.classList.add('urgent');

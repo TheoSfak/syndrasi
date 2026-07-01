@@ -5,6 +5,8 @@ $v = function ($name, $default = '') use ($member) {
     }
     return $member ? htmlspecialchars($member[$name] ?? $default, ENT_QUOTES) : htmlspecialchars($default, ENT_QUOTES);
 };
+$terms = authority_context(current_municipality_id());
+$eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
 ?>
 <div class="d-flex align-items-center mb-3 gap-2">
   <a href="<?= e(url('/team/members')) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
@@ -29,7 +31,7 @@ $v = function ($name, $default = '') use ($member) {
         <div class="col-md-6">
           <label class="form-label">Email</label>
           <input type="email" name="email" class="form-control" value="<?= $v('email') ?>">
-          <div class="form-text">Χρησιμοποιείται για αποστολή ειδοποίησης συμμετοχής σε δράση.</div>
+          <div class="form-text">Χρησιμοποιείται για αποστολή ειδοποίησης συμμετοχής σε <?= e($eventSingularLc) ?>.</div>
         </div>
         <div class="col-md-6">
           <label class="form-label">Ημερομηνία Γέννησης</label>

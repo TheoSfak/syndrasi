@@ -1,3 +1,7 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
   <h1 class="h3 mb-0">Ειδοποιήσεις</h1>
   <form method="post" action="<?= e(url('/notifications/read-all')) ?>">
@@ -5,7 +9,7 @@
     <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-check2-all me-1"></i>Όλες ως αναγνωσμένες</button>
   </form>
 </div>
-<p class="text-muted">Ενημερώσεις για δράσεις, δηλώσεις και επιχειρησιακά συμβάντα.</p>
+<p class="text-muted">Ενημερώσεις για <?= e($eventPluralLc) ?>, δηλώσεις και επιχειρησιακά συμβάντα.</p>
 
 <div class="card shadow-sm">
   <?php if (!$notifications): ?>

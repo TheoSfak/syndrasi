@@ -1,3 +1,8 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+?>
 <div class="d-flex align-items-center mb-3 gap-2">
   <a href="<?= e(url('/team/members')) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
   <div>
@@ -21,7 +26,7 @@
     <div class="card shadow-sm text-center">
       <div class="card-body py-3">
         <div class="fs-2 fw-bold text-primary"><?= (int) $stats['attended_events'] ?></div>
-        <div class="small text-muted">Δράσεις (παρών)</div>
+        <div class="small text-muted"><?= e($eventPlural) ?> (παρών)</div>
       </div>
     </div>
   </div>
@@ -62,7 +67,7 @@
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
-          <th>Δράση</th>
+          <th><?= e($eventSingular) ?></th>
           <th>Κατηγορία</th>
           <th>Ημερομηνία</th>
           <th class="text-center">Παρουσία</th>

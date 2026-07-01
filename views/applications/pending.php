@@ -1,5 +1,9 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
+?>
 <h1 class="h3 mb-1">Δηλώσεις Συμμετοχής</h1>
-<p class="text-muted">Όλες οι εκκρεμείς δηλώσεις ομάδων, ομαδοποιημένες ανά δράση.</p>
+<p class="text-muted">Όλες οι εκκρεμείς δηλώσεις ομάδων, ομαδοποιημένες ανά <?= e($eventSingularLc) ?>.</p>
 
 <?php if (!$applications): ?>
   <div class="card shadow-sm"><div class="card-body text-muted">

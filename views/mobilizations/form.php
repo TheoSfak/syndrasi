@@ -1,3 +1,8 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$orgLabel = $terms['short_name'] ?? 'Φορέας';
+?>
 <div class="d-flex align-items-center mb-3 gap-2">
   <a href="<?= e(url('/mobilizations')) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
   <div>
@@ -39,7 +44,7 @@
               </select>
             </div>
             <div class="col-sm-6">
-              <label class="form-label fw-semibold">Σχετική δράση (προαιρετικά)</label>
+              <label class="form-label fw-semibold">Σχετική <?= e(mb_strtolower($eventSingular, 'UTF-8')) ?> (προαιρετικά)</label>
               <select name="event_id" class="form-select">
                 <option value="">— Καμία —</option>
                 <?php foreach ($events as $ev): ?>
@@ -70,7 +75,7 @@
           <i class="bi bi-people me-1"></i>Ποιους να καλέσω
         </div>
         <div class="card-body">
-          <p class="small text-muted">Αφήστε τα όλα κενά για να κληθεί <strong>όλος ο δήμος</strong>, ή επιλέξτε συγκεκριμένες ομάδες.</p>
+          <p class="small text-muted">Αφήστε τα όλα κενά για να κληθεί όλος ο φορέας (<?= e($orgLabel) ?>), ή επιλέξτε συγκεκριμένες ομάδες.</p>
           <?php if (empty($teams)): ?>
             <p class="text-muted small mb-0">Δεν υπάρχουν ενεργές ομάδες.</p>
           <?php else: ?>

@@ -2,23 +2,28 @@
 $hasLive         = !empty($live);
 $hasStartingSoon = !empty($startingSoon);
 $hasConfirmed    = !empty($confirmed);
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$eventPlural = $terms['event_plural'] ?? 'Δράσεις';
+$eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 ?>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
   <div>
     <h1 class="h3 mb-0"><i class="bi bi-broadcast me-2"></i>Κέντρο Επιχειρήσεων</h1>
-    <p class="text-muted small mb-0">Παρακολούθηση και έλεγχος δράσεων σε πραγματικό χρόνο.</p>
+    <p class="text-muted small mb-0">Παρακολούθηση και έλεγχος <?= e($eventPluralLc) ?> σε πραγματικό χρόνο.</p>
   </div>
   <a href="<?= e(url('/events')) ?>" class="btn btn-outline-secondary btn-sm">
-    <i class="bi bi-calendar-event me-1"></i>Όλες οι δράσεις
+    <i class="bi bi-calendar-event me-1"></i>Όλες οι <?= e($eventPluralLc) ?>
   </a>
 </div>
 
 <?php if (!$hasLive && !$hasStartingSoon): ?>
 <div class="alert alert-info d-flex align-items-center gap-3 mb-4">
   <i class="bi bi-info-circle fs-4"></i>
-  <div>Δεν υπάρχουν ενεργές ή επικείμενες δράσεις αυτή τη στιγμή.
-    <a href="<?= e(url('/events')) ?>" class="alert-link">Δείτε όλες τις δράσεις</a>.
+  <div>Δεν υπάρχουν ενεργές ή επικείμενες <?= e($eventPluralLc) ?> αυτή τη στιγμή.
+    <a href="<?= e(url('/events')) ?>" class="alert-link">Δείτε όλες τις <?= e($eventPluralLc) ?></a>.
   </div>
 </div>
 <?php endif; ?>
@@ -58,7 +63,7 @@ $hasConfirmed    = !empty($confirmed);
         <div class="d-flex gap-2 mt-3 flex-wrap">
           <!-- Early-start override -->
           <form method="post" action="<?= e(url('/events/' . $ev['id'] . '/activate')) ?>"
-                onsubmit="return confirm('Πρόωρη έναρξη δράσης πριν την προγραμματισμένη ώρα;')"
+                onsubmit="return confirm(<?= e(json_encode('Πρόωρη έναρξη ' . $eventSingularLc . ' πριν την προγραμματισμένη ώρα;', JSON_UNESCAPED_UNICODE)) ?>)"
                 class="flex-grow-1">
             <?= csrf_field() ?>
             <button class="btn btn-outline-warning w-100 fw-semibold btn-sm">
@@ -148,10 +153,10 @@ $hasConfirmed    = !empty($confirmed);
 
         <!-- Secondary: close (manual). Goes to 'closed' → reconciliation. -->
         <form method="post" action="<?= e(url('/events/' . $ev['id'] . '/close')) ?>"
-              onsubmit="return confirm('Κλείσιμο δράσης τώρα;')">
+              onsubmit="return confirm(<?= e(json_encode('Κλείσιμο ' . $eventSingularLc . ' τώρα;', JSON_UNESCAPED_UNICODE)) ?>)">
           <?= csrf_field() ?>
           <button class="btn btn-outline-secondary btn-sm w-100">
-            <i class="bi bi-door-closed me-1"></i>Κλείσιμο δράσης
+            <i class="bi bi-door-closed me-1"></i>Κλείσιμο <?= e($eventSingularLc) ?>
           </button>
         </form>
       </div>
@@ -166,13 +171,13 @@ $hasConfirmed    = !empty($confirmed);
 <div class="card shadow-sm">
   <div class="card-header fw-semibold">
     <i class="bi bi-calendar-check me-1 text-primary"></i>
-    Επερχόμενες επιβεβαιωμένες δράσεις (<?= count($confirmed) ?>)
+    Επερχόμενες επιβεβαιωμένες <?= e($eventPluralLc) ?> (<?= count($confirmed) ?>)
   </div>
   <div class="table-responsive">
     <table class="table table-hover mb-0 align-middle">
       <thead class="table-light">
         <tr>
-          <th>Δράση</th>
+          <th><?= e($eventSingular) ?></th>
           <th>Κατηγορία</th>
           <th>Έναρξη</th>
           <th>Κατάσταση</th>
@@ -191,7 +196,7 @@ $hasConfirmed    = !empty($confirmed);
           <td class="text-end d-flex gap-1 justify-content-end">
             <!-- Early-start override -->
             <form method="post" action="<?= e(url('/events/' . $ev['id'] . '/activate')) ?>"
-                  onsubmit="return confirm('Πρόωρη έναρξη δράσης;')">
+                  onsubmit="return confirm(<?= e(json_encode('Πρόωρη έναρξη ' . $eventSingularLc . ';', JSON_UNESCAPED_UNICODE)) ?>)">
               <?= csrf_field() ?>
               <button class="btn btn-sm btn-outline-warning" title="Πρόωρη έναρξη">
                 <i class="bi bi-skip-start-fill"></i>

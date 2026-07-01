@@ -10,6 +10,10 @@ $videos = $story['videos'] ?? [];
 $shorts = $story['shortages'] ?? [];
 $checks = $story['checkins'] ?? [];
 $comms  = $story['communications'] ?? [];
+$terms = authority_context((int) ($ev['municipality_id'] ?? current_municipality_id()));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
 
 $download   = !empty($download);
 $publicMode = !empty($publicMode);
@@ -38,9 +42,10 @@ $mediaCount = (int) ($sm['photos'] ?? 0) + (int) ($sm['videos'] ?? 0);
 $duration = $sm['duration_h'] ?? null;
 $location = trim((string) ($ev['location_name'] ?? ''));
 $impactSentence = sprintf(
-    'Σε %s, %d ομάδες κάλυψαν τη δράση με %d εθελοντές και %s ώρες προσφοράς.',
+    'Σε %s, %d ομάδες κάλυψαν τη %s με %d εθελοντές και %s ώρες προσφοράς.',
     $duration ? e((string) $duration) . ' ώρες' : 'μία επιχειρησιακή περίοδο',
     (int) ($sm['teams'] ?? 0),
+    e($eventSingularLc),
     (int) ($sm['volunteers'] ?? 0),
     e((string) ($sm['hours'] ?? 0))
 );
@@ -104,7 +109,7 @@ foreach ($videos as $v) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($pageTitle ?? 'Απολογισμός Δράσης') ?></title>
+<title><?= e($pageTitle ?? ('Απολογισμός ' . $eventSingular)) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
@@ -267,7 +272,7 @@ foreach ($videos as $v) {
     <div class="containerx">
       <div class="kicker">
         <?php if (!empty($logo)): ?><img src="<?= e($logo) ?>" alt=""><?php endif; ?>
-        <span><?= e($orgLabel ?? 'Δήμος') ?> · Απολογισμός Δράσης</span>
+        <span><?= e($orgLabel) ?> · Απολογισμός <?= e($eventSingular) ?></span>
         <?php if ($isPublic): ?><span class="public-chip"><i class="bi bi-globe2"></i>Δημόσια έκδοση</span><?php endif; ?>
       </div>
       <h1 class="hero-title"><?= e($eventTitle) ?></h1>
@@ -329,7 +334,7 @@ foreach ($videos as $v) {
   <section class="section" id="summary">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Η εικόνα της δράσης</div>
+        <div class="eyebrow">Η εικόνα της <?= e($eventSingularLc) ?></div>
         <h2>Από την κινητοποίηση μέχρι την ολοκλήρωση</h2>
         <p class="section-sub">Συγκεντρωμένη εικόνα της επιχειρησιακής παρουσίας, της ανταπόκρισης των ομάδων και του υλικού που καταγράφηκε στο πεδίο.</p>
       </div>
@@ -351,8 +356,8 @@ foreach ($videos as $v) {
     <div class="section-head">
       <div>
         <div class="eyebrow">Live αποτύπωση</div>
-        <h2>Χάρτης δράσης & διαδρομές ομάδων</h2>
-        <p class="section-sub">Οι διαδρομές, τα σημεία ενδιαφέροντος και το υλικό πεδίου εμφανίζονται μαζί ώστε η ροή της δράσης να διαβάζεται με μια ματιά.</p>
+        <h2>Χάρτης <?= e($eventSingularLc) ?> & διαδρομές ομάδων</h2>
+        <p class="section-sub">Οι διαδρομές, τα σημεία ενδιαφέροντος και το υλικό πεδίου εμφανίζονται μαζί ώστε η ροή της <?= e($eventSingularLc) ?> να διαβάζεται με μια ματιά.</p>
       </div>
     </div>
     <div class="panel map-shell">
@@ -378,7 +383,7 @@ foreach ($videos as $v) {
         <div class="replay-current" id="replayCurrent">
           <div class="rc-icon" style="background:#64748b"><i class="bi bi-clock-history"></i></div>
           <div>
-            <div class="rc-time">Replay δράσης</div>
+            <div class="rc-time">Replay <?= e($eventSingularLc) ?></div>
             <div class="rc-title">Πατήστε Play για να εμφανιστούν τα γεγονότα με σειρά.</div>
             <div class="rc-detail">Μπορείτε να σύρετε τη μπάρα χρόνου ή να φιλτράρετε ομάδες και τύπους γεγονότων.</div>
           </div>
@@ -455,7 +460,7 @@ foreach ($videos as $v) {
     <div class="section-head">
       <div>
         <div class="eyebrow">Αναγνώριση</div>
-        <h2>Οι ομάδες της δράσης</h2>
+        <h2>Οι ομάδες της <?= e($eventSingularLc) ?></h2>
         <p class="section-sub">Κάθε κάρτα δείχνει την επιχειρησιακή παρουσία και τη συνεισφορά της ομάδας στον συνολικό απολογισμό.</p>
       </div>
     </div>
@@ -484,7 +489,7 @@ foreach ($videos as $v) {
       <div>
         <div class="eyebrow">Όπως συνέβη</div>
         <h2>Χρονολόγιο γεγονότων</h2>
-        <p class="section-sub">Η δράση χωρίζεται σε φάσεις για να φαίνεται καθαρά η επιχειρησιακή ροή.</p>
+        <p class="section-sub">Η <?= e($eventSingularLc) ?> χωρίζεται σε φάσεις για να φαίνεται καθαρά η επιχειρησιακή ροή.</p>
       </div>
     </div>
     <div class="timeline-layout">
@@ -504,7 +509,7 @@ foreach ($videos as $v) {
                     <span class="tl-dot" style="background:<?= e($it['color']) ?>"><i class="bi <?= e($it['icon']) ?>"></i></span>
                     <div class="tl-time">
                       <?= e($it['date']) ?> · <?= e($it['time']) ?>
-                      <span class="actor <?= e($it['actor']) ?>"><?= $it['actor'] === 'command' ? 'Δήμος' : ($it['actor'] === 'team' ? 'Ομάδα' : 'Σύστημα') ?></span>
+                      <span class="actor <?= e($it['actor']) ?>"><?= $it['actor'] === 'command' ? e($orgLabel) : ($it['actor'] === 'team' ? 'Ομάδα' : 'Σύστημα') ?></span>
                       <?php if (!empty($it['team'])): ?><span class="team-tag"><?= e($it['team']) ?></span><?php endif; ?>
                     </div>
                     <div class="tl-name"><?= e($it['title']) ?></div>
@@ -525,13 +530,13 @@ foreach ($videos as $v) {
     <div class="section-head">
       <div>
         <div class="eyebrow">Επικοινωνίες πεδίου</div>
-        <h2>Διάλογοι Δήμου και ομάδων</h2>
-        <p class="section-sub">Οι βασικές εντολές, ενημερώσεις και απαντήσεις της δράσης, με ευαίσθητα στοιχεία μασκαρισμένα όπου εντοπίζονται.</p>
+        <h2>Διάλογοι φορέα και ομάδων</h2>
+        <p class="section-sub">Οι βασικές εντολές, ενημερώσεις και απαντήσεις της <?= e($eventSingularLc) ?>, με ευαίσθητα στοιχεία μασκαρισμένα όπου εντοπίζονται.</p>
       </div>
     </div>
     <div class="comm-toolbar noprint" aria-label="Φίλτρα επικοινωνιών">
       <button type="button" class="comm-filter active" data-comm-filter="all">Όλα</button>
-      <button type="button" class="comm-filter" data-comm-filter="command">Δήμος / φορέας</button>
+      <button type="button" class="comm-filter" data-comm-filter="command"><?= e($orgLabel) ?></button>
       <button type="button" class="comm-filter" data-comm-filter="team">Ομάδες</button>
       <button type="button" class="comm-filter" data-comm-filter="order">Εντολές</button>
       <button type="button" class="comm-filter" data-comm-filter="status">Ενημερώσεις</button>
@@ -596,7 +601,7 @@ foreach ($videos as $v) {
       <div>
         <div class="eyebrow">Από το πεδίο</div>
         <h2>Οπτικό υλικό</h2>
-        <p class="section-sub">Φωτογραφίες και βίντεο που τεκμηριώνουν τη δράση.</p>
+        <p class="section-sub">Φωτογραφίες και βίντεο που τεκμηριώνουν τη <?= e($eventSingularLc) ?>.</p>
       </div>
     </div>
     <div class="gallery">
@@ -621,8 +626,8 @@ foreach ($videos as $v) {
     <div class="thanks">
       <div>
         <div class="eyebrow" style="color:#fbbf24">Ευχαριστούμε</div>
-        <h2>Η δράση ολοκληρώθηκε χάρη στη συνεργασία όλων.</h2>
-        <p>Ο απολογισμός κρατά ζωντανή την εικόνα της προσφοράς και βοηθά τον δήμο να αναγνωρίζει την πραγματική συμβολή των εθελοντικών ομάδων.</p>
+        <h2>Η <?= e($eventSingularLc) ?> ολοκληρώθηκε χάρη στη συνεργασία όλων.</h2>
+        <p>Ο απολογισμός κρατά ζωντανή την εικόνα της προσφοράς και βοηθά τον φορέα να αναγνωρίζει την πραγματική συμβολή των εθελοντικών ομάδων.</p>
       </div>
       <div style="font-size:3rem"><i class="bi bi-award"></i></div>
     </div>
@@ -846,7 +851,7 @@ foreach ($videos as $v) {
     function setCurrent(ev, total){
       if (!current) return;
       if (!ev) {
-        current.innerHTML = '<div class="rc-icon" style="background:#64748b"><i class="bi bi-clock-history"></i></div><div><div class="rc-time">Replay δράσης</div><div class="rc-title">Δεν υπάρχουν γεγονότα για τα τρέχοντα φίλτρα.</div><div class="rc-detail">Αλλάξτε φίλτρα ή ομάδα για να δείτε περισσότερα.</div></div>';
+        current.innerHTML = '<div class="rc-icon" style="background:#64748b"><i class="bi bi-clock-history"></i></div><div><div class="rc-time">Replay <?= e($eventSingularLc) ?></div><div class="rc-title">Δεν υπάρχουν γεγονότα για τα τρέχοντα φίλτρα.</div><div class="rc-detail">Αλλάξτε φίλτρα ή ομάδα για να δείτε περισσότερα.</div></div>';
         return;
       }
       var color = kindColor[ev.kind] || colorById[ev.team_id] || '#334155';

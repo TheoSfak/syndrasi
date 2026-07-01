@@ -179,7 +179,8 @@ class StoryService
         foreach ($photos as $p) { if ($p['latitude'] !== null) { $mapPoints[] = ['kind' => 'photo', 'lat' => (float) $p['latitude'], 'lng' => (float) $p['longitude'], 'label' => 'Φωτό', 'body' => $p['caption'], 'team' => $teamName($p['team_id'])]; } }
         foreach ($videos as $v) { if ($v['latitude'] !== null) { $mapPoints[] = ['kind' => 'video', 'lat' => (float) $v['latitude'], 'lng' => (float) $v['longitude'], 'label' => 'Βίντεο', 'body' => $v['caption'], 'team' => $teamName($v['team_id'])]; } }
         $replayEvents = self::replayEvents($event, $teams, $pingsByTeam, $gpsReq, $photoReq, $videoReq, $messages, $photos, $videos, $shortages, $sos);
-        $communications = self::communicationTranscript($messages, $teamName);
+        $authorityTerms = authority_context($mid);
+        $communications = self::communicationTranscript($messages, $teamName, $authorityTerms['short_name'] ?? 'Φορέας');
 
         /* ── Summary stats ───────────────────────────────────────────── */
         $totHours = 0.0;
@@ -228,7 +229,7 @@ class StoryService
         return dbq("SELECT id, team_id, status, created_at, fulfilled_at{$extra} FROM {$table} WHERE event_id = :eid", ['eid' => $eid])->fetchAll();
     }
 
-    private static function communicationTranscript(array $messages, callable $teamName): array
+    private static function communicationTranscript(array $messages, callable $teamName, string $orgLabel): array
     {
         $out = [];
         foreach ($messages as $m) {
@@ -251,7 +252,7 @@ class StoryService
                 'date' => substr((string) $m['created_at'], 0, 10),
                 'time' => substr((string) $m['created_at'], 11, 5),
                 'actor' => $actor,
-                'actor_label' => $actor === 'command' ? 'Δήμος / φορέας' : 'Ομάδα',
+                'actor_label' => $actor === 'command' ? $orgLabel : 'Ομάδα',
                 'team' => $tid ? $teamName($tid) : null,
                 'type' => $type,
                 'type_label' => $typeLabel,

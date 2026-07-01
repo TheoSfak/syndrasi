@@ -6,6 +6,10 @@
  */
 $eid      = (int) $event['id'];
 $approved = (int) $application['approved_people'];
+$terms = authority_context((int) ($event['municipality_id'] ?? current_municipality_id()));
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+$orgLabel = $terms['short_name'] ?? 'Φορέας';
 $evStatus  = $event['status'];
 $evStarted = !empty($event['start_datetime']) && strtotime($event['start_datetime']) <= time();
 $isActive  = $evStatus === 'active' || ($evStarted && in_array($evStatus, ['open', 'confirmed', 'review']));
@@ -487,7 +491,7 @@ foreach (flash_get() as $flash):
 <?php if (!$isActive): ?>
 <div class="inactive-notice">
   <i class="bi bi-hourglass-split"></i>
-  Η δράση δεν είναι ακόμη ενεργή. Οι επιχειρησιακές ενέργειες ενεργοποιούνται όταν ο δήμος ξεκινήσει τη δράση.
+  Η <?= e($eventSingularLc) ?> δεν είναι ακόμη ενεργή. Οι επιχειρησιακές ενέργειες ενεργοποιούνται όταν <?= e($orgLabel) ?> την ξεκινήσει.
 </div>
 <?php endif; ?>
 
@@ -513,7 +517,7 @@ foreach (flash_get() as $flash):
       <i class="bi bi-exclamation-octagon-fill sos-btn-icon"></i>
       <div style="flex:1">
         <div class="sos-btn-label">SOS — ΚΙΝΔΥΝΟΣ</div>
-        <div class="sos-btn-sub">Πατήστε για άμεση κλήση βοήθειας στον δήμο</div>
+        <div class="sos-btn-sub">Πατήστε για άμεση κλήση βοήθειας προς <?= e($orgLabel) ?></div>
       </div>
     </button>
     <div class="sos-active-banner" id="sosBanner" style="display:none"></div>
@@ -529,14 +533,14 @@ foreach (flash_get() as $flash):
           <?php if ($lastPing): ?>
             Τελευταίο: <?= e(gr_time($lastPing['created_at'])) ?>
           <?php else: ?>
-            Στείλτε τη θέση σας στον δήμο
+            Στείλτε τη θέση σας προς <?= e($orgLabel) ?>
           <?php endif; ?>
         </div>
       </div>
       <i class="bi bi-chevron-right loc-btn-arrow"></i>
     </button>
     <div id="gpsBanner" style="display:none" class="req-banner">
-      <i class="bi bi-geo-alt-fill"></i> Ο δήμος ζητά το στίγμα GPS σας — πατήστε «Αποστολή Στίγματος»
+      <i class="bi bi-geo-alt-fill"></i> <?= e($orgLabel) ?> ζητά το στίγμα GPS σας — πατήστε «Αποστολή Στίγματος»
     </div>
     <div id="locResult"></div>
   </div>
@@ -547,12 +551,12 @@ foreach (flash_get() as $flash):
       <i class="bi bi-camera-fill photo-toggle-icon"></i>
       <div>
         <div class="photo-toggle-label">Αποστολή Φωτογραφίας</div>
-        <div class="photo-toggle-sub" id="photoToggleSub">Στείλτε φωτογραφία στον δήμο</div>
+        <div class="photo-toggle-sub" id="photoToggleSub">Στείλτε φωτογραφία προς <?= e($orgLabel) ?></div>
       </div>
       <i class="bi bi-chevron-right photo-toggle-arrow" id="photoArrow"></i>
     </button>
     <div id="photoBanner" style="display:none" class="req-banner">
-      <i class="bi bi-camera-fill"></i> Ο δήμος ζητά φωτογραφία — τραβήξτε ή επιλέξτε μία παρακάτω
+      <i class="bi bi-camera-fill"></i> <?= e($orgLabel) ?> ζητά φωτογραφία — τραβήξτε ή επιλέξτε μία παρακάτω
     </div>
     <div id="photoUploadForm">
       <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/photo')) ?>"
@@ -583,12 +587,12 @@ foreach (flash_get() as $flash):
       <i class="bi bi-camera-video-fill photo-toggle-icon"></i>
       <div>
         <div class="photo-toggle-label">Αποστολή Βίντεο</div>
-        <div class="photo-toggle-sub" id="videoToggleSub">Στείλτε σύντομο βίντεο στον δήμο</div>
+        <div class="photo-toggle-sub" id="videoToggleSub">Στείλτε σύντομο βίντεο προς <?= e($orgLabel) ?></div>
       </div>
       <i class="bi bi-chevron-right photo-toggle-arrow" id="videoArrow"></i>
     </button>
     <div id="videoBanner" style="display:none" class="req-banner">
-      <i class="bi bi-camera-video-fill"></i> <span id="videoBannerText">Ο δήμος ζητά βίντεο — τραβήξτε ή επιλέξτε ένα παρακάτω</span>
+      <i class="bi bi-camera-video-fill"></i> <span id="videoBannerText"><?= e($orgLabel) ?> ζητά βίντεο — τραβήξτε ή επιλέξτε ένα παρακάτω</span>
     </div>
     <div id="videoUploadForm">
       <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/video')) ?>"
@@ -616,7 +620,7 @@ foreach (flash_get() as $flash):
 
   <!-- ── Χάρτης ──────────────────────────────────────────────────────── -->
   <div class="action-card">
-    <div class="presence-header"><i class="bi bi-map"></i> Χάρτης Δράσης
+    <div class="presence-header"><i class="bi bi-map"></i> Χάρτης <?= e($eventSingular) ?>
       <?php if ($lastPing): ?><span style="font-size:12px;font-weight:400;color:#7ab5ae;margin-left:auto">Στίγμα: <?= e(gr_time($lastPing['created_at'])) ?></span><?php endif; ?>
     </div>
     <div id="teamMap" style="height:240px;background:#0a1414"></div>
@@ -648,7 +652,7 @@ foreach (flash_get() as $flash):
       </button>
       <!-- Departed -->
       <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/checkin')) ?>"
-            onsubmit="return confirm('Αποχώρηση ομάδας από τη δράση;')">
+            onsubmit="return confirm(<?= e(json_encode('Αποχώρηση ομάδας από τη ' . $eventSingularLc . ';', JSON_UNESCAPED_UNICODE)) ?>)">
         <?= csrf_field() ?>
         <input type="hidden" name="status" value="departed">
         <input type="hidden" name="_from" value="live">
@@ -690,7 +694,7 @@ foreach (flash_get() as $flash):
       <i class="bi bi-exclamation-triangle shortage-toggle-icon"></i>
       <div>
         <div class="shortage-toggle-label">Αναφορά Έλλειψης</div>
-        <div class="shortage-toggle-sub">Ειδοποιήστε άμεσα τον δήμο</div>
+        <div class="shortage-toggle-sub">Ειδοποιήστε άμεσα <?= e($orgLabel) ?></div>
       </div>
       <i class="bi bi-chevron-right shortage-toggle-arrow" id="shortageArrow"></i>
     </button>
@@ -734,7 +738,7 @@ foreach (flash_get() as $flash):
         </div>
 
         <button type="submit" class="shortage-submit"
-                onclick="return confirm('Αποστολή αναφοράς έλλειψης στον δήμο;')">
+                onclick="return confirm(<?= e(json_encode('Αποστολή αναφοράς έλλειψης προς ' . $orgLabel . ';', JSON_UNESCAPED_UNICODE)) ?>)">
           <i class="bi bi-send-fill"></i> Αποστολή Αναφοράς
         </button>
       </form>
@@ -744,7 +748,7 @@ foreach (flash_get() as $flash):
   <!-- ── Shortage history (live-updated by poll) ───────────────────────── -->
   <div id="shortageHistory">
     <?php if ($shortages): ?>
-    <div class="section-title"><i class="bi bi-clock-history me-1"></i>Αναφορές μας σε αυτή τη δράση</div>
+    <div class="section-title"><i class="bi bi-clock-history me-1"></i>Αναφορές μας σε αυτή τη <?= e($eventSingularLc) ?></div>
     <?php foreach ($shortages as $sh): ?>
       <div class="shortage-item">
         <div class="shortage-row">
@@ -775,12 +779,12 @@ foreach (flash_get() as $flash):
     </div>
   </div>
 
-  <!-- ── Επικοινωνία με τον δήμο ──────────────────────────────────────── -->
+  <!-- ── Επικοινωνία με τον φορέα ──────────────────────────────────────── -->
   <div class="action-card">
-    <div class="presence-header"><i class="bi bi-chat-dots"></i> Επικοινωνία με τον δήμο</div>
+    <div class="presence-header"><i class="bi bi-chat-dots"></i> Επικοινωνία · <?= e($orgLabel) ?></div>
     <div class="msg-list" id="msgList"><div class="msg-empty">Φόρτωση…</div></div>
     <div class="msg-compose">
-      <input type="text" id="msgInput" placeholder="Μήνυμα προς τον δήμο…" maxlength="500">
+      <input type="text" id="msgInput" placeholder="Μήνυμα προς <?= e($orgLabel) ?>…" maxlength="500">
       <button type="button" id="msgSend" title="Αποστολή"><i class="bi bi-send"></i></button>
     </div>
   </div>
@@ -805,6 +809,8 @@ foreach (flash_get() as $flash):
   var EID  = <?= $eid ?>;
   var CSRF = window.csrfToken || '';
   var IS_ACTIVE = <?= $isActive ? 'true' : 'false' ?>;
+  var ORG_LABEL = <?= json_encode($orgLabel, JSON_UNESCAPED_UNICODE) ?>;
+  var EVENT_LC = <?= json_encode($eventSingularLc, JSON_UNESCAPED_UNICODE) ?>;
 
   function postJSON(path, body) {
     return fetch(BASE + path, {
@@ -825,7 +831,7 @@ foreach (flash_get() as $flash):
     var map = L.map('teamMap').setView(center, 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
     var b = [];
-    if (evLat !== null) { L.marker([evLat, evLng]).addTo(map).bindPopup('Σημείο δράσης'); b.push([evLat, evLng]); }
+    if (evLat !== null) { L.marker([evLat, evLng]).addTo(map).bindPopup('Σημείο ' + EVENT_LC); b.push([evLat, evLng]); }
     if (tLat  !== null) { L.circleMarker([tLat, tLng], { radius: 9, color: '#22d3ee', fillColor: '#22d3ee', fillOpacity: .85 }).addTo(map).bindPopup('Η θέση μας'); b.push([tLat, tLng]); }
     if (b.length > 1) { try { map.fitBounds(b, { padding: [30, 30], maxZoom: 16 }); } catch (e) {} }
     window.__teamMap = map;
@@ -967,13 +973,13 @@ foreach (flash_get() as $flash):
   var sosBanner = document.getElementById('sosBanner');
   if (sosBtn) {
     sosBtn.addEventListener('click', function () {
-      if (!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ο δήμος ότι κινδυνεύετε. Συνέχεια;')) return;
+      if (!confirm('ΕΠΙΒΕΒΑΙΩΣΗ SOS\n\nΘα ειδοποιηθεί ΑΜΕΣΑ ' + ORG_LABEL + ' ότι κινδυνεύετε. Συνέχεια;')) return;
       sosBtn.disabled = true;
       sosBtn.querySelector('.sos-btn-sub').textContent = 'Λήψη τοποθεσίας…';
       var send = function (lat, lng, acc) {
         postJSON('/team/operations/events/' + EID + '/sos', { latitude: lat, longitude: lng, accuracy: acc })
           .then(function (d) {
-            if (d && d.success) { sosBtn.querySelector('.sos-btn-sub').textContent = 'SOS εστάλη — ο δήμος ειδοποιήθηκε'; pollComms(); }
+            if (d && d.success) { sosBtn.querySelector('.sos-btn-sub').textContent = 'SOS εστάλη — ειδοποιήθηκε ' + ORG_LABEL; pollComms(); }
             else { sosBtn.disabled = false; sosBtn.querySelector('.sos-btn-sub').textContent = (d && d.message) || 'Αποτυχία — δοκιμάστε ξανά'; }
           })
           .catch(function () { sosBtn.disabled = false; sosBtn.querySelector('.sos-btn-sub').textContent = 'Σφάλμα σύνδεσης — δοκιμάστε ξανά'; });
@@ -1029,7 +1035,7 @@ foreach (flash_get() as $flash):
       var cls = m.kind === 'order' ? 'msg-order'
               : (m.kind === 'status' ? 'msg-status'
               : (m.sender_role === 'command' ? 'msg-command' : 'msg-team'));
-      var who = m.sender_role === 'command' ? 'Δήμος' : (m.sender_name || 'Ομάδα');
+      var who = m.sender_role === 'command' ? ORG_LABEL : (m.sender_name || 'Ομάδα');
       var t = (m.created_at || '').substr(11, 5);
       var html = '<div class="msg ' + cls + '"><div>' +
                  (m.kind === 'order' ? '📋 <strong>ΕΝΤΟΛΗ:</strong> ' : '') + escapeHtml(m.body || '') + '</div>';
@@ -1048,18 +1054,18 @@ foreach (flash_get() as $flash):
     if (!sos) {
       sosBanner.style.display = 'none';
       if (sosBtn) { sosBtn.classList.remove('sos-pulse'); sosBtn.disabled = !IS_ACTIVE;
-        if (IS_ACTIVE) sosBtn.querySelector('.sos-btn-sub').textContent = 'Πατήστε για άμεση κλήση βοήθειας στον δήμο'; }
+        if (IS_ACTIVE) sosBtn.querySelector('.sos-btn-sub').textContent = 'Πατήστε για άμεση κλήση βοήθειας προς ' + ORG_LABEL; }
       return;
     }
     sosBanner.style.display = 'flex';
     if (sos.status === 'acknowledged') {
       sosBanner.className = 'sos-active-banner ack';
-      sosBanner.innerHTML = '<i class="bi bi-check2-all"></i> Το SOS ελήφθη από τον δήμο' +
+      sosBanner.innerHTML = '<i class="bi bi-check2-all"></i> Το SOS ελήφθη από ' + escapeHtml(ORG_LABEL) +
         (sos.ack_name ? ' (' + escapeHtml(sos.ack_name) + ')' : '') + ' — έρχεται βοήθεια.';
       if (sosBtn) sosBtn.classList.remove('sos-pulse');
     } else {
       sosBanner.className = 'sos-active-banner';
-      sosBanner.innerHTML = '<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης από τον δήμο…';
+      sosBanner.innerHTML = '<i class="bi bi-broadcast-pin"></i> SOS ΕΝΕΡΓΟ — αναμονή επιβεβαίωσης από ' + escapeHtml(ORG_LABEL) + '…';
       if (sosBtn) sosBtn.classList.add('sos-pulse');
     }
     if (sosBtn) { sosBtn.disabled = true; sosBtn.querySelector('.sos-btn-sub').textContent = 'SOS ενεργό'; }
@@ -1072,7 +1078,7 @@ foreach (flash_get() as $flash):
     orderBannerEl.style.display = '';
     orderBannerEl.innerHTML = pending.map(function (m) {
       var t = (m.created_at || '').substr(11, 5);
-      var head = m.point_kind === 'incident' ? '⚠️ ΠΕΡΙΣΤΑΤΙΚΟ' : (m.point_kind === 'move' ? '➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ' : 'ΕΝΤΟΛΗ ΑΠΟ ΤΟΝ ΔΗΜΟ');
+      var head = m.point_kind === 'incident' ? '⚠️ ΠΕΡΙΣΤΑΤΙΚΟ' : (m.point_kind === 'move' ? '➡️ ΜΕΤΑΒΑΣΗ ΣΕ ΣΗΜΕΙΟ' : 'ΕΝΤΟΛΗ ΑΠΟ ' + ORG_LABEL);
       var dir = (m.latitude != null && m.longitude != null)
         ? '<a href="https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude + '" target="_blank" rel="noopener" class="order-pin-btn" style="display:block;text-align:center;text-decoration:none;background:#2563eb;color:#fff;margin-bottom:8px"><i class="bi bi-geo-alt-fill"></i> Οδηγίες (Google Maps)</a>' : '';
       return '<div class="order-pin">' +
@@ -1113,8 +1119,8 @@ foreach (flash_get() as $flash):
       photoToggleEl.classList.toggle('has-request', hasPhoto);
       if (photoToggleSubEl) {
         photoToggleSubEl.textContent = hasPhoto
-          ? '⚡ Ο δήμος ζητά φωτογραφία — πατήστε για να ανοίξει'
-          : 'Στείλτε φωτογραφία στον δήμο';
+          ? '⚡ ' + ORG_LABEL + ' ζητά φωτογραφία — πατήστε για να ανοίξει'
+          : 'Στείλτε φωτογραφία προς ' + ORG_LABEL;
       }
     }
     // Store request id for the hidden form field
@@ -1199,11 +1205,11 @@ foreach (flash_get() as $flash):
     if (videoBannerEl) {
       videoBannerEl.style.display = has ? 'flex' : 'none';
       var t = document.getElementById('videoBannerText');
-      if (has && videoReq.instructions && t) { t.textContent = 'Ο δήμος ζητά βίντεο: ' + videoReq.instructions; }
+      if (has && videoReq.instructions && t) { t.textContent = ORG_LABEL + ' ζητά βίντεο: ' + videoReq.instructions; }
     }
     if (videoToggleEl) {
       videoToggleEl.classList.toggle('has-request', has);
-      if (videoToggleSubEl) videoToggleSubEl.textContent = has ? '⚡ Ο δήμος ζητά βίντεο — πατήστε για να ανοίξει' : 'Στείλτε σύντομο βίντεο στον δήμο';
+      if (videoToggleSubEl) videoToggleSubEl.textContent = has ? '⚡ ' + ORG_LABEL + ' ζητά βίντεο — πατήστε για να ανοίξει' : 'Στείλτε σύντομο βίντεο προς ' + ORG_LABEL;
     }
     var ridEl = document.getElementById('videoRequestId');
     if (ridEl) ridEl.value = has ? videoReq.id : '';
@@ -1218,7 +1224,7 @@ foreach (flash_get() as $flash):
     if (!shortHistEl) return;
     list = list || [];
     if (!list.length) { shortHistEl.innerHTML = ''; return; }
-    shortHistEl.innerHTML = '<div class="section-title"><i class="bi bi-clock-history me-1"></i>Αναφορές μας σε αυτή τη δράση</div>' +
+    shortHistEl.innerHTML = '<div class="section-title"><i class="bi bi-clock-history me-1"></i>Αναφορές μας σε αυτή τη ' + escapeHtml(EVENT_LC) + '</div>' +
       list.map(function(sh){
         return '<div class="shortage-item"><div class="shortage-row">' +
           '<span class="badge ' + sh.severity_class + '">' + escapeHtml(sh.severity_label) + '</span>' +
@@ -1253,7 +1259,7 @@ foreach (flash_get() as $flash):
     if (!msgs || !msgs.length) { roomListEl.innerHTML = '<div class="msg-empty">Κανένα μήνυμα ακόμη.</div>'; return; }
     roomListEl.innerHTML = msgs.map(function (m) {
       var cmd = m.sender_role === 'command';
-      var who = cmd ? 'Δήμος' : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
+      var who = cmd ? ORG_LABEL : (m.sender_label || m.team_name || m.sender_name || 'Ομάδα');
       var t = (m.created_at || '').substr(11, 5);
       return '<div class="msg ' + (cmd ? 'msg-command' : 'msg-team') + '"><div>' + escapeHtml(m.body || '') +
              '</div><div class="msg-time">' + escapeHtml(who) + ' · ' + t + '</div></div>';

@@ -1,3 +1,7 @@
+<?php
+$terms = authority_context(current_municipality_id());
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+?>
 <h1 class="h3 mb-1">Οι Δηλώσεις μας</h1>
 <p class="text-muted">Ιστορικό δηλώσεων συμμετοχής της ομάδας.</p>
 
@@ -7,7 +11,7 @@
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead><tr><th>Δράση</th><th>Ημερομηνία δράσης</th><th>Προσφορά</th><th>Εγκεκριμένα</th><th>Κατάσταση</th><th></th></tr></thead>
+        <thead><tr><th><?= e($eventSingular) ?></th><th>Ημερομηνία <?= e(mb_strtolower($eventSingular, 'UTF-8')) ?></th><th>Προσφορά</th><th>Εγκεκριμένα</th><th>Κατάσταση</th><th></th></tr></thead>
         <tbody>
           <?php foreach ($applications as $a): ?>
             <tr>

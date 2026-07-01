@@ -1,3 +1,9 @@
+<?php
+$terms = authority_context((int) ($event['municipality_id'] ?? ($mun['id'] ?? current_municipality_id())));
+$orgName = $terms['official_name'] ?? ($mun['name'] ?? 'Φορέας');
+$eventSingular = $terms['event_singular'] ?? 'Δράση';
+$eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
+?>
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -199,19 +205,19 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
       <?php endif; ?>
     </div>
     <div class="doc-title">
-      <h1><?= e($mun['name'] ?? 'Δήμος') ?></h1>
+      <h1><?= e($orgName) ?></h1>
       <div class="sub">Αναφορά Επιχειρησιακής Κάλυψης</div>
     </div>
     <div class="doc-stamp">
       Εκτυπώθηκε<br><?= date('d/m/Y H:i') ?><br>
-      <strong>Αρ. δράσης #<?= (int) $event['id'] ?></strong>
+      <strong>Αρ. <?= e($eventSingularLc) ?> #<?= (int) $event['id'] ?></strong>
     </div>
   </div>
 
   <!-- Event info strip -->
   <div class="event-strip">
     <div class="field">
-      <label>Τίτλος δράσης</label>
+      <label>Τίτλος <?= e($eventSingularLc) ?></label>
       <span><?= e($event['title']) ?></span>
     </div>
     <div class="field">
@@ -332,11 +338,11 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
     <div class="sig-block">
       <div class="sig-line">
         <div class="line"></div>
-        <div class="name-label">Υπεύθυνος Δράσης</div>
+        <div class="name-label">Υπεύθυνος <?= e($eventSingular) ?></div>
       </div>
       <div class="sig-line">
         <div class="line"></div>
-        <div class="name-label">Διαχειριστής Δήμου</div>
+        <div class="name-label">Διαχειριστής Φορέα</div>
       </div>
       <div class="sig-line">
         <div class="line"></div>
@@ -347,7 +353,7 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
   </div><!-- /doc-body -->
 
   <div class="doc-footer">
-    Παράχθηκε αυτόματα από το SynDrasi · <?= e($mun['name'] ?? '') ?> · <?= date('d/m/Y H:i') ?>
+    Παράχθηκε αυτόματα από το SynDrasi · <?= e($orgName) ?> · <?= date('d/m/Y H:i') ?>
   </div>
 
 </div><!-- /doc -->

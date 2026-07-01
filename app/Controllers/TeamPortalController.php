@@ -5,6 +5,25 @@
  */
 class TeamPortalController
 {
+    private function authorityTerms($municipalityId = null): array
+    {
+        $ctx = authority_context($municipalityId !== null ? (int) $municipalityId : current_municipality_id());
+        $ctx['event_singular_lc'] = mb_strtolower($ctx['event_singular'] ?? 'Δράση', 'UTF-8');
+        return $ctx;
+    }
+
+    private function eventNotFoundMessage($municipalityId = null): string
+    {
+        $terms = $this->authorityTerms($municipalityId);
+        return 'Η ' . $terms['event_singular_lc'] . ' δεν βρέθηκε.';
+    }
+
+    private function teamNotApprovedMessage($municipalityId = null): string
+    {
+        $terms = $this->authorityTerms($municipalityId);
+        return 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη ' . $terms['event_singular_lc'] . '.';
+    }
+
     /* ------------------------------------------------------------ Dashboard */
 
     public function dashboard()
@@ -128,8 +147,9 @@ class TeamPortalController
         $tid = current_team_id();
         $events       = Event::availableForTeam($mid, $tid);
         $closedEvents = Event::closedForTeam($mid, $tid);
+        $terms        = $this->authorityTerms($mid);
         render('team/events', [
-            'pageTitle'    => 'Δράσεις',
+            'pageTitle'    => $terms['event_plural'] ?? 'Δράσεις',
             'events'       => $events,
             'closedEvents' => $closedEvents,
         ]);
@@ -140,16 +160,16 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         if ($event['status'] === 'draft') {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage((int) $event['municipality_id']));
         }
         // closed/completed: only visible if team had an approved application
         if (in_array($event['status'], ['closed', 'completed'], true)) {
             $app = EventApplication::findByEventTeam($event['id'], current_team_id());
             if (!$app || $app['status'] !== 'approved') {
-                abort(404, 'Η δράση δεν βρέθηκε.');
+                abort(404, $this->eventNotFoundMessage((int) $event['municipality_id']));
             }
         }
         $tid = current_team_id();
@@ -238,7 +258,8 @@ class TeamPortalController
         $pin   = EventApplication::ensureFieldPin((int) $application['id']);
         $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $link = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . url('/f/' . $token);
-        $sms = 'SynDrasi — Πεδίο δράσης «' . $application['event_title'] . '». Σύνδεσμος: ' . $link . ' — PIN: ' . $pin;
+        $terms = $this->authorityTerms((int) $application['municipality_id']);
+        $sms = 'SynDrasi — Πεδίο ' . $terms['event_singular_lc'] . ' «' . $application['event_title'] . '». Σύνδεσμος: ' . $link . ' — PIN: ' . $pin;
 
         $ok = SmsService::send($commander['phone'], $sms, (int) $application['municipality_id']);
         audit('field_link_sms', 'event_application', (int) $application['id'], 'to ' . $commander['phone']);
@@ -267,14 +288,16 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         if (!in_array($event['status'], ['open', 'review', 'active'], true)) {
-            flash_set('warning', 'Η δράση δεν δέχεται πλέον δηλώσεις συμμετοχής.');
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            flash_set('warning', 'Η ' . $terms['event_singular_lc'] . ' δεν δέχεται πλέον δηλώσεις συμμετοχής.');
             redirect('/team/events/' . $event['id']);
         }
         if (EventApplication::findByEventTeam($event['id'], current_team_id())) {
-            flash_set('warning', 'Έχετε ήδη υποβάλει δήλωση για αυτή τη δράση.');
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            flash_set('warning', 'Έχετε ήδη υποβάλει δήλωση για αυτή τη ' . $terms['event_singular_lc'] . '.');
             redirect('/team/events/' . $event['id']);
         }
 
@@ -353,7 +376,7 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         $tid         = current_team_id();
         $application = EventApplication::findByEventTeam($event['id'], $tid);
@@ -598,7 +621,8 @@ class TeamPortalController
         NotificationService::photoUploaded($event, $tid);
         audit('photo_uploaded', 'event', $event['id'], 'team ' . $tid);
 
-        flash_set('success', 'Η φωτογραφία στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        $terms = $this->authorityTerms((int) $event['municipality_id']);
+        flash_set('success', 'Η φωτογραφία στάλθηκε προς ' . $terms['short_name'] . '.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
         redirect($back);
     }
 
@@ -654,7 +678,8 @@ class TeamPortalController
         NotificationService::videoUploaded($event, $tid);
         audit('video_uploaded', 'event', $event['id'], 'team ' . $tid);
 
-        flash_set('success', 'Το βίντεο στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        $terms = $this->authorityTerms((int) $event['municipality_id']);
+        flash_set('success', 'Το βίντεο στάλθηκε προς ' . $terms['short_name'] . '.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
         redirect($back);
     }
 
@@ -714,14 +739,17 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            json_out(['success' => false, 'message' => 'Η δράση δεν βρέθηκε.'], 404);
+            $terms = $this->authorityTerms();
+            json_out(['success' => false, 'message' => 'Η ' . $terms['event_singular_lc'] . ' δεν βρέθηκε.'], 404);
         }
         $application = EventApplication::findByEventTeam($event['id'], current_team_id());
         if (!$application || $application['status'] !== 'approved') {
-            json_out(['success' => false, 'message' => 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη δράση.'], 403);
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            json_out(['success' => false, 'message' => 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη ' . $terms['event_singular_lc'] . '.'], 403);
         }
         if (!in_array($event['status'], ['active', 'confirmed'], true)) {
-            json_out(['success' => false, 'message' => 'Η δράση δεν είναι ενεργή.'], 422);
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            json_out(['success' => false, 'message' => 'Η ' . $terms['event_singular_lc'] . ' δεν είναι ενεργή.'], 422);
         }
 
         $input = json_input();
@@ -753,12 +781,12 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         $tid         = current_team_id();
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application || $application['status'] !== 'approved') {
-            flash_set('danger', 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη δράση.');
+            flash_set('danger', $this->teamNotApprovedMessage((int) $event['municipality_id']));
             redirect('/team/operations/events/' . $event['id']);
         }
 
@@ -790,11 +818,12 @@ class TeamPortalController
         audit('shortage_reported', 'event', $event['id'], 'type: ' . $type . ', severity: ' . $severity);
 
         $team = VolunteerTeam::find($tid);
+        $terms = $this->authorityTerms((int) $event['municipality_id']);
         NotificationService::notifyMunicipality(
             $event['municipality_id'],
             $event['id'],
             'Νέα έλλειψη: ' . $title,
-            ($team['name'] ?? 'Ομάδα') . ' ανέφερε έλλειψη (' . $severity . ') στη δράση ' . $event['title'] . '.',
+            ($team['name'] ?? 'Ομάδα') . ' ανέφερε έλλειψη (' . $severity . ') στη ' . $terms['event_singular_lc'] . ' ' . $event['title'] . '.',
             'shortage'
         );
 
@@ -810,7 +839,8 @@ class TeamPortalController
     {
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            json_out(['success' => false, 'message' => 'Η δράση δεν βρέθηκε.'], 404);
+            $terms = $this->authorityTerms();
+            json_out(['success' => false, 'message' => 'Η ' . $terms['event_singular_lc'] . ' δεν βρέθηκε.'], 404);
         }
         $tid = current_team_id();
         $application = EventApplication::findByEventTeam($event['id'], $tid);
@@ -848,7 +878,8 @@ class TeamPortalController
             error_log('[SOS] notify failed: ' . $e->getMessage());
         }
 
-        json_out(['success' => true, 'id' => $alertId, 'message' => 'SOS στάλθηκε — ο δήμος ειδοποιήθηκε.']);
+        $terms = $this->authorityTerms((int) $event['municipality_id']);
+        json_out(['success' => true, 'id' => $alertId, 'message' => 'SOS στάλθηκε — ειδοποιήθηκε ' . $terms['short_name'] . '.']);
     }
 
     /** POST /team/operations/events/{id}/message — team chat message to command (JSON). */
@@ -963,12 +994,13 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         $tid         = current_team_id();
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application || $application['status'] !== 'approved') {
-            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη δράση.');
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη ' . $terms['event_singular_lc'] . '.');
             redirect('/team/events/' . $event['id']);
         }
 
@@ -1049,12 +1081,13 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         $tid         = current_team_id();
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application || $application['status'] !== 'approved') {
-            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη δράση.');
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη ' . $terms['event_singular_lc'] . '.');
             redirect('/team/events/' . $event['id']);
         }
 
@@ -1075,12 +1108,13 @@ class TeamPortalController
         requireRole(['team_admin']);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         $tid         = current_team_id();
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application || $application['status'] !== 'approved') {
-            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη δράση.');
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη ' . $terms['event_singular_lc'] . '.');
             redirect('/team/events/' . $event['id']);
         }
 
@@ -1120,14 +1154,15 @@ class TeamPortalController
     {
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
-            abort(404, 'Η δράση δεν βρέθηκε.');
+            abort(404, $this->eventNotFoundMessage());
         }
         $application = EventApplication::findByEventTeam($event['id'], current_team_id());
         if (!$application || $application['status'] !== 'approved') {
-            abort(403, 'Η ομάδα σας δεν είναι εγκεκριμένη για αυτή τη δράση.');
+            abort(403, $this->teamNotApprovedMessage((int) $event['municipality_id']));
         }
         if ($requireActive && $event['status'] !== 'active') {
-            flash_set('warning', 'Η δράση δεν είναι ενεργή αυτή τη στιγμή.');
+            $terms = $this->authorityTerms((int) $event['municipality_id']);
+            flash_set('warning', 'Η ' . $terms['event_singular_lc'] . ' δεν είναι ενεργή αυτή τη στιγμή.');
             redirect('/team/operations/events/' . $event['id']);
         }
         return ['event' => $event, 'application' => $application];

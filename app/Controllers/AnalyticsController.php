@@ -23,6 +23,8 @@ class AnalyticsController
     {
         requireRole(['municipality_admin']);
         $mid   = current_municipality_id();
+        $terms = authority_context($mid);
+        $eventPlural = $terms['event_plural'] ?? 'Δράσεις';
         $focus = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
         $type  = $_GET['type'] ?? 'yearly';
         $y1    = $focus;
@@ -36,7 +38,7 @@ class AnalyticsController
             audit('export', 'analytics_category', null);
             CsvService::download(
                 "syndrasi-analytics-category-{$y0}-{$y1}.csv",
-                ['Κατηγορία', 'Δράσεις', 'Εθελοντικές ώρες'],
+                ['Κατηγορία', $eventPlural, 'Εθελοντικές ώρες'],
                 $rows
             );
             return;
@@ -76,7 +78,7 @@ class AnalyticsController
         audit('export', 'analytics_yearly', null);
         CsvService::download(
             "syndrasi-analytics-yearly-{$y0}-{$y1}.csv",
-            ['Έτος', 'Δράσεις', 'Συμμετοχές', 'Εθελοντικές ώρες', 'Μέσος χρόνος ανταπόκρισης (λεπτά)'],
+            ['Έτος', $eventPlural, 'Συμμετοχές', 'Εθελοντικές ώρες', 'Μέσος χρόνος ανταπόκρισης (λεπτά)'],
             $rows
         );
     }

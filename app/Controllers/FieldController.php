@@ -47,12 +47,20 @@ class FieldController
         ];
     }
 
+    private function authorityFor(array $app): array
+    {
+        $ctx = authority_context((int) $app['municipality_id']);
+        $ctx['event_singular_lc'] = mb_strtolower($ctx['event_singular'] ?? 'Δράση', 'UTF-8');
+        return $ctx;
+    }
+
     private function requireActive(array $app): void
     {
         $status  = $app['event_status'] ?? '';
         $started = !empty($app['start_datetime']) && strtotime($app['start_datetime']) <= time();
         if ($status !== 'active' && !($started && in_array($status, ['open', 'confirmed', 'review'], true))) {
-            json_out(['success' => false, 'message' => 'Η δράση δεν είναι ενεργή αυτή τη στιγμή.'], 422);
+            $ctx = $this->authorityFor($app);
+            json_out(['success' => false, 'message' => 'Η ' . $ctx['event_singular_lc'] . ' δεν είναι ενεργή αυτή τη στιγμή.'], 422);
         }
     }
 
@@ -194,7 +202,8 @@ class FieldController
             $sosAlert = SosAlert::find($alertId);
             if ($sosAlert) { NotificationService::sosRaised($sosAlert, $this->eventArr($app), ['name' => $app['team_name']]); }
         } catch (Throwable $e) { error_log('[Field SOS] ' . $e->getMessage()); }
-        json_out(['success' => true, 'id' => $alertId, 'message' => 'SOS στάλθηκε — ο δήμος ειδοποιήθηκε.']);
+        $ctx = $this->authorityFor($app);
+        json_out(['success' => true, 'id' => $alertId, 'message' => 'SOS στάλθηκε — ειδοποιήθηκε ' . $ctx['short_name'] . '.']);
     }
 
     /** POST /f/{token}/ack-order (JSON) — acknowledge a command order. */
@@ -280,7 +289,8 @@ class FieldController
                 'shortage'
             );
         } catch (Throwable $e) { error_log('[Field::shortage] ' . $e->getMessage()); }
-        flash_set('success', 'Η αναφορά έλλειψης στάλθηκε στον δήμο.');
+        $ctx = $this->authorityFor($app);
+        flash_set('success', 'Η αναφορά έλλειψης στάλθηκε προς ' . $ctx['short_name'] . '.');
         redirect($back);
     }
 
@@ -345,7 +355,8 @@ class FieldController
         PhotoRequest::fulfillForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         try { NotificationService::photoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) {}
 
-        flash_set('success', 'Η φωτογραφία στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        $ctx = $this->authorityFor($app);
+        flash_set('success', 'Η φωτογραφία στάλθηκε προς ' . $ctx['short_name'] . '.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
         redirect($back);
     }
 
@@ -400,7 +411,8 @@ class FieldController
         VideoRequest::fulfillForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         try { NotificationService::videoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) {}
 
-        flash_set('success', 'Το βίντεο στάλθηκε στον δήμο.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        $ctx = $this->authorityFor($app);
+        flash_set('success', 'Το βίντεο στάλθηκε προς ' . $ctx['short_name'] . '.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
         redirect($back);
     }
 }

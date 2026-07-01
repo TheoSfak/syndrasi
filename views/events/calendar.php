@@ -325,7 +325,7 @@ $evJson = json_encode(array_map(fn($e) => [
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h6 class="modal-title" id="dayModalTitle">Δράσεις ημέρας</h6>
+        <h6 class="modal-title" id="dayModalTitle"><?= e($eventPlural) ?> ημέρας</h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="dayModalBody"></div>
