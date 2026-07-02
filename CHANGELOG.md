@@ -4,6 +4,24 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.0-beta] — 2026-07-02
+
+### Feature — Έξυπνη Διάθεση Πόρων, Φάση 1 (Smart Resource Dispatch)
+
+- Νέο migration `039_resource_requests.sql`: πίνακας `resource_requests`
+  (pending→accepted/declined→delivered/cancelled), δεμένος προαιρετικά με `shortage_reports`.
+- `ResourceMatcher` (νέο service): σε κάθε ανοιχτή έλλειψη προτείνει ποιες ομάδες του δήμου
+  διαθέτουν τον πόρο, με βάση τα υπάρχοντα `readiness_items_json` / `has_vehicle` /
+  `has_medical_equipment` — keyword match με συνώνυμα και ελληνικό stemming, προτεραιότητα
+  σε ομάδες ήδη εγκεκριμένες στη δράση.
+- War-room: οι κάρτες ελλείψεων δείχνουν προτάσεις «💡 Ομάδα Χ — Γεννήτρια» με κουμπί
+  «Αίτημα» (ένα κλικ)· νέο panel «Αιτήματα πόρων» με status, κουμπιά «Παραδόθηκε»/«Ακύρωση».
+  Τα δεδομένα μπαίνουν στο κοινό snapshot (SSE + polling fallback).
+- Νέο notification `resourceRequested` (in-app + Web Push στην ομάδα).
+- Χειροκίνητη επίλυση έλλειψης ακυρώνει αυτόματα τα pending αιτήματά της· δεν προτείνονται
+  ομάδες με ήδη ανοιχτό αίτημα για την ίδια έλλειψη.
+- Φάση 2 (επόμενη): απάντηση Αποδοχή/Αδυναμία από field hub / team live.
+
 ## [0.15.13-beta] — 2026-07-02
 
 ### Docs — Spec «Έξυπνη Διάθεση Πόρων» (Smart Resource Dispatch)
