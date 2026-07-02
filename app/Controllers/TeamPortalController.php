@@ -576,53 +576,22 @@ class TeamPortalController
         $tid     = (int) current_team_id();
         $back    = '/team/operations/events/' . $event['id'];
 
-        if (empty($_FILES['photo']) || (int) ($_FILES['photo']['error'] ?? 1) !== UPLOAD_ERR_OK) {
-            flash_set('danger', 'Δεν επιλέχθηκε έγκυρη φωτογραφία.');
-            redirect($back);
-        }
-        $f = $_FILES['photo'];
-        if ((int) $f['size'] > 12 * 1024 * 1024) {
-            flash_set('danger', 'Η φωτογραφία είναι πολύ μεγάλη (μέγιστο 12MB).');
-            redirect($back);
-        }
-        $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-        $info    = @getimagesize($f['tmp_name']);
-        $mime    = $info['mime'] ?? '';
-        if (!isset($allowed[$mime])) {
-            flash_set('danger', 'Επιτρέπονται μόνο εικόνες JPG / PNG / WebP.');
-            redirect($back);
-        }
-
-        $dir = BASE_PATH . EventPhoto::DIR;
-        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
-            flash_set('danger', 'Αδυναμία αποθήκευσης (φάκελος).');
-            redirect($back);
-        }
-        $name = 'ev' . (int) $event['id'] . '_t' . $tid . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$mime];
-        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) {
-            flash_set('danger', 'Αποτυχία αποθήκευσης φωτογραφίας.');
-            redirect($back);
-        }
-
-        $lat = post_float_or_null('latitude');
-        $lng = post_float_or_null('longitude');
-        if ($lat !== null && ($lat < -90 || $lat > 90))   { $lat = null; }
-        if ($lng !== null && ($lng < -180 || $lng > 180)) { $lng = null; }
-        if ($lat === null || $lng === null) { $lat = null; $lng = null; }
-
-        $rid = post_int('request_id') ?: null;
-        EventPhoto::create([
+        $result = MediaUploader::storePhoto($_FILES['photo'] ?? [], [
             'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
-            'uid' => $_SESSION['user_id'], 'rid' => $rid, 'file' => $name,
-            'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
+            'uid' => $_SESSION['user_id'], 'rid' => post_int('request_id') ?: null, 'caption' => post_str('caption') ?: null,
         ]);
+        if (!$result['ok']) {
+            flash_set('danger', $result['error']);
+            redirect($back);
+        }
+
         // Always close any pending photo request for this team, with or without explicit rid.
         PhotoRequest::fulfillForEventTeam((int) $event['id'], $tid);
         NotificationService::photoUploaded($event, $tid);
         audit('photo_uploaded', 'event', $event['id'], 'team ' . $tid);
 
         $terms = $this->authorityTerms((int) $event['municipality_id']);
-        flash_set('success', 'Η φωτογραφία στάλθηκε προς ' . $terms['short_name'] . '.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        flash_set('success', 'Η φωτογραφία στάλθηκε προς ' . $terms['short_name'] . '.' . ($result['lat'] === null ? ' (χωρίς τοποθεσία)' : ''));
         redirect($back);
     }
 
@@ -634,52 +603,21 @@ class TeamPortalController
         $tid     = (int) current_team_id();
         $back    = '/team/operations/events/' . $event['id'];
 
-        if (empty($_FILES['video']) || (int) ($_FILES['video']['error'] ?? 1) !== UPLOAD_ERR_OK) {
-            flash_set('danger', 'Δεν επιλέχθηκε έγκυρο βίντεο.');
-            redirect($back);
-        }
-        $f = $_FILES['video'];
-        if ((int) $f['size'] > 60 * 1024 * 1024) {
-            flash_set('danger', 'Το βίντεο είναι πολύ μεγάλο (μέγιστο 60MB).');
-            redirect($back);
-        }
-        $detected = function_exists('mime_content_type') ? (mime_content_type($f['tmp_name']) ?: '') : (string) ($f['type'] ?? '');
-        $allowed  = ['video/mp4' => 'mp4', 'video/webm' => 'webm', 'video/quicktime' => 'mov'];
-        $base = strtolower(trim(explode(';', $detected)[0]));
-        if (!isset($allowed[$base])) {
-            flash_set('danger', 'Επιτρέπονται μόνο βίντεο MP4 / WebM / MOV.');
-            redirect($back);
-        }
-        $dir = BASE_PATH . EventVideo::DIR;
-        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
-            flash_set('danger', 'Αδυναμία αποθήκευσης (φάκελος).');
-            redirect($back);
-        }
-        $name = 'ev' . (int) $event['id'] . '_t' . $tid . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $allowed[$base];
-        if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $name)) {
-            flash_set('danger', 'Αποτυχία αποθήκευσης βίντεο.');
-            redirect($back);
-        }
-        $lat = post_float_or_null('latitude');
-        $lng = post_float_or_null('longitude');
-        if ($lat !== null && ($lat < -90 || $lat > 90))   { $lat = null; }
-        if ($lng !== null && ($lng < -180 || $lng > 180)) { $lng = null; }
-        if ($lat === null || $lng === null) { $lat = null; $lng = null; }
-        $dur = post_int('duration');
-        if ($dur < 1 || $dur > 600) { $dur = null; }
-
-        EventVideo::create([
+        $result = MediaUploader::storeVideo($_FILES['video'] ?? [], [
             'mid' => $event['municipality_id'], 'eid' => $event['id'], 'tid' => $tid,
-            'uid' => $_SESSION['user_id'], 'rid' => post_int('request_id') ?: null, 'file' => $name,
-            'mime' => $base, 'dur' => $dur, 'size' => (int) $f['size'],
-            'lat' => $lat, 'lng' => $lng, 'caption' => post_str('caption') ?: null,
+            'uid' => $_SESSION['user_id'], 'rid' => post_int('request_id') ?: null, 'caption' => post_str('caption') ?: null,
         ]);
+        if (!$result['ok']) {
+            flash_set('danger', $result['error']);
+            redirect($back);
+        }
+
         VideoRequest::fulfillForEventTeam((int) $event['id'], $tid);
         NotificationService::videoUploaded($event, $tid);
         audit('video_uploaded', 'event', $event['id'], 'team ' . $tid);
 
         $terms = $this->authorityTerms((int) $event['municipality_id']);
-        flash_set('success', 'Το βίντεο στάλθηκε προς ' . $terms['short_name'] . '.' . ($lat === null ? ' (χωρίς τοποθεσία)' : ''));
+        flash_set('success', 'Το βίντεο στάλθηκε προς ' . $terms['short_name'] . '.' . ($result['lat'] === null ? ' (χωρίς τοποθεσία)' : ''));
         redirect($back);
     }
 
@@ -896,7 +834,7 @@ class TeamPortalController
             'role' => 'team', 'uid' => $_SESSION['user_id'], 'kind' => 'message', 'body' => $body,
         ]);
         $team = VolunteerTeam::find($tid);
-        try { NotificationService::teamMessage($event, $team, 'Μήνυμα ομάδας', $body); } catch (Throwable $e) {}
+        try { NotificationService::teamMessage($event, $team, 'Μήνυμα ομάδας', $body); } catch (Throwable $e) { error_log('[teamMessage] ' . $e->getMessage()); }
         json_out(['success' => true]);
     }
 
@@ -916,7 +854,7 @@ class TeamPortalController
             'role' => 'team', 'uid' => $_SESSION['user_id'], 'kind' => 'status', 'code' => $code, 'body' => $label,
         ]);
         $team = VolunteerTeam::find($tid);
-        try { NotificationService::teamMessage($event, $team, 'Ενημέρωση κατάστασης', $label); } catch (Throwable $e) {}
+        try { NotificationService::teamMessage($event, $team, 'Ενημέρωση κατάστασης', $label); } catch (Throwable $e) { error_log('[teamMessage] ' . $e->getMessage()); }
         json_out(['success' => true, 'message' => 'Στάλθηκε: ' . $label]);
     }
 
