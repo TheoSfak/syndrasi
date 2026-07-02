@@ -16,9 +16,8 @@ class CronController
     /**
      * GET /cron/shift-reminders
      * Scans all approved shift applications whose shift starts in the next 55–65 minutes
-     * and sends reminder notifications. Safe to run every minute — uses a `reminded_at`
-     * flag to avoid duplicates (stored in shift_applications.notes as a prefix, or we
-     * use a simple flag column check via app_settings).
+     * and sends reminder notifications. Safe to run every minute — uses the shift's own
+     * `reminded_at` column to avoid duplicates.
      */
     public function shiftReminders()
     {
@@ -32,10 +31,7 @@ class CronController
              WHERE es.start_datetime BETWEEN DATE_ADD(NOW(), INTERVAL 55 MINUTE)
                                          AND DATE_ADD(NOW(), INTERVAL 65 MINUTE)
                AND e.status IN ('open','review','confirmed','active')
-               AND NOT EXISTS (
-                   SELECT 1 FROM app_settings
-                   WHERE setting_key = CONCAT('shift_reminded_', es.id)
-               )",
+               AND es.reminded_at IS NULL",
         )->fetchAll();
 
         $count = 0;
@@ -51,12 +47,7 @@ class CronController
             $count += $sent;
 
             // Mark as reminded so we don't send again
-            dbq(
-                "INSERT INTO app_settings (setting_key, setting_value)
-                 VALUES (:k, NOW())
-                 ON DUPLICATE KEY UPDATE setting_value = NOW()",
-                ['k' => 'shift_reminded_' . $shift['id']]
-            );
+            dbq('UPDATE event_shifts SET reminded_at = NOW() WHERE id = :id', ['id' => $shift['id']]);
         }
 
         json_out([

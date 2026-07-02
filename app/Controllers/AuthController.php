@@ -91,12 +91,12 @@ class AuthController
         redirect(role_home());
     }
 
-    // ── Rate-limit helpers (app_settings table) ────────────────────────────
+    // ── Rate-limit helpers (dedicated rate_limits table) ────────────────────
 
     private function rateSetting(string $key): ?string
     {
         $val = dbq(
-            "SELECT setting_value FROM app_settings WHERE setting_key = :k LIMIT 1",
+            "SELECT value FROM rate_limits WHERE rate_key = :k LIMIT 1",
             ['k' => $key]
         )->fetchColumn();
         return $val !== false ? (string) $val : null;
@@ -105,8 +105,8 @@ class AuthController
     private function setRateSetting(string $key, $value): void
     {
         dbq(
-            "INSERT INTO app_settings (setting_key, setting_value) VALUES (:k, :v)
-             ON DUPLICATE KEY UPDATE setting_value = :v2",
+            "INSERT INTO rate_limits (rate_key, value) VALUES (:k, :v)
+             ON DUPLICATE KEY UPDATE value = :v2",
             ['k' => $key, 'v' => $value, 'v2' => $value]
         );
     }

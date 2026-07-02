@@ -8,25 +8,16 @@ class MaintenanceService
 {
     /**
      * Purge transient rows that accumulate and never expire:
-     *   - login/reset rate-limit counters/locks
-     *   - per-shift "already reminded" flags for shifts that ran long ago
+     *   - login/reset rate-limit counters/locks (rate_limits table)
      *   - spent / expired password-reset tokens
+     * (Per-shift "already reminded" flags no longer need purging — they live
+     * on event_shifts.reminded_at and die with the shift row.)
      * Returns a counts array. Safe to run repeatedly.
      */
     public static function cleanup(): array
     {
         $rl = dbq(
-            "DELETE FROM app_settings
-             WHERE (setting_key LIKE 'login_fail_%'
-                    OR setting_key LIKE 'login_lock_%'
-                    OR setting_key LIKE 'reset_req_%')
-               AND updated_at < DATE_SUB(NOW(), INTERVAL 1 DAY)"
-        )->rowCount();
-
-        $sr = dbq(
-            "DELETE FROM app_settings
-             WHERE setting_key LIKE 'shift_reminded_%'
-               AND updated_at < DATE_SUB(NOW(), INTERVAL 2 DAY)"
+            "DELETE FROM rate_limits WHERE updated_at < DATE_SUB(NOW(), INTERVAL 1 DAY)"
         )->rowCount();
 
         $pr = dbq(
@@ -61,7 +52,6 @@ class MaintenanceService
         return [
             'rate_limit_removed'   => $rl,
             'videos_purged'        => $vc,
-            'shift_flags_removed'  => $sr,
             'reset_tokens_removed' => $pr,
             'at'                   => date('Y-m-d H:i:s'),
         ];

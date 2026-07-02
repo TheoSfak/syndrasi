@@ -11,8 +11,8 @@ class MaintenanceController
         requireRole(['super_admin']);
         $r = MaintenanceService::cleanup();
         flash_set('success', sprintf(
-            'Καθαρισμός ολοκληρώθηκε: %d εγγραφές rate-limit, %d σημαίες υπενθύμισης, %d tokens επαναφοράς διαγράφηκαν.',
-            $r['rate_limit_removed'], $r['shift_flags_removed'], $r['reset_tokens_removed']
+            'Καθαρισμός ολοκληρώθηκε: %d εγγραφές rate-limit, %d tokens επαναφοράς διαγράφηκαν.',
+            $r['rate_limit_removed'], $r['reset_tokens_removed']
         ));
         redirect('/admin/settings#cron');
     }
