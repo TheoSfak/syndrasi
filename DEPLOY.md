@@ -105,18 +105,48 @@ nothing to run, so the feature's table never gets created on production.
 
 ## 🆕 Fresh install (new database)
 
-`schema.sql` is the BASE schema only. A brand-new DB must also get every migration:
+`schema.sql` is a **full** dump of the schema produced by every file in
+`database/migrations/` — regenerate it whenever you add a migration (see
+below), and a brand-new DB needs nothing else:
 
 ```bash
 mysql -u root -p < database/schema.sql
-for f in database/migrations/0*.sql; do mysql -u root syndrasi < "$f"; done   # 001 … 015
 ```
 
-The in-app self-updater auto-runs *pending* migrations on EXISTING installs, but a
-fresh DB created from `schema.sql` alone is missing the migration tables
-(team_members, photo_requests/event_photos, sos_alerts, event_messages,
-event_room_messages, field_token/geo columns, …) and will throw fatal errors until
-the migrations are applied once.
+You do **not** need to run `database/migrations/*.sql` by hand on a fresh
+install. On first request, `MigrationRunner::ensureInitialised()` sees the
+`users` table already exists and "baselines" every migration file currently
+on disk as already-applied (recorded in `schema_migrations`, not re-run) —
+because their effect is already present in `schema.sql`. The in-app
+self-updater still auto-runs any *pending* migrations that are added after
+that point, same as on an existing install.
+
+### Regenerating schema.sql (release step)
+
+Whenever a new `database/migrations/NNN_*.sql` file is added, regenerate
+`schema.sql` from a fully-migrated dev DB before releasing, so it never
+drifts from what the migrations actually produce (this is what caused
+`schema.sql` to be missing ~26 tables prior to 2026-07-02):
+
+```bash
+mysqldump -u root --no-data --skip-comments --skip-add-locks --skip-set-charset syndrasi > /tmp/dump.sql
+```
+
+Hand-clean the dump into `schema.sql`'s existing style (uppercase types, no
+backticks, `INDEX name (col)` instead of `KEY`, drop `AUTO_INCREMENT=N`
+starting values, keep real `CONSTRAINT ... FOREIGN KEY` clauses verbatim),
+then diff a fresh import against the live DB to confirm they match:
+
+```bash
+mysql -u root -e "SHOW TABLES FROM syndrasi;" | sort > live_tables.txt
+mysql -u root -e "CREATE DATABASE schema_check; USE schema_check; SOURCE database/schema.sql;"
+mysql -u root -e "SHOW TABLES FROM schema_check;" | sort > fresh_tables.txt
+diff fresh_tables.txt live_tables.txt   # must be empty
+mysqldump -u root --no-data schema_check > fresh_structure.sql
+mysqldump -u root --no-data syndrasi > live_structure.sql
+diff <(sed -E 's/ AUTO_INCREMENT=[0-9]+//' fresh_structure.sql) <(sed -E 's/ AUTO_INCREMENT=[0-9]+//' live_structure.sql)   # must be empty
+mysql -u root -e "DROP DATABASE schema_check;"
+```
 
 ## ✅ Current status / work log (last updated 2026-06-17)
 
