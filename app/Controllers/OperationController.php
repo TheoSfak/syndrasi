@@ -107,25 +107,10 @@ class OperationController
         ['totalApproved' => $totalApproved, 'totalPresent' => $totalPresent,
          'checkedInCount' => $checkedInCount, 'coverage' => $coverage] = $stats;
 
-        $shortages = dbq(
-            "SELECT sr.*, t.name AS team_name, ua.name AS ack_name, ur.name AS res_name
-             FROM shortage_reports sr
-             JOIN volunteer_teams t ON t.id = sr.team_id
-             LEFT JOIN users ua ON ua.id = sr.acknowledged_by
-             LEFT JOIN users ur ON ur.id = sr.resolved_by
-             WHERE sr.event_id = :eid
-             ORDER BY FIELD(sr.status,'open','acknowledged','resolved'),
-                      FIELD(sr.severity,'critical','high','medium','low'), sr.created_at DESC",
-            ['eid' => $eid]
-        )->fetchAll();
+        $shortages = $this->shortagesForEvent($eid);
         $openShortages = count(array_filter($shortages, fn($s) => $s['status'] === 'open'));
 
-        $notes = dbq(
-            "SELECT n.*, u.name AS author_name FROM operational_notes n
-             JOIN users u ON u.id = n.user_id
-             WHERE n.event_id = :eid ORDER BY n.created_at DESC LIMIT 30",
-            ['eid' => $eid]
-        )->fetchAll();
+        $notes = $this->notesForEvent($eid);
 
         $activity = $this->buildActivityFeed($eid);
 
@@ -168,14 +153,7 @@ class OperationController
         $nameMap = [];
         foreach ($teams as $t) { $nameMap[(int)$t['team_id']] = $t['team_name']; }
 
-        $pendingApps = dbq(
-            "SELECT ea.id, ea.team_id, t.name AS team_name, ea.offered_people, ea.comment
-             FROM event_applications ea
-             JOIN volunteer_teams t ON t.id = ea.team_id
-             WHERE ea.event_id = :eid AND ea.status = 'pending'
-             ORDER BY ea.submitted_at ASC",
-            ['eid' => $eid]
-        )->fetchAll();
+        $pendingApps = $this->pendingApplicationsForEvent($eid);
 
         json_out([
             'ok'           => true,
@@ -209,24 +187,7 @@ class OperationController
         $event = Event::findForCurrent($id);
         $eid   = $event['id'];
 
-        $pings = dbq(
-            "SELECT lp.team_id, t.name AS team_name, lp.latitude, lp.longitude,
-                    lp.accuracy, lp.message, lp.created_at,
-                    TIMESTAMPDIFF(MINUTE, lp.created_at, NOW()) AS age_min
-             FROM location_pings lp
-             JOIN volunteer_teams t ON t.id = lp.team_id
-             WHERE lp.event_id = :eid
-               AND lp.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
-             ORDER BY lp.created_at DESC",
-            ['eid' => $eid]
-        )->fetchAll();
-
-        $latest = [];
-        foreach ($pings as $p) {
-            if (!isset($latest[$p['team_id']])) {
-                $latest[$p['team_id']] = $p;
-            }
-        }
+        $latest = $this->latestPingsByTeam($eid);
 
         $approvedRows = dbq(
             "SELECT ea.team_id, t.name AS team_name FROM event_applications ea
@@ -622,42 +583,10 @@ class OperationController
         ['totalApproved' => $totalApproved, 'totalPresent' => $totalPresent,
          'checkedInCount' => $checkedInCount, 'coverage' => $coverage] = $stats;
 
-        $shortages = dbq(
-            "SELECT sr.*, t.name AS team_name
-             FROM shortage_reports sr
-             JOIN volunteer_teams t ON t.id = sr.team_id
-             WHERE sr.event_id = :eid
-             ORDER BY FIELD(sr.status,'open','acknowledged','resolved'),
-                      FIELD(sr.severity,'critical','high','medium','low'), sr.created_at DESC",
-            ['eid' => $eid]
-        )->fetchAll();
-
-        $notes = dbq(
-            "SELECT n.*, u.name AS author_name FROM operational_notes n
-             JOIN users u ON u.id = n.user_id
-             WHERE n.event_id = :eid ORDER BY n.created_at DESC LIMIT 30",
-            ['eid' => $eid]
-        )->fetchAll();
-
-        $activity = $this->buildActivityFeed($eid);
-
-        $pingRows = dbq(
-            "SELECT lp.team_id, t.name AS team_name, lp.latitude, lp.longitude,
-                    lp.accuracy, lp.message, lp.created_at,
-                    TIMESTAMPDIFF(MINUTE, lp.created_at, NOW()) AS age_min
-             FROM location_pings lp
-             JOIN volunteer_teams t ON t.id = lp.team_id
-             WHERE lp.event_id = :eid
-               AND lp.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
-             ORDER BY lp.created_at DESC",
-            ['eid' => $eid]
-        )->fetchAll();
-        $latestPings = [];
-        foreach ($pingRows as $p) {
-            if (!isset($latestPings[$p['team_id']])) {
-                $latestPings[$p['team_id']] = $p;
-            }
-        }
+        $shortages = $this->shortagesForEvent($eid);
+        $notes     = $this->notesForEvent($eid);
+        $activity  = $this->buildActivityFeed($eid);
+        $latestPings = $this->latestPingsByTeam($eid);
 
         $pendingPhoto = array_flip(array_map('intval', PhotoRequest::pendingTeamIds($eid)));
         $pendingGps   = array_flip(array_map('intval', GpsRequest::pendingTeamIds($eid)));
@@ -698,14 +627,7 @@ class OperationController
         // Check for teams that have gone silent beyond the configured threshold.
         $this->checkSilentTeams($eid, $event, $teamsPayload);
 
-        $pendingApps = dbq(
-            "SELECT ea.id, ea.team_id, t.name AS team_name, ea.offered_people, ea.comment
-             FROM event_applications ea
-             JOIN volunteer_teams t ON t.id = ea.team_id
-             WHERE ea.event_id = :eid AND ea.status = 'pending'
-             ORDER BY ea.submitted_at ASC",
-            ['eid' => $eid]
-        )->fetchAll();
+        $pendingApps = $this->pendingApplicationsForEvent($eid);
 
         return [
             'ok'           => true,
@@ -733,6 +655,71 @@ class OperationController
                                   array_column($teams, 'team_name', 'team_id')),
             'pending_apps' => $pendingApps,
         ];
+    }
+
+    /**
+     * Shared by status(), stream()/buildStreamSnapshot() — single source of truth so
+     * the two views of the same event can't drift out of sync with each other.
+     */
+    private function shortagesForEvent(int $eid): array
+    {
+        return dbq(
+            "SELECT sr.*, t.name AS team_name, ua.name AS ack_name, ur.name AS res_name
+             FROM shortage_reports sr
+             JOIN volunteer_teams t ON t.id = sr.team_id
+             LEFT JOIN users ua ON ua.id = sr.acknowledged_by
+             LEFT JOIN users ur ON ur.id = sr.resolved_by
+             WHERE sr.event_id = :eid
+             ORDER BY FIELD(sr.status,'open','acknowledged','resolved'),
+                      FIELD(sr.severity,'critical','high','medium','low'), sr.created_at DESC",
+            ['eid' => $eid]
+        )->fetchAll();
+    }
+
+    private function notesForEvent(int $eid): array
+    {
+        return dbq(
+            "SELECT n.*, u.name AS author_name FROM operational_notes n
+             JOIN users u ON u.id = n.user_id
+             WHERE n.event_id = :eid ORDER BY n.created_at DESC LIMIT 30",
+            ['eid' => $eid]
+        )->fetchAll();
+    }
+
+    private function pendingApplicationsForEvent(int $eid): array
+    {
+        return dbq(
+            "SELECT ea.id, ea.team_id, t.name AS team_name, ea.offered_people, ea.comment
+             FROM event_applications ea
+             JOIN volunteer_teams t ON t.id = ea.team_id
+             WHERE ea.event_id = :eid AND ea.status = 'pending'
+             ORDER BY ea.submitted_at ASC",
+            ['eid' => $eid]
+        )->fetchAll();
+    }
+
+    /** Most recent ping (last 2h) per team, keyed by team_id. Also used by locations(). */
+    private function latestPingsByTeam(int $eid): array
+    {
+        $rows = dbq(
+            "SELECT lp.team_id, t.name AS team_name, lp.latitude, lp.longitude,
+                    lp.accuracy, lp.message, lp.created_at,
+                    TIMESTAMPDIFF(MINUTE, lp.created_at, NOW()) AS age_min
+             FROM location_pings lp
+             JOIN volunteer_teams t ON t.id = lp.team_id
+             WHERE lp.event_id = :eid
+               AND lp.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
+             ORDER BY lp.created_at DESC",
+            ['eid' => $eid]
+        )->fetchAll();
+
+        $latest = [];
+        foreach ($rows as $p) {
+            if (!isset($latest[$p['team_id']])) {
+                $latest[$p['team_id']] = $p;
+            }
+        }
+        return $latest;
     }
 
     /** POST /operations/events/{id}/note */
