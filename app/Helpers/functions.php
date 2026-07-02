@@ -78,7 +78,7 @@ function url($path = '/')
     return base_uri() . '/' . ltrim($path, '/');
 }
 
-function redirect($path)
+function redirect($path): never
 {
     header('Location: ' . url($path));
     exit;
@@ -94,7 +94,7 @@ function wants_json()
         || strpos($ctype, 'application/json') !== false;
 }
 
-function json_out($data, $code = 200)
+function json_out($data, $code = 200): never
 {
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
@@ -378,7 +378,7 @@ function audit($action, $entityType = null, $entityId = null, $details = null)
 
 /* ----------------------------------------------------------------- Views */
 
-function render($view, array $data = [], $withLayout = true)
+function render($view, array $data = [], $withLayout = true): never
 {
     $config = config('config');
     $needsLeaflet = $data['needsLeaflet'] ?? in_array($view, ['events/show', 'team/event_show'], true);
@@ -397,7 +397,7 @@ function render($view, array $data = [], $withLayout = true)
     exit;
 }
 
-function abort($code, $message = null)
+function abort($code, $message = null): never
 {
     http_response_code($code);
     if (wants_json()) {

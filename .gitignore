@@ -2,6 +2,10 @@
 /vendor/
 /node_modules/
 
+# Dev tooling artifacts
+/.phpunit.result.cache
+/.phpunit.cache/
+
 # Runtime / generated
 /storage/logs/*
 /storage/exports/*

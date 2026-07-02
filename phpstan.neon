@@ -1,0 +1,10 @@
+parameters:
+    level: 5
+    paths:
+        - app
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    treatPhpDocTypesAsCertain: false
+
+includes:
+    - phpstan-baseline.neon

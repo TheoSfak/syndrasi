@@ -1,0 +1,56 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: app/Controllers/FieldController.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 2
+			path: app/Controllers/MaintenanceController.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 5
+			path: app/Controllers/OperationController.php
+
+		-
+			message: "#^Right side of \\|\\| is always false\\.$#"
+			count: 1
+			path: app/Services/FireRiskMapService.php
+
+		-
+			message: "#^Ternary operator condition is always true\\.$#"
+			count: 1
+			path: app/Services/FireRiskMapService.php
+
+		-
+			message: "#^Right side of \\|\\| is always false\\.$#"
+			count: 1
+			path: app/Services/FireServiceIncidentService.php
+
+		-
+			message: "#^Instantiated class PHPMailer\\\\PHPMailer\\\\PHPMailer not found\\.$#"
+			count: 1
+			path: app/Services/MailService.php
+
+		-
+			message: "#^Property SmtpMailer\\:\\:\\$log is never read, only written\\.$#"
+			count: 1
+			path: app/Services/SmtpMailer.php
+
+		-
+			message: "#^Right side of && is always false\\.$#"
+			count: 1
+			path: app/Services/TelegramService.php
+
+		-
+			message: "#^Static method UpdateService\\:\\:putSetting\\(\\) is unused\\.$#"
+			count: 1
+			path: app/Services/UpdateService.php
+
+		-
+			message: "#^Static method UpdateService\\:\\:setting\\(\\) is unused\\.$#"
+			count: 1
+			path: app/Services/UpdateService.php
