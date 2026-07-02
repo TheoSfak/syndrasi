@@ -394,6 +394,17 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
       </div>
     </div>
 
+    <!-- Resource dispatch requests (Smart Resource Dispatch) -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-box-seam me-1 text-primary"></i>Αιτήματα πόρων</span>
+        <span class="badge bg-primary" id="rrBadge">0</span>
+      </div>
+      <div class="card-body p-2" id="resReqBox">
+        <div class="text-muted small py-2 text-center">Κανένα αίτημα πόρου</div>
+      </div>
+    </div>
+
     <!-- Activity feed -->
     <div class="card flex-grow-1">
       <div class="card-header">
@@ -976,6 +987,18 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
       } else if (s.status === 'acknowledged') {
         actions = '<button type="button" class="btn btn-outline-success btn-sm py-0 sh-res-btn" data-id="' + s.id + '">Λύθηκε</button>';
       }
+      var sug = '';
+      if (s.suggestions && s.suggestions.length && s.status !== 'resolved') {
+        s.suggestions.forEach(function(g) {
+          var itemsTxt = (g.items || []).join(', ');
+          sug += '<div class="d-flex align-items-center gap-1 small mt-1">' +
+                 '<i class="bi bi-lightbulb-fill text-warning flex-shrink-0"></i>' +
+                 '<span class="text-truncate">' + esc(g.team_name) + ' — ' + esc(itemsTxt) +
+                 (g.in_event ? ' <span class="badge text-bg-info">στη δράση</span>' : '') + '</span>' +
+                 '<button type="button" class="btn btn-outline-primary btn-sm py-0 ms-auto flex-shrink-0 rr-req-btn" data-shortage="' + s.id + '" data-team="' + g.team_id + '" data-item="' + encodeURIComponent((g.items || [])[0] || '') + '">Αίτημα</button>' +
+                 '</div>';
+        });
+      }
       html += '<div class="card sc ' + s.status + ' mb-1 p-2">' +
               '<div class="d-flex justify-content-between align-items-start">' +
               '<div><span class="badge text-bg-' + (sevCls[sev]||'secondary') + ' me-1">' + (sevLbl[sev]||sev) + '</span>' +
@@ -983,6 +1006,40 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
               '<div class="text-muted small">' + esc(s.team_name) + '</div></div>' +
               '<span class="badge text-bg-' + (s.status==='open'?'danger':s.status==='acknowledged'?'warning':'success') + '">' +
               (s.status==='open'?'Ανοιχτή':s.status==='acknowledged'?'Σε γνώση':'Λύθηκε') + '</span></div>' +
+              sug +
+              (actions ? '<div class="d-flex gap-1 mt-2 justify-content-end">' + actions + '</div>' : '') +
+              '</div>';
+    });
+    box.innerHTML = html;
+  }
+
+  /* ─── Resource dispatch requests (Smart Resource Dispatch) ─── */
+  function renderResourceRequests(items) {
+    var box = document.getElementById('resReqBox');
+    if (!box) return;
+    items = items || [];
+    var open = items.filter(function(r){ return r.status === 'pending' || r.status === 'accepted'; }).length;
+    var badge = document.getElementById('rrBadge');
+    if (badge) badge.textContent = open;
+    if (!items.length) {
+      box.innerHTML = '<div class="text-muted small py-2 text-center">Κανένα αίτημα πόρου</div>';
+      return;
+    }
+    var stCls = { pending:'secondary', accepted:'info', delivered:'success', declined:'danger', cancelled:'light' };
+    var stLbl = { pending:'Εκκρεμεί', accepted:'Αποδεκτό', delivered:'Παραδόθηκε', declined:'Αδυναμία', cancelled:'Ακυρώθηκε' };
+    var html = '';
+    items.forEach(function(r) {
+      var actions = '';
+      if (r.status === 'pending' || r.status === 'accepted') {
+        actions = '<button type="button" class="btn btn-outline-success btn-sm py-0 rr-del-btn" data-id="' + r.id + '">Παραδόθηκε</button>' +
+                  '<button type="button" class="btn btn-outline-secondary btn-sm py-0 rr-can-btn" data-id="' + r.id + '">Ακύρωση</button>';
+      }
+      var eta = (r.status === 'accepted' && r.eta_minutes) ? ' · ' + r.eta_minutes + "'" : '';
+      html += '<div class="card sc mb-1 p-2">' +
+              '<div class="d-flex justify-content-between align-items-start">' +
+              '<div><strong class="small">' + esc(r.item_label) + '</strong>' +
+              '<div class="text-muted small">' + esc(r.team_name) + (r.shortage_title ? ' · ' + esc(r.shortage_title) : '') + '</div></div>' +
+              '<span class="badge text-bg-' + (stCls[r.status] || 'secondary') + '">' + (stLbl[r.status] || r.status) + eta + '</span></div>' +
               (actions ? '<div class="d-flex gap-1 mt-2 justify-content-end">' + actions + '</div>' : '') +
               '</div>';
     });
@@ -1208,6 +1265,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     renderTeams(d.teams);
     renderTeamBoard(d.teams, d.sos, d.stats);
     renderShortages(d.shortages);
+    renderResourceRequests(d.resource_requests || []);
     renderActivity(d.activity);
     renderNotes(d.notes);
     if (d.pending_apps !== undefined) renderPendingApps(d.pending_apps);
@@ -1645,6 +1703,9 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     else if ((b = e.target.closest('.sos-res-btn'))) { if (confirm('Κλείσιμο SOS;')) { b.disabled = true; postForm('/sos/' + b.dataset.id + '/resolve', {}).then(pollStatus); } }
     else if ((b = e.target.closest('.sh-ack-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/acknowledge', {}).then(pollStatus); }
     else if ((b = e.target.closest('.sh-res-btn'))) { b.disabled = true; postForm('/shortages/' + b.dataset.id + '/resolve', {}).then(pollStatus); }
+    else if ((b = e.target.closest('.rr-req-btn'))) { b.disabled = true; postForm('/operations/events/' + EID + '/resource-request', { team_id: b.dataset.team, shortage_id: b.dataset.shortage, item_label: decodeURIComponent(b.dataset.item) }).then(function(d){ if (d && d.ok === false && d.error) alert(d.error); pollStatus(); }); }
+    else if ((b = e.target.closest('.rr-del-btn'))) { b.disabled = true; postForm('/operations/resource-requests/' + b.dataset.id + '/delivered', {}).then(pollStatus); }
+    else if ((b = e.target.closest('.rr-can-btn'))) { b.disabled = true; postForm('/operations/resource-requests/' + b.dataset.id + '/cancel', {}).then(pollStatus); }
     else if (IS_ADMIN && (b = e.target.closest('.app-approve-btn'))) {
       var appRow = b.closest('[data-app-id]');
       var inp    = appRow ? appRow.querySelector('.app-people-inp') : null;
