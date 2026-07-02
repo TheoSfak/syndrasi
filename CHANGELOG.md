@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.13-beta] — 2026-07-02
+
+### Docs — Spec «Έξυπνη Διάθεση Πόρων» (Smart Resource Dispatch)
+
+- Νέο `docs/RESOURCE_DISPATCH_SPEC.md`: σχεδιασμός για αυτόματη πρόταση ομάδας-πόρου σε
+  κάθε έλλειψη (πάνω στο υπάρχον readiness σύστημα — `readiness_items_json`,
+  `TeamMissionMatcher`, `shortage_reports`), αιτήματα διάθεσης με απάντηση Αποδοχή/Αδυναμία
+  από field hub / team live, παρακολούθηση pending→accepted→delivered στο war-room και
+  μετρικές απόκρισης στο Story. Migration 039, target 0.16.x. Χωρίς αλλαγές κώδικα.
+
 ## [0.15.12-beta] — 2026-07-02
 
 ### Security — Deny-by-default route middleware
