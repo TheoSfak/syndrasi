@@ -4,6 +4,35 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.15.12-beta] — 2026-07-02
+
+### Security — Deny-by-default route middleware
+
+- Το `Router::dispatch()` πλέον επιβάλλει έλεγχο πρόσβασης πριν αρχικοποιήσει οποιονδήποτε controller: κάθε route δηλώνει ρητά `['public' => true]` ή `['roles' => [...]]`, αλλιώς απαιτείται συνδεδεμένος χρήστης εξ ορισμού.
+- Πριν, η ασφάλεια εξαρτιόταν αποκλειστικά από το να θυμηθεί κάθε action να καλέσει `requireRole()`/`requireLogin()` — ένα νέο route χωρίς αυτή τη γραμμή έμενε ανοιχτό σιωπηλά. Ελέγχθηκαν και σχολιάστηκαν και τα 227 υπάρχοντα routes.
+- Εντοπίστηκε και διορθώθηκε ένα route (`/mobilizations` και σχετικά) που δεν είχε κανέναν έλεγχο σε επίπεδο router.
+- Άγνωστος controller σε route πλέον επιστρέφει καθαρό 500 αντί για fatal error.
+
+### Technical — Πρώτο δίχτυ ασφαλείας: PHPStan + PHPUnit + CI
+
+- Προστέθηκε `composer.json` (μόνο dev dependencies· η εφαρμογή παραμένει χωρίς runtime dependencies), PHPStan (level 5) και PHPUnit, με GitHub Actions να τρέχει lint + phpstan + phpunit σε κάθε push/PR.
+- Το PHPStan εντόπισε άμεσα δύο πραγματικά bugs (πιθανώς μη-ορισμένες μεταβλητές μετά από redirect() μέσα σε catch block) — διορθώθηκαν προσθέτοντας `never` return type στα `redirect()`, `json_out()`, `render()`, `abort()`.
+- 22 αρχικά unit tests για την καθαρή λογική χωρίς side-effects (μηχανή καταστάσεων `Event::canTransition()`, ελληνικά labels/μορφοποίηση, ορολογία φορέων).
+
+### Cleanup — Αφαίρεση διπλότυπου κώδικα ανεβάσματος φωτογραφιών/βίντεο
+
+- Νέα κλάση `MediaUploader` συγκεντρώνει τον έλεγχο μεγέθους/τύπου αρχείου, αποθήκευση και lat/lng clamping που ήταν αντιγραμμένος σχεδόν αυτούσιος σε 4 σημεία (`FieldController::photo/video`, `TeamPortalController::uploadPhoto/uploadVideo`).
+- Διορθώθηκαν 4 άδεια `catch (Throwable $e) {}` γύρω από ειδοποιήσεις — πλέον καταγράφονται στο error log αντί να καταπίνονται σιωπηλά.
+
+### Cleanup — Ενοποίηση ερωτημάτων live-ops
+
+- Τα `status()`, `stream()` και `locations()` του `OperationController` είχαν το καθένα δικό του αντίγραφο των ερωτημάτων για ελλείψεις/σημειώσεις/αιτήσεις/στίγματα — είχαν ήδη αποκλίνει (η ζωντανή προβολή δεν έδειχνε ποιος επιβεβαίωσε/έλυσε μια έλλειψη, ενώ η χειροκίνητη ανανέωση ναι). Ενοποιήθηκαν σε κοινές συναρτήσεις.
+
+### Cleanup — Έξοδος rate-limit και σημαιών cron από τα app_settings
+
+- Νέος πίνακας `rate_limits` για τους μετρητές rate-limit σύνδεσης/επαναφοράς κωδικού (migration 037).
+- Το `event_shifts` αποκτά στήλη `reminded_at` (migration 038) αντί για μία εγγραφή `app_settings` ανά βάρδια για πάντα, που απαιτούσε περιοδικό καθαρισμό.
+
 ## [0.15.11-beta] — 2026-07-01
 
 ### Fix — Telegram supergroup migration
