@@ -1,19 +1,25 @@
 <?php
 /**
  * SynDrasi - Minimal router with {param} placeholders (numeric IDs).
+ *
+ * Every route is deny-by-default: dispatch() requires a logged-in session
+ * before invoking the controller, unless the route is registered with
+ * ['public' => true]. Pass ['roles' => [...]] to further restrict to
+ * specific roles (checked via requireRole()). A route with neither option
+ * still requires login, but allows any authenticated role through.
  */
 class Router
 {
     private $routes = [];
 
-    public function get($pattern, $handler)
+    public function get($pattern, $handler, array $options = [])
     {
-        $this->routes[] = ['GET', $pattern, $handler];
+        $this->routes[] = ['GET', $pattern, $handler, $options];
     }
 
-    public function post($pattern, $handler)
+    public function post($pattern, $handler, array $options = [])
     {
-        $this->routes[] = ['POST', $pattern, $handler];
+        $this->routes[] = ['POST', $pattern, $handler, $options];
     }
 
     public function dispatch($method, $uri)
@@ -36,7 +42,7 @@ class Router
         }
 
         foreach ($this->routes as $route) {
-            list($m, $pattern, $handler) = $route;
+            list($m, $pattern, $handler, $options) = $route;
             if ($m !== $method) {
                 continue;
             }
@@ -51,12 +57,29 @@ class Router
             ) . '$#';
             if (preg_match($regex, $path, $matches)) {
                 array_shift($matches);
+                $this->enforceAccess($options);
                 list($class, $action) = explode('@', $handler);
+                if (!class_exists($class)) {
+                    abort(500, 'Άγνωστος ελεγκτής δρομολόγησης.');
+                }
                 $controller = new $class();
                 return call_user_func_array([$controller, $action], $matches);
             }
         }
 
         abort(404, 'Η σελίδα δεν βρέθηκε.');
+    }
+
+    /** Deny-by-default access gate, run before the controller is instantiated. */
+    private function enforceAccess(array $options)
+    {
+        if (!empty($options['public'])) {
+            return;
+        }
+        if (!empty($options['roles'])) {
+            requireRole($options['roles']);
+            return;
+        }
+        requireLogin();
     }
 }
