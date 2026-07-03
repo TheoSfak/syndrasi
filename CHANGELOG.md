@@ -4,6 +4,21 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.3-beta] — 2026-07-02
+
+### Feature — Έξυπνη Διάθεση Πόρων, Φάση 4 (Εικόνα Ετοιμότητας)
+
+- Νέο widget «Εικόνα Ετοιμότητας» στον Πίνακα Ελέγχου: πόσες ενεργές ομάδες διαθέτουν
+  όχημα / υγειονομικό και πόσες έχουν δηλώσει κάθε πόρο/ικανότητα (π.χ. «Γεννήτρια ×2»),
+  από τα υπάρχοντα Προφίλ Ετοιμότητας — κανένα νέο schema.
+- Τα διπλότυπα items ανά ομάδα (διαφορά κεφαλαίων/κενών) μετρούν μία φορά.
+- Αν καμία ομάδα δεν έχει συμπληρώσει προφίλ, το widget προτρέπει να ζητηθεί από τους
+  αρχηγούς ομάδων.
+
+Ολοκληρώνεται το Smart Resource Dispatch (Φάσεις 1–4, βλ. docs/RESOURCE_DISPATCH_SPEC.md).
+
+---
+
 ## [0.16.2-beta] — 2026-07-02
 
 ### Feature — Έξυπνη Διάθεση Πόρων, Φάση 3 (επίλυση με ένα κλικ + μετρικές Story)
