@@ -259,6 +259,34 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
   </div>
 </div>
 
+<?php /* ── Εικόνα Ετοιμότητας (Smart Resource Dispatch, Φάση 4) ── */ ?>
+<?php if (!empty($readiness['teams'])): ?>
+<div class="card border-0 shadow-sm mb-4" style="border-radius:1rem;">
+  <div class="card-body p-4">
+    <div class="section-hd" style="--c-primary:#0d9488">
+      <i class="bi bi-box-seam me-1"></i>Εικόνα Ετοιμότητας
+      <span class="text-muted fw-normal small ms-1">— δηλωμένοι πόροι στις <?= (int) $readiness['teams'] ?> ενεργές ομάδες</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      <span class="badge rounded-pill text-bg-<?= $readiness['vehicle'] > 0 ? 'success' : 'secondary' ?>" style="font-size:.78rem">
+        <i class="bi bi-truck me-1"></i>Όχημα: <?= (int) $readiness['vehicle'] ?>/<?= (int) $readiness['teams'] ?>
+      </span>
+      <span class="badge rounded-pill text-bg-<?= $readiness['medical'] > 0 ? 'success' : 'secondary' ?>" style="font-size:.78rem">
+        <i class="bi bi-heart-pulse me-1"></i>Υγειονομικό: <?= (int) $readiness['medical'] ?>/<?= (int) $readiness['teams'] ?>
+      </span>
+      <?php foreach ($readiness['items'] as $it): ?>
+        <span class="badge rounded-pill" style="font-size:.78rem;background:#ccfbf1;color:#0f766e">
+          <?= e($it['label']) ?> <span class="fw-bold">×<?= (int) $it['teams'] ?></span>
+        </span>
+      <?php endforeach; ?>
+      <?php if (!$readiness['items'] && !$readiness['vehicle'] && !$readiness['medical']): ?>
+        <span class="text-muted small">Καμία ομάδα δεν έχει συμπληρώσει ακόμη το Προφίλ Ετοιμότητας — ζητήστε το από τους αρχηγούς ομάδων (Team Portal → Ετοιμότητα Ομάδας).</span>
+      <?php endif; ?>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
 <!-- ── Row 4: Upcoming events ───────────────────────────────── -->
 <?php if ($upcoming): ?>
 <div class="card border-0 shadow-sm mb-4" style="border-radius:1rem;">

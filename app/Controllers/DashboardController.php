@@ -153,8 +153,36 @@ class DashboardController
             ['mid'=>$mid]
         )->fetchAll();
 
+        /* ── Εικόνα ετοιμότητας (Smart Resource Dispatch, Φάση 4) ──────
+           Άθροισμα δηλωμένων πόρων/ικανοτήτων στις ενεργές ομάδες — από τα
+           υπάρχοντα πεδία readiness_items_json / has_vehicle /
+           has_medical_equipment, κανένα νέο schema. */
+        $readiness = ['teams' => 0, 'vehicle' => 0, 'medical' => 0, 'items' => []];
+        $readinessTeams = dbq(
+            "SELECT has_vehicle, has_medical_equipment, readiness_items_json
+             FROM volunteer_teams WHERE municipality_id = :mid AND status = 'active'",
+            ['mid' => $mid]
+        )->fetchAll();
+        $itemCounts = [];
+        foreach ($readinessTeams as $t) {
+            $readiness['teams']++;
+            if ((int) $t['has_vehicle']) { $readiness['vehicle']++; }
+            if ((int) $t['has_medical_equipment']) { $readiness['medical']++; }
+            $seenThisTeam = [];
+            foreach (VolunteerTeam::readinessItems($t) as $item) {
+                $key = mb_strtolower($item, 'UTF-8');
+                if (isset($seenThisTeam[$key])) { continue; } // μία φορά ανά ομάδα
+                $seenThisTeam[$key] = true;
+                if (!isset($itemCounts[$key])) { $itemCounts[$key] = ['label' => $item, 'teams' => 0]; }
+                $itemCounts[$key]['teams']++;
+            }
+        }
+        usort($itemCounts, fn($a, $b) => [$b['teams'], $a['label']] <=> [$a['teams'], $b['label']]);
+        $readiness['items'] = array_values($itemCounts);
+
         render('dashboard/municipality', [
             'pageTitle'           => 'Πίνακας Ελέγχου',
+            'readiness'           => $readiness,
             'openEvents'          => $openEvents,
             'pendingApplications' => $pendingApplications,
             'confirmedEvents'     => $confirmedEvents,
