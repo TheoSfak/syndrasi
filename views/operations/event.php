@@ -1179,8 +1179,8 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
       box.innerHTML = '<div class="text-muted small py-2 text-center">Δεν υπάρχει δραστηριότητα ακόμα.</div>';
       return;
     }
-    var iconMap = { checkin:'bi-check-circle-fill', shortage:'bi-exclamation-triangle-fill', note:'bi-journal-text' };
-    var clsMap  = { checkin:'bg-success text-white', shortage:'bg-danger text-white', note:'bg-warning text-dark' };
+    var iconMap = { checkin:'bi-check-circle-fill', shortage:'bi-exclamation-triangle-fill', note:'bi-journal-text', resource:'bi-box-seam' };
+    var clsMap  = { checkin:'bg-success text-white', shortage:'bg-danger text-white', note:'bg-warning text-dark', resource:'bg-info text-white' };
     var html = '';
     items.forEach(function(a) {
       var ic = iconMap[a.type] || 'bi-dot';

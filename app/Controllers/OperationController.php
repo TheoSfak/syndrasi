@@ -1374,10 +1374,31 @@ class OperationController
                 FROM operational_notes n
                 JOIN users u ON u.id = n.user_id
                 WHERE n.event_id = :eid3
+                UNION ALL
+                SELECT 'resource', rr.created_at, t.name,
+                       CONCAT('Αίτημα πόρου: ', rr.item_label), ''
+                FROM resource_requests rr
+                JOIN volunteer_teams t ON t.id = rr.from_team_id
+                WHERE rr.event_id = :eid4
+                UNION ALL
+                SELECT 'resource', rr.responded_at, t.name,
+                       CONCAT(CASE rr.status WHEN 'accepted' THEN 'Αποδοχή πόρου: ' ELSE 'Αδυναμία πόρου: ' END,
+                              rr.item_label,
+                              CASE WHEN rr.eta_minutes IS NOT NULL THEN CONCAT(' (ETA ', rr.eta_minutes, '′)') ELSE '' END), ''
+                FROM resource_requests rr
+                JOIN volunteer_teams t ON t.id = rr.from_team_id
+                WHERE rr.event_id = :eid5 AND rr.responded_at IS NOT NULL
+                  AND rr.status IN ('accepted','declined')
+                UNION ALL
+                SELECT 'resource', rr.delivered_at, t.name,
+                       CONCAT('Παράδοση πόρου: ', rr.item_label), ''
+                FROM resource_requests rr
+                JOIN volunteer_teams t ON t.id = rr.from_team_id
+                WHERE rr.event_id = :eid6 AND rr.delivered_at IS NOT NULL
              ) feed
              ORDER BY ts DESC
              LIMIT 25",
-            ['eid' => $eid, 'eid2' => $eid, 'eid3' => $eid]
+            ['eid' => $eid, 'eid2' => $eid, 'eid3' => $eid, 'eid4' => $eid, 'eid5' => $eid, 'eid6' => $eid]
         )->fetchAll();
     }
 }

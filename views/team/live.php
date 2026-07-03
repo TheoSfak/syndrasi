@@ -402,6 +402,17 @@ body { min-height: 100dvh; }
 .order-pin-btn:active { transform: scale(.98); }
 .order-pin-time { font-size: 11px; color: #fde68a; opacity: .8; margin-top: 8px; text-align: right; }
 
+/* ── Resource request card (Smart Resource Dispatch, Φάση 2) ─────────────── */
+.resource-pin { background: linear-gradient(135deg, #134e4a 0%, #0f766e 100%); border: 1px solid #2dd4bf; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.resource-pin-head { font-weight: 900; color: #99f6e4; font-size: 14px; letter-spacing: .03em; display: flex; align-items: center; gap: 6px; }
+.resource-pin-body { color: #fff; font-size: 17px; font-weight: 700; margin: 8px 0 12px; line-height: 1.35; }
+.resource-pin-input { width: 100%; margin-bottom: 8px; padding: 11px 12px; border-radius: 10px; border: 1px solid #14b8a6; background: #042f2e; color: #ccfbf1; font-size: 14px; }
+.resource-pin-input::placeholder { color: #5eead4; opacity: .7; }
+.resource-accept-btn { background: #2dd4bf; color: #042f2e; border: none; border-radius: 12px; font-weight: 800; font-size: 15px; padding: 14px 16px; width: 100%; cursor: pointer; }
+.resource-accept-btn:active { transform: scale(.98); }
+.resource-decline-btn { background: transparent; color: #99f6e4; border: 1px solid #5eead4; border-radius: 12px; font-weight: 700; font-size: 14px; padding: 11px 16px; width: 100%; cursor: pointer; margin-top: 8px; }
+.resource-pin-time { font-size: 11px; color: #99f6e4; opacity: .8; margin-top: 8px; text-align: right; }
+
 /* ── Request banners (GPS / photo) ───────────────────────────────────────── */
 .req-banner {
   margin: 0 0 0; padding: 10px 16px;
@@ -510,6 +521,9 @@ foreach (flash_get() as $flash):
 
   <!-- Pinned ΕΝΤΟΛΕΣ (unacknowledged orders) -->
   <div id="orderBanner" style="display:none"></div>
+
+  <!-- Resource dispatch requests (Smart Resource Dispatch, Φάση 2) -->
+  <div id="resourceBox" style="display:none"></div>
 
   <!-- ── 0. SOS / Έκτακτη Ανάγκη ────────────────────────────────────── -->
   <div>
@@ -1102,6 +1116,42 @@ foreach (flash_get() as $flash):
     });
   }
 
+  /* ── Resource dispatch requests (Φάση 2) ────────────────────────── */
+  var resourceBoxEl = document.getElementById('resourceBox');
+  var lastRrIds = null;
+  function renderResourceRequests(list) {
+    if (!resourceBoxEl) return;
+    list = list || [];
+    var ids = list.map(function (r) { return r.id; }).join(',');
+    if (ids === lastRrIds) return; /* don't clobber ETA/note inputs while typing */
+    lastRrIds = ids;
+    if (!list.length) { resourceBoxEl.innerHTML = ''; resourceBoxEl.style.display = 'none'; return; }
+    resourceBoxEl.style.display = '';
+    resourceBoxEl.innerHTML = list.map(function (r) {
+      var t = (r.created_at || '').substr(11, 5);
+      return '<div class="resource-pin">' +
+        '<div class="resource-pin-head"><i class="bi bi-box-seam"></i> ΑΙΤΗΜΑ ΠΟΡΟΥ ΑΠΟ ' + escapeHtml(ORG_LABEL) + '</div>' +
+        '<div class="resource-pin-body">' + escapeHtml(r.item_label || '') + '</div>' +
+        '<input type="number" class="resource-pin-input" id="rrEta' + r.id + '" min="1" max="1440" inputmode="numeric" placeholder="ETA σε λεπτά (προαιρετικό)">' +
+        '<input type="text" class="resource-pin-input" id="rrNote' + r.id + '" maxlength="255" placeholder="Σχόλιο (προαιρετικό)">' +
+        '<button type="button" class="resource-accept-btn" onclick="respondResource(' + r.id + ',\'accept\')"><i class="bi bi-check2-circle"></i> Αποδοχή — το διαθέτουμε</button>' +
+        '<button type="button" class="resource-decline-btn" onclick="respondResource(' + r.id + ',\'decline\')">Αδυναμία διάθεσης</button>' +
+        '<div class="resource-pin-time">' + t + '</div></div>';
+    }).join('');
+  }
+  window.respondResource = function (id, action) {
+    var eta  = document.getElementById('rrEta' + id);
+    var note = document.getElementById('rrNote' + id);
+    var body = { action: action };
+    if (action === 'accept' && eta && eta.value) { body.eta_minutes = parseInt(eta.value, 10); }
+    if (note && note.value.trim()) { body.note = note.value.trim(); }
+    postJSON('/team/resource-requests/' + id + '/respond', body).then(function (d) {
+      if (d && !d.success && d.message) { alert(d.message); }
+      lastRrIds = null; /* force re-render on next poll */
+      pollComms();
+    }).catch(function () {});
+  };
+
   /* ── GPS / Photo request banners ────────────────────────────────── */
   var gpsBannerEl  = document.getElementById('gpsBanner');
   var photoBannerEl = document.getElementById('photoBanner');
@@ -1246,6 +1296,7 @@ foreach (flash_get() as $flash):
           renderRoom(d.room);
           renderRequests(d.photo_request, d.gps_request);
           renderVideoRequest(d.video_request);
+          renderResourceRequests(d.resource_requests);
           renderShortages(d.shortages);
         }
       })

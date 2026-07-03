@@ -166,6 +166,10 @@ $router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage', 
 $router->post('/operations/events/{id}/resource-request', 'OperationController@createResourceRequest', ['roles' => ['municipality_admin', 'event_operator']]);
 $router->post('/operations/resource-requests/{id}/delivered', 'OperationController@resourceRequestDelivered', ['roles' => ['municipality_admin', 'event_operator']]);
 $router->post('/operations/resource-requests/{id}/cancel', 'OperationController@resourceRequestCancel', ['roles' => ['municipality_admin', 'event_operator']]);
+
+/* Smart Resource Dispatch (Φάση 2): απάντηση ομάδας από team live ή field link */
+$router->post('/team/resource-requests/{id}/respond', 'TeamPortalController@respondResourceRequest', ['roles' => ['team_admin']]);
+$router->post('/f/{token}/resource-requests/{id}/respond', 'FieldController@respondResourceRequest', ['public' => true]);
 $router->post('/sos/{id}/acknowledge', 'OperationController@sosAck', ['roles' => ['municipality_admin', 'event_operator']]);
 $router->post('/sos/{id}/resolve', 'OperationController@sosResolve', ['roles' => ['municipality_admin', 'event_operator']]);
 

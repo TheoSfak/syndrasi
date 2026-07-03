@@ -786,6 +786,28 @@ class NotificationService
         self::notifyTeam((int) $team['id'], (int) $event['id'], $title, $msg, 'resource_request', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
     }
 
+    /** Ομάδα αποδέχθηκε αίτημα πόρου (Φάση 2) — ενημέρωση προσωπικού διοίκησης. */
+    public static function resourceAccepted(array $event, array $team, string $item, ?int $etaMinutes = null)
+    {
+        $et    = self::eventTerms((int) $event['municipality_id']);
+        $title = 'Αποδοχή αιτήματος πόρου';
+        $msg   = 'Η ομάδα «' . ($team['name'] ?? '') . '» αποδέχθηκε το αίτημα «' . $item . '» για τη '
+               . $et['singular_lc'] . ' «' . $event['title'] . '».'
+               . ($etaMinutes ? ' ETA: ' . (int) $etaMinutes . '′.' : '');
+        self::notifyCommandStaff((int) $event['municipality_id'], (int) $event['id'], $title, $msg, 'resource_accepted', self::absoluteUrl('/operations/events/' . (int) $event['id']));
+    }
+
+    /** Ομάδα δήλωσε αδυναμία σε αίτημα πόρου (Φάση 2) — ενημέρωση προσωπικού διοίκησης. */
+    public static function resourceDeclined(array $event, array $team, string $item, ?string $note = null)
+    {
+        $et    = self::eventTerms((int) $event['municipality_id']);
+        $title = 'Αδυναμία διάθεσης πόρου';
+        $msg   = 'Η ομάδα «' . ($team['name'] ?? '') . '» δεν μπορεί να διαθέσει «' . $item . '» για τη '
+               . $et['singular_lc'] . ' «' . $event['title'] . '».'
+               . ($note ? ' Σχόλιο: ' . $note : '');
+        self::notifyCommandStaff((int) $event['municipality_id'], (int) $event['id'], $title, $msg, 'resource_declined', self::absoluteUrl('/operations/events/' . (int) $event['id']));
+    }
+
     /** Team uploaded a video — notify municipality admins (in-app + push). */
     public static function videoUploaded(array $event, int $teamId)
     {

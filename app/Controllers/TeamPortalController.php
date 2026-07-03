@@ -900,16 +900,57 @@ class TeamPortalController
             ];
         }, $shortRows);
         json_out([
-            'success'       => true,
-            'messages'      => EventMessage::forTeamEvent((int) $event['id'], $tid, $since),
-            'sos'           => SosAlert::latestForTeamEvent((int) $event['id'], $tid),
-            'room'          => EventRoomMessage::forEvent((int) $event['id']),
-            'photo_request' => PhotoRequest::pendingForEventTeam((int) $event['id'], $tid),
-            'gps_request'   => GpsRequest::pendingForEventTeam((int) $event['id'], $tid),
-            'video_request' => VideoRequest::pendingForEventTeam((int) $event['id'], $tid),
-            'shortages'     => $shortages,
-            'now'           => date('H:i:s'),
+            'success'           => true,
+            'messages'          => EventMessage::forTeamEvent((int) $event['id'], $tid, $since),
+            'sos'               => SosAlert::latestForTeamEvent((int) $event['id'], $tid),
+            'room'              => EventRoomMessage::forEvent((int) $event['id']),
+            'photo_request'     => PhotoRequest::pendingForEventTeam((int) $event['id'], $tid),
+            'gps_request'       => GpsRequest::pendingForEventTeam((int) $event['id'], $tid),
+            'video_request'     => VideoRequest::pendingForEventTeam((int) $event['id'], $tid),
+            'resource_requests' => ResourceRequest::pendingForTeam($tid, (int) $event['id']),
+            'shortages'         => $shortages,
+            'now'               => date('H:i:s'),
         ]);
+    }
+
+    /** POST /team/resource-requests/{id}/respond — αποδοχή/αδυναμία αιτήματος πόρου (Φάση 2, JSON). */
+    public function respondResourceRequest($id)
+    {
+        requireRole(['team_admin']);
+        $tid = (int) current_team_id();
+        $rr  = ResourceRequest::find((int) $id);
+        if (!$rr || (int) $rr['from_team_id'] !== $tid) {
+            json_out(['success' => false, 'message' => 'Το αίτημα δεν βρέθηκε.'], 404);
+        }
+
+        $in     = json_input();
+        $action = (string) ($in['action'] ?? '');
+        if (!in_array($action, ['accept', 'decline'], true)) {
+            json_out(['success' => false, 'message' => 'Μη έγκυρη ενέργεια.'], 422);
+        }
+        $note = trim((string) ($in['note'] ?? '')) ?: null;
+        $eta  = null;
+        if ($action === 'accept' && isset($in['eta_minutes'])) {
+            $eta = (int) $in['eta_minutes'];
+            if ($eta < 1 || $eta > 1440) { $eta = null; }
+        }
+
+        $status = $action === 'accept' ? 'accepted' : 'declined';
+        if (!ResourceRequest::respond((int) $rr['id'], $status, $note, $eta)) {
+            json_out(['success' => false, 'message' => 'Το αίτημα δεν είναι πλέον σε εκκρεμότητα.'], 409);
+        }
+
+        $event = Event::find((int) $rr['event_id']);
+        $team  = VolunteerTeam::find($tid);
+        if ($event && $team) {
+            try {
+                $status === 'accepted'
+                    ? NotificationService::resourceAccepted($event, $team, (string) $rr['item_label'], $eta)
+                    : NotificationService::resourceDeclined($event, $team, (string) $rr['item_label'], $note);
+            } catch (Throwable $e) { error_log('[resourceRespond] ' . $e->getMessage()); }
+        }
+        audit('resource_' . $status, 'event', (int) $rr['event_id'], 'request ' . (int) $rr['id'] . ' team ' . $tid);
+        json_out(['success' => true, 'message' => $status === 'accepted' ? 'Καταγράφηκε η αποδοχή.' : 'Καταγράφηκε η αδυναμία.']);
     }
 
     /** POST /team/operations/events/{id}/room — post to the shared operations room. */

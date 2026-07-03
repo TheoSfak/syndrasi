@@ -79,10 +79,11 @@ class FieldController
              WHERE event_id = :eid AND team_id = :tid ORDER BY id DESC LIMIT 1',
             ['eid' => $app['event_id'], 'tid' => $app['team_id']]
         )->fetch() ?: null;
-        // Pending photo / GPS requests for this team (so the field device shows the prompt)
+        // Pending photo / GPS / video / resource requests for this team (so the field device shows the prompt)
         $photoRequest = PhotoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         $gpsRequest   = GpsRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
         $videoRequest = VideoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
+        $resourceRequests = ResourceRequest::pendingForTeam((int) $app['team_id'], (int) $app['event_id']);
         $munSettings  = MunicipalitySetting::all((int) $app['municipality_id']);
         render('field/hub', [
             'pageTitle'    => 'Πεδίο — ' . $app['event_title'],
@@ -93,6 +94,7 @@ class FieldController
             'photoRequest' => $photoRequest,
             'gpsRequest'   => $gpsRequest,
             'videoRequest' => $videoRequest,
+            'resourceRequests' => $resourceRequests,
             'orgLabel'     => org_term('short_name', (int) $app['municipality_id']),
             'orgIcon'      => org_term('icon', (int) $app['municipality_id']),
         ], false); // standalone, no app layout / no login chrome
@@ -234,9 +236,51 @@ class FieldController
                 $vr = VideoRequest::pendingForEventTeam((int) $app['event_id'], (int) $app['team_id']);
                 return $vr ? ['instructions' => $vr['instructions'], 'max_seconds' => (int) $vr['max_seconds']] : null;
             })(),
+            'resource_requests' => ResourceRequest::pendingForTeam((int) $app['team_id'], (int) $app['event_id']),
             'room'          => EventRoomMessage::forEvent((int) $app['event_id']),
             'now'           => date('H:i:s'),
         ]);
+    }
+
+    /** POST /f/{token}/resource-requests/{id}/respond — αποδοχή/αδυναμία αιτήματος πόρου (Φάση 2, JSON). */
+    public function respondResourceRequest($token, $id)
+    {
+        $ctx = $this->resolve($token); $app = $ctx['app'];
+        $this->requireActive($app);
+
+        // Το αίτημα πρέπει να ανήκει στην ομάδα ΚΑΙ στη δράση του token.
+        $rr = ResourceRequest::find((int) $id);
+        if (!$rr
+            || (int) $rr['from_team_id'] !== (int) $app['team_id']
+            || (int) $rr['event_id'] !== (int) $app['event_id']) {
+            json_out(['success' => false, 'message' => 'Το αίτημα δεν βρέθηκε.'], 404);
+        }
+
+        $in     = json_input();
+        $action = (string) ($in['action'] ?? '');
+        if (!in_array($action, ['accept', 'decline'], true)) {
+            json_out(['success' => false, 'message' => 'Μη έγκυρη ενέργεια.'], 422);
+        }
+        $note = trim((string) ($in['note'] ?? '')) ?: null;
+        $eta  = null;
+        if ($action === 'accept' && isset($in['eta_minutes'])) {
+            $eta = (int) $in['eta_minutes'];
+            if ($eta < 1 || $eta > 1440) { $eta = null; }
+        }
+
+        $status = $action === 'accept' ? 'accepted' : 'declined';
+        if (!ResourceRequest::respond((int) $rr['id'], $status, $note, $eta)) {
+            json_out(['success' => false, 'message' => 'Το αίτημα δεν είναι πλέον σε εκκρεμότητα.'], 409);
+        }
+
+        $team = ['name' => $app['team_name'] ?? ('#' . (int) $app['team_id'])];
+        try {
+            $status === 'accepted'
+                ? NotificationService::resourceAccepted($this->eventArr($app), $team, (string) $rr['item_label'], $eta)
+                : NotificationService::resourceDeclined($this->eventArr($app), $team, (string) $rr['item_label'], $note);
+        } catch (Throwable $e) { error_log('[Field::resourceRespond] ' . $e->getMessage()); }
+        audit('resource_' . $status, 'event', (int) $rr['event_id'], 'request ' . (int) $rr['id'] . ' team ' . (int) $app['team_id'] . ' (field)');
+        json_out(['success' => true, 'message' => $status === 'accepted' ? 'Καταγράφηκε η αποδοχή.' : 'Καταγράφηκε η αδυναμία.']);
     }
 
     /** POST /f/{token}/message (JSON) — send a private message to the command center. */

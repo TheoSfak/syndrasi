@@ -74,6 +74,13 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
   .order-pin-h{font-weight:900;color:#fde68a;font-size:14px;display:flex;gap:6px;align-items:center}
   .order-pin-b{color:#fff;font-size:16px;margin:8px 0 12px}
   .order-pin-btn{background:#facc15;color:#1a1400;border:none;border-radius:12px;font-weight:800;font-size:15px;padding:14px;width:100%;cursor:pointer}
+  .resource-pin{background:linear-gradient(135deg,#134e4a,#0f766e);border:1px solid #2dd4bf;border-radius:16px;padding:16px;margin-bottom:12px}
+  .resource-pin-h{font-weight:900;color:#99f6e4;font-size:14px;display:flex;gap:6px;align-items:center}
+  .resource-pin-b{color:#fff;font-size:17px;font-weight:700;margin:8px 0 12px}
+  .resource-pin-in{width:100%;margin-bottom:8px;padding:11px 12px;border-radius:10px;border:1px solid #14b8a6;background:#042f2e;color:#ccfbf1;font-size:14px}
+  .resource-pin-in::placeholder{color:#5eead4;opacity:.7}
+  .resource-accept{background:#2dd4bf;color:#042f2e;border:none;border-radius:12px;font-weight:800;font-size:15px;padding:14px;width:100%;cursor:pointer}
+  .resource-decline{background:transparent;color:#99f6e4;border:1px solid #5eead4;border-radius:12px;font-weight:700;font-size:14px;padding:11px;width:100%;cursor:pointer;margin-top:8px}
   #locRes{font-size:13px;color:#4ade80;padding:0 4px;display:none}
   #locRes.err{color:#f87171}
 </style>
@@ -101,6 +108,9 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
 
   <!-- Pinned orders -->
   <div id="orderBanner" style="display:none"></div>
+
+  <!-- Resource dispatch requests (Smart Resource Dispatch, Φάση 2) -->
+  <div id="resourceBox" style="display:none"></div>
 
   <!-- Offline indicator (shown after 2 consecutive poll failures) -->
   <div id="offlineBanner" role="alert" aria-live="assertive" style="display:none;background:#7c2d12;color:#fef2f2;border:1px solid #ef4444;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;gap:10px;align-items:center">
@@ -445,6 +455,39 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
       return '<div class="order-pin"><div class="order-pin-h"><i class="bi bi-megaphone-fill"></i> '+head+'</div><div class="order-pin-b">'+esc(m.body||'')+'</div>'+dir+'<button class="order-pin-btn" onclick="ackOrder('+parseInt(m.id,10)+')"><i class="bi bi-check2-all"></i> Επιβεβαίωση λήψης</button><div style="font-size:11px;color:#fde68a;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
     }).join('');
   }
+  /* Resource dispatch requests (Φάση 2) */
+  var resourceBox=document.getElementById('resourceBox'),lastRrIds=null;
+  function renderResourceRequests(list){
+    if(!resourceBox)return;
+    list=list||[];
+    var ids=list.map(function(r){return r.id;}).join(',');
+    if(ids===lastRrIds)return; /* don't clobber inputs while typing */
+    var hasNew=lastRrIds!==null&&list.some(function(r){return (','+lastRrIds+',').indexOf(','+r.id+',')===-1;});
+    if(hasNew){alertNewRequest();showNewMsgFlash('Αίτημα πόρου από ' + ORG_LABEL + '!');}
+    lastRrIds=ids;
+    if(!list.length){resourceBox.innerHTML='';resourceBox.style.display='none';return;}
+    resourceBox.style.display='';
+    resourceBox.innerHTML=list.map(function(r){
+      var t=(r.created_at||'').substr(11,5);
+      return '<div class="resource-pin"><div class="resource-pin-h"><i class="bi bi-box-seam"></i> ΑΙΤΗΜΑ ΠΟΡΟΥ ΑΠΟ '+esc(ORG_LABEL)+'</div>'+
+        '<div class="resource-pin-b">'+esc(r.item_label||'')+'</div>'+
+        '<input type="number" class="resource-pin-in" id="rrEta'+r.id+'" min="1" max="1440" inputmode="numeric" placeholder="ETA σε λεπτά (προαιρετικό)">'+
+        '<input type="text" class="resource-pin-in" id="rrNote'+r.id+'" maxlength="255" placeholder="Σχόλιο (προαιρετικό)">'+
+        '<button class="resource-accept" onclick="respondResource('+parseInt(r.id,10)+',\'accept\')"><i class="bi bi-check2-circle"></i> Αποδοχή — το διαθέτουμε</button>'+
+        '<button class="resource-decline" onclick="respondResource('+parseInt(r.id,10)+',\'decline\')">Αδυναμία διάθεσης</button>'+
+        '<div style="font-size:11px;color:#99f6e4;opacity:.8;margin-top:6px;text-align:right">'+t+'</div></div>';
+    }).join('');
+  }
+  window.respondResource=function(id,action){
+    var eta=document.getElementById('rrEta'+id),note=document.getElementById('rrNote'+id);
+    var body={action:action};
+    if(action==='accept'&&eta&&eta.value){body.eta_minutes=parseInt(eta.value,10);}
+    if(note&&note.value.trim()){body.note=note.value.trim();}
+    postJSON('/resource-requests/'+id+'/respond',body).then(function(d){
+      if(d&&!d.success&&d.message){alert(d.message);}
+      lastRrIds=null;pollComms();
+    }).catch(function(){});
+  };
   function renderGeoPoints(msgs){
     var map=window.__teamMap,grp=window.__teamGeo; if(!map||!grp)return; grp.clearLayers();
     (msgs||[]).forEach(function(m){
@@ -545,6 +588,7 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
       renderGeoPoints(msgs);
       renderSos(d.sos);
       renderRoom(d.room);
+      renderResourceRequests(d.resource_requests);
       var pb=document.getElementById('photoReqBanner');if(pb)pb.style.display=photoNow?'block':'none';
       var gb=document.getElementById('gpsReqBanner');if(gb)gb.style.display=gpsNow?'block':'none';
     })
@@ -554,6 +598,8 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
       if(ob&&pollFails>=2)ob.style.display='flex';
     });
   }
+  /* Instant initial render (field connections are flaky — don't wait for the first poll) */
+  renderResourceRequests(<?= json_encode($resourceRequests ?? [], JSON_UNESCAPED_UNICODE) ?>);
   pollComms();setInterval(pollComms,5000);
 })();
 </script>
