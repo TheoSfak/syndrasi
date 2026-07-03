@@ -65,17 +65,27 @@ tag → publish Release**, in that order.
 2. Immediately write the **same content** to the **htdocs path** using the Write tool (for XAMPP testing).
 3. Run git from Desktop.
 
-**Mount staleness gotcha — why bash `cp` is banned:** the bash mount serves
-**stale/truncated reads** of ANY file recently written by the Write/Edit tools,
-regardless of whether it's in Desktop or htdocs. So:
+**Syncing Desktop → htdocs (proven method as of v0.16.4):** use PowerShell
+`Copy-Item` and then **hash-verify every copied file** with `Get-FileHash`
+against both trees — this ran dozens of times across the v0.15.12→v0.16.4
+pushes with zero truncation. The historical bash-mount truncation bug
+(v0.9.4/v0.9.5) applied to bash `cp`/`rsync`; those remain banned for
+syncing. `git add/commit/push/tag` via Bash is fine — git reads directly
+from disk.
 
-- **Do NOT use bash `cp` or `rsync` to sync the two folders** — it silently copies truncated content. This is what caused v0.9.4/v0.9.5 packaging failures.
-- **Always dual-write** both paths in the same session using the Write/Edit tools.
-- `git add/commit/push/tag` via Bash is fine — git reads directly from disk.
+```powershell
+Copy-Item "$src\app\*" "$dst\app\" -Recurse -Force
+# ...then hash-compare: any mismatch = re-copy, never ship unverified
+Get-ChildItem "$src\app" -Recurse -File | ForEach-Object {
+  $rel = $_.FullName.Substring($src.Length)
+  if ((Get-FileHash $_.FullName).Hash -ne (Get-FileHash "$dst$rel").Hash) { "MISMATCH: $rel" }
+}
+```
 
-**PHP is NOT available in the sandbox** (`php -l` can't run, no root to install). So
-PHP syntax must be eye-checked, and the **owner should smoke-test in XAMPP** before
-releasing.
+**PHP IS available in this environment** at `C:\xampp\php\php.exe` — run
+`php -l`, PHPStan and PHPUnit locally before every release (see
+"Verification gates" below). An older note here claimed otherwise; that
+applied to a different sandbox.
 
 ## 🔁 Release sync — ALWAYS mirror, NEVER cherry-pick files
 
@@ -153,7 +163,106 @@ diff <(sed -E 's/ AUTO_INCREMENT=[0-9]+//' fresh_structure.sql) <(sed -E 's/ AUT
 mysql -u root -e "DROP DATABASE schema_check;"
 ```
 
-## ✅ Current status / work log (last updated 2026-07-02)
+## 🧪 Verification gates — run before EVERY release
+
+All of these must be green before tag/release (CI runs the first three on
+every push too, via `.github/workflows/ci.yml`):
+
+```bash
+cd /c/Users/user/Desktop/Syndrasi/syndrasi
+find app routes config -name '*.php' -print0 | xargs -0 -n1 /c/xampp/php/php.exe -l   # syntax
+/c/xampp/php/php.exe vendor/bin/phpstan analyse --memory-limit=512M                    # static analysis (L5)
+/c/xampp/php/php.exe vendor/bin/phpunit                                               # ALL suites
+```
+
+What the test suites cover (37 tests as of v0.16.4-beta):
+- **`tests/Unit/`** — pure logic (event state machine, Greek helpers,
+  authority terminology, MediaUploader rejection paths) **plus two release
+  gates**: `RouteRoleConsistencyTest` (route role declarations must match
+  each controller's `requireRole()` — resolves `Role::` constants and class
+  consts via reflection) and `SchemaMigrationsDriftTest` (every migration
+  table/column must exist in `schema.sql`).
+- **`tests/Integration/`** — real HTTP against the local XAMPP install
+  (`http://localhost/syndrasi/public`): token-based field flow
+  (accept/409/404), the login form flow, deny-by-default routes, cron
+  Bearer auth, and the full ops-stream change-detection cycle. Creates and
+  removes its own DB fixtures. **Skips cleanly when Apache/MySQL aren't
+  running** (so CI stays green) — if the whole suite shows "skipped",
+  start XAMPP; don't ship on skipped integration tests.
+
+Conventions the gates enforce (added v0.16.4-beta):
+- Roles are `Role::` class constants (`app/Models/Role.php`) in routes and
+  `requireRole()` calls — never raw strings.
+- Every live-ops write must call `Event::touchActivity($eventId)` (or go
+  through a model `create()` that already does) — otherwise the war-room
+  poll's change detection won't see it and the board can appear stale for
+  up to 60s.
+
+## ✅ Current status / work log (last updated 2026-07-03, v0.16.4-beta)
+
+### Released: v0.16.1 → v0.16.4-beta (2026-07-02/03)
+
+- **v0.16.1-beta — Resource Dispatch Phase 2**: teams answer resource
+  requests (accept + ETA / decline) from the no-login field link and team
+  live; push templates `resourceAccepted`/`resourceDeclined` to command
+  staff; war-room activity feed shows the request lifecycle.
+- **v0.16.2-beta — Phase 3**: delivered request linked to a shortage shows
+  a one-click «Επίλυση έλλειψης;» button; Story gets an «Αιτήματα πόρων»
+  section (response/delivery durations, ETA, acceptance rate) + timeline
+  entries + summary count.
+- **v0.16.3-beta — Phase 4 (feature complete)**: «Εικόνα Ετοιμότητας»
+  dashboard widget aggregating team readiness (vehicle/medical/per-item
+  counts) — no new schema. Smart Resource Dispatch Phases 1–4 done.
+- **v0.16.4-beta — code-smell report fix batch** (see
+  `SynDrasi_CodeSmell_Architecture_Report_2026-07-03.md` one level above
+  the repo root): live-ops poll change detection via
+  `events.last_activity_at` + per-session signature — unchanged polls get
+  a skinny `{unchanged:true}` instead of the full snapshot (~95% query
+  reduction; full rebuild on any real change and at least 1×/min);
+  `ResourceRequestResponder` (deduped Phase 2 respond logic); `Role`
+  constants swept over 367 call sites; HTTP integration test suite; route↔
+  controller role-consistency gate; schema↔migrations drift gate;
+  `schema.sql` `USE` foot-gun removed **and** missing `resource_requests`
+  table restored (fresh installs were broken again); Router treats HEAD as
+  GET (was 404 — broke monitoring probes); self-updater now health-checks
+  the new version after applying and **auto-restores the pre-update
+  backup** on definitive failure (5xx/connection refused; ambiguous
+  timeouts never trigger rollback).
+
+Migrations now: **040** (`037` rate_limits, `038` shift reminded_at,
+`039` resource_requests, `040` event last_activity). `schema.sql` verified
+against the live migrated DB: 44 tables, identical.
+
+### Self-updater behaviour (changed in v0.16.4-beta)
+After copying files + running migrations, the updater probes its own
+`/login` page. HTTP 2xx/3xx → healthy. HTTP 5xx or connection refused →
+**automatic rollback** to the pre-update backup zip (note: already-applied
+migrations stay applied — old code + newer additive schema is tolerable).
+Timeout/other → no rollback, logged as `unknown` (a busy server must not
+cause a false restore). The maintenance lock is released *before* the
+probe (it 503s everything, including our own request).
+
+### Next steps / open items (as of v0.16.4-beta)
+- The two remaining report items, both deliberately deferred because they
+  need live browser verification and carry multi-day blast radius: **S5**
+  extract the ~1,100-line inline JS from `views/operations/event.php` (+
+  `team/live.php`, `field/hub.php`, `events/story.php`) into
+  `public/assets/js/`; **C4** split `OperationController` /
+  `TeamPortalController` / `NotificationService` god classes.
+- Status-literal sweep (`EventStatus`/`ResourceRequestStatus` constants):
+  349 literals, many inside views where strings like `'active'` also
+  appear in CSS/JS contexts — needs careful per-site review, not regex.
+- Production: run Backup → Update from Platform Settings to go
+  0.15.x → 0.16.4-beta in one hop (migrations 037–040 apply
+  automatically). The new auto-rollback makes this safer, but take the
+  manual backup anyway.
+- Older item, still open: functional smoke-test on production for room
+  chat round-trip, smsbox **Δοκιμαστικό SMS**, push/GPS/camera (require
+  HTTPS).
+
+---
+
+## 🗄️ Older work log (2026-07-02 push, kept for context)
 
 ### Released on GitHub: **v0.15.12-beta**, superseded shortly after by **v0.16.0-beta**
 `v0.15.12-beta` was tagged/pushed/released (not marked prerelease — see
@@ -227,19 +336,18 @@ GitHub "prerelease" in the first place (breaks `/releases/latest`); this
 repo's convention is `-beta` in the version string, not the GitHub
 prerelease flag.
 
-**⚠️ `schema.sql` safety note:** it opens with `CREATE DATABASE IF NOT
-EXISTS syndrasi; USE syndrasi;` — it is NOT safe to "test" by running it
-against a differently-named scratch database from the `mysql` CLI, because
-the file's own `USE` statement overrides whatever database you pointed the
-client at. Verifying it needs either (a) reading the dump into a real
-scratch DB via `mysql < file` after temporarily editing/stripping those two
-lines, or (b) `mysql --one-database schema_check < schema.sql` is NOT
-sufficient either (the `USE` still switches away). Safest: diff its
-`CREATE TABLE` statements against `SHOW TABLES`/`SHOW CREATE TABLE` output
-from the live DB without executing the file at all. Running it against the
-live DB directly (even "just to check") drops and recreates every table —
-this happened once this push; recovered from a same-morning backup, see
-memory note for the local machine.
+**⚠️ `schema.sql` safety note (RESOLVED in v0.16.4-beta):** the file used
+to open with `CREATE DATABASE IF NOT EXISTS syndrasi; USE syndrasi;`, which
+made it silently target the live DB no matter which database you pointed
+the `mysql` CLI at — running it "against a scratch DB" once dropped and
+recreated every live table (recovered from a same-morning backup; the
+backups live in `C:\xampp\mysql\_syndrasi_db_backups_2026-07-02\`). As of
+v0.16.4-beta those statements are **removed**: the file applies only to
+the database named on the command line, and testing against a scratch DB
+(`mysql -u root scratch_db < database/schema.sql`) is safe. A PHPUnit
+drift guard (`SchemaMigrationsDriftTest`) additionally fails the build if
+any migration's table/column is missing from schema.sql — this class of
+bug recurred twice in one week before the guard existed.
 
 **⚠️ Two copies of the codebase gotcha (reconfirmed this push):**
 `C:\xampp\htdocs\syndrasi` (what Apache actually serves) is a **separate,
@@ -276,16 +384,5 @@ above; see `git log`/CHANGELOG.md for the full history):
   changed to `Accept: */*`. NOTE: the broken updater can't self-deliver its own fix —
   this one line must be hand-patched once on any install still on the old updater.
 
-### Next steps / open items (as of v0.15.12-beta, 2026-07-02)
-- Confirm production's self-updater picks up v0.15.12-beta and applies
-  migrations `037`/`038` cleanly.
-- Report items not yet done (see `SynDrasi_CodeSmell_Architecture_Report.md`
-  in repo root): `Role`/`EventStatus` PHP enums + literal sweep (500+
-  call sites, large/risky), extracting the ~1000-line inline JS out of
-  `views/operations/event.php` + 3 other monolith views (needs live
-  browser verification), splitting `OperationController`/
-  `TeamPortalController`/`NotificationService` god classes.
-- Older item, still open: functional smoke-test on production for room
-  chat round-trip, smsbox **Δοκιμαστικό SMS**, push/GPS/camera (require
-  HTTPS).
-- Nothing else pending on the deploy/migration side — repo == htdocs, DB current.
+*(The "next steps" that used to sit here are superseded by the
+v0.16.4-beta section above.)*
