@@ -162,6 +162,10 @@ $router->get('/operations/videos/{id}/download', 'OperationController@downloadVi
 $router->post('/operations/videos/{id}/delete', 'OperationController@deleteVideo', ['roles' => ['municipality_admin', 'event_operator']]);
 $router->post('/shortages/{id}/acknowledge', 'OperationController@acknowledgeShortage', ['roles' => ['municipality_admin', 'event_operator']]);
 $router->post('/shortages/{id}/resolve', 'OperationController@resolveShortage', ['roles' => ['municipality_admin', 'event_operator']]);
+/* Smart Resource Dispatch (Φάση 1): αιτήματα διάθεσης πόρων από το war-room */
+$router->post('/operations/events/{id}/resource-request', 'OperationController@createResourceRequest', ['roles' => ['municipality_admin', 'event_operator']]);
+$router->post('/operations/resource-requests/{id}/delivered', 'OperationController@resourceRequestDelivered', ['roles' => ['municipality_admin', 'event_operator']]);
+$router->post('/operations/resource-requests/{id}/cancel', 'OperationController@resourceRequestCancel', ['roles' => ['municipality_admin', 'event_operator']]);
 $router->post('/sos/{id}/acknowledge', 'OperationController@sosAck', ['roles' => ['municipality_admin', 'event_operator']]);
 $router->post('/sos/{id}/resolve', 'OperationController@sosResolve', ['roles' => ['municipality_admin', 'event_operator']]);
 

@@ -170,6 +170,7 @@ class OperationController
             ],
             'teams'        => $teamsPayload,
             'shortages'    => $shortages,
+            'resource_requests' => $this->resourceRequestsForEvent($eid),
             'notes'        => $notes,
             'activity'     => $activity,
             'sos'          => SosAlert::activeForEvent((int) $eid),
@@ -642,6 +643,7 @@ class OperationController
             ],
             'teams'        => $teamsPayload,
             'shortages'    => $shortages,
+            'resource_requests' => $this->resourceRequestsForEvent($eid),
             'notes'        => $notes,
             'activity'     => $activity,
             'pings'        => array_values($latestPings),
@@ -663,7 +665,7 @@ class OperationController
      */
     private function shortagesForEvent(int $eid): array
     {
-        return dbq(
+        $rows = dbq(
             "SELECT sr.*, t.name AS team_name, ua.name AS ack_name, ur.name AS res_name
              FROM shortage_reports sr
              JOIN volunteer_teams t ON t.id = sr.team_id
@@ -674,6 +676,30 @@ class OperationController
                       FIELD(sr.severity,'critical','high','medium','low'), sr.created_at DESC",
             ['eid' => $eid]
         )->fetchAll();
+
+        // Smart Resource Dispatch: προτάσεις ομάδας-πόρου για ανοιχτές ελλείψεις.
+        try {
+            $openReq = ResourceRequest::openTeamIdsByShortage($eid);
+            foreach ($rows as &$s) {
+                $s['suggestions'] = in_array($s['status'], ['open', 'acknowledged'], true)
+                    ? ResourceMatcher::suggestForShortage($s, $openReq[(int) $s['id']] ?? [])
+                    : [];
+            }
+            unset($s);
+        } catch (Throwable $e) {
+            error_log('[Ops::shortages] suggestions failed: ' . $e->getMessage());
+        }
+        return $rows;
+    }
+
+    /** Αιτήματα πόρων δράσης — ανθεκτικό αν δεν έχει τρέξει ακόμη το migration 039. */
+    private function resourceRequestsForEvent(int $eid): array
+    {
+        try {
+            return ResourceRequest::forEvent($eid);
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 
     private function notesForEvent(int $eid): array
@@ -923,6 +949,7 @@ class OperationController
         } elseif ($action === 'resolved') {
             dbq("UPDATE shortage_reports SET status='resolved', resolved_by=:uid, resolved_at=NOW()
                  WHERE id=:id AND status IN ('open','acknowledged')", ['uid' => $uid, 'id' => $id]);
+            try { ResourceRequest::cancelPendingForShortage($id); } catch (Throwable $e) { error_log('[Ops::shortage] rr-cancel: ' . $e->getMessage()); }
         } else {
             abort(422, 'Μη έγκυρη ενέργεια.');
         }
@@ -934,6 +961,80 @@ class OperationController
         if (wants_json()) { json_out(['ok' => true]); }
         flash_set('success', $action === 'resolved' ? 'Η έλλειψη επιλύθηκε.' : 'Η έλλειψη επιβεβαιώθηκε.');
         redirect('/operations/events/' . $sh['event_id']);
+    }
+
+    /* ── Smart Resource Dispatch (Φάση 1) ──────────────────────────────── */
+
+    /** POST /operations/events/{id}/resource-request — αίτημα διάθεσης πόρου από ομάδα. */
+    public function createResourceRequest($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $event = Event::findForCurrent($id);
+        $mid   = (int) $event['municipality_id'];
+
+        $tid        = post_int('team_id');
+        $item       = trim(post_str('item_label'));
+        $shortageId = post_int('shortage_id') ?: null;
+
+        $team = VolunteerTeam::find($tid);
+        if (!$team || (int) $team['municipality_id'] !== $mid) {
+            json_out(['ok' => false, 'error' => 'Η ομάδα δεν βρέθηκε.'], 422);
+        }
+        if ($item === '' || mb_strlen($item, 'UTF-8') > 255) {
+            json_out(['ok' => false, 'error' => 'Μη έγκυρος πόρος.'], 422);
+        }
+        if ($shortageId !== null) {
+            $sh = dbq('SELECT * FROM shortage_reports WHERE id = :id LIMIT 1', ['id' => $shortageId])->fetch();
+            if (!$sh || (int) $sh['event_id'] !== (int) $event['id']) {
+                json_out(['ok' => false, 'error' => 'Η έλλειψη δεν βρέθηκε.'], 422);
+            }
+            if (ResourceRequest::hasOpenForShortageTeam($shortageId, $tid)) {
+                json_out(['ok' => false, 'error' => 'Υπάρχει ήδη ανοιχτό αίτημα προς αυτή την ομάδα.'], 422);
+            }
+        }
+
+        $rid = ResourceRequest::create([
+            'mid'          => $mid,
+            'eid'          => (int) $event['id'],
+            'shortage_id'  => $shortageId,
+            'from_team_id' => $tid,
+            'item_label'   => $item,
+            'requested_by' => current_user_id(),
+        ]);
+        try { NotificationService::resourceRequested($event, $team, $item); }
+        catch (Throwable $e) { error_log('[Ops::resourceRequest] ' . $e->getMessage()); }
+        audit('resource_requested', 'event', (int) $event['id'], 'team ' . $tid . ' item ' . $item);
+        json_out(['ok' => true, 'id' => $rid]);
+    }
+
+    /** POST /operations/resource-requests/{id}/delivered — ο πόρος παραδόθηκε. */
+    public function resourceRequestDelivered($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $rr = ResourceRequest::find((int) $id);
+        if (!$rr || (int) $rr['municipality_id'] !== (int) current_municipality_id()) {
+            json_out(['ok' => false, 'error' => 'Το αίτημα δεν βρέθηκε.'], 404);
+        }
+        if (!ResourceRequest::markDelivered((int) $id)) {
+            json_out(['ok' => false, 'error' => 'Το αίτημα δεν είναι ανοιχτό.'], 422);
+        }
+        audit('resource_delivered', 'event', (int) $rr['event_id'], 'request ' . (int) $id);
+        json_out(['ok' => true, 'shortage_id' => $rr['shortage_id'] !== null ? (int) $rr['shortage_id'] : null]);
+    }
+
+    /** POST /operations/resource-requests/{id}/cancel — ακύρωση αιτήματος. */
+    public function resourceRequestCancel($id)
+    {
+        requireRole(['municipality_admin', 'event_operator']);
+        $rr = ResourceRequest::find((int) $id);
+        if (!$rr || (int) $rr['municipality_id'] !== (int) current_municipality_id()) {
+            json_out(['ok' => false, 'error' => 'Το αίτημα δεν βρέθηκε.'], 404);
+        }
+        if (!ResourceRequest::cancel((int) $id)) {
+            json_out(['ok' => false, 'error' => 'Το αίτημα δεν είναι ανοιχτό.'], 422);
+        }
+        audit('resource_request_cancelled', 'event', (int) $rr['event_id'], 'request ' . (int) $id);
+        json_out(['ok' => true]);
     }
 
     /* ═══════════════════ WAR ROOM (multi-event) ═══════════════════ */

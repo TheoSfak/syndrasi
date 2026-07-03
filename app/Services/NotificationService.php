@@ -777,6 +777,15 @@ class NotificationService
         self::notifyTeam((int) $team['id'], (int) $event['id'], $title, $msg, 'video_request', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
     }
 
+    /** Command ζητά πόρο από ομάδα (Smart Resource Dispatch) — in-app + push. */
+    public static function resourceRequested(array $event, array $team, string $item)
+    {
+        $et    = self::eventTerms((int) $event['municipality_id']);
+        $title = 'Αίτημα πόρου';
+        $msg   = $et['org_short'] . ' ζητά «' . $item . '» για τη ' . $et['singular_lc'] . ' «' . $event['title'] . '».';
+        self::notifyTeam((int) $team['id'], (int) $event['id'], $title, $msg, 'resource_request', (int) $event['municipality_id'], null, null, self::absoluteUrl('/team/operations/events/' . (int) $event['id']));
+    }
+
     /** Team uploaded a video — notify municipality admins (in-app + push). */
     public static function videoUploaded(array $event, int $teamId)
     {
