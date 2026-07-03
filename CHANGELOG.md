@@ -4,6 +4,26 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.1-beta] — 2026-07-02
+
+### Feature — Έξυπνη Διάθεση Πόρων, Φάση 2 (απάντηση ομάδας από το πεδίο)
+
+- Οι ομάδες απαντούν πλέον στα αιτήματα πόρων — κλείνει ο κύκλος της Φάσης 1:
+  **Αποδοχή** (με προαιρετικό ETA σε λεπτά και σχόλιο) ή **Αδυναμία** (με προαιρετικό
+  σχόλιο), από το **field link** `/f/{token}` (χωρίς login) και από το **team live**.
+- Νέες κάρτες «Αίτημα πόρου» και στις δύο οθόνες, μέσω των υπαρχόντων polls· στο field
+  hub με ηχητική ειδοποίηση/δόνηση σε νέο αίτημα (ίδιο μοτίβο με αίτημα φωτογραφίας/GPS).
+- Νέα routes: `POST /team/resource-requests/{id}/respond` (team_admin) και
+  `POST /f/{token}/resource-requests/{id}/respond` (ταυτοποίηση μέσω token — το αίτημα
+  πρέπει να ανήκει στην ομάδα ΚΑΙ στη δράση του token). Μόνο εκκρεμή αιτήματα αλλάζουν
+  κατάσταση (409 αλλιώς).
+- Νέα notifications `resourceAccepted` / `resourceDeclined` προς όλο το προσωπικό
+  διοίκησης (in-app + Web Push), με το ETA/σχόλιο στο μήνυμα.
+- Το activity feed του war-room δείχνει πλέον όλο τον κύκλο ζωής του αιτήματος
+  (δημιουργία / αποδοχή με ETA / αδυναμία / παράδοση).
+
+---
+
 ## [0.16.0-beta] — 2026-07-02
 
 ### Feature — Έξυπνη Διάθεση Πόρων, Φάση 1 (Smart Resource Dispatch)
