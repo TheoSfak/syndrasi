@@ -20,7 +20,9 @@ class EventVideo
                (:mid, :eid, :tid, :uid, :rid, :file, :mime, :dur, :size, :lat, :lng, :caption)',
             $d
         );
-        return (int) db()->lastInsertId();
+        $id = (int) db()->lastInsertId();
+        Event::touchActivity((int) $d['eid']);
+        return $id;
     }
 
     public static function find(int $id): ?array

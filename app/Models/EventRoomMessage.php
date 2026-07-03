@@ -22,7 +22,9 @@ class EventRoomMessage
                     'label' => $d['label'] ?? null, 'body' => $d['body'],
                 ]
             );
-            return (int) db()->lastInsertId();
+            $id = (int) db()->lastInsertId();
+            Event::touchActivity((int) $d['eid']);
+            return $id;
         } catch (Throwable $e) {
             error_log('[Room] create failed (migration 015?): ' . $e->getMessage());
             return 0;

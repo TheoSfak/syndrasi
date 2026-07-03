@@ -27,7 +27,9 @@ class ResourceRequest
                 'uid'  => $d['requested_by'] !== null ? (int) $d['requested_by'] : null,
             ]
         );
-        return (int) db()->lastInsertId();
+        $id = (int) db()->lastInsertId();
+        Event::touchActivity((int) $d['eid']);
+        return $id;
     }
 
     /** Ομάδα απαντά (Φάση 2). Μόνο από pending. Returns true αν άλλαξε γραμμή. */

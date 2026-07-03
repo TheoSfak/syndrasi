@@ -50,7 +50,9 @@ class EventMessage
                 $common
             );
         }
-        return (int) db()->lastInsertId();
+        $id = (int) db()->lastInsertId();
+        Event::touchActivity((int) $d['eid']);
+        return $id;
     }
 
     public static function find(int $id): ?array

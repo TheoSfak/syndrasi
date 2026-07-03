@@ -29,6 +29,20 @@ class Event
         return in_array($to, self::TRANSITIONS[$from] ?? [], true);
     }
 
+    /**
+     * Σημειώνει επιχειρησιακή δραστηριότητα στη δράση — καλείται από κάθε
+     * live-ops εγγραφή ώστε το 3" poll να ξέρει φθηνά αν άλλαξε κάτι.
+     * Ανθεκτικό αν δεν έχει τρέξει ακόμη το migration 040.
+     */
+    public static function touchActivity(int $id): void
+    {
+        try {
+            dbq('UPDATE events SET last_activity_at = NOW() WHERE id = :id', ['id' => $id]);
+        } catch (Throwable $e) {
+            error_log('[Event::touchActivity] ' . $e->getMessage());
+        }
+    }
+
     public static function find($id)
     {
         return dbq(

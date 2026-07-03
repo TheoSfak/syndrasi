@@ -1258,6 +1258,8 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   /* ─── Apply a full snapshot (from SSE or manual poll) ─── */
   function applySnapshot(d) {
     if (!d || !d.ok) return;
+    /* Skinny keep-alive from the server's change detection — nothing to render. */
+    if (d.unchanged) { var clk = document.getElementById('sv-clk'); if (clk && d.ts) clk.textContent = d.ts; return; }
     /* read previous counts before DOM update for change detection */
     var prevCi = parseInt(document.getElementById('sv-ci').textContent, 10);
     var prevSh = parseInt(document.getElementById('sv-sh').textContent, 10);

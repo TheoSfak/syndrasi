@@ -24,6 +24,11 @@ class Router
 
     public function dispatch($method, $uri)
     {
+        // HEAD is GET without a body (the SAPI discards the output) — needed
+        // by health checks and monitoring probes.
+        if ($method === 'HEAD') {
+            $method = 'GET';
+        }
         $path = parse_url($uri, PHP_URL_PATH);
         $base = base_uri();
         if ($base !== '' && strpos($path, $base) === 0) {

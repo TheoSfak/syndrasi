@@ -85,7 +85,9 @@ class EventApplication
              VALUES (:municipality_id, :event_id, :team_id, :offered_people, :offered_vehicle, :offered_medical_equipment, :comment, \'pending\')',
             $d
         );
-        return (int) db()->lastInsertId();
+        $id = (int) db()->lastInsertId();
+        Event::touchActivity((int) $d['event_id']);
+        return $id;
     }
 
     public static function approve($id, $approvedPeople, $adminComment, $reviewerId)
