@@ -1033,6 +1033,10 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
       if (r.status === 'pending' || r.status === 'accepted') {
         actions = '<button type="button" class="btn btn-outline-success btn-sm py-0 rr-del-btn" data-id="' + r.id + '">Παραδόθηκε</button>' +
                   '<button type="button" class="btn btn-outline-secondary btn-sm py-0 rr-can-btn" data-id="' + r.id + '">Ακύρωση</button>';
+      } else if (r.status === 'delivered' && r.shortage_id && r.shortage_status && r.shortage_status !== 'resolved') {
+        /* Φάση 3: ο πόρος παραδόθηκε — πρόταση επίλυσης της συνδεδεμένης έλλειψης με ένα κλικ */
+        actions = '<button type="button" class="btn btn-success btn-sm py-0 sh-res-btn" data-id="' + r.shortage_id + '">' +
+                  '<i class="bi bi-check-circle"></i> Επίλυση έλλειψης;</button>';
       }
       var eta = (r.status === 'accepted' && r.eta_minutes) ? ' · ' + r.eta_minutes + "'" : '';
       html += '<div class="card sc mb-1 p-2">' +

@@ -456,6 +456,54 @@ foreach ($videos as $v) {
     </div>
   </section>
 
+  <?php $res = $story['resources'] ?? null; ?>
+  <?php if ($res && $res['sent'] > 0): ?>
+  <section class="section" id="resources">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Διάθεση Πόρων</div>
+        <h2>Αιτήματα πόρων</h2>
+        <p class="section-sub">
+          <?= (int) $res['sent'] ?> αιτήματα ·
+          <?= $res['accept_rate'] !== null ? (int) $res['accept_rate'] . '% αποδοχή' : 'χωρίς απάντηση' ?> ·
+          μέση απόκριση <?= e($res['response_stats']['avg_label']) ?> ·
+          μέση παράδοση <?= e($res['deliver_stats']['avg_label']) ?>
+        </p>
+      </div>
+    </div>
+    <div class="panel table-wrap">
+      <table>
+        <thead><tr>
+          <th>Πόρος</th>
+          <th>Ομάδα</th>
+          <th>Κατάσταση</th>
+          <th class="num">Απόκριση</th>
+          <th class="num">Παράδοση</th>
+        </tr></thead>
+        <tbody>
+          <?php
+          $rrStatus = [
+              'pending'   => 'Εκκρεμεί',
+              'accepted'  => 'Αποδεκτό' ,
+              'declined'  => 'Αδυναμία',
+              'delivered' => 'Παραδόθηκε',
+              'cancelled' => 'Ακυρώθηκε',
+          ];
+          foreach ($res['rows'] as $r): ?>
+          <tr>
+            <td><?= e($r['item']) ?><?php if (!$isPublic && $r['note']): ?><div class="muted"><?= e($r['note']) ?></div><?php endif; ?></td>
+            <td><?= e($r['team']) ?></td>
+            <td><?= e($rrStatus[$r['status']] ?? $r['status']) ?><?= $r['eta_minutes'] !== null ? ' · ETA ' . (int) $r['eta_minutes'] . '′' : '' ?></td>
+            <td class="num"><?= $r['response_label'] !== null ? e($r['response_label']) : '—' ?></td>
+            <td class="num"><?= $r['deliver_label'] !== null ? e($r['deliver_label']) : '—' ?></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <?php endif; ?>
+
   <section class="section" id="teams">
     <div class="section-head">
       <div>

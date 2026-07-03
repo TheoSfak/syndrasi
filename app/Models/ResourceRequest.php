@@ -64,11 +64,11 @@ class ResourceRequest
         )->rowCount() > 0;
     }
 
-    /** Όλα τα αιτήματα μιας δράσης, με όνομα ομάδας + τίτλο έλλειψης (για war-room). */
+    /** Όλα τα αιτήματα μιας δράσης, με όνομα ομάδας + τίτλο/κατάσταση έλλειψης (για war-room). */
     public static function forEvent(int $eid): array
     {
         return dbq(
-            "SELECT rr.*, t.name AS team_name, sr.title AS shortage_title
+            "SELECT rr.*, t.name AS team_name, sr.title AS shortage_title, sr.status AS shortage_status
              FROM resource_requests rr
              JOIN volunteer_teams t ON t.id = rr.from_team_id
              LEFT JOIN shortage_reports sr ON sr.id = rr.shortage_id

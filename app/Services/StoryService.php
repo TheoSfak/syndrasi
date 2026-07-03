@@ -93,6 +93,18 @@ class StoryService
              FROM shortage_reports WHERE event_id = :eid ORDER BY created_at",
             ['eid' => $eid]
         )->fetchAll();
+        /* ── Resource dispatch requests (Φάση 3) — defensive: migration 039 may not have run */
+        try {
+            $resourceReqs = dbq(
+                "SELECT id, from_team_id AS team_id, item_label, status, eta_minutes, response_note,
+                        created_at, responded_at, delivered_at
+                 FROM resource_requests WHERE event_id = :eid ORDER BY created_at",
+                ['eid' => $eid]
+            )->fetchAll();
+        } catch (Throwable $e) {
+            $resourceReqs = [];
+        }
+
         $sos = dbq(
             "SELECT team_id, latitude, longitude, note, status, created_at, acknowledged_at, resolved_at
              FROM sos_alerts WHERE event_id = :eid ORDER BY created_at",
@@ -167,6 +179,23 @@ class StoryService
             $add($s['created_at'], 'team', $s['team_id'], 'bi-exclamation-octagon-fill', '#dc2626', '🆘 SOS', $s['note'] ?: '');
             if ($s['resolved_at']) { $add($s['resolved_at'], 'command', $s['team_id'], 'bi-shield-check', '#16a34a', 'SOS επιλύθηκε', ''); }
         }
+        foreach ($resourceReqs as $rr) {
+            $add($rr['created_at'], 'command', $rr['team_id'], 'bi-box-seam', '#9333ea', 'Αίτημα πόρου: ' . $rr['item_label'], '');
+            if ($rr['responded_at']) {
+                $sec = strtotime($rr['responded_at']) - strtotime($rr['created_at']);
+                $accepted = in_array($rr['status'], ['accepted', 'delivered'], true);
+                $add($rr['responded_at'], 'team', $rr['team_id'],
+                    $accepted ? 'bi-check2-circle' : 'bi-x-circle',
+                    $accepted ? '#16a34a' : '#dc2626',
+                    $accepted ? 'Αποδοχή πόρου: ' . $rr['item_label'] : 'Αδυναμία πόρου: ' . $rr['item_label'],
+                    'απόκριση: ' . self::dur($sec) . ($accepted && $rr['eta_minutes'] ? ' · ETA ' . (int) $rr['eta_minutes'] . '′' : ''));
+            }
+            if ($rr['delivered_at']) {
+                $sec = strtotime($rr['delivered_at']) - strtotime($rr['created_at']);
+                $add($rr['delivered_at'], 'team', $rr['team_id'], 'bi-box-seam-fill', '#16a34a',
+                    'Παράδοση πόρου: ' . $rr['item_label'], 'συνολικός χρόνος: ' . self::dur($sec));
+            }
+        }
         usort($tl, fn($a, $b) => strcmp((string) $a['at'], (string) $b['at']));
 
         /* ── Map points ──────────────────────────────────────────────── */
@@ -192,6 +221,40 @@ class StoryService
         }
         $orderCount = count(array_filter($messages, fn($m) => $m['kind'] === 'order'));
         $pingCount  = array_sum(array_map('count', $pingsByTeam));
+
+        /* ── Resource dispatch metrics (Φάση 3) ──────────────────────── */
+        $resourceRows = [];
+        $respDurs = [];
+        $delivDurs = [];
+        $answered = 0;
+        $acceptedCnt = 0;
+        foreach ($resourceReqs as $rr) {
+            $respSec  = $rr['responded_at'] ? strtotime($rr['responded_at']) - strtotime($rr['created_at']) : null;
+            $delivSec = $rr['delivered_at'] ? strtotime($rr['delivered_at']) - strtotime($rr['created_at']) : null;
+            if ($respSec !== null)  { $respDurs[] = $respSec; $answered++; }
+            if ($delivSec !== null) { $delivDurs[] = $delivSec; }
+            if (in_array($rr['status'], ['accepted', 'delivered'], true) && $rr['responded_at']) { $acceptedCnt++; }
+            $resourceRows[] = [
+                'team'          => $teamName($rr['team_id']),
+                'item'          => $rr['item_label'],
+                'status'        => $rr['status'],
+                'eta_minutes'   => $rr['eta_minutes'] !== null ? (int) $rr['eta_minutes'] : null,
+                'note'          => self::publicText($rr['response_note'] ?? ''),
+                'created_at'    => $rr['created_at'],
+                'response_label'=> $respSec !== null ? self::dur($respSec) : null,
+                'deliver_label' => $delivSec !== null ? self::dur($delivSec) : null,
+            ];
+        }
+        $resources = [
+            'rows'           => $resourceRows,
+            'sent'           => count($resourceReqs),
+            'answered'       => $answered,
+            'accepted'       => $acceptedCnt,
+            'delivered'      => count($delivDurs),
+            'accept_rate'    => $answered ? round($acceptedCnt / $answered * 100) : null,
+            'response_stats' => self::statBlock(count($resourceReqs), $respDurs),
+            'deliver_stats'  => self::statBlock(count($resourceReqs), $delivDurs),
+        ];
         $summary = [
             'teams'       => count($teams),
             'volunteers'  => array_sum(array_map(fn($t) => $t['actual'] ?? $t['approved'], $teams)),
@@ -202,6 +265,7 @@ class StoryService
             'videos'      => count($videos),
             'shortages'   => count($shortages),
             'sos'         => count($sos),
+            'resources'   => count($resourceReqs),
             'duration_h'  => ($event['start_datetime'] && $event['end_datetime'])
                 ? round((strtotime($event['end_datetime']) - strtotime($event['start_datetime'])) / 3600, 1) : null,
         ];
@@ -215,6 +279,7 @@ class StoryService
             'timeline'    => $tl,
             'communications' => $communications,
             'metrics'     => $metrics,
+            'resources'   => $resources,
             'photos'      => $photos,
             'videos'      => $videos,
             'shortages'   => $shortages,
