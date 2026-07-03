@@ -1,12 +1,18 @@
 -- ============================================================
 -- SynDrasi - Database schema (MySQL 8 / MariaDB 10.5+)
--- Run:  mysql -u root -p < schema.sql
 --
--- ✅ FRESH INSTALL — this file is now a FULL, up-to-date dump of the schema
--- produced by all files in database/migrations/ (regenerated from a fully
--- migrated dev DB on 2026-07-02, current through migration 038). A brand new
--- database created from this file alone already has every table the app
--- needs — you do NOT need to run database/migrations/*.sql by hand.
+-- ⚠️ This file deliberately contains NO "CREATE DATABASE" / "USE" statement:
+-- it applies to whatever database YOU select, so it can never silently target
+-- a different (live!) database than the one named on the command line.
+-- Run:
+--   mysql -u root -p -e "CREATE DATABASE syndrasi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+--   mysql -u root -p syndrasi < database/schema.sql
+--
+-- ✅ FRESH INSTALL — this file is a FULL, up-to-date dump of the schema
+-- produced by all files in database/migrations/ (current through
+-- migration 039). A brand new database created from this file alone already
+-- has every table the app needs — you do NOT need to run
+-- database/migrations/*.sql by hand.
 --
 -- On first request, MigrationRunner::ensureInitialised() sees the `users`
 -- table already exists and "baselines" every *.sql file currently in
@@ -19,18 +25,14 @@
 -- added, regenerate this file from a fully-migrated dev DB as part of the
 -- release step (mysqldump --no-data, hand-cleaned to match this file's
 -- style) so schema.sql never drifts from what the migrations actually
--- produce. See DEPLOY.md → "Fresh install".
+-- produce. See DEPLOY.md → "Fresh install". CI also cross-checks the table
+-- set against the migration chain (.github/workflows/ci.yml).
 -- ============================================================
-
-CREATE DATABASE IF NOT EXISTS syndrasi
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE syndrasi;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS schema_migrations;
+DROP TABLE IF EXISTS resource_requests;
 DROP TABLE IF EXISTS rate_limits;
 DROP TABLE IF EXISTS app_settings;
 DROP TABLE IF EXISTS municipality_settings;
@@ -219,6 +221,7 @@ CREATE TABLE events (
   created_by INT NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
+  last_activity_at DATETIME NULL COMMENT 'bumped by live-ops writes; poll change detection (migration 040)',
   reconciliation_notes TEXT NULL,
   story_token VARCHAR(64) NULL COMMENT 'no-login public Story link',
   story_published_at DATETIME NULL,
@@ -870,6 +873,27 @@ CREATE TABLE rate_limits (
   value TEXT NULL,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_rate_limits_updated_at (updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+-- Smart Resource Dispatch: αιτήματα διάθεσης πόρων (migration 039)
+CREATE TABLE resource_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  municipality_id INT NOT NULL,
+  event_id INT NOT NULL,
+  shortage_id INT NULL,
+  from_team_id INT NOT NULL,
+  item_label VARCHAR(255) NOT NULL,
+  requested_by INT NULL,
+  status ENUM('pending','accepted','declined','delivered','cancelled') NOT NULL DEFAULT 'pending',
+  response_note VARCHAR(255) NULL,
+  eta_minutes INT NULL,
+  responded_at DATETIME NULL,
+  delivered_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_rr_event (event_id, status),
+  INDEX idx_rr_team (from_team_id, status),
+  INDEX idx_rr_shortage (shortage_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------

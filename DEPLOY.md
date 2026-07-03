@@ -107,10 +107,15 @@ nothing to run, so the feature's table never gets created on production.
 
 `schema.sql` is a **full** dump of the schema produced by every file in
 `database/migrations/` — regenerate it whenever you add a migration (see
-below), and a brand-new DB needs nothing else:
+below), and a brand-new DB needs nothing else.
+
+⚠️ The file intentionally has **no `CREATE DATABASE` / `USE`** statement (it
+used to, and running it "against a test DB" once wiped the live one). You
+create and name the target database yourself:
 
 ```bash
-mysql -u root -p < database/schema.sql
+mysql -u root -p -e "CREATE DATABASE syndrasi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+mysql -u root -p syndrasi < database/schema.sql
 ```
 
 You do **not** need to run `database/migrations/*.sql` by hand on a fresh

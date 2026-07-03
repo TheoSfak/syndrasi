@@ -270,8 +270,26 @@ class UpdateService
         self::rrmdir($exDir);
         @unlink($zipPath);
 
+        // 6. Post-update health check. The maintenance lock must come off
+        //    first (it 503s every request, including our own probe).
+        @unlink($lockFile);
+        $health = self::healthCheck();
+        if ($health['status'] === 'dead') {
+            self::log('HEALTH CHECK FAILED (' . $health['detail'] . ') — rolling back to ' . basename($backup));
+            $restore = self::restoreBackup(basename($backup));
+            return [
+                'ok'          => false,
+                'error'       => 'Η νέα έκδοση δεν αποκρίνεται (' . $health['detail'] . '). '
+                               . ($restore['ok']
+                                   ? 'Έγινε αυτόματη επαναφορά στο προηγούμενο backup. Προσοχή: τυχόν νέα migrations έχουν ήδη εφαρμοστεί στη βάση.'
+                                   : 'Η αυτόματη επαναφορά ΑΠΕΤΥΧΕ (' . $restore['error'] . ') — απαιτείται χειροκίνητη επαναφορά του backup ' . basename($backup) . '.'),
+                'rolled_back' => $restore['ok'],
+                'backup'      => basename($backup),
+            ];
+        }
+
         $newVersion = self::currentVersion();
-        self::log("Update complete. Version now {$newVersion}. Migrations: "
+        self::log("Update complete. Version now {$newVersion}. Health: {$health['status']}. Migrations: "
             . (empty($mig['applied']) ? 'none' : implode(', ', $mig['applied']))
             . ($mig['error'] ? ' | ERROR: ' . $mig['error'] : ''));
 
@@ -282,7 +300,46 @@ class UpdateService
             'files'     => $copied,
             'migrated'  => $mig['applied'],
             'backup'    => basename($backup),
+            'health'    => $health['status'],
         ];
+    }
+
+    /**
+     * Probe the app's own public login page after an update.
+     * Returns status 'healthy' (HTTP 2xx/3xx), 'dead' (5xx or connection
+     * refused — the new code is broken, safe to auto-rollback), or
+     * 'unknown' (timeout / no HTTP context — do NOT rollback on ambiguity,
+     * a busy server must not trigger a false restore).
+     */
+    private static function healthCheck(): array
+    {
+        if (empty($_SERVER['HTTP_HOST']) || !function_exists('curl_init')) {
+            return ['status' => 'unknown', 'detail' => 'no HTTP context for self-probe'];
+        }
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $probe  = $scheme . '://' . $_SERVER['HTTP_HOST'] . url('/login');
+
+        $ch = curl_init($probe);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_NOBODY         => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_SSL_VERIFYPEER => false, // self-probe on same host; cert may be local
+        ]);
+        curl_exec($ch);
+        $code  = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $errNo = curl_errno($ch);
+        curl_close($ch);
+
+        if ($code >= 200 && $code < 400) {
+            return ['status' => 'healthy', 'detail' => 'HTTP ' . $code];
+        }
+        if ($code >= 500 || $errNo === CURLE_COULDNT_CONNECT) {
+            return ['status' => 'dead', 'detail' => $code ? 'HTTP ' . $code : 'connection refused'];
+        }
+        return ['status' => 'unknown', 'detail' => $code ? 'HTTP ' . $code : 'curl error ' . $errNo];
     }
 
     /* ── HTTP ──────────────────────────────────────────────────────────────── */
