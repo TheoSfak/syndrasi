@@ -4,6 +4,46 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.4-beta] — 2026-07-03
+
+### Performance — Ανίχνευση αλλαγών στο live-ops poll (~95% λιγότερα queries)
+
+- Νέα στήλη `events.last_activity_at` (migration 040), ενημερώνεται από κάθε
+  επιχειρησιακή εγγραφή (μηνύματα, SOS, ελλείψεις, σημειώσεις, media, αιτήματα πόρων,
+  check-ins, εγκρίσεις αιτήσεων).
+- Το SSE endpoint του war-room υπολογίζει πλέον φθηνή «υπογραφή δραστηριότητας»
+  (last_activity + status + νεότερο στίγμα + κάδος 60″) ανά session: όταν δεν έχει
+  αλλάξει τίποτα, στέλνει σκελετικό `{unchanged:true}` αντί να ξαναχτίζει ολόκληρο το
+  snapshot (που πλέον περιλάμβανε και το matching προτάσεων πόρων ανά έλλειψη).
+  Πλήρες rebuild γίνεται σε κάθε πραγματική αλλαγή και τουλάχιστον 1 φορά/λεπτό.
+
+### Technical — Σκληρότερο δίχτυ ασφαλείας
+
+- **HTTP integration tests** (νέα σουίτα `tests/Integration/`): token-based field flow,
+  login, deny-by-default, και ολόκληρος ο κύκλος short-circuit του stream — τρέχουν σε
+  τοπικό XAMPP, παραλείπονται καθαρά στο CI.
+- **Route↔controller συνέπεια ρόλων**: test που αποτυγχάνει αν τα δηλωμένα roles στα
+  routes αποκλίνουν από τα `requireRole()` των controllers.
+- **Φρουρός drift schema↔migrations**: test που αποτυγχάνει αν κάποιο table/column των
+  migrations λείπει από το schema.sql — έπιασε πραγματικό drift με την πρώτη εκτέλεση.
+- **`Role` constants**: σάρωση 367 κλήσεων σε routes + controllers — τα typos σε ρόλους
+  είναι πλέον fatal error αντί για σιωπηλή αποτυχία σύγκρισης.
+
+### Fix / Cleanup
+
+- `ResourceRequestResponder`: κοινή υπηρεσία για την απάντηση αιτημάτων πόρων
+  (team portal + field link) — εξαλείφθηκε ο διπλός κώδικας της Φάσης 2.
+- `schema.sql`: αφαιρέθηκε το `CREATE DATABASE`/`USE` (εφαρμόζεται πλέον μόνο στη βάση
+  που επιλέγει ο χρήστης) και προστέθηκε ο πίνακας `resource_requests` που έλειπε —
+  τα fresh installs ήταν ξανά σπασμένα.
+- Router: τα HTTP HEAD requests αντιμετωπίζονται ως GET (πριν επέστρεφαν 404 —
+  προβλήματα σε monitoring probes).
+- Self-updater: μετά την εφαρμογή ενημέρωσης γίνεται health check στη νέα έκδοση·
+  σε οριστική αποτυχία (5xx/άρνηση σύνδεσης) γίνεται **αυτόματη επαναφορά** στο
+  pre-update backup. Σε αμφίσημα αποτελέσματα (timeout) δεν γίνεται rollback.
+
+---
+
 ## [0.16.3-beta] — 2026-07-02
 
 ### Feature — Έξυπνη Διάθεση Πόρων, Φάση 4 (Εικόνα Ετοιμότητας)
