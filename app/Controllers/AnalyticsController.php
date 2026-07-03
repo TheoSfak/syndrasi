@@ -13,7 +13,7 @@ class AnalyticsController
     /** GET /analytics — merged into the Statistics page (tabs); redirect there. */
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $q = isset($_GET['year']) ? ('?year=' . (int) $_GET['year']) : '';
         redirect('/statistics' . $q);
     }
@@ -21,7 +21,7 @@ class AnalyticsController
     /** GET /analytics/export?type=yearly|category|teams */
     public function export()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid   = current_municipality_id();
         $terms = authority_context($mid);
         $eventPlural = $terms['event_plural'] ?? 'Δράσεις';

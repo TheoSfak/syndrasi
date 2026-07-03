@@ -7,7 +7,7 @@ class ApplicationController
     /** All pending applications across events. */
     public function pending()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $applications = EventApplication::pendingForMunicipality(current_municipality_id());
         render('applications/pending', [
             'pageTitle'    => 'Δηλώσεις Συμμετοχής',
@@ -18,7 +18,7 @@ class ApplicationController
     /** Applications of one event with review actions. */
     public function index($eventId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($eventId);
         $applications = EventApplication::forEvent($event['id']);
 
@@ -42,7 +42,7 @@ class ApplicationController
 
     public function approve($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $application = $this->findOwn($id);
 
         $approvedPeople = post_int('approved_people');
@@ -54,6 +54,7 @@ class ApplicationController
         $comment = post_str('admin_comment') ?: null;
         EventApplication::approve($application['id'], $approvedPeople, $comment, $_SESSION['user_id']);
         audit('application_approved', 'event_application', $application['id'], 'approved_people: ' . $approvedPeople);
+        Event::touchActivity((int) $application['event_id']);
 
         $event = Event::find($application['event_id']);
         $application['approved_people'] = $approvedPeople;
@@ -65,12 +66,13 @@ class ApplicationController
 
     public function reject($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $application = $this->findOwn($id);
 
         $comment = post_str('admin_comment') ?: null;
         EventApplication::reject($application['id'], $comment, $_SESSION['user_id']);
         audit('application_rejected', 'event_application', $application['id']);
+        Event::touchActivity((int) $application['event_id']);
 
         $event = Event::find($application['event_id']);
         try { NotificationService::applicationRejected($event, $application, (string) $comment); } catch (Throwable $e) { error_log($e); }
@@ -82,7 +84,7 @@ class ApplicationController
     /** POST /events/{id}/applications/bulk — batch approve or reject multiple applications */
     public function bulkApprove($eventId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event  = Event::findForCurrent((int) $eventId);
         $action = post_str('bulk_action'); // 'approve' | 'reject'
         $appIds = isset($_POST['app_ids']) && is_array($_POST['app_ids'])

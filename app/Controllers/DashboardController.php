@@ -6,7 +6,7 @@ class DashboardController
 {
     public function municipality()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid  = current_municipality_id();
         $year = (int) date('Y');
         $month = (int) date('n');

@@ -28,7 +28,7 @@ class TeamPortalController
 
     public function dashboard()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $tid = current_team_id();
         $mid = current_municipality_id();
         $team = VolunteerTeam::find($tid);
@@ -110,7 +110,7 @@ class TeamPortalController
 
     public function readiness()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $team = VolunteerTeam::find(current_team_id());
         render('team/readiness', [
             'pageTitle'        => 'Ετοιμότητα Ομάδας',
@@ -121,7 +121,7 @@ class TeamPortalController
 
     public function saveReadiness()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $team = VolunteerTeam::find(current_team_id());
         if (!$team) {
             abort(404, 'Η ομάδα δεν βρέθηκε.');
@@ -142,7 +142,7 @@ class TeamPortalController
 
     public function events()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $mid = current_municipality_id();
         $tid = current_team_id();
         $events       = Event::availableForTeam($mid, $tid);
@@ -157,7 +157,7 @@ class TeamPortalController
 
     public function showEvent($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, $this->eventNotFoundMessage());
@@ -240,7 +240,7 @@ class TeamPortalController
     /** POST /team/applications/{id}/send-field-link — SMS the commander's field link. */
     public function sendFieldLink($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $application = EventApplication::find((int) $id);
         if (!$application || (int) $application['team_id'] !== (int) current_team_id()) {
             abort(404, 'Δεν βρέθηκε η δήλωση.');
@@ -272,7 +272,7 @@ class TeamPortalController
     /** POST /team/applications/{id}/regenerate-pin — rotate the field PIN. */
     public function regenerateFieldPin($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $application = EventApplication::find((int) $id);
         if (!$application || (int) $application['team_id'] !== (int) current_team_id()) {
             abort(404, 'Δεν βρέθηκε η δήλωση.');
@@ -285,7 +285,7 @@ class TeamPortalController
 
     public function apply($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, $this->eventNotFoundMessage());
@@ -373,7 +373,7 @@ class TeamPortalController
     /** POST /team/events/{id}/application/members — update member list before first check-in */
     public function updateApplicationMembers($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, $this->eventNotFoundMessage());
@@ -447,7 +447,7 @@ class TeamPortalController
 
     public function cancelApplication($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $application = EventApplication::find($id);
         if (!$application) {
             abort(404, 'Η δήλωση δεν βρέθηκε.');
@@ -465,7 +465,7 @@ class TeamPortalController
 
     public function applications()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $applications = EventApplication::forTeam(current_team_id());
         render('team/applications', ['pageTitle' => 'Οι Δηλώσεις μας', 'applications' => $applications]);
     }
@@ -475,7 +475,7 @@ class TeamPortalController
     /** Full-screen Mobile Action Hub — /team/live/{id} */
     public function live($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $context = $this->approvedContext($id);
         $event       = $context['event'];
         $application = $context['application'];
@@ -513,7 +513,7 @@ class TeamPortalController
      */
     public function qrCheckin($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $context     = $this->approvedContext($id);
         $event       = $context['event'];
         $application = $context['application'];
@@ -534,7 +534,7 @@ class TeamPortalController
     /** Mobile operational page for the team during an active event. */
     public function operations($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $context = $this->approvedContext($id);
         $event = $context['event'];
         $application = $context['application'];
@@ -570,7 +570,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/photo — upload a (geotagged) photo. */
     public function uploadPhoto($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $context = $this->approvedContext($id);
         $event   = $context['event'];
         $tid     = (int) current_team_id();
@@ -597,7 +597,7 @@ class TeamPortalController
 
     public function uploadVideo($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $context = $this->approvedContext($id);
         $event   = $context['event'];
         $tid     = (int) current_team_id();
@@ -624,7 +624,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/checkin */
     public function checkin($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $context = $this->approvedContext($id, true);
         $event = $context['event'];
         $application = $context['application'];
@@ -662,6 +662,7 @@ class TeamPortalController
             ]
         );
         audit('team_checked_in', 'event', $event['id'], 'status: ' . $status . ', present: ' . $present);
+        Event::touchActivity((int) $event['id']);
 
         flash_set('success', 'Η δήλωση παρουσίας καταχωρήθηκε: ' . greek_status($status) . '.');
         $from = post_str('_from');
@@ -674,7 +675,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/send-location  (JSON) */
     public function sendLocation($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             $terms = $this->authorityTerms();
@@ -716,7 +717,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/shortage — report a resource shortage. */
     public function reportShortage($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, $this->eventNotFoundMessage());
@@ -754,6 +755,7 @@ class TeamPortalController
             ]
         );
         audit('shortage_reported', 'event', $event['id'], 'type: ' . $type . ', severity: ' . $severity);
+        Event::touchActivity((int) $event['id']);
 
         $team = VolunteerTeam::find($tid);
         $terms = $this->authorityTerms((int) $event['municipality_id']);
@@ -791,7 +793,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/sos — raise SOS / man-down (JSON). */
     public function sos($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         [$event, $tid] = $this->commsContext($id);
 
         $input = json_input();
@@ -823,7 +825,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/message — team chat message to command (JSON). */
     public function sendTeamMessage($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         [$event, $tid] = $this->commsContext($id);
         $input = json_input();
         $body  = trim((string) ($input['body'] ?? ''));
@@ -841,7 +843,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/status-ping — one-tap status ping (JSON). */
     public function statusPing($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         [$event, $tid] = $this->commsContext($id);
         $input = json_input();
         $code  = (string) ($input['code'] ?? '');
@@ -861,7 +863,7 @@ class TeamPortalController
     /** POST /team/operations/events/{id}/ack-order — team ACKs a command order (JSON). */
     public function ackOrder($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         [$event, $tid] = $this->commsContext($id);
         $input  = json_input();
         $msgId  = (int) ($input['message_id'] ?? 0);
@@ -871,13 +873,14 @@ class TeamPortalController
             json_out(['success' => false, 'message' => 'Η εντολή δεν βρέθηκε.'], 404);
         }
         EventMessage::acknowledge($msgId, $_SESSION['user_id']);
+        Event::touchActivity((int) $event['id']);
         json_out(['success' => true]);
     }
 
     /** GET /team/operations/events/{id}/comms — polling feed for the team hub (JSON). */
     public function commsFeed($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         [$event, $tid] = $this->commsContext($id);
         $since = (int) ($_GET['since'] ?? 0);
         $shortRows = dbq('SELECT * FROM shortage_reports WHERE event_id = :eid AND team_id = :tid ORDER BY created_at DESC', ['eid' => $event['id'], 'tid' => $tid])->fetchAll();
@@ -916,47 +919,25 @@ class TeamPortalController
     /** POST /team/resource-requests/{id}/respond — αποδοχή/αδυναμία αιτήματος πόρου (Φάση 2, JSON). */
     public function respondResourceRequest($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $tid = (int) current_team_id();
         $rr  = ResourceRequest::find((int) $id);
         if (!$rr || (int) $rr['from_team_id'] !== $tid) {
             json_out(['success' => false, 'message' => 'Το αίτημα δεν βρέθηκε.'], 404);
         }
 
-        $in     = json_input();
-        $action = (string) ($in['action'] ?? '');
-        if (!in_array($action, ['accept', 'decline'], true)) {
-            json_out(['success' => false, 'message' => 'Μη έγκυρη ενέργεια.'], 422);
-        }
-        $note = trim((string) ($in['note'] ?? '')) ?: null;
-        $eta  = null;
-        if ($action === 'accept' && isset($in['eta_minutes'])) {
-            $eta = (int) $in['eta_minutes'];
-            if ($eta < 1 || $eta > 1440) { $eta = null; }
-        }
-
-        $status = $action === 'accept' ? 'accepted' : 'declined';
-        if (!ResourceRequest::respond((int) $rr['id'], $status, $note, $eta)) {
-            json_out(['success' => false, 'message' => 'Το αίτημα δεν είναι πλέον σε εκκρεμότητα.'], 409);
-        }
-
         $event = Event::find((int) $rr['event_id']);
         $team  = VolunteerTeam::find($tid);
-        if ($event && $team) {
-            try {
-                $status === 'accepted'
-                    ? NotificationService::resourceAccepted($event, $team, (string) $rr['item_label'], $eta)
-                    : NotificationService::resourceDeclined($event, $team, (string) $rr['item_label'], $note);
-            } catch (Throwable $e) { error_log('[resourceRespond] ' . $e->getMessage()); }
+        if (!$event || !$team) {
+            json_out(['success' => false, 'message' => 'Το αίτημα δεν βρέθηκε.'], 404);
         }
-        audit('resource_' . $status, 'event', (int) $rr['event_id'], 'request ' . (int) $rr['id'] . ' team ' . $tid);
-        json_out(['success' => true, 'message' => $status === 'accepted' ? 'Καταγράφηκε η αποδοχή.' : 'Καταγράφηκε η αδυναμία.']);
+        ResourceRequestResponder::respond($rr, json_input(), $event, $team, ' team ' . $tid);
     }
 
     /** POST /team/operations/events/{id}/room — post to the shared operations room. */
     public function sendRoomMessage($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         [$event, $tid] = $this->commsContext($id);
         $body = trim((string) (json_input()['body'] ?? ''));
         if ($body === '') { json_out(['success' => false, 'message' => 'Κενό μήνυμα.'], 422); }
@@ -970,7 +951,7 @@ class TeamPortalController
     /** POST /team/events/{id}/report — team post-event report (upsert). */
     public function submitReport($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, $this->eventNotFoundMessage());
@@ -1021,7 +1002,7 @@ class TeamPortalController
     /** GET /team/statistics */
     public function statistics()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $tid  = current_team_id();
         $team = VolunteerTeam::find($tid);
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
@@ -1057,7 +1038,7 @@ class TeamPortalController
     /** GET /team/events/{id}/debrief — post-event debrief form. */
     public function debrief($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, $this->eventNotFoundMessage());
@@ -1084,7 +1065,7 @@ class TeamPortalController
     /** POST /team/events/{id}/debrief — save the post-event debrief. */
     public function saveDebrief($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $event = Event::find($id);
         if (!$event || (int) $event['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, $this->eventNotFoundMessage());

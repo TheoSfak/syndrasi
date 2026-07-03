@@ -6,7 +6,7 @@ class AwardController
 {
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid  = current_municipality_id();
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
         $s    = MunicipalitySetting::all($mid);

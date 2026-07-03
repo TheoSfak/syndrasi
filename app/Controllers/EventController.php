@@ -15,7 +15,7 @@ class EventController
     /** Ενεργές δράσεις: open / review / confirmed / active */
     public function index()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid    = current_municipality_id();
         $terms  = authority_context($mid);
         $events = Event::forMunicipalityByStatuses($mid, ['open', 'review', 'confirmed', 'active']);
@@ -31,7 +31,7 @@ class EventController
     /** Calendar view — all events for a given month */
     public function calendar()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid = current_municipality_id();
 
         $yearMonth = isset($_GET['m']) ? preg_replace('/[^0-9\-]/', '', trim($_GET['m'])) : date('Y-m');
@@ -77,7 +77,7 @@ class EventController
     /** Πρόχειρα */
     public function drafts()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid    = current_municipality_id();
         $terms  = authority_context($mid);
         $events = Event::forMunicipalityByStatuses($mid, ['draft']);
@@ -91,7 +91,7 @@ class EventController
     /** Κλειστές δράσεις — αναμονή αρχειοθέτησης */
     public function closed()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid    = current_municipality_id();
         $terms  = authority_context($mid);
         $events = Event::forMunicipalityByStatuses($mid, ['closed']);
@@ -106,7 +106,7 @@ class EventController
     /** Ολοκληρωμένες δράσεις — αρχείο */
     public function completed()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid    = current_municipality_id();
         $q      = isset($_GET['q']) ? trim($_GET['q']) : '';
         $from   = isset($_GET['from']) ? trim($_GET['from']) : '';
@@ -128,7 +128,7 @@ class EventController
 
     public function create()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         $terms = authority_context($mid);
 
@@ -169,7 +169,7 @@ class EventController
 
     public function store()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $data = $this->validated();
         if ($data === null) {
             redirect('/events/create');
@@ -218,7 +218,7 @@ class EventController
 
     public function show($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event        = Event::findForCurrent($id);
         $applications = EventApplication::forEvent($event['id']);
         $reports      = dbq(
@@ -248,7 +248,7 @@ class EventController
 
     public function edit($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($id);
         $terms = authority_context((int) $event['municipality_id']);
         render('events/form', [
@@ -262,7 +262,7 @@ class EventController
 
     public function update($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($id);
         $data  = $this->validated();
         if ($data === null) {
@@ -279,7 +279,7 @@ class EventController
 
     public function publish($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent((int)$id);
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
@@ -298,7 +298,7 @@ class EventController
     /** Manual early-start */
     public function activate($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent((int)$id);
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
@@ -317,7 +317,7 @@ class EventController
     /** GET /events/{id}/story/download — self-contained HTML (φωτό base64, βίντεο ως links). */
     public function storyDownload($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $eid   = (int) $event['id'];
         EventVideo::markKeptForEvent($eid);
@@ -352,7 +352,7 @@ class EventController
     /** POST /events/{id}/story/publish — create/return the public Story link. */
     public function publishStory($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $token = $event['story_token'] ?? null;
         if (!$token) {
@@ -369,7 +369,7 @@ class EventController
     /** GET /events/{id}/story — full storytelling / απολογισμός page (standalone). */
     public function story($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event  = Event::findForCurrent($id);
         $public = (($_GET['view'] ?? '') === 'public');
         EventVideo::markKeptForEvent((int) $event['id']); // story generated → keep its media
@@ -385,7 +385,7 @@ class EventController
 
     public function close($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent((int)$id);
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
@@ -402,7 +402,7 @@ class EventController
 
     public function complete($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent((int)$id);
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
@@ -419,7 +419,7 @@ class EventController
 
     public function remind($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent((int) $id);
         $terms = authority_context((int) $event['municipality_id']);
         if (!in_array($event['status'], ['open', 'review', 'confirmed', 'active'], true)) {
@@ -442,7 +442,7 @@ class EventController
 
     public function cancel($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent((int) $id);
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
@@ -460,7 +460,7 @@ class EventController
     /** Move a closed event to completed/archive. */
     public function archive($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent((int)$id);
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
@@ -478,7 +478,7 @@ class EventController
     /** GET — reconciliation form for a closed event */
     public function reconcile($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event        = Event::findForCurrent($id);
         $applications = EventApplication::forEvent($event['id']);
 
@@ -500,7 +500,7 @@ class EventController
     /** POST — save reconciliation data */
     public function saveReconciliation($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($id);
         $terms = authority_context((int) $event['municipality_id']);
         if ($event['status'] !== 'closed') {
@@ -605,7 +605,7 @@ class EventController
     /** POST /events/{id}/clone — copy to new draft, redirect to edit */
     public function clone($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent((int) $id);
 
         $data = [
@@ -640,7 +640,7 @@ class EventController
     /** GET /events/{id}/debriefs — admin overview of all team debriefs for an event */
     public function debriefs($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event    = Event::findForCurrent($id);
         $debriefs = TeamDebrief::forEvent($event['id']);
         $stats    = TeamDebrief::statsForEvent($event['id']);
@@ -677,7 +677,7 @@ class EventController
     /** POST /events/{id}/municipality-debrief — δήμος after-action report (upsert). */
     public function saveMunicipalityDebrief($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($id);
 
         $summary = post_str('summary') ?: null;
@@ -723,7 +723,7 @@ class EventController
     /** POST /events/{id}/save-template — snapshot this event (core fields + shifts) as a reusable template. */
     public function saveTemplate($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($id);
 
         $name = trim(post_str('template_name'));
@@ -768,7 +768,7 @@ class EventController
     /** POST /event-templates/{id}/delete */
     public function deleteTemplate($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         EventTemplate::delete((int) $id, current_municipality_id());
         audit('event_template_deleted', 'event_template', (int) $id);
         flash_set('success', 'Το πρότυπο διαγράφηκε.');

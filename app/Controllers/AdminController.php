@@ -6,7 +6,7 @@ class AdminController
 {
     public function dashboard()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
 
         $counts = [
             'municipalities' => (int) dbq('SELECT COUNT(*) FROM municipalities')->fetchColumn(),
@@ -50,7 +50,7 @@ class AdminController
 
     public function impersonate($userId)
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         if (isset($_SESSION['impersonating_user_id'])) {
             flash_set('danger', 'Είστε ήδη σε λειτουργία impersonation.');
             redirect('/admin/dashboard');
@@ -95,7 +95,7 @@ class AdminController
 
     public function municipalities()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         render('municipalities/index', [
             'pageTitle'      => 'Φορείς',
             'municipalities' => Municipality::all(),
@@ -105,7 +105,7 @@ class AdminController
 
     public function storeMunicipality()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $name = post_str('name');
         if ($name === '') {
             flash_set('danger', 'Το όνομα του φορέα είναι υποχρεωτικό.');
@@ -133,7 +133,7 @@ class AdminController
 
     public function updateMunicipality($id)
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $m = Municipality::find($id);
         if (!$m) {
             abort(404, 'Ο φορέας δεν βρέθηκε.');
@@ -165,7 +165,7 @@ class AdminController
 
     public function toggleMunicipality($id)
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $m = Municipality::find($id);
         if (!$m) {
             abort(404, 'Ο φορέας δεν βρέθηκε.');
@@ -182,7 +182,7 @@ class AdminController
     /** Municipality detail page */
     public function showMunicipality($id)
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $m = Municipality::find($id);
         if (!$m) { abort(404, 'Ο φορέας δεν βρέθηκε.'); }
 
@@ -225,7 +225,7 @@ class AdminController
 
     public function teamsOverview()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
 
         $municipalityId = isset($_GET['municipality_id']) && $_GET['municipality_id'] !== '' ? (int) $_GET['municipality_id'] : 0;
         $teamId = isset($_GET['team_id']) && $_GET['team_id'] !== '' ? (int) $_GET['team_id'] : 0;
@@ -326,7 +326,7 @@ class AdminController
 
     public function users()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $users = dbq(
             'SELECT u.*, m.name AS municipality_name, t.name AS team_name
              FROM users u
@@ -355,7 +355,7 @@ class AdminController
 
     public function storeUser()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $name  = post_str('name');
         $email = strtolower(trim(post_str('email')));
         $role  = post_str('role');
@@ -386,7 +386,7 @@ class AdminController
 
     public function updateUser($id)
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $user = User::find($id);
         if (!$user) { abort(404, 'Ο χρήστης δεν βρέθηκε.'); }
         $name  = post_str('name');
@@ -419,7 +419,7 @@ class AdminController
 
     public function resetUserPassword($id)
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $user = User::find($id);
         if (!$user) { abort(404, 'Ο χρήστης δεν βρέθηκε.'); }
         $pass = post_str('password');
@@ -435,7 +435,7 @@ class AdminController
 
     public function toggleUser($id)
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $user = User::find($id);
         if (!$user) { abort(404, 'Ο χρήστης δεν βρέθηκε.'); }
         if ((int) $user['id'] === current_user_id()) {
@@ -455,7 +455,7 @@ class AdminController
 
     public function settings()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $settings = [];
         foreach (['platform_announcement', 'support_email', 'cron_secret'] as $k) {
             $settings[$k] = dbq(
@@ -484,7 +484,7 @@ class AdminController
 
     public function saveSettings()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         foreach (['platform_announcement', 'support_email'] as $k) {
             $v = post_str($k);
             dbq(

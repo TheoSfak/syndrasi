@@ -219,6 +219,7 @@ class FieldController
             json_out(['success' => false, 'message' => 'Η εντολή δεν βρέθηκε.'], 404);
         }
         EventMessage::acknowledge($msgId, $ctx['owner']);
+        Event::touchActivity((int) $app['event_id']);
         json_out(['success' => true]);
     }
 
@@ -256,31 +257,9 @@ class FieldController
             json_out(['success' => false, 'message' => 'Το αίτημα δεν βρέθηκε.'], 404);
         }
 
-        $in     = json_input();
-        $action = (string) ($in['action'] ?? '');
-        if (!in_array($action, ['accept', 'decline'], true)) {
-            json_out(['success' => false, 'message' => 'Μη έγκυρη ενέργεια.'], 422);
-        }
-        $note = trim((string) ($in['note'] ?? '')) ?: null;
-        $eta  = null;
-        if ($action === 'accept' && isset($in['eta_minutes'])) {
-            $eta = (int) $in['eta_minutes'];
-            if ($eta < 1 || $eta > 1440) { $eta = null; }
-        }
-
-        $status = $action === 'accept' ? 'accepted' : 'declined';
-        if (!ResourceRequest::respond((int) $rr['id'], $status, $note, $eta)) {
-            json_out(['success' => false, 'message' => 'Το αίτημα δεν είναι πλέον σε εκκρεμότητα.'], 409);
-        }
-
         $team = ['name' => $app['team_name'] ?? ('#' . (int) $app['team_id'])];
-        try {
-            $status === 'accepted'
-                ? NotificationService::resourceAccepted($this->eventArr($app), $team, (string) $rr['item_label'], $eta)
-                : NotificationService::resourceDeclined($this->eventArr($app), $team, (string) $rr['item_label'], $note);
-        } catch (Throwable $e) { error_log('[Field::resourceRespond] ' . $e->getMessage()); }
-        audit('resource_' . $status, 'event', (int) $rr['event_id'], 'request ' . (int) $rr['id'] . ' team ' . (int) $app['team_id'] . ' (field)');
-        json_out(['success' => true, 'message' => $status === 'accepted' ? 'Καταγράφηκε η αποδοχή.' : 'Καταγράφηκε η αδυναμία.']);
+        ResourceRequestResponder::respond($rr, json_input(), $this->eventArr($app), $team,
+            ' team ' . (int) $app['team_id'] . ' (field)');
     }
 
     /** POST /f/{token}/message (JSON) — send a private message to the command center. */
@@ -325,6 +304,7 @@ class FieldController
                 'title' => $title, 'descr' => post_str('description') ?: null,
             ]
         );
+        Event::touchActivity((int) $app['event_id']);
         try {
             NotificationService::notifyMunicipality(
                 (int) $app['municipality_id'], (int) $app['event_id'],

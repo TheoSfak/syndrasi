@@ -6,7 +6,7 @@ class NotificationCenterController
 {
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = (int) current_municipality_id();
         $filters = [
             'channel' => $this->allowed($_GET['channel'] ?? 'all', ['all','email','sms','telegram','push','in_app'], 'all'),
@@ -28,7 +28,7 @@ class NotificationCenterController
 
     public function retryEmail($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = (int) current_municipality_id();
         $mailId = (int) $id;
         $row = dbq(
@@ -53,7 +53,7 @@ class NotificationCenterController
 
     public function clearHistory()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = (int) current_municipality_id();
         if (post_str('confirm') !== 'DELETE') {
             flash_set('danger', 'Για διαγραφή ιστορικού πληκτρολογήστε DELETE.');

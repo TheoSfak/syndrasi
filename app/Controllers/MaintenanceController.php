@@ -8,7 +8,7 @@ class MaintenanceController
     /** Run the housekeeping cleanup on demand (replaces the cron schedule for demos). */
     public function cleanup()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $r = MaintenanceService::cleanup();
         flash_set('success', sprintf(
             'Καθαρισμός ολοκληρώθηκε: %d εγγραφές rate-limit, %d tokens επαναφοράς διαγράφηκαν.',
@@ -21,7 +21,7 @@ class MaintenanceController
 
     public function backup()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $r = UpdateService::backupNow();
         if ($r['ok']) {
             flash_set('success', 'Δημιουργήθηκε αντίγραφο ασφαλείας: ' . $r['name']);
@@ -33,14 +33,14 @@ class MaintenanceController
 
     public function checkUpdate()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $_SESSION['update_check'] = UpdateService::checkLatest();
         redirect('/admin/settings#updates');
     }
 
     public function applyUpdate()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $r = UpdateService::applyUpdate();
         if ($r['ok']) {
             $msg = 'Η ενημέρωση ολοκληρώθηκε. Έκδοση: ' . $r['version']
@@ -57,7 +57,7 @@ class MaintenanceController
 
     public function downloadBackup()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $path = UpdateService::backupFile((string) ($_GET['file'] ?? ''));
         if ($path === null) {
             abort(404, 'Το backup δεν βρέθηκε.');
@@ -71,7 +71,7 @@ class MaintenanceController
 
     public function restoreBackup()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $r = UpdateService::restoreBackup(post_str('file'));
         if ($r['ok']) {
             flash_set('success', 'Επαναφορά από backup «' . $r['name']
@@ -84,7 +84,7 @@ class MaintenanceController
 
     public function runMigrations()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         $r = MigrationRunner::runPending();
         if ($r['error']) {
             flash_set('danger', 'Migration απέτυχε: ' . $r['error']);
@@ -100,7 +100,7 @@ class MaintenanceController
 
     public function resetData()
     {
-        requireRole(['super_admin']);
+        requireRole([Role::SUPER_ADMIN]);
         if (post_str('confirm') !== 'ΔΙΑΓΡΑΦΗ') {
             flash_set('danger', 'Η διαγραφή ακυρώθηκε — η λέξη επιβεβαίωσης δεν ταίριαξε.');
             redirect('/admin/settings#danger');

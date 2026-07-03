@@ -8,7 +8,7 @@
  */
 class MobilizationController
 {
-    private const COMMAND_ROLES = ['municipality_admin', 'event_operator'];
+    private const COMMAND_ROLES = Role::COMMAND;
 
     /* ── Command side ──────────────────────────────────────────────────────── */
 

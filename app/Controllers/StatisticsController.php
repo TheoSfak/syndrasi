@@ -6,7 +6,7 @@ class StatisticsController
 {
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
 
@@ -51,7 +51,7 @@ class StatisticsController
 
     public function team($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $team = VolunteerTeam::find($id);
         if (!$team) {
             abort(404, 'Η ομάδα δεν βρέθηκε.');

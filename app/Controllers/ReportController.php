@@ -13,7 +13,7 @@ class ReportController
 
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $events = dbq(
             "SELECT e.id, e.title, e.start_datetime, e.status FROM events e
              WHERE e.municipality_id = :mid
@@ -25,7 +25,7 @@ class ReportController
 
     public function exportEvents()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $events = Event::forMunicipality(current_municipality_id(), []);
         $rows = [];
         foreach ($events as $e) {
@@ -44,7 +44,7 @@ class ReportController
 
     public function exportEventApplications($eventId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($eventId);
         $terms = $this->terms();
         $apps = EventApplication::forEvent($event['id']);
@@ -67,7 +67,7 @@ class ReportController
 
     public function exportEventCoverage($eventId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($eventId);
         $rows = [];
         $teams = dbq(
@@ -107,7 +107,7 @@ class ReportController
 
     public function exportTeamStatistics()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
         $terms = $this->terms();
         $eventPlural = $terms['event_plural'] ?? 'Δράσεις';
@@ -131,7 +131,7 @@ class ReportController
 
     public function exportMunicipalityStatistics()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
         $terms = $this->terms();
         $o = StatsService::municipalityOverview(current_municipality_id(), $year);
@@ -151,7 +151,7 @@ class ReportController
 
     public function exportAwards()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid  = current_municipality_id();
         $year = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
         $terms = $this->terms();
@@ -194,7 +194,7 @@ class ReportController
 
     public function pdfCoverage($eventId)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($eventId);
         $mid   = current_municipality_id();
         $mun   = Municipality::find($mid);
@@ -238,7 +238,7 @@ class ReportController
 
     public function pdfCertificate($eventId)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($eventId);
         $mid   = current_municipality_id();
         $mun   = Municipality::find($mid);
@@ -267,7 +267,7 @@ class ReportController
 
     public function pdfAwards($year)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $year = (int)$year;
         if ($year < 2020 || $year > 2040) { abort(400,'Μη έγκυρο έτος.'); }
         $mid  = current_municipality_id();
@@ -293,7 +293,7 @@ class ReportController
     /** GET /reports/pdf/annual/{year} — full-year branded PDF for city council. */
     public function pdfAnnual($year)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $year = (int) $year;
         if ($year < 2020 || $year > 2040) { abort(400, 'Μη έγκυρο έτος.'); }
         $mid  = current_municipality_id();

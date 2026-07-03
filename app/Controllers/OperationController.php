@@ -7,7 +7,7 @@ class OperationController
     /** GET /operations — command-centre event selector */
     public function index()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid = current_municipality_id();
         $this->autoCloseExpired($mid);
 
@@ -63,7 +63,7 @@ class OperationController
     /** GET /operations/events/{id} */
     public function show($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $mid   = $event['municipality_id'];
         $munSettings = MunicipalitySetting::all($mid);
@@ -84,7 +84,7 @@ class OperationController
     /** GET /operations/events/{id}/gate-qr — full-screen Gate QR for team check-in. */
     public function gateQr($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
 
         render('operations/gate-qr', [
@@ -98,7 +98,7 @@ class OperationController
      */
     public function status($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $eid   = $event['id'];
 
@@ -184,7 +184,7 @@ class OperationController
     /** GET /operations/events/{id}/locations */
     public function locations($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $eid   = $event['id'];
 
@@ -275,7 +275,7 @@ class OperationController
     /** POST /operations/events/{id}/request-photo — ask a team for a photo. */
     public function requestPhoto($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $tid   = post_int('team_id');
         $team  = VolunteerTeam::find($tid);
@@ -296,7 +296,7 @@ class OperationController
     /** POST /operations/events/{id}/request-gps — ask a team for a live GPS fix. */
     public function requestGps($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $tid   = post_int('team_id');
         $team  = VolunteerTeam::find($tid);
@@ -322,7 +322,7 @@ class OperationController
      */
     public function requestVideo($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $mid   = (int) $event['municipality_id'];
 
@@ -439,7 +439,7 @@ class OperationController
     /** GET /operations/videos/{id}/download — download a video for archiving. */
     public function downloadVideo($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $video = EventVideo::find((int) $id);
         if (!$video) { abort(404, 'Το βίντεο δεν βρέθηκε.'); }
         requireMunicipalityAccess($video['municipality_id']);
@@ -454,7 +454,7 @@ class OperationController
     /** POST /operations/videos/{id}/delete — delete a team video (file + row). */
     public function deleteVideo($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $video = EventVideo::find((int) $id);
         if (!$video) {
             if (wants_json()) { json_out(['ok' => false, 'error' => 'not_found'], 404); }
@@ -541,12 +541,23 @@ class OperationController
      * The browser reconnects every 3 000 ms (set via retry:).
      * This "close-and-retry" pattern works reliably on Apache/XAMPP
      * without long-running PHP or output-buffering issues.
+     *
+     * Change detection: a per-session activity signature (last_activity_at +
+     * event status + newest ping id + 60s time bucket) lets unchanged polls
+     * short-circuit to a skinny {unchanged:true} payload instead of the full
+     * multi-query snapshot. The 60s bucket forces a real rebuild at least
+     * once a minute so ping ages and silent-team checks stay fresh.
      */
     public function stream($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $eid   = (int) $event['id'];
+
+        $sig       = $this->activitySignature($eid, $event);
+        $sessKey   = 'ops_sig_' . $eid;
+        $unchanged = $sig !== null && ($_SESSION[$sessKey] ?? null) === $sig;
+        $_SESSION[$sessKey] = $sig;
 
         // Release session file lock so other tabs don't block
         session_write_close();
@@ -565,12 +576,34 @@ class OperationController
         // Browser reconnects 3 s after this connection closes
         echo "retry: 3000\n";
 
-        $snapshot = $this->buildStreamSnapshot($eid, $event);
+        $payload = $unchanged
+            ? ['ok' => true, 'unchanged' => true, 'ts' => date('H:i:s')]
+            : $this->buildStreamSnapshot($eid, $event);
         echo "event: update\n";
-        echo "data: " . json_encode($snapshot, JSON_UNESCAPED_UNICODE) . "\n\n";
+        echo "data: " . json_encode($payload, JSON_UNESCAPED_UNICODE) . "\n\n";
 
         flush();
         exit;
+    }
+
+    /**
+     * Cheap change signature for the live-ops poll. Null (never matches, so
+     * a full snapshot is always sent) when migration 040 hasn't run yet.
+     */
+    private function activitySignature(int $eid, array $event): ?string
+    {
+        if (!array_key_exists('last_activity_at', $event)) {
+            return null;
+        }
+        try {
+            $maxPing = (int) dbq(
+                'SELECT COALESCE(MAX(id), 0) FROM location_pings WHERE event_id = :eid',
+                ['eid' => $eid]
+            )->fetchColumn();
+        } catch (Throwable $e) {
+            return null;
+        }
+        return ($event['last_activity_at'] ?? '-') . '|' . $event['status'] . '|' . $maxPing . '|' . intdiv(time(), 60);
     }
 
     /**
@@ -751,7 +784,7 @@ class OperationController
     /** POST /operations/events/{id}/note */
     public function addNote($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $note  = trim(post_str('note'));
         if (!$note) {
@@ -765,6 +798,7 @@ class OperationController
              'uid' => $_SESSION['user_id'], 'note' => $note]
         );
         audit('ops_note_added', 'event', $event['id']);
+        Event::touchActivity((int) $event['id']);
         json_out(['ok' => true, 'ts' => date('H:i')]);
     }
 
@@ -773,7 +807,7 @@ class OperationController
     /** POST /sos/{id}/acknowledge — command acknowledges a team SOS; notifies team. */
     public function sosAck($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $alert = SosAlert::find((int) $id);
         if (!$alert || (int) $alert['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, 'Το SOS δεν βρέθηκε.');
@@ -784,6 +818,7 @@ class OperationController
             try { NotificationService::sosAcknowledged($alert, $event); } catch (Throwable $e) { error_log('[Ops::sosAck] ' . $e->getMessage()); }
         }
         audit('sos_acknowledged', 'event', (int) $alert['event_id'], 'sos ' . $id);
+        Event::touchActivity((int) $alert['event_id']);
         if (wants_json()) { json_out(['ok' => true]); }
         flash_set('success', 'Το SOS επιβεβαιώθηκε· η ομάδα ενημερώθηκε.');
         redirect('/operations/events/' . $alert['event_id']);
@@ -792,13 +827,14 @@ class OperationController
     /** POST /sos/{id}/resolve — close an SOS. */
     public function sosResolve($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $alert = SosAlert::find((int) $id);
         if (!$alert || (int) $alert['municipality_id'] !== (int) current_municipality_id()) {
             abort(404, 'Το SOS δεν βρέθηκε.');
         }
         SosAlert::resolve((int) $id, current_user_id());
         audit('sos_resolved', 'event', (int) $alert['event_id'], 'sos ' . $id);
+        Event::touchActivity((int) $alert['event_id']);
         if (wants_json()) { json_out(['ok' => true]); }
         flash_set('success', 'Το SOS έκλεισε.');
         redirect('/operations/events/' . $alert['event_id']);
@@ -807,7 +843,7 @@ class OperationController
     /** POST /operations/events/{id}/message — command → team(s): message or order. */
     public function sendMessage($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event  = Event::findForCurrent($id);
         $body   = trim(post_str('body'));
         $kind   = post_str('kind') === 'order' ? 'order' : 'message';
@@ -864,7 +900,7 @@ class OperationController
      */
     public function approveApplication($id, $appId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($id);
         $app   = EventApplication::find($appId);
         if (!$app
@@ -879,6 +915,7 @@ class OperationController
         $comment = post_str('admin_comment') ?: null;
         EventApplication::approve($appId, $people, $comment, current_user_id());
         audit('application_approved', 'event_application', $appId, 'via ops, people: ' . $people);
+        Event::touchActivity((int) $event['id']);
         $app['approved_people'] = $people;
         try { NotificationService::applicationApproved($event, $app); } catch (Throwable $e) { error_log('[Ops::approveApp] ' . $e->getMessage()); }
         json_out(['ok' => true]);
@@ -890,7 +927,7 @@ class OperationController
      */
     public function rejectApplication($id, $appId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($id);
         $app   = EventApplication::find($appId);
         if (!$app
@@ -903,6 +940,7 @@ class OperationController
         $comment = post_str('admin_comment') ?: null;
         EventApplication::reject($appId, $comment, current_user_id());
         audit('application_rejected', 'event_application', $appId, 'via ops');
+        Event::touchActivity((int) $event['id']);
         try { NotificationService::applicationRejected($event, $app, (string) $comment); } catch (Throwable $e) { error_log('[Ops::rejectApp] ' . $e->getMessage()); }
         json_out(['ok' => true]);
     }
@@ -910,7 +948,7 @@ class OperationController
     /** POST /operations/events/{id}/room — post to the shared operations room. */
     public function sendRoom($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $body  = trim(post_str('body'));
         if ($body === '') { json_out(['ok' => false, 'error' => 'Κενό μήνυμα.']); return; }
@@ -924,14 +962,14 @@ class OperationController
     /** POST /shortages/{id}/acknowledge */
     public function acknowledgeShortage($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $this->updateShortageStatus((int) $id, 'acknowledged');
     }
 
     /** POST /shortages/{id}/resolve */
     public function resolveShortage($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $this->updateShortageStatus((int) $id, 'resolved');
     }
 
@@ -958,6 +996,7 @@ class OperationController
             try { NotificationService::shortageHandled($sh, $event, $action); } catch (Throwable $e) { error_log('[Ops::shortage] ' . $e->getMessage()); }
         }
         audit('shortage_' . $action, 'event', (int) $sh['event_id'], 'shortage ' . $id);
+        Event::touchActivity((int) $sh['event_id']);
         if (wants_json()) { json_out(['ok' => true]); }
         flash_set('success', $action === 'resolved' ? 'Η έλλειψη επιλύθηκε.' : 'Η έλλειψη επιβεβαιώθηκε.');
         redirect('/operations/events/' . $sh['event_id']);
@@ -968,7 +1007,7 @@ class OperationController
     /** POST /operations/events/{id}/resource-request — αίτημα διάθεσης πόρου από ομάδα. */
     public function createResourceRequest($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $event = Event::findForCurrent($id);
         $mid   = (int) $event['municipality_id'];
 
@@ -1010,7 +1049,7 @@ class OperationController
     /** POST /operations/resource-requests/{id}/delivered — ο πόρος παραδόθηκε. */
     public function resourceRequestDelivered($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $rr = ResourceRequest::find((int) $id);
         if (!$rr || (int) $rr['municipality_id'] !== (int) current_municipality_id()) {
             json_out(['ok' => false, 'error' => 'Το αίτημα δεν βρέθηκε.'], 404);
@@ -1019,13 +1058,14 @@ class OperationController
             json_out(['ok' => false, 'error' => 'Το αίτημα δεν είναι ανοιχτό.'], 422);
         }
         audit('resource_delivered', 'event', (int) $rr['event_id'], 'request ' . (int) $id);
+        Event::touchActivity((int) $rr['event_id']);
         json_out(['ok' => true, 'shortage_id' => $rr['shortage_id'] !== null ? (int) $rr['shortage_id'] : null]);
     }
 
     /** POST /operations/resource-requests/{id}/cancel — ακύρωση αιτήματος. */
     public function resourceRequestCancel($id)
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $rr = ResourceRequest::find((int) $id);
         if (!$rr || (int) $rr['municipality_id'] !== (int) current_municipality_id()) {
             json_out(['ok' => false, 'error' => 'Το αίτημα δεν βρέθηκε.'], 404);
@@ -1034,6 +1074,7 @@ class OperationController
             json_out(['ok' => false, 'error' => 'Το αίτημα δεν είναι ανοιχτό.'], 422);
         }
         audit('resource_request_cancelled', 'event', (int) $rr['event_id'], 'request ' . (int) $id);
+        Event::touchActivity((int) $rr['event_id']);
         json_out(['ok' => true]);
     }
 
@@ -1042,7 +1083,7 @@ class OperationController
     /** GET /operations/war-room — all active events on one map. */
     public function warRoom()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid         = current_municipality_id();
         $this->autoCloseExpired($mid);
         $munSettings = MunicipalitySetting::all($mid);
@@ -1066,7 +1107,7 @@ class OperationController
      */
     public function warRoomStream()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid = current_municipality_id();
         $this->autoCloseExpired($mid);
 
@@ -1093,7 +1134,7 @@ class OperationController
     /** GET /operations/war-room/status — JSON fallback when SSE is unavailable. */
     public function warRoomStatus()
     {
-        requireRole(['municipality_admin', 'event_operator']);
+        requireRole([Role::MUNICIPALITY_ADMIN, Role::EVENT_OPERATOR]);
         $mid = current_municipality_id();
         $this->autoCloseExpired($mid);
 

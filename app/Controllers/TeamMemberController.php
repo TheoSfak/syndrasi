@@ -17,7 +17,7 @@ class TeamMemberController
 
     public function index()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $tid = current_team_id();
         $mid = current_municipality_id();
         $members = TeamMember::allByTeam($tid);
@@ -37,7 +37,7 @@ class TeamMemberController
 
     public function create()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $mid = current_municipality_id();
         $fieldConfig = TeamMember::fieldConfig($mid);
 
@@ -51,7 +51,7 @@ class TeamMemberController
 
     public function store()
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $tid = current_team_id();
         $mid = current_municipality_id();
         $fieldConfig = TeamMember::fieldConfig($mid);
@@ -74,7 +74,7 @@ class TeamMemberController
 
     public function edit($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $member = $this->requireOwned($id);
         $fieldConfig = TeamMember::fieldConfig(current_municipality_id());
 
@@ -88,7 +88,7 @@ class TeamMemberController
 
     public function update($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $member = $this->requireOwned($id);
         $mid = current_municipality_id();
         $fieldConfig = TeamMember::fieldConfig($mid);
@@ -112,7 +112,7 @@ class TeamMemberController
 
     public function toggle($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $member = $this->requireOwned($id);
 
         if (!empty($member['is_team_admin']) && empty($member['is_assistant_admin'])) {
@@ -136,7 +136,7 @@ class TeamMemberController
 
     public function promoteAssistant($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $this->requireAssistantManager();
         $member = $this->requireOwned($id);
 
@@ -215,7 +215,7 @@ class TeamMemberController
 
     public function revokeAssistant($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $this->requireAssistantManager();
         $member = $this->requireOwned($id);
         $this->revokeAssistantMember($member);
@@ -241,7 +241,7 @@ class TeamMemberController
     /** GET /team/members/{id}/stats — participation history for one member */
     public function stats($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $member = $this->requireOwned($id);
         $team   = VolunteerTeam::find($member['team_id']);
 
@@ -260,7 +260,7 @@ class TeamMemberController
     /** GET /team/members/{id}/certificate — printable volunteer certificate */
     public function certificate($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $member = $this->requireOwned($id);
         $team   = VolunteerTeam::find($member['team_id']);
         $mid    = current_municipality_id();

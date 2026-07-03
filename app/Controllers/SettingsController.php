@@ -6,7 +6,7 @@ class SettingsController
 {
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         $municipality = Municipality::find($mid);
         $settings  = MunicipalitySetting::all($mid);
@@ -36,7 +36,7 @@ class SettingsController
 
     public function saveMail()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $driver = post_str('mail_driver');
@@ -99,7 +99,7 @@ class SettingsController
         set_time_limit(60);
         ignore_user_abort(true);
 
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         $user = current_user();
         $municipality = Municipality::find($mid);
@@ -132,7 +132,7 @@ class SettingsController
 
     public function clearMailHistory()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         if (post_str('confirm') !== 'DELETE') {
@@ -154,7 +154,7 @@ class SettingsController
 
     public function saveMap()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $lat  = trim(post_str('map_lat'));
@@ -186,7 +186,7 @@ class SettingsController
 
     public function saveAwards()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $bronze  = post_int('award_bronze_events');
@@ -215,7 +215,7 @@ class SettingsController
 
     public function saveNotifications()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $types = [
@@ -280,7 +280,7 @@ class SettingsController
 
     public function syncFireRiskMap()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = (int) current_municipality_id();
         $result = FireRiskMapService::sync($mid);
 
@@ -299,7 +299,7 @@ class SettingsController
 
     public function uploadFireRiskMap()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = (int) current_municipality_id();
         $date = post_str('map_date');
         $file = $_FILES['fire_risk_map'] ?? null;
@@ -342,7 +342,7 @@ class SettingsController
 
     public function saveSms()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $driver = post_str('sms_driver');
@@ -386,7 +386,7 @@ class SettingsController
     public function testSms()
     {
         set_time_limit(60);
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $to = preg_replace('/[^\d+]/', '', (string) post_str('test_to'));
@@ -412,7 +412,7 @@ class SettingsController
 
     public function saveTelegram()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $enabled = post_bool('telegram_enabled') ? '1' : '0';
@@ -440,7 +440,7 @@ class SettingsController
     public function testTelegram()
     {
         set_time_limit(60);
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         $municipality = Municipality::find($mid);
         $authority = authority_context($mid);
@@ -487,7 +487,7 @@ class SettingsController
 
     public function saveEventDefaults()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $deadlineDays = post_int('event_application_deadline_days');
@@ -507,7 +507,7 @@ class SettingsController
 
     public function saveMemberFields()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $optionalFields = ['blood_type', 'driving_license', 'certifications', 'id_number', 'amka'];
@@ -532,7 +532,7 @@ class SettingsController
 
     public function saveEmailTemplates()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid  = current_municipality_id();
         $defs = EmailTemplate::definitions();
 
@@ -568,7 +568,7 @@ class SettingsController
 
     public function saveBranding()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
 
         $logoUrl = post_str('branding_logo_url');
@@ -596,7 +596,7 @@ class SettingsController
 
     public function saveOrganisation()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         flash_set('warning', 'Ο τύπος και η ονομασία φορέα ορίζονται πλέον μόνο από τον Super Admin.');
         redirect('/settings');
     }

@@ -6,7 +6,7 @@ class TeamController
 {
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         $terms = authority_context($mid);
         $teams = VolunteerTeam::forMunicipality($mid);
@@ -15,7 +15,7 @@ class TeamController
 
     public function create()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         render('teams/form', [
             'pageTitle'        => 'Νέα Ομάδα',
@@ -26,7 +26,7 @@ class TeamController
 
     public function store()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $data = $this->validated();
         if ($data === null) {
             redirect('/teams/create');
@@ -74,7 +74,7 @@ class TeamController
 
     public function edit($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $team = $this->findOwn($id);
         render('teams/form', [
             'pageTitle'        => 'Επεξεργασία Ομάδας',
@@ -85,7 +85,7 @@ class TeamController
 
     public function assistants($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $team = $this->findOwn($id);
         $assistants = TeamMember::assistantsByTeam($team['id']);
         render('teams/assistants', [
@@ -97,7 +97,7 @@ class TeamController
 
     public function update($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $team = $this->findOwn($id);
         $data = $this->validated();
         if ($data === null) {
@@ -111,7 +111,7 @@ class TeamController
 
     public function toggleStatus($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $team = $this->findOwn($id);
         VolunteerTeam::toggleStatus($team['id']);
         audit('team_status_toggled', 'volunteer_team', $team['id']);
@@ -121,7 +121,7 @@ class TeamController
 
     public function revokeAssistant($id, $memberId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $team = $this->findOwn($id);
         $member = TeamMember::find($memberId);
         if (!$member || (int) $member['team_id'] !== (int) $team['id']) {

@@ -6,7 +6,7 @@ class FireServiceController
 {
     public function index()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = current_municipality_id();
         $municipality = $mid ? Municipality::find($mid) : null;
         $defaults = FireServiceIncidentService::defaultFiltersForMunicipality($municipality);
@@ -33,7 +33,7 @@ class FireServiceController
 
     public function sync()
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $result = FireServiceIncidentService::sync();
         if ($result['success']) {
             $telegramSent = (int) ($result['telegram_sent'] ?? 0);
@@ -48,7 +48,7 @@ class FireServiceController
 
     public function createEvent($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         try {
             $eventId = FireServiceIncidentService::createEventDraft((int) $id, current_municipality_id(), current_user_id());
             $terms = authority_context(current_municipality_id());
@@ -64,7 +64,7 @@ class FireServiceController
 
     public function mobilizeReview($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         try {
             $data = FireServiceIncidentService::mobilizationReviewData((int) $id, current_municipality_id());
             render('fire_service/mobilize_review', [
@@ -86,7 +86,7 @@ class FireServiceController
 
     public function mobilize($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         try {
             $teamIds = (isset($_POST['team_ids']) && is_array($_POST['team_ids']))
                 ? array_map('intval', $_POST['team_ids'])

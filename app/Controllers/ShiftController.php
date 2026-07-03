@@ -10,7 +10,7 @@ class ShiftController
     /** POST /events/{id}/shifts/store */
     public function store($eventId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($eventId);
 
         $errors = [];
@@ -46,7 +46,7 @@ class ShiftController
     /** POST /events/{id}/shifts/{sid}/update */
     public function update($eventId, $shiftId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($eventId);
         $shift = EventShift::findForCurrent($shiftId);
 
@@ -74,7 +74,7 @@ class ShiftController
     /** POST /events/{id}/shifts/{sid}/delete */
     public function destroy($eventId, $shiftId)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $event = Event::findForCurrent($eventId);
         EventShift::findForCurrent($shiftId); // ownership check
 
@@ -89,7 +89,7 @@ class ShiftController
     /** POST /shift-applications/{id}/approve */
     public function approve($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $app    = EventShift::findApplication($id);
         $people = max(0, (int) post_str('approved_people', $app['offered_people']));
 
@@ -107,7 +107,7 @@ class ShiftController
     /** POST /shift-applications/{id}/reject */
     public function reject($id)
     {
-        requireRole(['municipality_admin']);
+        requireRole([Role::MUNICIPALITY_ADMIN]);
         $app = EventShift::findApplication($id);
 
         EventShift::rejectApplication($id);
@@ -125,7 +125,7 @@ class ShiftController
     /** POST /team/events/{id}/shifts/{sid}/apply */
     public function teamApply($eventId, $shiftId)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
 
         $event = Event::find($eventId);
         if (!$event || !in_array($event['status'], ['open', 'review', 'confirmed', 'active'], true)) {
@@ -157,7 +157,7 @@ class ShiftController
     /** POST /team/shift-applications/{id}/cancel */
     public function teamCancel($id)
     {
-        requireRole(['team_admin']);
+        requireRole([Role::TEAM_ADMIN]);
         $app = EventShift::findApplication($id);
         if ((int) $app['team_id'] !== current_team_id()) { abort(403); }
 
