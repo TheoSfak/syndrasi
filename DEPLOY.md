@@ -150,11 +150,33 @@ mysql -u root -e "DROP DATABASE schema_check;"
 
 ## ✅ Current status / work log (last updated 2026-07-02)
 
-### Released on GitHub: **v0.15.12-beta** (Latest)
-Tagged, pushed, and published as a GitHub Release (not marked prerelease —
-see gotcha below). 38 migrations total (`037`, `038` new this push).
-`schema.sql` regenerated and verified to match the live migrated DB exactly
-(43 tables) — see "Fresh install" section above, which this push added.
+### Released on GitHub: **v0.15.12-beta**, superseded shortly after by **v0.16.0-beta**
+`v0.15.12-beta` was tagged/pushed/released (not marked prerelease — see
+gotcha below) with 38 migrations total (`037`, `038` new that push) and a
+regenerated `schema.sql` verified to match the live migrated DB exactly
+(43 tables — see "Fresh install" section above, which that push added).
+A separate, concurrent piece of work (Smart Resource Dispatch feature —
+`docs/RESOURCE_DISPATCH_SPEC.md`, migration `039`, `ResourceRequest`
+model/`ResourceMatcher` service) landed on `origin/main` independently
+right after and bumped to **v0.16.0-beta**, now the actual latest. Merged
+cleanly (no real conflicts — see gotcha below on why the merge initially
+looked conflicted).
+
+**⚠️ Two-sessions-same-folder gotcha:** mid-push, `git push` was rejected
+because another session (working in this same
+`C:\Users\user\Desktop\Syndrasi\syndrasi` folder, not an isolated worktree)
+had independently committed and pushed the Resource Dispatch feature.
+`git merge` then reported the working tree had uncommitted local changes
+AND untracked files that would be "overwritten" — but diffing every one of
+those files against `origin/main` (after stripping `\r`, since Windows
+CRLF checkout makes every line show as changed even when content is
+identical) showed **zero real differences**: the other session's files
+were already sitting in this shared folder, just not `git add`ed here yet.
+Safe resolution was `git checkout -- <tracked files>` +
+`rm <untracked files>` (discarding what were actually just local copies of
+already-pushed content) then a clean `git merge`. **Always diff before
+assuming a "would be overwritten" conflict is real** — with two sessions
+sharing one folder, it usually isn't.
 
 This push's changes (route middleware → app_settings cleanup → schema.sql
 fix, one commit per concern — see `git log` for exact diffs):
