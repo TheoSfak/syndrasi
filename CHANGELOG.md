@@ -4,6 +4,16 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.6-beta] — 2026-07-10
+
+### Fix — Διαγνωστικές λεπτομέρειες στο σφάλμα λήψης Πυροσβεστικής
+
+- Το `FireServiceIncidentService::fetchHtml()` δείχνει πλέον την πραγματική
+  αιτία αποτυχίας (HTTP status ή σφάλμα cURL/σύνδεσης) μέσα στο μήνυμα
+  σφάλματος, αντί για γενικό «Αποτυχία λήψης». Χρειάζεται για να
+  επιβεβαιωθεί αν πρόκειται για το ίδιο `403 Forbidden` block που ήδη
+  αντιμετωπίζει το production στο fire-risk-map (Πολιτική Προστασία).
+
 ## [0.16.5-beta] — 2026-07-10
 
 ### Fix — Συμβάντα Πυροσβεστικής: αποτυχία λήψης στο production

@@ -567,6 +567,8 @@ class FireServiceIncidentService
             'Accept: text/html,application/xhtml+xml',
         ];
 
+        $detail = 'άγνωστο σφάλμα';
+
         if (function_exists('curl_init')) {
             $ch = curl_init(self::SOURCE_URL);
             curl_setopt_array($ch, [
@@ -586,7 +588,8 @@ class FireServiceIncidentService
                 return (string) $html;
             }
 
-            error_log('[FireService] cURL fetch failed: ' . ($html === false ? ($err ?: 'cURL error') : 'HTTP ' . $code));
+            $detail = $html === false ? ($err ?: 'cURL error') : ('HTTP ' . $code);
+            error_log('[FireService] cURL fetch failed: ' . $detail);
         }
 
         $context = stream_context_create([
@@ -594,12 +597,16 @@ class FireServiceIncidentService
                 'method' => 'GET',
                 'timeout' => 25,
                 'header' => implode("\r\n", $headers) . "\r\n",
+                'ignore_errors' => true,
             ],
             'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
         ]);
         $html = @file_get_contents(self::SOURCE_URL, false, $context);
         if ($html === false || trim($html) === '') {
-            throw new RuntimeException('Αποτυχία λήψης από το Πυροσβεστικό Σώμα.');
+            if (!empty($http_response_header) && is_array($http_response_header)) {
+                $detail = mb_substr((string) $http_response_header[0], 0, 80);
+            }
+            throw new RuntimeException('Αποτυχία λήψης από το Πυροσβεστικό Σώμα (' . $detail . ').');
         }
         return $html;
     }
