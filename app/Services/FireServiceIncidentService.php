@@ -25,8 +25,8 @@ class FireServiceIncidentService
             if (!$incidents) {
                 $len = strlen($html);
                 $hasTabs = (str_contains($html, 'id="L1"') || str_contains($html, "id='L1'")) ? 'tabs-ok' : 'no-tabs';
-                $snippet = trim(preg_replace('/\s+/u', ' ', strip_tags($html)));
-                $snippet = mb_substr($snippet, 0, 220, 'UTF-8');
+                $snippet = trim(preg_replace('/\s+/u', ' ', $html));
+                $snippet = mb_substr($snippet, 0, 300, 'UTF-8');
                 throw new RuntimeException(
                     'Η πηγή φορτώθηκε αλλά δεν αναγνωρίστηκε κανένα συμβάν. '
                     . "(μήκος={$len}, {$hasTabs}, απόσπασμα: {$snippet})"

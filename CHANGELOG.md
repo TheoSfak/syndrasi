@@ -4,6 +4,15 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.8-beta] — 2026-07-10
+
+### Fix — Raw HTML στο διαγνωστικό απόσπασμα
+
+- Το production επέστρεψε μόλις 311 bytes, χωρίς tabs, και κενό απόσπασμα —
+  επειδή το προηγούμενο diagnostic έκανε `strip_tags()` πριν το απόσπασμα,
+  κρύβοντας ακριβώς το markup που θα έδειχνε τι είδους σελίδα ήταν
+  (πιθανό redirect/challenge stub). Το απόσπασμα δείχνει πλέον το raw HTML.
+
 ## [0.16.7-beta] — 2026-07-10
 
 ### Fix — Διαγνωστικό απόσπασμα HTML στο "δεν αναγνωρίστηκε κανένα συμβάν"
