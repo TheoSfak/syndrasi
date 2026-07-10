@@ -147,6 +147,35 @@ class CronController
     }
 
     /**
+     * POST /cron/fire-service/ingest
+     * Receives raw Fire Service incidents HTML from an external fetcher when
+     * the live server's outbound IP is blocked by fireservice.gr's WAF
+     * (FortiADC). JSON body: {"html": "<...>"}
+     */
+    public function ingestFireService()
+    {
+        $this->authCron();
+        @set_time_limit(90);
+
+        $body = json_input();
+        $html = isset($body['html']) ? (string) $body['html'] : '';
+
+        if (trim($html) === '') {
+            json_out(['success' => false, 'error' => 'Missing html.'], 422);
+        }
+        if (strlen($html) > 2 * 1024 * 1024) {
+            json_out(['success' => false, 'error' => 'HTML payload too large.'], 422);
+        }
+
+        try {
+            $result = FireServiceIncidentService::syncFromHtml($html);
+        } catch (InvalidArgumentException $e) {
+            json_out(['success' => false, 'error' => $e->getMessage()], 422);
+        }
+        json_out(array_merge($result, ['at' => date('Y-m-d H:i:s')]), $result['success'] ? 200 : 422);
+    }
+
+    /**
      * GET /cron/fire-risk-map
      * Checks the Civil Protection daily fire-risk map. Safe to run every 60 min.
      */

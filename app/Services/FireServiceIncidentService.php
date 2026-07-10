@@ -17,10 +17,27 @@ class FireServiceIncidentService
 
     public static function sync(): array
     {
+        return self::performSync(fn() => self::fetchHtml());
+    }
+
+    /**
+     * Ingests pre-fetched HTML from an external fetcher, for when the live
+     * server's outbound IP is blocked by fireservice.gr's WAF (FortiADC).
+     */
+    public static function syncFromHtml(string $html): array
+    {
+        if (trim($html) === '') {
+            throw new InvalidArgumentException('Το HTML που στάλθηκε είναι κενό.');
+        }
+        return self::performSync(fn() => $html);
+    }
+
+    private static function performSync(callable $htmlProvider): array
+    {
         @set_time_limit(90);
         $fetchId = self::startFetch();
         try {
-            $html = self::fetchHtml();
+            $html = $htmlProvider();
             $incidents = self::parse($html);
             if (!$incidents) {
                 $len = strlen($html);

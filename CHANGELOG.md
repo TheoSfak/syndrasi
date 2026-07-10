@@ -4,6 +4,30 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.17.0-beta] — 2026-07-10
+
+### Feature — External ingest endpoint για Συμβάντα Πυροσβεστικής
+
+- Επιβεβαιώθηκε η αιτία της αποτυχίας: το fireservice.gr μπλοκάρει το
+  outbound IP του production μέσω FortiADC WAF (επιστρέφει
+  `/fortiadc_error_page/index.html`, 311 bytes, καμία σχέση με το πραγματικό
+  περιεχόμενο). Ίδια κατηγορία προβλήματος με το ήδη τεκμηριωμένο `403` της
+  Πολιτικής Προστασίας στο fire-risk-map.
+- Νέο endpoint `POST /cron/fire-service/ingest` (mirror του υπάρχοντος
+  `ingestFireRiskMap`): δέχεται JSON `{"html": "..."}` με το ίδιο Bearer
+  cron secret, και τρέχει το ίδιο parse/upsert pipeline μέσω νέου
+  `FireServiceIncidentService::syncFromHtml()`.
+- `FireServiceIncidentService::sync()` έγινε thin wrapper γύρω από κοινό
+  `performSync()`, ώστε ο κανονικός server-side fetch και το external
+  ingest να μοιράζονται όλη τη λογική (parse, upsert, Telegram, cleanup,
+  καταγραφή στο `fire_service_fetches`).
+- Προστέθηκε εξαίρεση CSRF στο `public/index.php` για το νέο path
+  (mirror της ήδη υπάρχουσας εξαίρεσης για `/cron/fire-risk-map/ingest`).
+- Εξωτερικός fetcher (`fire-service-fetcher/fetch_and_ingest.ps1`, εκτός
+  git repo λόγω του secret) τρέχει τοπικά μέσω Windows Task Scheduler κάθε
+  5 λεπτά, φέρνει το HTML από ένα IP που δεν είναι μπλοκαρισμένο, και το
+  στέλνει στο νέο endpoint.
+
 ## [0.16.8-beta] — 2026-07-10
 
 ### Fix — Raw HTML στο διαγνωστικό απόσπασμα

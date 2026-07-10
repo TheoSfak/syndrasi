@@ -270,6 +270,7 @@ $router->get('/cron/shift-reminders', 'CronController@shiftReminders', ['public'
 $router->get('/cron/cleanup', 'CronController@cleanup', ['public' => true]);
 $router->get('/cron/mail-queue', 'CronController@processMailQueue', ['public' => true]);
 $router->get('/cron/fire-service', 'CronController@fireService', ['public' => true]);
+$router->post('/cron/fire-service/ingest', 'CronController@ingestFireService', ['public' => true]);
 $router->get('/cron/fire-risk-map', 'CronController@fireRiskMap', ['public' => true]);
 $router->post('/cron/fire-risk-map/ingest', 'CronController@ingestFireRiskMap', ['public' => true]);
 
