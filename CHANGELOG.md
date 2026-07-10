@@ -4,6 +4,21 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.5-beta] — 2026-07-10
+
+### Fix — Συμβάντα Πυροσβεστικής: αποτυχία λήψης στο production
+
+- `FireServiceIncidentService::fetchHtml()` βασιζόταν αποκλειστικά σε
+  `file_get_contents()`, χωρίς fallback — αν το `allow_url_fopen` είναι
+  απενεργοποιημένο στο hosting (πιθανή αιτία στο production), η λήψη απέτυχε
+  αμέσως σε κάθε προσπάθεια. Πλέον δοκιμάζει πρώτα cURL (όπως ήδη κάνουν
+  `TelegramService` και `FireRiskMapService`) και πέφτει σε `file_get_contents`
+  μόνο αν το cURL αποτύχει ή δεν είναι διαθέσιμο.
+- `CronController::authCron()`: fallback σε `getallheaders()` όταν το Apache
+  δεν γεμίζει το `$_SERVER['HTTP_AUTHORIZATION']` (παρατηρήθηκε σε τοπικό
+  XAMPP· δεν επηρέαζε το production, αλλά κάνει το auth πιο ανθεκτικό
+  ανεξαρτήτως server config).
+
 ## [0.16.4-beta] — 2026-07-03
 
 ### Performance — Ανίχνευση αλλαγών στο live-ops poll (~95% λιγότερα queries)

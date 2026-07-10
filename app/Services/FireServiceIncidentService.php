@@ -562,11 +562,38 @@ class FireServiceIncidentService
 
     private static function fetchHtml(): string
     {
+        $headers = [
+            'User-Agent: SynDrasi Fire Incident Monitor',
+            'Accept: text/html,application/xhtml+xml',
+        ];
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init(self::SOURCE_URL);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_TIMEOUT => 25,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $html = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            curl_close($ch);
+
+            if ($html !== false && $code < 400 && trim((string) $html) !== '') {
+                return (string) $html;
+            }
+
+            error_log('[FireService] cURL fetch failed: ' . ($html === false ? ($err ?: 'cURL error') : 'HTTP ' . $code));
+        }
+
         $context = stream_context_create([
             'http' => [
                 'method' => 'GET',
                 'timeout' => 25,
-                'header' => "User-Agent: SynDrasi Fire Incident Monitor\r\nAccept: text/html,application/xhtml+xml\r\n",
+                'header' => implode("\r\n", $headers) . "\r\n",
             ],
             'ssl' => ['verify_peer' => true, 'verify_peer_name' => true],
         ]);

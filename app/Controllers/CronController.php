@@ -200,7 +200,17 @@ class CronController
     private function authCron()
     {
         // Accept secret via Authorization: Bearer header only; never from GET (avoids access-log exposure)
-        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+        if ($authHeader === '' && function_exists('getallheaders')) {
+            // Some Apache/mod_php configs (e.g. XAMPP on Windows without CGIPassAuth)
+            // never populate $_SERVER['HTTP_AUTHORIZATION'] even though the header was sent.
+            foreach (getallheaders() as $name => $value) {
+                if (strcasecmp($name, 'Authorization') === 0) {
+                    $authHeader = $value;
+                    break;
+                }
+            }
+        }
         $secret = str_starts_with($authHeader, 'Bearer ') ? substr($authHeader, 7) : '';
         if ($secret === '') {
             http_response_code(401);
