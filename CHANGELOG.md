@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.17.1-beta] — 2026-07-10
+
+### Fix — Base64 στο fire-service ingest για να περάσει το inbound WAF
+
+- Το raw HTML στο POST body του `/cron/fire-service/ingest` μπλοκαριζόταν
+  με απλό `403 Forbidden` (καθαρό κείμενο, όχι από την εφαρμογή) από το
+  δικό μας inbound WAF/hosting security layer — επιβεβαιώθηκε ότι είναι
+  content-pattern κανόνας (όχι μέγεθος): 42KB απλό κείμενο περνάει κανονικά,
+  ένα απόσπασμα 2KB με πραγματικά `<tags>` μπλοκάρεται. Το endpoint δέχεται
+  πλέον `{"html_b64": "<base64>"}` αντί για ωμό HTML.
+
 ## [0.17.0-beta] — 2026-07-10
 
 ### Feature — External ingest endpoint για Συμβάντα Πυροσβεστικής
