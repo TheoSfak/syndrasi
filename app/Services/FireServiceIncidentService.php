@@ -23,7 +23,14 @@ class FireServiceIncidentService
             $html = self::fetchHtml();
             $incidents = self::parse($html);
             if (!$incidents) {
-                throw new RuntimeException('Η πηγή φορτώθηκε αλλά δεν αναγνωρίστηκε κανένα συμβάν.');
+                $len = strlen($html);
+                $hasTabs = (str_contains($html, 'id="L1"') || str_contains($html, "id='L1'")) ? 'tabs-ok' : 'no-tabs';
+                $snippet = trim(preg_replace('/\s+/u', ' ', strip_tags($html)));
+                $snippet = mb_substr($snippet, 0, 220, 'UTF-8');
+                throw new RuntimeException(
+                    'Η πηγή φορτώθηκε αλλά δεν αναγνωρίστηκε κανένα συμβάν. '
+                    . "(μήκος={$len}, {$hasTabs}, απόσπασμα: {$snippet})"
+                );
             }
             self::upsertIncidents($incidents, $fetchId);
             $telegramSent = self::notifyCreteTelegramIncidents();

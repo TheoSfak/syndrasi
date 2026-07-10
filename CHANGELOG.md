@@ -4,6 +4,17 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.16.7-beta] — 2026-07-10
+
+### Fix — Διαγνωστικό απόσπασμα HTML στο "δεν αναγνωρίστηκε κανένα συμβάν"
+
+- Στο production η λήψη πλέον πετυχαίνει (πέρασε το `403`-block), αλλά ο
+  parser δεν αναγνωρίζει συμβάντα ενώ τοπικά αναγνωρίζει ~50. Πιθανή αιτία:
+  η πηγή μπορεί να επιστρέφει διαφορετικό περιεχόμενο (π.χ. anti-bot
+  challenge page) στο production IP αντί για την πραγματική σελίδα.
+  Το μήνυμα σφάλματος δείχνει πλέον μήκος HTML, αν βρέθηκαν τα tabs
+  (`id="L1"`) και ένα απόσπασμα κειμένου, ώστε να φανεί τι όντως έφτασε.
+
 ## [0.16.6-beta] — 2026-07-10
 
 ### Fix — Διαγνωστικές λεπτομέρειες στο σφάλμα λήψης Πυροσβεστικής
