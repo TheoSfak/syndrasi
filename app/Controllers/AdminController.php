@@ -479,6 +479,8 @@ class AdminController
             'migApplied'     => MigrationRunner::appliedFiles(),
             'migPending'     => MigrationRunner::pendingFiles(),
             'backups'        => UpdateService::listBackups(),
+            'languages'      => Language::all(),
+            'stringsPage'    => TranslationString::search([]),
         ]);
     }
 

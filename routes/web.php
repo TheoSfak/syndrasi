@@ -291,6 +291,10 @@ $router->post('/admin/impersonate/{id}', 'AdminController@impersonate', ['roles'
 $router->post('/admin/stop-impersonation', 'AdminController@stopImpersonation');
 $router->get('/admin/settings', 'AdminController@settings', ['roles' => [Role::SUPER_ADMIN]]);
 $router->post('/admin/settings', 'AdminController@saveSettings', ['roles' => [Role::SUPER_ADMIN]]);
+$router->get('/admin/languages/search', 'LanguageController@search', ['roles' => [Role::SUPER_ADMIN]]);
+$router->post('/admin/languages/save',   'LanguageController@save',   ['roles' => [Role::SUPER_ADMIN]]);
+$router->post('/admin/languages/add',    'LanguageController@add',    ['roles' => [Role::SUPER_ADMIN]]);
+$router->post('/admin/languages/toggle', 'LanguageController@toggle', ['roles' => [Role::SUPER_ADMIN]]);
 
 /* Super admin: maintenance (cron) + self-update */
 $router->post('/admin/maintenance/cleanup',    'MaintenanceController@cleanup', ['roles' => [Role::SUPER_ADMIN]]);
