@@ -25,6 +25,10 @@ final class LocalHttpTest extends TestCase
     private static int $rrAcceptId = 0;
     private static int $rrDoubleId = 0;
     private static int $userId = 0;
+    private const SUPER_ADMIN_EMAIL = 'httptest_superadmin@test.local';
+    private const SUPER_ADMIN_PASS  = 'HttpTest#Super12345';
+    private static int $superAdminId = 0;
+    private static int $testTranslationKeyId = 0;
 
     public static function setUpBeforeClass(): void
     {
@@ -104,6 +108,18 @@ final class LocalHttpTest extends TestCase
              VALUES (?, 'HTTP Test Admin', ?, ?, 'municipality_admin', 'active')"
         )->execute([$mid, self::TEST_EMAIL, $hash]);
         self::$userId = (int) $pdo->lastInsertId();
+
+        $hashSuper = password_hash(self::SUPER_ADMIN_PASS, PASSWORD_DEFAULT);
+        $pdo->prepare(
+            "INSERT INTO users (name, email, password_hash, role, status) VALUES ('HTTP Test Super Admin', ?, ?, 'super_admin', 'active')"
+        )->execute([self::SUPER_ADMIN_EMAIL, $hashSuper]);
+        self::$superAdminId = (int) $pdo->lastInsertId();
+
+        $pdo->prepare("INSERT INTO translation_keys (str_key, str_group) VALUES ('httptest.sample', 'httptest')")->execute();
+        self::$testTranslationKeyId = (int) $pdo->lastInsertId();
+        $pdo->prepare(
+            "INSERT INTO translation_values (key_id, language_code, value) VALUES (?, 'el', 'Δοκιμαστικό κείμενο')"
+        )->execute([self::$testTranslationKeyId]);
     }
 
     private static function fixturesDown(): void
@@ -114,6 +130,12 @@ final class LocalHttpTest extends TestCase
         $pdo->prepare('DELETE FROM event_applications WHERE field_token = ?')->execute([self::$fieldToken]);
         $pdo->prepare('DELETE FROM users WHERE email = ?')->execute([self::TEST_EMAIL]);
         $pdo->prepare('DELETE FROM audit_logs WHERE user_id = ?')->execute([self::$userId]);
+
+        $pdo->exec('DELETE FROM translation_values WHERE key_id = ' . self::$testTranslationKeyId);
+        $pdo->exec('DELETE FROM translation_keys WHERE id = ' . self::$testTranslationKeyId);
+        $pdo->exec("DELETE FROM languages WHERE code = 'de'"); // in case a test run leaves it behind
+        $pdo->prepare('DELETE FROM users WHERE email = ?')->execute([self::SUPER_ADMIN_EMAIL]);
+        $pdo->prepare('DELETE FROM audit_logs WHERE user_id = ?')->execute([self::$superAdminId]);
     }
 
     /** @return array{0:int,1:string,2:string} [status, body, contentType] */
@@ -155,6 +177,16 @@ final class LocalHttpTest extends TestCase
             return $m[1];
         }
         $this->fail('CSRF token missing from page');
+    }
+
+    private function loginAs(string $email, string $password): void
+    {
+        [, $html] = $this->http('GET', '/login');
+        $csrf = $this->csrfFrom($html);
+        [$code] = $this->http('POST', '/login', [
+            'form' => ['email' => $email, 'password' => $password, '_token' => $csrf],
+        ]);
+        $this->assertSame(302, $code, 'login should redirect on success');
     }
 
     /* ── Deny-by-default surfaces ─────────────────────────────────────── */
@@ -245,5 +277,95 @@ final class LocalHttpTest extends TestCase
         $third = json_decode($m3[1], true);
         $this->assertArrayNotHasKey('unchanged', $third, 'activity bump must invalidate the signature');
         $this->assertArrayHasKey('teams', $third);
+    }
+
+    /* ── Languages settings tab (super admin) ─────────────────────────── */
+
+    public function testSuperAdminCanManageLanguagesAndTranslations(): void
+    {
+        $this->loginAs(self::SUPER_ADMIN_EMAIL, self::SUPER_ADMIN_PASS);
+
+        [$code, $html] = $this->http('GET', '/admin/settings');
+        $this->assertSame(200, $code);
+        $this->assertStringContainsString('tab-languages', $html);
+        $csrf = $this->csrfFrom($html);
+
+        // Add a language.
+        [$code] = $this->http('POST', '/admin/languages/add', [
+            'form' => ['code' => 'de', 'name' => 'Deutsch', '_token' => $csrf],
+        ]);
+        $this->assertSame(302, $code);
+        $row = self::$pdo->query("SELECT * FROM languages WHERE code = 'de'")->fetch();
+        $this->assertNotFalse($row, 'language should have been created');
+        $this->assertSame(1, (int) $row['is_active']);
+
+        // Search finds the fixture key as missing for 'de'.
+        [$code, $body] = $this->http('GET', '/admin/languages/search?targetLang=de&status=missing&q=httptest', [
+            'headers' => ['X-Requested-With: XMLHttpRequest'],
+        ]);
+        $this->assertSame(200, $code);
+        $data = json_decode($body, true);
+        $this->assertTrue($data['success']);
+        $this->assertGreaterThanOrEqual(1, $data['total']);
+
+        // Save a translation for it.
+        [$code, $body] = $this->http('POST', '/admin/languages/save', [
+            'json' => [
+                'languageCode' => 'de',
+                'rows' => [['key_id' => self::$testTranslationKeyId, 'value' => 'Testtext']],
+                '_token' => $csrf,
+            ],
+            'headers' => ['X-CSRF-Token: ' . $csrf, 'X-Requested-With: XMLHttpRequest'],
+        ]);
+        $this->assertSame(302, $code, $body);
+        $val = self::$pdo->query(
+            'SELECT value FROM translation_values WHERE key_id = ' . self::$testTranslationKeyId . " AND language_code = 'de'"
+        )->fetchColumn();
+        $this->assertSame('Testtext', $val);
+
+        // Clean up the language this test added.
+        self::$pdo->exec("DELETE FROM translation_values WHERE language_code = 'de'");
+        self::$pdo->exec("DELETE FROM languages WHERE code = 'de'");
+    }
+
+    public function testCannotDeactivateSourceLanguage(): void
+    {
+        $this->loginAs(self::SUPER_ADMIN_EMAIL, self::SUPER_ADMIN_PASS);
+        [, $html] = $this->http('GET', '/admin/settings');
+        $csrf = $this->csrfFrom($html);
+
+        [$code] = $this->http('POST', '/admin/languages/toggle', [
+            'form' => ['code' => 'el', 'active' => '0', '_token' => $csrf],
+        ]);
+        $this->assertSame(302, $code);
+
+        $active = self::$pdo->query("SELECT is_active FROM languages WHERE code = 'el'")->fetchColumn();
+        $this->assertSame('1', (string) $active, 'source language must stay active');
+    }
+
+    /* ── Per-user language preference (/profile) ──────────────────────── */
+
+    public function testProfileLanguagePickerPersistsAndRejectsInvalidCode(): void
+    {
+        $this->loginAs(self::TEST_EMAIL, self::TEST_PASS);
+        [, $html] = $this->http('GET', '/profile');
+        $this->assertStringContainsString('name="language_code"', $html);
+        $csrf = $this->csrfFrom($html);
+
+        // Invalid code is rejected — no change persisted.
+        [$code] = $this->http('POST', '/profile/language', [
+            'form' => ['language_code' => 'xx', '_token' => $csrf],
+        ]);
+        $this->assertSame(302, $code);
+        $val = self::$pdo->query("SELECT language_code FROM users WHERE email = '" . self::TEST_EMAIL . "'")->fetchColumn();
+        $this->assertNull($val, 'invalid language code must not be persisted');
+
+        // Valid code persists.
+        [$code] = $this->http('POST', '/profile/language', [
+            'form' => ['language_code' => 'en', '_token' => $csrf],
+        ]);
+        $this->assertSame(302, $code);
+        $val = self::$pdo->query("SELECT language_code FROM users WHERE email = '" . self::TEST_EMAIL . "'")->fetchColumn();
+        $this->assertSame('en', $val);
     }
 }
