@@ -21,6 +21,11 @@
     </button>
   </li>
   <li class="nav-item" role="presentation">
+    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-languages" type="button">
+      <i class="bi bi-translate me-1"></i>Γλώσσες
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
     <button class="nav-link text-danger" data-bs-toggle="tab" data-bs-target="#tab-danger" type="button">
       <i class="bi bi-exclamation-triangle-fill me-1"></i>Επικίνδυνη Ζώνη
     </button>
@@ -265,6 +270,222 @@
     </div>
 
   </div>
+
+  <!-- ── Languages ────────────────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-languages">
+
+    <!-- Language management -->
+    <div class="card shadow-sm mb-3" style="max-width:820px">
+      <div class="card-body">
+        <h2 class="h6 mb-3"><i class="bi bi-globe2 me-1"></i>Γλώσσες</h2>
+        <table class="table table-sm align-middle mb-3">
+          <thead class="table-light"><tr><th>Κωδικός</th><th>Όνομα</th><th></th></tr></thead>
+          <tbody>
+            <?php foreach ($languages as $lang): ?>
+              <tr>
+                <td class="font-monospace small"><?= e($lang['code']) ?></td>
+                <td><?= e($lang['name']) ?><?php if ($lang['is_source']): ?> <span class="badge text-bg-secondary">πηγή</span><?php endif; ?></td>
+                <td>
+                  <?php if (!$lang['is_source']): ?>
+                  <form method="post" action="<?= e(url('/admin/languages/toggle')) ?>" class="d-inline">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="code" value="<?= e($lang['code']) ?>">
+                    <input type="hidden" name="active" value="<?= $lang['is_active'] ? '0' : '1' ?>">
+                    <button class="btn btn-sm btn-outline-secondary py-0">
+                      <?= $lang['is_active'] ? 'Απενεργοποίηση' : 'Ενεργοποίηση' ?>
+                    </button>
+                  </form>
+                  <?php else: ?>
+                    <span class="badge text-bg-success">ενεργή</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+        <form method="post" action="<?= e(url('/admin/languages/add')) ?>" class="d-flex gap-2 align-items-end flex-wrap">
+          <?= csrf_field() ?>
+          <div>
+            <label class="form-label small mb-1">Κωδικός (π.χ. de)</label>
+            <input type="text" name="code" class="form-control form-control-sm" style="width:100px" maxlength="10" required>
+          </div>
+          <div>
+            <label class="form-label small mb-1">Όνομα (π.χ. Deutsch)</label>
+            <input type="text" name="name" class="form-control form-control-sm" style="width:200px" required>
+          </div>
+          <button class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg me-1"></i>Προσθήκη γλώσσας</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Translation catalog -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+          <div>
+            <label class="form-label small mb-1">Αναφορά</label>
+            <select id="langRef" class="form-select form-select-sm">
+              <?php foreach ($languages as $lang): ?>
+                <option value="<?= e($lang['code']) ?>" <?= $lang['code'] === 'el' ? 'selected' : '' ?>><?= e($lang['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div>
+            <label class="form-label small mb-1">Μετάφραση σε</label>
+            <select id="langTarget" class="form-select form-select-sm">
+              <?php foreach ($languages as $lang): ?>
+                <option value="<?= e($lang['code']) ?>" <?= $lang['code'] === 'en' ? 'selected' : '' ?>><?= e($lang['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="flex-grow-1" style="min-width:200px">
+            <label class="form-label small mb-1">Αναζήτηση</label>
+            <input type="text" id="langSearch" class="form-control form-control-sm" placeholder="Αναζήτηση κειμένου ή κλειδιού…">
+          </div>
+          <div class="btn-group btn-group-sm" role="group" id="langStatusFilter">
+            <button type="button" class="btn btn-outline-secondary active" data-status="all">Όλα</button>
+            <button type="button" class="btn btn-outline-secondary" data-status="missing">Χωρίς μετάφραση</button>
+            <button type="button" class="btn btn-outline-secondary" data-status="translated">Μεταφρασμένα</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr><th style="width:22%">Κλειδί</th><th style="width:39%">Αναφορά</th><th style="width:39%">Μετάφραση</th></tr>
+            </thead>
+            <tbody id="langRows">
+              <tr><td colspan="3" class="text-muted small">Φόρτωση…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="small text-muted" id="langPageInfo"></div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="langPrev">« Προηγούμενο</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="langNext">Επόμενο »</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <span class="small text-muted" id="langDirtyInfo"></span>
+        <button type="button" class="btn btn-primary btn-sm" id="langSaveBtn" disabled>
+          <i class="bi bi-save me-1"></i>Αποθήκευση αλλαγών
+        </button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var page = 1, status = 'all', dirty = {};
+
+  function el(id) { return document.getElementById(id); }
+
+  function postJSON(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) { return r.json(); });
+  }
+
+  function buildSearchUrl() {
+    var params = new URLSearchParams({
+      page: page, status: status,
+      q: el('langSearch').value,
+      refLang: el('langRef').value,
+      targetLang: el('langTarget').value
+    });
+    return window.baseUrl + '/admin/languages/search?' + params.toString();
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+  }
+
+  function rowHtml(row) {
+    var current = dirty[row.key_id] !== undefined ? dirty[row.key_id] : (row.target_value || '');
+    return '<tr data-key-id="' + row.key_id + '">' +
+      '<td class="small text-muted">' + escapeHtml(row.str_key) + '<div class="badge text-bg-light">' + escapeHtml(row.str_group) + '</div></td>' +
+      '<td class="small">' + escapeHtml(row.ref_value) + '</td>' +
+      '<td><input type="text" class="form-control form-control-sm lang-target-input" value="' + escapeHtml(current) + '"></td>' +
+      '</tr>';
+  }
+
+  function renderRows(rows) {
+    var body = el('langRows');
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="3" class="text-muted small">Δεν βρέθηκαν αποτελέσματα.</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(rowHtml).join('');
+    Array.prototype.forEach.call(body.querySelectorAll('.lang-target-input'), function (input) {
+      input.addEventListener('input', function () {
+        var keyId = input.closest('tr').getAttribute('data-key-id');
+        dirty[keyId] = input.value;
+        updateDirtyUi();
+      });
+    });
+  }
+
+  function updateDirtyUi() {
+    var count = Object.keys(dirty).length;
+    el('langDirtyInfo').textContent = count ? (count + ' αλλαγές δεν έχουν αποθηκευτεί') : '';
+    el('langSaveBtn').disabled = count === 0;
+  }
+
+  function load() {
+    el('langRows').innerHTML = '<tr><td colspan="3" class="text-muted small">Φόρτωση…</td></tr>';
+    fetch(buildSearchUrl(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.success) return;
+        page = d.page;
+        renderRows(d.rows);
+        el('langPageInfo').textContent = 'Σελίδα ' + d.page + ' από ' + d.pages + ' (' + d.total + ' συνολικά)';
+        el('langPrev').disabled = d.page <= 1;
+        el('langNext').disabled = d.page >= d.pages;
+      });
+  }
+
+  el('langRef').addEventListener('change', function () { page = 1; load(); });
+  el('langTarget').addEventListener('change', function () { page = 1; dirty = {}; updateDirtyUi(); load(); });
+
+  var searchTimer;
+  el('langSearch').addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { page = 1; load(); }, 300);
+  });
+
+  Array.prototype.forEach.call(el('langStatusFilter').querySelectorAll('button'), function (btn) {
+    btn.addEventListener('click', function () {
+      Array.prototype.forEach.call(el('langStatusFilter').querySelectorAll('button'), function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      status = btn.getAttribute('data-status');
+      page = 1;
+      load();
+    });
+  });
+
+  el('langPrev').addEventListener('click', function () { if (page > 1) { page--; load(); } });
+  el('langNext').addEventListener('click', function () { page++; load(); });
+
+  el('langSaveBtn').addEventListener('click', function () {
+    var rows = Object.keys(dirty).map(function (keyId) { return { key_id: parseInt(keyId, 10), value: dirty[keyId] }; });
+    if (!rows.length) return;
+    postJSON(window.baseUrl + '/admin/languages/save', { languageCode: el('langTarget').value, rows: rows })
+      .then(function () { dirty = {}; updateDirtyUi(); load(); });
+  });
+
+  if (document.getElementById('tab-languages')) {
+    load();
+  }
+})();
+</script>
 
   <!-- ── Danger Zone ──────────────────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-danger">
