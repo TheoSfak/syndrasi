@@ -477,8 +477,18 @@
   el('langSaveBtn').addEventListener('click', function () {
     var rows = Object.keys(dirty).map(function (keyId) { return { key_id: parseInt(keyId, 10), value: dirty[keyId] }; });
     if (!rows.length) return;
+    el('langSaveBtn').disabled = true;
     postJSON(window.baseUrl + '/admin/languages/save', { languageCode: el('langTarget').value, rows: rows })
-      .then(function () { dirty = {}; updateDirtyUi(); load(); });
+      .then(function (d) {
+        if (!d || !d.success) {
+          el('langDirtyInfo').textContent = (d && d.message) ? d.message : 'Η αποθήκευση απέτυχε.';
+          el('langSaveBtn').disabled = false;
+          return;
+        }
+        dirty = {};
+        updateDirtyUi();
+        load();
+      });
   });
 
   if (document.getElementById('tab-languages')) {

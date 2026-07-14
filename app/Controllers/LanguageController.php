@@ -32,8 +32,7 @@ class LanguageController
         $rows = is_array($body['rows'] ?? null) ? $body['rows'] : [];
 
         if ($languageCode === '' || !$rows) {
-            flash_set('danger', 'Δεν επιλέχθηκαν αλλαγές για αποθήκευση.');
-            redirect('/admin/settings#languages');
+            json_out(['success' => false, 'message' => 'Δεν επιλέχθηκαν αλλαγές για αποθήκευση.'], 422);
         }
 
         $clean = [];
@@ -46,8 +45,10 @@ class LanguageController
 
         TranslationString::saveMany($clean, $languageCode);
         audit('translation_strings_updated', 'languages', null, ['language' => $languageCode, 'count' => count($clean)]);
-        flash_set('success', 'Αποθηκεύτηκαν ' . count($clean) . ' μεταφράσεις.');
-        redirect('/admin/settings#languages');
+        // Called only via the tab's AJAX save flow (views/settings/index.php),
+        // never as a plain form POST — respond JSON so fetch()'s r.json() call
+        // doesn't choke on an HTML redirect target.
+        json_out(['success' => true, 'saved' => count($clean)]);
     }
 
     public function add()

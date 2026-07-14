@@ -321,7 +321,8 @@ final class LocalHttpTest extends TestCase
             ],
             'headers' => ['X-CSRF-Token: ' . $csrf, 'X-Requested-With: XMLHttpRequest'],
         ]);
-        $this->assertSame(302, $code, $body);
+        $this->assertSame(200, $code, $body);
+        $this->assertTrue((bool) (json_decode($body, true)['success'] ?? false), $body);
         $val = self::$pdo->query(
             'SELECT value FROM translation_values WHERE key_id = ' . self::$testTranslationKeyId . " AND language_code = 'de'"
         )->fetchColumn();
