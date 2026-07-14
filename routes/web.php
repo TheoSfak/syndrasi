@@ -48,6 +48,7 @@ $router->get('/reset-password', 'AuthController@showResetForm', ['public' => tru
 $router->post('/reset-password', 'AuthController@doResetPassword', ['public' => true]);
 $router->get('/profile', 'AuthController@profile');
 $router->post('/profile/password', 'AuthController@changePassword');
+$router->post('/profile/language', 'AuthController@updateLanguage');
 
 /* Notifications (any authenticated role) */
 $router->get('/notifications', 'NotificationController@index');

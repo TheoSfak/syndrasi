@@ -180,7 +180,7 @@ function current_user()
         $user = null;
         if (is_logged_in()) {
             $user = dbq(
-                'SELECT id, name, email, role, municipality_id, team_id, status, last_login_at, created_at
+                'SELECT id, name, email, role, municipality_id, team_id, status, language_code, last_login_at, created_at
                  FROM users WHERE id = :id AND status = :st LIMIT 1',
                 ['id' => $_SESSION['user_id'], 'st' => 'active']
             )->fetch();

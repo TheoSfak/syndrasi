@@ -32,6 +32,29 @@
         </dl>
       </div>
     </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-translate me-1"></i> Γλώσσα</div>
+      <div class="card-body">
+        <form method="post" action="<?= e(url('/profile/language')) ?>">
+          <?= csrf_field() ?>
+          <div class="mb-2">
+            <select name="language_code" class="form-select">
+              <option value="">— Προεπιλογή πλατφόρμας —</option>
+              <?php foreach ($languages as $lang): ?>
+                <option value="<?= e($lang['code']) ?>" <?= ($user['language_code'] ?? '') === $lang['code'] ? 'selected' : '' ?>>
+                  <?= e($lang['name']) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <p class="small text-muted mb-2">
+            Η επιλογή γλώσσας θα εφαρμοστεί σε επόμενη ενημέρωση της εφαρμογής.
+          </p>
+          <button class="btn btn-primary btn-sm" type="submit">Αποθήκευση</button>
+        </form>
+      </div>
+    </div>
   </div>
 
   <div class="col-lg-6">

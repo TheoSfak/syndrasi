@@ -24,6 +24,11 @@ class User
         dbq('UPDATE users SET password_hash = :h WHERE id = :id', ['h' => $hash, 'id' => $id]);
     }
 
+    public static function updateLanguage($id, $languageCode)
+    {
+        dbq('UPDATE users SET language_code = :lc WHERE id = :id', ['lc' => $languageCode, 'id' => $id]);
+    }
+
     public static function teamAdmins($teamId)
     {
         return dbq(

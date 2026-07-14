@@ -264,6 +264,7 @@ class AuthController
             'user'         => $user,
             'municipality' => $municipality,
             'team'         => $team,
+            'languages'    => Language::all(true),
         ]);
     }
 
@@ -287,6 +288,22 @@ class AuthController
         User::updatePassword($user['id'], password_hash($new, PASSWORD_DEFAULT));
         audit('password_changed', 'user', $user['id']);
         flash_set('success', 'Ο κωδικός πρόσβασης άλλαξε με επιτυχία.');
+        redirect('/profile');
+    }
+
+    public function updateLanguage()
+    {
+        requireLogin();
+        $user = current_user();
+        $code = post_str('language_code');
+
+        if ($code !== '' && !Language::isActiveCode($code)) {
+            flash_set('danger', 'Μη έγκυρη γλώσσα.');
+            redirect('/profile');
+        }
+
+        User::updateLanguage($user['id'], $code !== '' ? $code : null);
+        flash_set('success', 'Η γλώσσα ενημερώθηκε.');
         redirect('/profile');
     }
 }
