@@ -13,7 +13,7 @@
 - Route role guards must exactly match the `requireRole([...])` call at the top of the controller action — enforced by `tests/Unit/RouteRoleConsistencyTest.php`. Every new `['roles' => [Role::SUPER_ADMIN]]` route must pair with a literal `requireRole([Role::SUPER_ADMIN]);` as the first line of its action.
 - Every `CREATE TABLE` and `ALTER TABLE ... ADD COLUMN` in a new migration must also land in `database/schema.sql` — enforced by `tests/Unit/SchemaMigrationsDriftTest.php`.
 - Migration `.sql` files may never contain a literal `;` character inside a string literal — `MigrationRunner::splitStatements()` naively splits on every `;` regardless of quoting.
-- PDO connects with `PDO::ATTR_EMULATE_PREPARES => false` (native prepares). Reusing the same named placeholder (e.g. `:q`) multiple times in one query is safe and already done elsewhere (`AdminController.php:250`) — but `LIMIT`/`OFFSET` must be interpolated as `(int)`-cast values, never bound as params (existing convention in `Notification.php`, `TeamDebrief.php`; binding them as named params throws under native prepares).
+- PDO connects with `PDO::ATTR_EMULATE_PREPARES => false` (native prepares). **Reusing the same named placeholder (e.g. `:q`) multiple times in one query throws `PDOException: Invalid parameter number`** — confirmed empirically against the local dev DB during Task 2. (This corrects an earlier, wrong assumption in this plan based on `AdminController.php:250` appearing to do this — that existing code has the same latent bug, unrelated to this feature; out of scope here.) Bind the same value under distinct placeholder names instead (`:q1`, `:q2`, ...). Also, `LIMIT`/`OFFSET` must be interpolated as `(int)`-cast values, never bound as params (existing convention in `Notification.php`, `TeamDebrief.php`; binding them as named params throws under native prepares).
 - This codebase has no DB-backed PHPUnit `Unit` tests (`tests/bootstrap.php` never opens a DB connection) — all DB-touching behavior is verified through `tests/Integration/LocalHttpTest.php`, which self-skips cleanly when no local server/DB is reachable. Follow that convention: new DB-touching code gets a throwaway CLI smoke check during development (shown in each task) and permanent coverage added to `LocalHttpTest.php` in the final task, not new isolated Unit tests.
 - No `declare(strict_types=1)` anywhere in this codebase — don't introduce it.
 - Static-method model classes with no constructor, matching `MunicipalitySetting`/`User`/`Event` style — not instantiated classes.
@@ -434,8 +434,15 @@ class TranslationString
         $params = ['refLang' => $refLang, 'targetLang' => $targetLang];
 
         if ($q !== '') {
-            $where[] = '(refv.value LIKE :q OR tgtv.value LIKE :q OR tk.str_key LIKE :q)';
-            $params['q'] = '%' . $q . '%';
+            // PDO with ATTR_EMULATE_PREPARES=false does not support reusing the
+            // same named placeholder more than once in a single prepared
+            // statement (throws "Invalid parameter number") — bind the same
+            // value under three distinct names instead.
+            $where[] = '(refv.value LIKE :q1 OR tgtv.value LIKE :q2 OR tk.str_key LIKE :q3)';
+            $like = '%' . $q . '%';
+            $params['q1'] = $like;
+            $params['q2'] = $like;
+            $params['q3'] = $like;
         }
         if ($group !== '') {
             $where[] = 'tk.str_group = :group';

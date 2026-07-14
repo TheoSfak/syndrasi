@@ -25,8 +25,15 @@ class TranslationString
         $params = ['refLang' => $refLang, 'targetLang' => $targetLang];
 
         if ($q !== '') {
-            $where[] = '(refv.value LIKE :q OR tgtv.value LIKE :q OR tk.str_key LIKE :q)';
-            $params['q'] = '%' . $q . '%';
+            // PDO with ATTR_EMULATE_PREPARES=false does not support reusing the
+            // same named placeholder more than once in a single prepared
+            // statement (throws "Invalid parameter number") — bind the same
+            // value under three distinct names instead.
+            $where[] = '(refv.value LIKE :q1 OR tgtv.value LIKE :q2 OR tk.str_key LIKE :q3)';
+            $like = '%' . $q . '%';
+            $params['q1'] = $like;
+            $params['q2'] = $like;
+            $params['q3'] = $like;
         }
         if ($group !== '') {
             $where[] = 'tk.str_group = :group';
