@@ -11,6 +11,13 @@
  * "<p>Some <strong>bold</strong> text</p>") is extracted as separate
  * fragments ("Some ", " text") rather than one sentence. Acceptable for a
  * first pass — an admin can still translate each fragment.
+ *
+ * <script>...</script> bodies are blanked out before scanning (same
+ * technique as PHP blocks below) so inline JS containing Greek string
+ * literals is never mistaken for translatable UI text. An earlier version
+ * relied on the ';'-skip filter to catch this instead, which missed
+ * semicolon-free JS fragments (e.g. string concatenation with no trailing
+ * ';') and let ~13 garbage rows into the seed data — caught in code review.
  */
 
 define('BASE_PATH', dirname(__DIR__));
@@ -74,6 +81,13 @@ foreach ($files as $path) {
     $withoutPhp = preg_replace_callback('/<\?php.*?\?>|<\?=.*?\?>/s', function ($m) {
         return str_repeat(' ', strlen($m[0]));
     }, $raw);
+
+    // Blank out <script>...</script> bodies so inline JS (which often
+    // contains Greek string literals used in dynamic UI text) is never
+    // mistaken for a translatable text node.
+    $withoutPhp = preg_replace_callback('/<script\b[^>]*>.*?<\/script>/is', function ($m) {
+        return str_repeat(' ', strlen($m[0]));
+    }, $withoutPhp);
 
     $seenInFile = [];
     $index = 0;
