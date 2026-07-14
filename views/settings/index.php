@@ -488,6 +488,10 @@
         dirty = {};
         updateDirtyUi();
         load();
+      })
+      .catch(function () {
+        el('langDirtyInfo').textContent = 'Η αποθήκευση απέτυχε (σφάλμα δικτύου).';
+        el('langSaveBtn').disabled = false;
       });
   });
 
