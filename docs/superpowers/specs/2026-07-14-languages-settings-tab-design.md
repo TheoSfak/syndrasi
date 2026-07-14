@@ -32,8 +32,12 @@ text) is still out of scope here — see below.
 - A one-time extraction pass that scans the 73 views for human-readable Greek
   text and seeds the catalog with real keys/values (Greek populated; other
   languages start empty).
-- A new "Γλώσσες" (Languages) tab in `/admin/settings`, gated by the existing
-  `Role::MUNICIPALITY_ADMIN` check that already covers the whole Settings page.
+- A new "Γλώσσες" (Languages) tab in `/admin/settings` (Ρυθμίσεις Πλατφόρμας —
+  `AdminController@settings`), gated by the existing `Role::SUPER_ADMIN` check
+  that already covers that whole page. (Note: this is the platform-wide settings
+  page, distinct from the per-municipality `/settings` page owned by
+  `SettingsController`/`Role::MUNICIPALITY_ADMIN` — a translation catalog is a
+  platform-wide concern since it covers views shared by every municipality.)
 - A searchable/filterable table UI where an admin picks a reference language and
   an editing language, and translates strings into the editing language, with
   bulk save.
@@ -131,18 +135,21 @@ New model `app/Models/Language.php`:
 - `setActive(string $code, bool $active): void`
 - `source(): array` — the `is_source = 1` row.
 
-`SettingsController` additions, under the existing
-`requireRole([Role::MUNICIPALITY_ADMIN])` guard:
-- Extend the settings-index data load to include the language list + first page
-  of strings for the default reference/target pair (Greek → English), consistent
-  with how Cron/Updates tabs are populated today.
-- `POST /admin/settings/languages/save` — `{languageCode, rows: [{key_id, value}]}`,
+`AdminController::settings()` (existing method, `requireRole([Role::SUPER_ADMIN])`)
+is extended to also pass the language list + first page of strings for the
+default reference/target pair (Greek → English) into the `settings/index` view,
+consistent with how the Cron/Updates tabs are populated today.
+
+A new `LanguageController`, mirroring the existing `MaintenanceController` split
+(which already backs the Cron/Updates/Danger-Zone tabs on this same page), under
+`requireRole([Role::SUPER_ADMIN])`:
+- `GET /admin/languages/search` — AJAX endpoint returning a JSON page of
+  filtered/searched rows (search-as-you-type without full-page reload).
+- `POST /admin/languages/save` — `{languageCode, rows: [{key_id, value}]}`,
   calls `TranslationString::saveMany()`, redirects back to
   `/admin/settings#languages` with a flash message.
-- `GET /admin/settings/languages/search` — AJAX endpoint returning a JSON page of
-  filtered/searched rows (search-as-you-type without full-page reload).
-- `POST /admin/settings/languages/add` — `{code, name}`, calls `Language::create()`.
-- `POST /admin/settings/languages/toggle` — `{code, active}`, calls
+- `POST /admin/languages/add` — `{code, name}`, calls `Language::create()`.
+- `POST /admin/languages/toggle` — `{code, active}`, calls
   `Language::setActive()`. Deactivating the `is_source` language is rejected.
 
 `AuthController` addition:
