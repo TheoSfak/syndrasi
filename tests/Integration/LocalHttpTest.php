@@ -181,6 +181,10 @@ final class LocalHttpTest extends TestCase
 
     private function loginAs(string $email, string $password): void
     {
+        // Clear any session left by an earlier test (e.g. testLoginAndOpsStreamShortCircuit
+        // never logs out) — GET /login redirects with an empty body when already
+        // authenticated (AuthController::showLogin()), which would break csrfFrom() below.
+        file_put_contents(self::$cookieJar, '');
         [, $html] = $this->http('GET', '/login');
         $csrf = $this->csrfFrom($html);
         [$code] = $this->http('POST', '/login', [
