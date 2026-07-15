@@ -155,23 +155,24 @@ Create `scripts/wire-translations.php`:
  * newly minted key + seeded 'el' value, logged to
  * storage/logs/wiring-new-keys.log for a later translation pass.
  *
- * Safe to re-run: an already-wired file's Greek text now lives inside
- * <?= ?> tags, which get blanked before matching, so re-running finds
- * nothing left to replace in that file.
+ * Safe to re-run: an already-wired file's Greek text now lives inside PHP
+ * echo tags, which get blanked before matching, so re-running finds nothing
+ * left to replace in that file.
  *
  * IMPORTANT — text-node blanking is context-aware, not a single blind rule:
  * A blanked PHP/<script> span must become a hard tag-like boundary when it
  * sits BETWEEN two real HTML tags (otherwise two Greek fragments separated
- * only by e.g. `<?php else: ?>` merge into one over-wide match, and
+ * only by e.g. a PHP `else:` tag merge into one over-wide match, and
  * replacing that match deletes the tag — the first bug found while building
  * this script). But it must NOT become a boundary when it sits INSIDE an
- * already-open real tag's attribute list (e.g.
- * `<form action="<?= ... ?>" onsubmit="...Greek...">`) — treating that as a
- * boundary makes the >...< regex mistake the rest of the tag's real
- * attribute syntax (a closing quote, an attribute name) for a text node,
- * and replacing THAT match deletes real HTML structure while still passing
- * both `php -l` and a naive tag-count check, since a new valid `<?= ?>` tag
- * is also being added at the same time (the second bug found). So:
+ * already-open real tag's attribute list (e.g. a `<form>` tag whose
+ * `action` attribute is a PHP echo, followed by an `onsubmit` attribute
+ * containing Greek text) — treating that as a boundary makes the >...<
+ * regex mistake the rest of the tag's real attribute syntax (a closing
+ * quote, an attribute name) for a text node, and replacing THAT match
+ * deletes real HTML structure while still passing both `php -l` and a naive
+ * tag-count check, since a new valid PHP echo tag is also being added at
+ * the same time (the second bug found). So:
  *
  * 1. Blank all PHP/<script> spans to pure spaces first (`blankToSpaces`) —
  *    this is also exactly what attribute matching uses, unchanged.
@@ -189,16 +190,24 @@ Create `scripts/wire-translations.php`:
  * Attribute matching is unaffected by any of this — it only ever uses the
  * step-1 pure-space blanking, exactly as before.
  *
- * Safe to re-run: an already-wired file's Greek text now lives inside
- * <?= ?> tags, which get blanked before matching, so re-running finds
- * nothing left to replace in that file.
- *
- * A second, independent safety net: any candidate match whose cleaned text
- * looks like leaked HTML attribute syntax (starts with a bare `"`, or
- * contains `="` or `='`) is rejected outright rather than wired — genuine
- * translatable UI text never looks like this, so this is a cheap backstop
- * against any further variant of the tag-context bug this algorithm hasn't
- * been proven immune to yet.
+ * Two further, independent safety nets, both applied per-match right before
+ * it's accepted for replacement:
+ * 1. Any candidate whose cleaned text looks like leaked HTML attribute
+ *    syntax (starts with a bare `"`, or contains `="` or `='`) is rejected
+ *    outright — genuine translatable UI text never looks like this.
+ * 2. Before replacing, each match's raw offset/length is first trimmed to
+ *    strip any leading/trailing blanked-PHP padding (an attribute match can
+ *    capture up to its closing quote, which may be *past* a live dynamic
+ *    value the blanking turned to spaces — e.g. a `title` attribute holding
+ *    static text followed by a PHP echo of a variable). Then, unconditionally,
+ *    if the real (unblanked) bytes at that trimmed range still contain a
+ *    literal PHP opening tag, the match is rejected outright rather than
+ *    replaced. This is the authoritative gate: it does
+ *    not depend on correctly anticipating every HTML/PHP nesting pattern —
+ *    it directly enforces the one invariant that matters ("never delete
+ *    live PHP"), so any remaining edge case the boundary logic hasn't
+ *    anticipated fails safe (a string stays hardcoded) instead of silently
+ *    corrupting a file.
  *
  * Usage:
  *   php scripts/wire-translations.php                   # wire every view
@@ -243,8 +252,8 @@ function blankAsFakeTag(string $s): string
     return '<' . str_repeat(' ', $len - 2) . '>';
 }
 
-/** Blank <?php ?>/<?= ?>/<script> blocks to pure spaces. Also the exact
- *  blanking attribute matching uses, unchanged. */
+/** Blank PHP open/close tag pairs and script blocks to pure spaces. Also
+ *  the exact blanking attribute matching uses, unchanged. */
 function blankToSpaces(string $raw): string
 {
     $withoutPhp = preg_replace_callback('/<\?php.*?\?>|<\?=.*?\?>/s', function ($m) {
@@ -386,12 +395,38 @@ foreach ($files as $path) {
     $newRows = [];
 
     foreach ($rawMatches as $match) {
-        $clean = cleanText($match['text']);
+        // Attribute matches can capture blanked-PHP padding at their edges
+        // (e.g. a title attribute holding Greek text followed by a PHP echo
+        // of a variable blanks to the Greek text plus a run of trailing
+        // spaces) — the trailing spaces are really a LIVE PHP call in the
+        // raw file, not padding to discard. Trim that
+        // padding from the OFFSET/LENGTH used for replacement, not just from
+        // the display string — cleanText() alone only fixes the display
+        // string and left the actual delete-range spanning into live PHP.
+        $text = $match['text'];
+        $leadingWs = strlen($text) - strlen(ltrim($text));
+        $core = rtrim(ltrim($text));
+        $offset = $match['offset'] + $leadingWs;
+        $length = strlen($core);
+
+        $clean = cleanText($core);
         if ($clean === '' || mb_strlen($clean) < 2 || strpos($clean, ';') !== false) {
             continue;
         }
         if (looksLikeAttributeSyntax($clean)) {
             echo "  SKIPPED (looks like attribute syntax): \"$clean\"\n";
+            continue;
+        }
+        // Final, unconditional safety gate: never delete a byte range that
+        // still contains a live <?php/<?= tag in the real file, no matter
+        // how the match's boundaries were derived. Catches middle-of-match
+        // PHP (e.g. two Greek fragments either side of a dynamic value in
+        // one attribute) that edge-trimming alone can't isolate. A rejection
+        // here just leaves this one string hardcoded — safe; wiring is
+        // best-effort, never deleting live code is not negotiable.
+        $rawSpan = substr($raw, $offset, $length);
+        if (preg_match('/<\?php|<\?=/', $rawSpan)) {
+            echo "  SKIPPED (replacement span would delete live PHP): \"$clean\"\n";
             continue;
         }
         if (isset($seenInFile[$clean])) {
@@ -406,8 +441,8 @@ foreach ($files as $path) {
             $newRows[$key] = $clean;
         }
         $replacements[] = [
-            'offset' => $match['offset'],
-            'length' => $match['length'],
+            'offset' => $offset,
+            'length' => $length,
             'key' => $key,
             'fallback' => $clean,
         ];
