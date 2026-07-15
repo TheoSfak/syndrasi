@@ -122,32 +122,49 @@ this codebase).
 
 ## The wiring script
 
-`scripts/wire-translations.php` reuses the *exact* matching and key-assignment
-logic from `scripts/extract-translation-strings.php` — same regexes, same
+`scripts/wire-translations.php` reuses the *matching* logic from
+`scripts/extract-translation-strings.php` — same regexes, same
 PHP/`<script>`-blanking, same order (all text-node matches in a file first,
-*then* all attribute matches), same per-file duplicate-text dedup (a string
-repeated verbatim in one file reuses the first occurrence's key) — so every key
-it computes is guaranteed to already exist in `translation_keys`, with no drift
-between what extraction found and what wiring replaces.
+*then* all attribute matches) — but **not** its sequential-position key
+assignment. Two view files (`settings/index.php`'s Languages tab,
+`auth/profile.php`'s language picker) were edited *after* the original
+extraction ran, so their current Greek-text order/count no longer matches what
+extraction saw when the 1801-key catalog was built — deriving keys from
+current file position would misalign every key after the drift point. Content
+lookup instead of position lookup makes this robust in general, not just a
+patch for these two known files.
 
-It differs from extraction in two ways:
+For each matched string:
 
-1. **It records byte offsets, not SQL statements.** Blanking PHP/`<script>`
-   blocks before matching replaces them with equal-length runs of spaces, which
-   means every other byte in the file keeps its exact original offset — so
-   offsets computed against the blanked copy (via `PREG_OFFSET_CAPTURE`) are
-   valid positions in the real, unblanked file content.
-2. **It replaces every occurrence of a repeated string, not just the first.**
-   Extraction's dedup means a string repeated three times in one file only ever
-   got *one* key — but all three occurrences must now be replaced with a call to
-   that *same* key, not just the first one. The script tracks, per file, a map
-   of `cleaned text → key` (reusing the exact same cleaning/dedup rule) and
-   replaces every raw match whose cleaned text is in that map.
+1. **Look up an existing key by exact text**: does `translation_keys` already
+   have a row in this file's `str_group` whose Greek (`'el'`) value equals
+   this cleaned string exactly? If yes, reuse that `str_key` — this is how
+   already-translated content stays correctly wired regardless of where it
+   now sits in the file.
+2. **Mint a new key for genuinely new text**: if no existing row matches, this
+   string was added after the last extraction run (or is otherwise
+   uncataloged). Assign the next unused sequential index for that group
+   (`MAX(index) + 1`, computed from existing keys in that group), insert new
+   `translation_keys`/`translation_values` rows (`'el'` = the found text,
+   seeded immediately so nothing is lost), and queue it for English
+   translation as part of this project (a small set — expected to be the
+   ~20-30 Languages-tab/profile-picker strings, not a repeat of the full
+   1801-string effort).
+3. **Per-file duplicate text still dedups to one key**: a string repeated
+   verbatim within one file (whether matched via step 1 or minted via step 2)
+   reuses the same key for every occurrence in that file.
 
-Replacements are collected as a list of `(start_offset, length, replacement)`
-and applied to the real file content **back-to-front** (highest offset first),
-so splicing an earlier replacement never invalidates a not-yet-applied later
-offset.
+Two more differences from extraction:
+
+- **It records byte offsets, not SQL statements.** Blanking PHP/`<script>`
+  blocks before matching replaces them with equal-length runs of spaces, which
+  means every other byte in the file keeps its exact original offset — so
+  offsets computed against the blanked copy (via `PREG_OFFSET_CAPTURE`) are
+  valid positions in the real, unblanked file content.
+- Replacements are collected as a list of `(start_offset, length,
+  replacement)` and applied to the real file content **back-to-front**
+  (highest offset first), so splicing an earlier replacement never invalidates
+  a not-yet-applied later offset.
 
 - A text-node match `>Ρυθμίσεις Πλατφόρμας<` (inner span only, not the
   delimiters) becomes `<?= e(t('settings/index.001', 'Ρυθμίσεις Πλατφόρμας')) ?>`.
@@ -194,12 +211,23 @@ concatenation, so both languages pluralize correctly.
   both a Greek-preferring and an English-preferring user — not an exhaustive
   click-through of all 73, which the automated checks above are relied on to
   cover at the syntax/regression level.
+- **Content-based key verification**: after wiring, extract every `t('...', ...)`
+  key literal from the 73 files (`grep`-based) and confirm each one exists in
+  `translation_keys` — any key referenced in code but missing from the
+  database is a hard bug (masked at runtime by the fallback argument, so it
+  wouldn't otherwise surface as an error) and must be fixed before this task
+  is considered done.
 
 ## Rollout
 
-No new migration needed — the schema (`languages`, `translation_keys`,
-`translation_values`, `users.language_code`) and the full bilingual catalog
-already shipped in v0.18.0-beta/v0.19.0-beta and are already on every install
-that's updated. This project only changes application code (the two new helper
-functions plus the 73 view files), so it ships as a normal code release — no
-new migration, no schema.sql change.
+The schema (`languages`, `translation_keys`, `translation_values`,
+`users.language_code`) and the original 1801-string bilingual catalog already
+shipped in v0.18.0-beta/v0.19.0-beta and are on every updated install. This
+project adds a small number of newly-discovered strings (the Languages tab
+and profile-picker text that postdated the original extraction — expected
+~20-30), which need their own migration (seeding both `'el'` and `'en'` values,
+following the same `ON DUPLICATE KEY UPDATE`-safe pattern as migration 043) so
+existing installs pick them up via the normal update flow, plus a
+`schema.sql` update so fresh installs start with the complete catalog. Beyond
+that, this project only changes application code (the two new helper
+functions plus the 73 view files).
