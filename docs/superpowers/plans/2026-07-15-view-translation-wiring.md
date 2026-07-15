@@ -159,22 +159,46 @@ Create `scripts/wire-translations.php`:
  * <?= ?> tags, which get blanked before matching, so re-running finds
  * nothing left to replace in that file.
  *
- * IMPORTANT — two different blanking strategies, not one:
- * Text-node matching (the `>...<` regex) must treat a blanked PHP/<script>
- * span as a hard boundary, or two Greek fragments separated only by e.g.
- * `<?php else: ?>` (no real HTML tag between them) get matched as ONE span
- * whose raw byte range includes the PHP tag — and replacing that whole span
- * deletes the tag from the file, corrupting control flow. So PHP/<script>
- * blocks are blanked to a same-length FAKE TAG (`<` + spaces + `>`) before
- * text-node matching: a real `<`/`>` pair, so the regex can never span
- * across it. Attribute matching does NOT have this problem (it's bounded by
- * `"..."`, not `<`/`>`) and its existing pure-space blanking must NOT change
- * (some attributes intentionally hold a single translatable word between two
- * blanked dynamic values, e.g. `title="<?= $s ?> αστέρ<?= ... ?>"` in
- * views/team/debrief.php — turning that padding into fake tags would leak
- * literal `<`/`>` characters into the captured value). Two blanked copies of
- * the same file are built, one per regex, both preserving exact byte length
- * so offsets from either one are valid positions in the real raw content.
+ * IMPORTANT — text-node blanking is context-aware, not a single blind rule:
+ * A blanked PHP/<script> span must become a hard tag-like boundary when it
+ * sits BETWEEN two real HTML tags (otherwise two Greek fragments separated
+ * only by e.g. `<?php else: ?>` merge into one over-wide match, and
+ * replacing that match deletes the tag — the first bug found while building
+ * this script). But it must NOT become a boundary when it sits INSIDE an
+ * already-open real tag's attribute list (e.g.
+ * `<form action="<?= ... ?>" onsubmit="...Greek...">`) — treating that as a
+ * boundary makes the >...< regex mistake the rest of the tag's real
+ * attribute syntax (a closing quote, an attribute name) for a text node,
+ * and replacing THAT match deletes real HTML structure while still passing
+ * both `php -l` and a naive tag-count check, since a new valid `<?= ?>` tag
+ * is also being added at the same time (the second bug found). So:
+ *
+ * 1. Blank all PHP/<script> spans to pure spaces first (`blankToSpaces`) —
+ *    this is also exactly what attribute matching uses, unchanged.
+ * 2. Scan that space-blanked copy to find every byte range that sits inside
+ *    a real `<...>` tag span (`computeInsideTagRanges`) — safe to do only
+ *    after step 1, so a PHP comparison like `$a < $b` can never be mistaken
+ *    for a real tag's `<`.
+ * 3. Re-blank the PHP/<script> spans against the ORIGINAL raw content, this
+ *    time choosing per-occurrence: pure spaces if that occurrence's offset
+ *    falls inside one of the ranges from step 2 (attribute context — matches
+ *    how attribute matching already handles it safely), or a same-length
+ *    FAKE TAG (`<` + spaces + `>`) otherwise (top-level context — creates
+ *    the real boundary needed to prevent cross-branch merging).
+ *
+ * Attribute matching is unaffected by any of this — it only ever uses the
+ * step-1 pure-space blanking, exactly as before.
+ *
+ * Safe to re-run: an already-wired file's Greek text now lives inside
+ * <?= ?> tags, which get blanked before matching, so re-running finds
+ * nothing left to replace in that file.
+ *
+ * A second, independent safety net: any candidate match whose cleaned text
+ * looks like leaked HTML attribute syntax (starts with a bare `"`, or
+ * contains `="` or `='`) is rejected outright rather than wired — genuine
+ * translatable UI text never looks like this, so this is a cheap backstop
+ * against any further variant of the tag-context bug this algorithm hasn't
+ * been proven immune to yet.
  *
  * Usage:
  *   php scripts/wire-translations.php                   # wire every view
@@ -195,6 +219,14 @@ function cleanText(string $text): string
     return trim(preg_replace('/\s+/', ' ', $text));
 }
 
+/** Genuine translatable UI text never looks like this — a defensive
+ *  backstop against any HTML-attribute-syntax leak this algorithm's
+ *  boundary detection hasn't been proven immune to. */
+function looksLikeAttributeSyntax(string $text): bool
+{
+    return str_starts_with($text, '"') || str_contains($text, '="') || str_contains($text, "='");
+}
+
 function blankAsSpaces(string $s): string
 {
     return str_repeat(' ', strlen($s));
@@ -211,24 +243,75 @@ function blankAsFakeTag(string $s): string
     return '<' . str_repeat(' ', $len - 2) . '>';
 }
 
-function blankForTextNodes(string $raw): string
+/** Blank <?php ?>/<?= ?>/<script> blocks to pure spaces. Also the exact
+ *  blanking attribute matching uses, unchanged. */
+function blankToSpaces(string $raw): string
 {
     $withoutPhp = preg_replace_callback('/<\?php.*?\?>|<\?=.*?\?>/s', function ($m) {
-        return blankAsFakeTag($m[0]);
+        return blankAsSpaces($m[0]);
     }, $raw);
     return preg_replace_callback('/<script\b[^>]*>.*?<\/script>/is', function ($m) {
-        return blankAsFakeTag($m[0]);
+        return blankAsSpaces($m[0]);
     }, $withoutPhp);
+}
+
+/**
+ * Byte ranges (offsets into a space-blanked copy) that sit inside a real
+ * HTML tag's <...> span. Must run against an already space-blanked copy so
+ * PHP code's own < / > characters (comparison operators) can never be
+ * mistaken for a real tag boundary.
+ * @return array<int, array{0:int,1:int}> sorted, non-overlapping [start, end) pairs
+ */
+function computeInsideTagRanges(string $spaceBlanked): array
+{
+    $ranges = [];
+    $depth = 0;
+    $tagStart = null;
+    $len = strlen($spaceBlanked);
+    for ($i = 0; $i < $len; $i++) {
+        $ch = $spaceBlanked[$i];
+        if ($ch === '<' && $depth === 0) {
+            $depth = 1;
+            $tagStart = $i;
+        } elseif ($ch === '>' && $depth === 1) {
+            $ranges[] = [$tagStart, $i + 1];
+            $depth = 0;
+            $tagStart = null;
+        }
+    }
+    return $ranges;
+}
+
+function isInsideTag(array $sortedRanges, int $offset): bool
+{
+    foreach ($sortedRanges as [$start, $end]) {
+        if ($offset < $start) {
+            return false;
+        }
+        if ($offset < $end) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function blankForTextNodes(string $raw): string
+{
+    $spaceBlanked = blankToSpaces($raw);
+    $insideTagRanges = computeInsideTagRanges($spaceBlanked);
+
+    $result = preg_replace_callback('/<\?php.*?\?>|<\?=.*?\?>/s', function ($m) use ($insideTagRanges) {
+        return isInsideTag($insideTagRanges, $m[0][1]) ? blankAsSpaces($m[0][0]) : blankAsFakeTag($m[0][0]);
+    }, $raw, -1, $count, PREG_OFFSET_CAPTURE);
+
+    return preg_replace_callback('/<script\b[^>]*>.*?<\/script>/is', function ($m) {
+        return blankAsFakeTag($m[0]);
+    }, $result);
 }
 
 function blankForAttributes(string $raw): string
 {
-    $withoutPhp = preg_replace_callback('/<\?php.*?\?>|<\?=.*?\?>/s', function ($m) {
-        return blankAsSpaces($m[0]);
-    }, $raw);
-    return preg_replace_callback('/<script\b[^>]*>.*?<\/script>/is', function ($m) {
-        return blankAsSpaces($m[0]);
-    }, $withoutPhp);
+    return blankToSpaces($raw);
 }
 
 /** @return array<int, array{offset:int, length:int, text:string}> */
@@ -256,7 +339,9 @@ $files = [];
 $rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($viewsDir, FilesystemIterator::SKIP_DOTS));
 foreach ($rii as $file) {
     if ($file->isFile() && $file->getExtension() === 'php') {
-        $files[] = $file->getPathname();
+        // getPathname() joins with the OS separator (backslash on Windows)
+        // regardless of $viewsDir's own separator, so normalize here too.
+        $files[] = str_replace('\\', '/', $file->getPathname());
     }
 }
 sort($files);
@@ -303,6 +388,10 @@ foreach ($files as $path) {
     foreach ($rawMatches as $match) {
         $clean = cleanText($match['text']);
         if ($clean === '' || mb_strlen($clean) < 2 || strpos($clean, ';') !== false) {
+            continue;
+        }
+        if (looksLikeAttributeSyntax($clean)) {
+            echo "  SKIPPED (looks like attribute syntax): \"$clean\"\n";
             continue;
         }
         if (isset($seenInFile[$clean])) {
@@ -383,7 +472,41 @@ for f in auth/login.php settings/index.php team/event_show.php; do
   echo "$f: before=$before after=$after diff=$((after - before))"
 done
 ```
-Expected: each file's `diff` exactly equals that file's span count printed in Step 3. If any file's diff is *less* than its span count, a real `<?php`/`<?=` tag was deleted during wiring — stop immediately, do not proceed to Step 5, and treat it as a bug in the wiring script (this is exactly the class of bug that corrupted an earlier version of this algorithm: a text-node match spanned across a PHP control-flow tag with no real HTML tag between two Greek fragments, and replacing that match deleted the tag).
+Expected: each file's `diff` exactly equals that file's span count printed in Step 3. If any file's diff is *less* than its span count, a real `<?php`/`<?=` tag was deleted during wiring — stop immediately, do not proceed further, and treat it as a bug in the wiring script (this is exactly the class of bug that corrupted an earlier version of this algorithm: a text-node match spanned across a PHP control-flow tag with no real HTML tag between two Greek fragments, and replacing that match deleted the tag).
+
+**Passing Step 4b is necessary but not sufficient** — a second bug class was found where a PHP tag *inside* an already-open real tag's attribute list (e.g. `<form action="<?= ?>" onsubmit="...">`) got wired in a way that deleted real attribute syntax (a closing quote, an attribute name) while still adding a new, valid `<?= ?>` tag — so the tag count still balanced even though the file was corrupted. Step 4c below is the check that catches this class instead.
+
+- [ ] **Step 4c: Verify no `t()` call's fallback text looks like leaked HTML attribute syntax**
+
+Write and run:
+
+```php
+<?php
+$viewsDir = 'C:/Users/user/Desktop/Syndrasi/syndrasi/.claude/worktrees/view-translation-wiring/views';
+$rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($viewsDir, FilesystemIterator::SKIP_DOTS));
+$bad = [];
+foreach ($rii as $file) {
+    if (!$file->isFile() || $file->getExtension() !== 'php') {
+        continue;
+    }
+    $content = file_get_contents($file->getPathname());
+    if (preg_match_all("/t\('([^']+)',\s*'((?:[^'\\\\]|\\\\.)*)'\)/", $content, $m, PREG_SET_ORDER)) {
+        foreach ($m as $match) {
+            $fallback = stripslashes($match[2]);
+            if (str_starts_with($fallback, '"') || str_contains($fallback, '="') || str_contains($fallback, "='")) {
+                $bad[] = $file->getPathname() . ': ' . $match[1] . ' = "' . $fallback . '"';
+            }
+        }
+    }
+}
+if ($bad) {
+    echo "SUSPICIOUS FALLBACK TEXT (possible attribute-syntax leak):\n" . implode("\n", $bad) . "\n";
+    exit(1);
+}
+echo "OK: no suspicious t() fallback text found.\n";
+```
+
+Expected: `OK: no suspicious t() fallback text found.` Any `SUSPICIOUS FALLBACK TEXT` line means real HTML attribute syntax leaked into a `t()` call's fallback argument — stop immediately and treat it as a bug in the wiring script, not something to patch around by editing the affected view file by hand (the algorithm needs to not produce this in the first place, since Task 3 runs this same script across 70 more files next).
 
 - [ ] **Step 5: Verify every `t()` key referenced in the 3 files exists in the database**
 
@@ -449,6 +572,12 @@ grep -oE '^Wired [^:]+: [0-9]+ spans' /tmp/wiring-run.log | sed -E 's/^Wired (.+
 done
 ```
 Expected: no `MISMATCH` lines. Any mismatch means a file lost real PHP structure during wiring — stop immediately and treat it as a bug in the wiring script, the same class of bug Task 2 found and fixed (a text-node match spanning across a PHP tag with no real HTML tag between two Greek fragments).
+
+- [ ] **Step 2c: Verify no `t()` call's fallback text looks like leaked HTML attribute syntax, across every wired file**
+
+Run the same content-sanity script from Task 2's Step 4c (adjust the `foreach ($m as $match)` loop to scan every file under `views/`, not just the 3 pilot files — the script as written in Task 2's brief already does this, it wasn't pilot-file-specific).
+
+Expected: `OK: no suspicious t() fallback text found.` Any `SUSPICIOUS FALLBACK TEXT` output means the same class of bug Task 2 found and fixed (a PHP tag inside an open real tag's attribute list) — stop immediately.
 
 - [ ] **Step 3: Verify every `t()` key referenced anywhere in `views/` exists in the database**
 
