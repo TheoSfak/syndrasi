@@ -159,6 +159,23 @@ Create `scripts/wire-translations.php`:
  * <?= ?> tags, which get blanked before matching, so re-running finds
  * nothing left to replace in that file.
  *
+ * IMPORTANT — two different blanking strategies, not one:
+ * Text-node matching (the `>...<` regex) must treat a blanked PHP/<script>
+ * span as a hard boundary, or two Greek fragments separated only by e.g.
+ * `<?php else: ?>` (no real HTML tag between them) get matched as ONE span
+ * whose raw byte range includes the PHP tag — and replacing that whole span
+ * deletes the tag from the file, corrupting control flow. So PHP/<script>
+ * blocks are blanked to a same-length FAKE TAG (`<` + spaces + `>`) before
+ * text-node matching: a real `<`/`>` pair, so the regex can never span
+ * across it. Attribute matching does NOT have this problem (it's bounded by
+ * `"..."`, not `<`/`>`) and its existing pure-space blanking must NOT change
+ * (some attributes intentionally hold a single translatable word between two
+ * blanked dynamic values, e.g. `title="<?= $s ?> αστέρ<?= ... ?>"` in
+ * views/team/debrief.php — turning that padding into fake tags would leak
+ * literal `<`/`>` characters into the captured value). Two blanked copies of
+ * the same file are built, one per regex, both preserving exact byte length
+ * so offsets from either one are valid positions in the real raw content.
+ *
  * Usage:
  *   php scripts/wire-translations.php                   # wire every view
  *   php scripts/wire-translations.php auth/login.php     # wire only these
@@ -178,26 +195,52 @@ function cleanText(string $text): string
     return trim(preg_replace('/\s+/', ' ', $text));
 }
 
-function blankProtectedSpans(string $raw): string
+function blankAsSpaces(string $s): string
+{
+    return str_repeat(' ', strlen($s));
+}
+
+/** Same length as $s, but starts with < and ends with > — a real tag
+ *  boundary the >...< text-node regex can never span across. */
+function blankAsFakeTag(string $s): string
+{
+    $len = strlen($s);
+    if ($len < 2) {
+        return str_repeat(' ', $len);
+    }
+    return '<' . str_repeat(' ', $len - 2) . '>';
+}
+
+function blankForTextNodes(string $raw): string
 {
     $withoutPhp = preg_replace_callback('/<\?php.*?\?>|<\?=.*?\?>/s', function ($m) {
-        return str_repeat(' ', strlen($m[0]));
+        return blankAsFakeTag($m[0]);
     }, $raw);
     return preg_replace_callback('/<script\b[^>]*>.*?<\/script>/is', function ($m) {
-        return str_repeat(' ', strlen($m[0]));
+        return blankAsFakeTag($m[0]);
+    }, $withoutPhp);
+}
+
+function blankForAttributes(string $raw): string
+{
+    $withoutPhp = preg_replace_callback('/<\?php.*?\?>|<\?=.*?\?>/s', function ($m) {
+        return blankAsSpaces($m[0]);
+    }, $raw);
+    return preg_replace_callback('/<script\b[^>]*>.*?<\/script>/is', function ($m) {
+        return blankAsSpaces($m[0]);
     }, $withoutPhp);
 }
 
 /** @return array<int, array{offset:int, length:int, text:string}> */
-function findMatches(string $blanked): array
+function findMatches(string $blankedForText, string $blankedForAttr): array
 {
     $matches = [];
-    if (preg_match_all('/>([^<>]*[\x{0370}-\x{03FF}\x{1F00}-\x{1FFF}][^<>]*)</u', $blanked, $m, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/>([^<>]*[\x{0370}-\x{03FF}\x{1F00}-\x{1FFF}][^<>]*)</u', $blankedForText, $m, PREG_OFFSET_CAPTURE)) {
         foreach ($m[1] as [$text, $offset]) {
             $matches[] = ['offset' => $offset, 'length' => strlen($text), 'text' => $text];
         }
     }
-    if (preg_match_all('/\b(?:placeholder|title|alt|aria-label)="([^"]*[\x{0370}-\x{03FF}\x{1F00}-\x{1FFF}][^"]*)"/u', $blanked, $m, PREG_OFFSET_CAPTURE)) {
+    if (preg_match_all('/\b(?:placeholder|title|alt|aria-label)="([^"]*[\x{0370}-\x{03FF}\x{1F00}-\x{1FFF}][^"]*)"/u', $blankedForAttr, $m, PREG_OFFSET_CAPTURE)) {
         foreach ($m[1] as [$text, $offset]) {
             $matches[] = ['offset' => $offset, 'length' => strlen($text), 'text' => $text];
         }
@@ -206,7 +249,7 @@ function findMatches(string $blanked): array
 }
 
 $requested = array_slice($argv, 1);
-$viewsDir = BASE_PATH . '/views';
+$viewsDir = str_replace('\\', '/', BASE_PATH . '/views'); // BASE_PATH is backslash-separated on Windows
 $newKeysLog = BASE_PATH . '/storage/logs/wiring-new-keys.log';
 
 $files = [];
@@ -233,8 +276,7 @@ foreach ($files as $path) {
     $relative = str_replace('\\', '/', substr($path, strlen($viewsDir) + 1));
     $group = preg_replace('/\.php$/', '', $relative);
     $raw = file_get_contents($path);
-    $blanked = blankProtectedSpans($raw);
-    $rawMatches = findMatches($blanked);
+    $rawMatches = findMatches(blankForTextNodes($raw), blankForAttributes($raw));
     if (!$rawMatches) {
         continue;
     }
@@ -319,7 +361,7 @@ Delete any stale log from a previous attempt, then run on three deliberately div
 rm -f storage/logs/wiring-new-keys.log
 /c/xampp/php/php.exe scripts/wire-translations.php auth/login.php settings/index.php team/event_show.php
 ```
-Expected: `Wired auth/login.php: 5 spans (0 new)`, `Wired settings/index.php: NN spans (M new)` with `M > 0`, `Wired team/event_show.php: 73 spans (0 new)`, and a non-empty `storage/logs/wiring-new-keys.log`.
+Expected: a `Wired <file>: N spans (M new)` line per file — `auth/login.php` should show `0 new` (its content predates no drift), `settings/index.php` should show `M > 0` (the Languages tab postdates extraction), and a non-empty `storage/logs/wiring-new-keys.log`. Don't expect an exact span count for any file — a string repeated multiple times within one file reuses one key across every occurrence, so span count can exceed the file's distinct-key count; that's correct dedup behavior, not a bug.
 
 - [ ] **Step 4: Lint the 3 wired files**
 
@@ -328,7 +370,20 @@ Expected: `Wired auth/login.php: 5 spans (0 new)`, `Wired settings/index.php: NN
 /c/xampp/php/php.exe -l views/settings/index.php
 /c/xampp/php/php.exe -l views/team/event_show.php
 ```
-Expected: `No syntax errors detected` for all three.
+Expected: `No syntax errors detected` for all three. **A lint pass alone does not prove the wiring is safe** — see Step 4b.
+
+- [ ] **Step 4b: Verify no PHP structure was lost (the check that would have caught the file-corruption class of bug in the original algorithm)**
+
+For each of the 3 pilot files, confirm the wired version has exactly `N` more `<?php`/`<?=` tag-opening sequences than the original (`N` = that file's span count from Step 3's output — replacement only ever *adds* one new `<?= ?>` tag per replaced span, it must never remove an existing one):
+
+```bash
+for f in auth/login.php settings/index.php team/event_show.php; do
+  before=$(git show HEAD:views/$f | grep -oE '<\?php|<\?=' | wc -l)
+  after=$(grep -oE '<\?php|<\?=' views/$f | wc -l)
+  echo "$f: before=$before after=$after diff=$((after - before))"
+done
+```
+Expected: each file's `diff` exactly equals that file's span count printed in Step 3. If any file's diff is *less* than its span count, a real `<?php`/`<?=` tag was deleted during wiring — stop immediately, do not proceed to Step 5, and treat it as a bug in the wiring script (this is exactly the class of bug that corrupted an earlier version of this algorithm: a text-node match spanned across a PHP control-flow tag with no real HTML tag between two Greek fragments, and replacing that match deleted the tag).
 
 - [ ] **Step 5: Verify every `t()` key referenced in the 3 files exists in the database**
 
@@ -364,10 +419,10 @@ git commit -m "Add view-wiring script; pilot on 3 diverse view files"
 **Interfaces:**
 - Consumes: `scripts/wire-translations.php` (Task 2), `t()`/`e()` (Task 1).
 
-- [ ] **Step 1: Run the script with no arguments (wires everything; already-wired files are skipped as no-ops)**
+- [ ] **Step 1: Run the script with no arguments (wires everything; already-wired files are skipped as no-ops), saving its output**
 
 ```bash
-/c/xampp/php/php.exe scripts/wire-translations.php
+/c/xampp/php/php.exe scripts/wire-translations.php | tee /tmp/wiring-run.log
 ```
 Expected: a `Wired <file>: N spans (M new)` line for every file with Greek content (the 3 pilot files will show `0 spans` since their matchable Greek text is already gone), ending with a `Total: ...` summary line.
 
@@ -376,7 +431,24 @@ Expected: a `Wired <file>: N spans (M new)` line for every file with Greek conte
 ```bash
 find views -name '*.php' -print0 | xargs -0 -n1 /c/xampp/php/php.exe -l 2>&1 | grep -v "No syntax errors"
 ```
-Expected: no output (empty = every file is clean).
+Expected: no output (empty = every file is clean). **A lint pass alone does not prove wiring is safe — see Step 2b.**
+
+- [ ] **Step 2b: Verify no PHP structure was lost, across every wired file**
+
+Record the commit before this task ran (Task 2's commit — call it `$TASK2_SHA`), then for every file the run actually touched, confirm its `<?php`/`<?=` tag count grew by exactly its reported span count:
+
+```bash
+TASK2_SHA=<the commit hash Task 2 committed — fill in the real value>
+grep -oE '^Wired [^:]+: [0-9]+ spans' /tmp/wiring-run.log | sed -E 's/^Wired (.+): ([0-9]+) spans/\1 \2/' | while read -r file spans; do
+  before=$(git show "$TASK2_SHA:views/$file" 2>/dev/null | grep -oE '<\?php|<\?=' | wc -l)
+  after=$(grep -oE '<\?php|<\?=' "views/$file" | wc -l)
+  diff=$((after - before))
+  if [ "$diff" != "$spans" ]; then
+    echo "MISMATCH: $file — expected +$spans tags, got +$diff"
+  fi
+done
+```
+Expected: no `MISMATCH` lines. Any mismatch means a file lost real PHP structure during wiring — stop immediately and treat it as a bug in the wiring script, the same class of bug Task 2 found and fixed (a text-node match spanning across a PHP tag with no real HTML tag between two Greek fragments).
 
 - [ ] **Step 3: Verify every `t()` key referenced anywhere in `views/` exists in the database**
 
