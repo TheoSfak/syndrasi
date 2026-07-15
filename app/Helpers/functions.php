@@ -203,6 +203,53 @@ function current_role()
     return isset($_SESSION['role']) ? $_SESSION['role'] : null;
 }
 
+function current_language(): string
+{
+    $user = current_user();
+    return $user['language_code'] ?? 'el';
+}
+
+function t(string $key, string $fallback = ''): string
+{
+    static $cache = [];
+    $lang = current_language();
+
+    if (!isset($cache[$lang])) {
+        $cache[$lang] = [];
+        $rows = dbq(
+            'SELECT tk.str_key, tv.value FROM translation_keys tk
+             JOIN translation_values tv ON tv.key_id = tk.id AND tv.language_code = :lang',
+            ['lang' => $lang]
+        )->fetchAll();
+        foreach ($rows as $row) {
+            $cache[$lang][$row['str_key']] = $row['value'];
+        }
+    }
+
+    if (isset($cache[$lang][$key]) && $cache[$lang][$key] !== '') {
+        return $cache[$lang][$key];
+    }
+    if ($fallback !== '') {
+        return $fallback;
+    }
+    if ($lang !== 'el') {
+        if (!isset($cache['el'])) {
+            $cache['el'] = [];
+            $rows = dbq(
+                "SELECT tk.str_key, tv.value FROM translation_keys tk
+                 JOIN translation_values tv ON tv.key_id = tk.id AND tv.language_code = 'el'"
+            )->fetchAll();
+            foreach ($rows as $row) {
+                $cache['el'][$row['str_key']] = $row['value'];
+            }
+        }
+        if (isset($cache['el'][$key]) && $cache['el'][$key] !== '') {
+            return $cache['el'][$key];
+        }
+    }
+    return $key;
+}
+
 function current_municipality_id()
 {
     return isset($_SESSION['municipality_id']) && $_SESSION['municipality_id'] !== null
