@@ -4,6 +4,42 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.18.0-beta] — 2026-07-15
+
+### Feature — Καταλόγος μεταφράσεων & γλωσσών (θεμέλιο πολυγλωσσικότητας)
+
+- Νέο tab **«Γλώσσες»** στις Ρυθμίσεις Πλατφόρμας (`/admin/settings`,
+  μόνο super admin): διαχείριση γλωσσών (προσθήκη/απενεργοποίηση —
+  η γλώσσα-πηγή δεν μπορεί να απενεργοποιηθεί) και πίνακας μετάφρασης
+  με αναζήτηση, φίλτρα (Όλα / Χωρίς μετάφραση / Μεταφρασμένα), επιλογή
+  γλώσσας αναφοράς/στόχου, και μαζική αποθήκευση αλλαγών.
+- Νέοι πίνακες `languages`, `translation_keys`, `translation_values`
+  (κανονικοποιημένο σχήμα — η προσθήκη νέας γλώσσας είναι πράξη
+  δεδομένων, όχι αλλαγή schema), συν `users.language_code` για
+  ατομική προτίμηση γλώσσας ανά χρήστη.
+- Αυτόματη εξαγωγή (`scripts/extract-translation-strings.php`) του
+  υπάρχοντος ελληνικού κειμένου UI από τα 73 view αρχεία: **1801
+  strings**, σπόρος του καταλόγου με γλώσσα-πηγή τα Ελληνικά.
+- Νέα ενότητα **«Γλώσσα»** στο προφίλ χρήστη (`/profile`, όλοι οι
+  ρόλοι): κάθε χρήστης επιλέγει τη δική του γλώσσα ανεξάρτητα (π.χ.
+  διαχειριστής σε Ελληνικά, μέλος ομάδας σε English). Η επιλογή
+  αποθηκεύεται τώρα· η εμφάνιση της εφαρμογής στη γλώσσα αυτή είναι
+  ξεχωριστό, μελλοντικό έργο — τα 73 views δεν έχουν ακόμα συνδεθεί
+  με τον κατάλογο μεταφράσεων.
+- `LanguageController` (νέο, mirror του `MaintenanceController`) + 4
+  routes, όλα `Role::SUPER_ADMIN`. Ολοκληρωμένη κάλυψη integration
+  tests (`LocalHttpTest`) για το νέο tab και το profile picker.
+- Δύο bugs εντοπίστηκαν και διορθώθηκαν κατά την ανάπτυξη/έλεγχο,
+  χωρίς σχέση με άλλα σημεία της εφαρμογής: επαναχρησιμοποίηση του
+  ίδιου named placeholder (`:q`) πολλές φορές σε ένα PDO query πετάει
+  `Invalid parameter number` υπό `ATTR_EMULATE_PREPARES=false` (ίδιο,
+  ξεχωριστό, προϋπάρχον πρόβλημα εντοπίστηκε — άσχετο εδώ — στο
+  `AdminController.php:250` και `FireServiceIncidentService.php:86`,
+  εκτός scope)· και ένα skip-φίλτρο βασισμένο σε ερωτηματικό (`;`) στο
+  extraction script άφηνε αποσπάσματα inline JS να περάσουν ως
+  ψευδο-"strings" — διορθώθηκε ώστε να αγνοεί ολόκληρα τα `<script>`
+  blocks.
+
 ## [0.17.1-beta] — 2026-07-10
 
 ### Fix — Base64 στο fire-service ingest για να περάσει το inbound WAF
