@@ -4,6 +4,32 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.20.1-beta] — 2026-07-16
+
+### Fix — Self-updater could deploy a broken mixed old/new codebase
+
+- Root cause of the `v0.20.0-beta` production update failure (`HTTP 500` on
+  the self-updater's post-update health check, three times in a row,
+  auto-rolled back each time): `UpdateService::applyUpdate()` copies the new
+  release over the app and, moments later, probes its own `/login` page —
+  but nothing told PHP's OPcache to drop its compiled cache in between.
+  `app/Helpers/functions.php` is `require`d on every request, so it's
+  virtually always sitting hot in OPcache; the probe fired inside OPcache's
+  revalidation window and got served the **pre-update bytecode** of that
+  file (missing the new `t()`/`current_language()` helpers added in
+  `v0.20.0-beta`), while the freshly-copied `views/auth/login.php` (calling
+  `t()`) compiled from disk normally — a genuine mixed old/new state,
+  reproduced and confirmed locally against a live OPcache instance.
+- Fix: `applyUpdate()` now calls `opcache_reset()` immediately after copying
+  files (before migrations/health-check run), guaranteeing every request
+  from that point on — including the self-probe — compiles the
+  just-written code, not a stale cached copy.
+- Hardening: `UpdateService::copyTree()` previously swallowed individual
+  file-copy failures via `@copy()` with no record of what failed. It now
+  returns and logs the list of any files that didn't copy, so a partial
+  deploy is always visible in `storage/logs/update.log` instead of silently
+  proceeding.
+
 ## [0.20.0-beta] — 2026-07-16
 
 ### Feature — Η εφαρμογή εμφανίζεται πλέον στη γλώσσα κάθε χρήστη

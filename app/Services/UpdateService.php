@@ -260,8 +260,22 @@ class UpdateService
         $lockFile = BASE_PATH . '/storage/maintenance.lock';
         file_put_contents($lockFile, date('Y-m-d H:i:s'));
         register_shutdown_function(function () use ($lockFile) { @unlink($lockFile); });
-        $copied = self::copyTree($root, BASE_PATH);
+        $copyResult = self::copyTree($root, BASE_PATH);
+        $copied = $copyResult['count'];
         self::log("Copied {$copied} files from " . basename($root));
+        if ($copyResult['failed']) {
+            self::log('COPY FAILURES (' . count($copyResult['failed']) . '): ' . implode(', ', $copyResult['failed']));
+        }
+
+        // Deployed files are on disk now, but OPcache may still be serving
+        // pre-update bytecode for already-hot files (e.g. functions.php,
+        // required on every request) until its next per-file revalidation —
+        // which can lag past the health-check probe fired a moment later.
+        // Drop the whole cache now so every request after this point,
+        // including the probe below, compiles the files just written.
+        if (function_exists('opcache_reset')) {
+            opcache_reset();
+        }
 
         // 5. Run pending migrations
         $mig = MigrationRunner::runPending();
@@ -527,10 +541,17 @@ class UpdateService
         return (($attr >> 16) & 0170000) === 0120000;
     }
 
-    /** Copy everything from $src into $dst, skipping protected top-level dirs. */
-    private static function copyTree(string $src, string $dst): int
+    /**
+     * Copy everything from $src into $dst, skipping protected top-level dirs.
+     * Returns ['count' => copied file count, 'failed' => [relative paths that
+     * did not copy]] — failures are never silently dropped, so a partial
+     * deploy is always visible in the update log even if the health-check
+     * probe happens not to catch it.
+     */
+    private static function copyTree(string $src, string $dst): array
     {
         $count = 0;
+        $failed = [];
         $it = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($src, FilesystemIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
@@ -554,10 +575,12 @@ class UpdateService
                 }
                 if (@copy($file->getPathname(), $target)) {
                     $count++;
+                } else {
+                    $failed[] = $relUnix;
                 }
             }
         }
-        return $count;
+        return ['count' => $count, 'failed' => $failed];
     }
 
     private static function singleSubdir(string $dir): ?string
