@@ -24,7 +24,7 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
 
 <?php if ($event['status'] !== 'active'): ?>
   <div class="alert alert-warning">
-    Η <?= e($eventSingularLc) ?> <?= e(t('team/operations.058', 'δεν είναι ενεργή αυτή τη στιγμή. Οι επιχειρησιακές ενέργειες είναι διαθέσιμες όταν')) ?> <?= e($orgLabel) ?> <?= e(t('team/operations.059', 'την ενεργοποιήσει.')) ?>
+    <?= e(t('team/operations.066', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('team/operations.058', 'δεν είναι ενεργή αυτή τη στιγμή. Οι επιχειρησιακές ενέργειες είναι διαθέσιμες όταν')) ?> <?= e($orgLabel) ?> <?= e(t('team/operations.059', 'την ενεργοποιήσει.')) ?>
   </div>
 <?php endif; ?>
 

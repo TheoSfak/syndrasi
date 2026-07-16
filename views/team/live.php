@@ -502,7 +502,7 @@ foreach (flash_get() as $flash):
 <?php if (!$isActive): ?>
 <div class="inactive-notice">
   <i class="bi bi-hourglass-split"></i>
-  Η <?= e($eventSingularLc) ?> <?= e(t('team/live.063', 'δεν είναι ακόμη ενεργή. Οι επιχειρησιακές ενέργειες ενεργοποιούνται όταν')) ?> <?= e($orgLabel) ?> <?= e(t('team/live.064', 'την ξεκινήσει.')) ?>
+  <?= e(t('team/live.068', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('team/live.063', 'δεν είναι ακόμη ενεργή. Οι επιχειρησιακές ενέργειες ενεργοποιούνται όταν')) ?> <?= e($orgLabel) ?> <?= e(t('team/live.064', 'την ξεκινήσει.')) ?>
 </div>
 <?php endif; ?>
 

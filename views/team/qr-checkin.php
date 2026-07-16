@@ -64,7 +64,7 @@ $isDeparted    = $checkinStatus === 'departed';
   <?php endif; ?>
 
   <?php if (!$isActive): ?>
-    <div class="alert alert-warning text-center">Η <?= e($eventSingularLc) ?> <?= e(t('team/qr-checkin.012', 'δεν είναι ενεργή αυτή τη στιγμή.')) ?></div>
+    <div class="alert alert-warning text-center"><?= e(t('team/qr-checkin.015', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('team/qr-checkin.012', 'δεν είναι ενεργή αυτή τη στιγμή.')) ?></div>
   <?php endif; ?>
 
   <div class="qr-card">

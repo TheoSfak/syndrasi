@@ -150,7 +150,7 @@ if (!empty($event['requested_items_json'])) {
             <i class="bi bi-clipboard2-check fs-2 flex-shrink-0" style="opacity:.85"></i>
             <div class="flex-grow-1">
               <div class="fw-bold fs-5 mb-1">Post-Event Debrief</div>
-              <p class="mb-3 small" style="opacity:.9">Η <?= e($eventSingularLc) ?> <?= e(t('team/event_show.075', 'ολοκληρώθηκε. Αφιερώστε 2 λεπτά να καταγράψετε τι πήγε καλά, τι μπορεί να βελτιωθεί και τα αριθμητικά στοιχεία της ομάδας.')) ?></p>
+              <p class="mb-3 small" style="opacity:.9"><?= e(t('team/event_show.084', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('team/event_show.075', 'ολοκληρώθηκε. Αφιερώστε 2 λεπτά να καταγράψετε τι πήγε καλά, τι μπορεί να βελτιωθεί και τα αριθμητικά στοιχεία της ομάδας.')) ?></p>
               <a href="<?= e(url('/team/events/' . $event['id'] . '/debrief')) ?>"
                  class="btn btn-light fw-semibold" style="color:#6366f1">
                 <i class="bi bi-pencil-square me-1"></i><?= e(t('team/event_show.021', 'Συμπλήρωση Debrief')) ?>
@@ -261,7 +261,7 @@ if (!empty($event['requested_items_json'])) {
         <?php endif; ?>
 
       <?php else: ?>
-        <div class="alert alert-secondary">Η <?= e($eventSingularLc) ?> <?= e(t('team/event_show.081', 'δεν δέχεται δηλώσεις συμμετοχής αυτή τη στιγμή.')) ?></div>
+        <div class="alert alert-secondary"><?= e(t('team/event_show.084', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('team/event_show.081', 'δεν δέχεται δηλώσεις συμμετοχής αυτή τη στιγμή.')) ?></div>
       <?php endif; ?>
 
     <?php else: ?>

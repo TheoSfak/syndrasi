@@ -280,7 +280,7 @@ foreach ($videos as $v) {
       <div class="hero-meta">
         <span><i class="bi bi-calendar-event"></i><?= e(gr_datetime($startD)) ?> → <?= e(gr_datetime($endD)) ?></span>
         <?php if ($location !== ''): ?><span><i class="bi bi-geo-alt-fill"></i><?= e($location) ?></span><?php endif; ?>
-        <?php if ($duration): ?><span><i class="bi bi-hourglass-split"></i><?= e(t('events/story.100', 'Διάρκεια')) ?> <?= e((string) $duration) ?>ω</span><?php endif; ?>
+        <?php if ($duration): ?><span><i class="bi bi-hourglass-split"></i><?= e(t('events/story.100', 'Διάρκεια')) ?> <?= e((string) $duration) ?><?= e(t('events/story.117', 'ω')) ?></span><?php endif; ?>
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="v"><?= (int) ($sm['teams'] ?? 0) ?></div><div class="l"><?= e(t('events/story.004', 'Ομάδες')) ?></div></div>
@@ -535,7 +535,7 @@ foreach ($videos as $v) {
       <div>
         <div class="eyebrow"><?= e(t('events/story.067', 'Όπως συνέβη')) ?></div>
         <h2><?= e(t('events/story.068', 'Χρονολόγιο γεγονότων')) ?></h2>
-        <p class="section-sub">Η <?= e($eventSingularLc) ?> <?= e(t('events/story.111', 'χωρίζεται σε φάσεις για να φαίνεται καθαρά η επιχειρησιακή ροή.')) ?></p>
+        <p class="section-sub"><?= e(t('events/story.116', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('events/story.111', 'χωρίζεται σε φάσεις για να φαίνεται καθαρά η επιχειρησιακή ροή.')) ?></p>
       </div>
     </div>
     <div class="timeline-layout">
@@ -672,7 +672,7 @@ foreach ($videos as $v) {
     <div class="thanks">
       <div>
         <div class="eyebrow" style="color:#fbbf24"><?= e(t('events/story.086', 'Ευχαριστούμε')) ?></div>
-        <h2>Η <?= e($eventSingularLc) ?> <?= e(t('events/story.115', 'ολοκληρώθηκε χάρη στη συνεργασία όλων.')) ?></h2>
+        <h2><?= e(t('events/story.116', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('events/story.115', 'ολοκληρώθηκε χάρη στη συνεργασία όλων.')) ?></h2>
         <p><?= e(t('events/story.088', 'Ο απολογισμός κρατά ζωντανή την εικόνα της προσφοράς και βοηθά τον φορέα να αναγνωρίζει την πραγματική συμβολή των εθελοντικών ομάδων.')) ?></p>
       </div>
       <div style="font-size:3rem"><i class="bi bi-award"></i></div>

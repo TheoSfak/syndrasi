@@ -99,10 +99,10 @@ $eventPlural = $terms['event_plural'] ?? 'Δράσεις';
           <i class="bi bi-star-fill me-1 text-warning"></i><?= e(t('team/debrief.011', 'Βαθμολογία Οργάνωσης')) ?>
         </h6>
         <div class="mb-3">
-          <label class="form-label d-block"><?= e(t('team/debrief.019', 'Πώς αξιολογείτε την οργάνωση της')) ?> <?= e($eventSingularLc) ?>;</label>
+          <label class="form-label d-block"><?= e(t('team/debrief.019', 'Πώς αξιολογείτε την οργάνωση της')) ?> <?= e($eventSingularLc) ?><?= e(t('team/debrief.022', ';')) ?></label>
           <div class="d-flex gap-2" id="starRow">
             <?php for ($s = 1; $s <= 5; $s++): ?>
-              <label class="star-label" title="<?= $s ?> <?= e(t('team/debrief.017', 'αστέρ')) ?><?= $s === 1 ? 'ι' : 'ια' ?>">
+              <label class="star-label" title="<?= $s ?> <?= e($s === 1 ? t('team/debrief.020', 'αστέρι') : t('team/debrief.021', 'αστέρια')) ?>">
                 <input type="radio" name="organization_rating" value="<?= $s ?>"
                        <?= $s === $rating ? 'checked' : '' ?> class="d-none star-radio">
                 <i class="bi bi-star<?= $s <= $rating ? '-fill' : '' ?> fs-2 star-icon"

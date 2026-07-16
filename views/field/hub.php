@@ -103,7 +103,7 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
   <?php endforeach; ?>
 
   <?php if (!$isActive): ?>
-  <div class="inactive"><i class="bi bi-hourglass-split"></i> Η <?= e($eventSingularLc) ?> <?= e(t('field/hub.051', 'δεν είναι ενεργή αυτή τη στιγμή.')) ?></div>
+  <div class="inactive"><i class="bi bi-hourglass-split"></i> <?= e(t('field/hub.052', 'Η')) ?> <?= e($eventSingularLc) ?> <?= e(t('field/hub.051', 'δεν είναι ενεργή αυτή τη στιγμή.')) ?></div>
   <?php endif; ?>
 
   <!-- Pinned orders -->
