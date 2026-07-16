@@ -28,21 +28,21 @@ foreach ($selectedReadiness as $item) {
 $readinessExtra = old('readiness_items_extra', '');
 ?>
 <h1 class="h3 mb-1"><?= $isEdit ? 'Επεξεργασία Ομάδας' : 'Νέα Ομάδα' ?></h1>
-<p class="text-muted">Στοιχεία εθελοντικής ομάδας.</p>
+<p class="text-muted"><?= e(t('teams/form.001', 'Στοιχεία εθελοντικής ομάδας.')) ?></p>
 
 <form method="post" action="<?= e(url($isEdit ? '/teams/' . $team['id'] . '/update' : '/teams/store')) ?>" class="card shadow-sm">
   <?= csrf_field() ?>
   <div class="card-body row g-3">
     <div class="col-md-6">
-      <label class="form-label">Όνομα ομάδας *</label>
+      <label class="form-label"><?= e(t('teams/form.002', 'Όνομα ομάδας *')) ?></label>
       <input type="text" name="name" class="form-control" required value="<?= e($v('name')) ?>">
     </div>
     <div class="col-md-6">
-      <label class="form-label">Τύπος</label>
-      <input type="text" name="type" class="form-control" value="<?= e($v('type')) ?>" placeholder="π.χ. Διασωστική, Υγειονομική">
+      <label class="form-label"><?= e(t('teams/form.003', 'Τύπος')) ?></label>
+      <input type="text" name="type" class="form-control" value="<?= e($v('type')) ?>" placeholder="<?= e(t('teams/form.023', 'π.χ. Διασωστική, Υγειονομική')) ?>">
     </div>
     <div class="col-md-6">
-      <label class="form-label">Υπεύθυνος επικοινωνίας</label>
+      <label class="form-label"><?= e(t('teams/form.004', 'Υπεύθυνος επικοινωνίας')) ?></label>
       <input type="text" name="contact_person" class="form-control" value="<?= e($v('contact_person')) ?>">
     </div>
     <div class="col-md-3">
@@ -50,47 +50,47 @@ $readinessExtra = old('readiness_items_extra', '');
       <input type="email" name="email" class="form-control" value="<?= e($v('email')) ?>">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Τηλέφωνο</label>
+      <label class="form-label"><?= e(t('teams/form.005', 'Τηλέφωνο')) ?></label>
       <input type="text" name="phone" class="form-control" value="<?= e($v('phone')) ?>">
     </div>
     <div class="col-md-6">
-      <label class="form-label">Telegram Chat ID ομάδας</label>
-      <input type="text" name="telegram_chat_id" class="form-control" value="<?= e($v('telegram_chat_id')) ?>" placeholder="π.χ. -1001234567890">
-      <div class="form-text">Προαιρετικό. Συμπληρώστε μόνο αν αυτή η ομάδα έχει δικό της ξεχωριστό Telegram group. Αλλιώς χρησιμοποιείται το κοινό Chat ID ομάδων από τις Ρυθμίσεις.</div>
+      <label class="form-label"><?= e(t('teams/form.006', 'Telegram Chat ID ομάδας')) ?></label>
+      <input type="text" name="telegram_chat_id" class="form-control" value="<?= e($v('telegram_chat_id')) ?>" placeholder="<?= e(t('teams/form.024', 'π.χ. -1001234567890')) ?>">
+      <div class="form-text"><?= e(t('teams/form.007', 'Προαιρετικό. Συμπληρώστε μόνο αν αυτή η ομάδα έχει δικό της ξεχωριστό Telegram group. Αλλιώς χρησιμοποιείται το κοινό Chat ID ομάδων από τις Ρυθμίσεις.')) ?></div>
     </div>
     <div class="col-md-6">
-      <label class="form-label">Διεύθυνση</label>
+      <label class="form-label"><?= e(t('teams/form.008', 'Διεύθυνση')) ?></label>
       <input type="text" name="address" class="form-control" value="<?= e($v('address')) ?>">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Τυπική δύναμη (άτομα)</label>
+      <label class="form-label"><?= e(t('teams/form.009', 'Τυπική δύναμη (άτομα)')) ?></label>
       <input type="number" min="0" name="default_people_capacity" class="form-control" value="<?= e($v('default_people_capacity')) ?>">
     </div>
     <div class="col-md-3">
-      <label class="form-label">Κατάσταση</label>
+      <label class="form-label"><?= e(t('teams/form.010', 'Κατάσταση')) ?></label>
       <select name="status" class="form-select">
-        <option value="active" <?= $v('status', 'active') === 'active' ? 'selected' : '' ?>>Ενεργή</option>
-        <option value="inactive" <?= $v('status') === 'inactive' ? 'selected' : '' ?>>Ανενεργή</option>
+        <option value="active" <?= $v('status', 'active') === 'active' ? 'selected' : '' ?>><?= e(t('teams/form.011', 'Ενεργή')) ?></option>
+        <option value="inactive" <?= $v('status') === 'inactive' ? 'selected' : '' ?>><?= e(t('teams/form.012', 'Ανενεργή')) ?></option>
       </select>
     </div>
     <div class="col-md-6 d-flex align-items-center gap-4">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="has_vehicle" id="hasVehicle" value="1" <?= $v('has_vehicle') ? 'checked' : '' ?>>
-        <label class="form-check-label" for="hasVehicle">Διαθέτει όχημα</label>
+        <label class="form-check-label" for="hasVehicle"><?= e(t('teams/form.013', 'Διαθέτει όχημα')) ?></label>
       </div>
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="has_medical_equipment" id="hasMedical" value="1" <?= $v('has_medical_equipment') ? 'checked' : '' ?>>
-        <label class="form-check-label" for="hasMedical">Διαθέτει υγειονομικό εξοπλισμό</label>
+        <label class="form-check-label" for="hasMedical"><?= e(t('teams/form.014', 'Διαθέτει υγειονομικό εξοπλισμό')) ?></label>
       </div>
     </div>
     <div class="col-12">
       <label class="form-label d-flex align-items-center justify-content-between gap-2">
-        <span>Επιχειρησιακή ετοιμότητα</span>
+        <span><?= e(t('teams/form.015', 'Επιχειρησιακή ετοιμότητα')) ?></span>
         <span class="badge text-bg-light border" id="readinessCount"><?= count($selectedReadiness) ?></span>
       </label>
       <div class="border rounded bg-light p-3">
         <?php if (!$readinessOptions): ?>
-          <div class="text-muted small mb-2">Δεν υπάρχουν ακόμα playbook αντικείμενα για αυτόν τον τύπο φορέα. Προσθέστε custom δυνατότητες παρακάτω.</div>
+          <div class="text-muted small mb-2"><?= e(t('teams/form.016', 'Δεν υπάρχουν ακόμα playbook αντικείμενα για αυτόν τον τύπο φορέα. Προσθέστε custom δυνατότητες παρακάτω.')) ?></div>
         <?php else: ?>
           <div class="row g-2 mb-3">
             <?php foreach ($readinessOptions as $idx => $item): ?>
@@ -104,28 +104,28 @@ $readinessExtra = old('readiness_items_extra', '');
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
-        <label class="form-label small fw-semibold">Έξτρα δυνατότητες / εξοπλισμός</label>
-        <textarea name="readiness_items_extra" id="readinessItemsExtra" class="form-control" rows="2" placeholder="Ένα ανά γραμμή, π.χ. χειριστής drone"><?= e($readinessExtra) ?></textarea>
+        <label class="form-label small fw-semibold"><?= e(t('teams/form.017', 'Έξτρα δυνατότητες / εξοπλισμός')) ?></label>
+        <textarea name="readiness_items_extra" id="readinessItemsExtra" class="form-control" rows="2" placeholder="<?= e(t('teams/form.025', 'Ένα ανά γραμμή, π.χ. χειριστής drone')) ?>"><?= e($readinessExtra) ?></textarea>
       </div>
-      <div class="form-text">Αυτά συγκρίνονται με τα ζητούμενα αντικείμενα κάθε αποστολής για να βγαίνει match score.</div>
+      <div class="form-text"><?= e(t('teams/form.018', 'Αυτά συγκρίνονται με τα ζητούμενα αντικείμενα κάθε αποστολής για να βγαίνει match score.')) ?></div>
     </div>
     <div class="col-12">
-      <label class="form-label">Σημειώσεις</label>
+      <label class="form-label"><?= e(t('teams/form.019', 'Σημειώσεις')) ?></label>
       <textarea name="notes" class="form-control" rows="2"><?= e($v('notes')) ?></textarea>
     </div>
 
     <?php if (!$isEdit): ?>
       <div class="col-12">
         <hr>
-        <label class="form-label">Email υπευθύνου για δημιουργία λογαριασμού (προαιρετικό)</label>
-        <input type="email" name="admin_email" class="form-control" placeholder="Αν συμπληρωθεί, θα δημιουργηθεί λογαριασμός υπευθύνου ομάδας και θα σταλεί προσωρινός κωδικός.">
-        <div class="form-text">Ο υπεύθυνος θα λάβει email με προσωρινό κωδικό πρόσβασης.</div>
+        <label class="form-label"><?= e(t('teams/form.020', 'Email υπευθύνου για δημιουργία λογαριασμού (προαιρετικό)')) ?></label>
+        <input type="email" name="admin_email" class="form-control" placeholder="<?= e(t('teams/form.026', 'Αν συμπληρωθεί, θα δημιουργηθεί λογαριασμός υπευθύνου ομάδας και θα σταλεί προσωρινός κωδικός.')) ?>">
+        <div class="form-text"><?= e(t('teams/form.021', 'Ο υπεύθυνος θα λάβει email με προσωρινό κωδικό πρόσβασης.')) ?></div>
       </div>
     <?php endif; ?>
   </div>
   <div class="card-footer bg-white d-flex gap-2">
     <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= $isEdit ? 'Αποθήκευση' : 'Δημιουργία ομάδας' ?></button>
-    <a class="btn btn-link text-muted" href="<?= e(url('/teams')) ?>">Άκυρο</a>
+    <a class="btn btn-link text-muted" href="<?= e(url('/teams')) ?>"><?= e(t('teams/form.022', 'Άκυρο')) ?></a>
   </div>
 </form>
 

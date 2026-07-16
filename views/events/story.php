@@ -272,50 +272,50 @@ foreach ($videos as $v) {
     <div class="containerx">
       <div class="kicker">
         <?php if (!empty($logo)): ?><img src="<?= e($logo) ?>" alt=""><?php endif; ?>
-        <span><?= e($orgLabel) ?> · Απολογισμός <?= e($eventSingular) ?></span>
-        <?php if ($isPublic): ?><span class="public-chip"><i class="bi bi-globe2"></i>Δημόσια έκδοση</span><?php endif; ?>
+        <span><?= e($orgLabel) ?> <?= e(t('events/story.001', '· Απολογισμός')) ?> <?= e($eventSingular) ?></span>
+        <?php if ($isPublic): ?><span class="public-chip"><i class="bi bi-globe2"></i><?= e(t('events/story.002', 'Δημόσια έκδοση')) ?></span><?php endif; ?>
       </div>
       <h1 class="hero-title"><?= e($eventTitle) ?></h1>
       <p class="hero-lede"><?= $impactSentence ?></p>
       <div class="hero-meta">
         <span><i class="bi bi-calendar-event"></i><?= e(gr_datetime($startD)) ?> → <?= e(gr_datetime($endD)) ?></span>
         <?php if ($location !== ''): ?><span><i class="bi bi-geo-alt-fill"></i><?= e($location) ?></span><?php endif; ?>
-        <?php if ($duration): ?><span><i class="bi bi-hourglass-split"></i>Διάρκεια <?= e((string) $duration) ?>ω</span><?php endif; ?>
+        <?php if ($duration): ?><span><i class="bi bi-hourglass-split"></i><?= e(t('events/story.100', 'Διάρκεια')) ?> <?= e((string) $duration) ?>ω</span><?php endif; ?>
       </div>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="v"><?= (int) ($sm['teams'] ?? 0) ?></div><div class="l">Ομάδες</div></div>
-        <div class="hero-stat"><div class="v"><?= (int) ($sm['volunteers'] ?? 0) ?></div><div class="l">Εθελοντές</div></div>
-        <div class="hero-stat"><div class="v"><?= e($sm['hours'] ?? 0) ?></div><div class="l">Ώρες προσφοράς</div></div>
-        <div class="hero-stat"><div class="v"><?= (int) ($sm['orders'] ?? 0) ?></div><div class="l">Εντολές</div></div>
-        <div class="hero-stat"><div class="v"><?= (int) ($sm['pings'] ?? 0) ?></div><div class="l">Στίγματα</div></div>
-        <div class="hero-stat"><div class="v"><?= $mediaCount ?></div><div class="l">Φωτό / Βίντεο</div></div>
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['teams'] ?? 0) ?></div><div class="l"><?= e(t('events/story.004', 'Ομάδες')) ?></div></div>
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['volunteers'] ?? 0) ?></div><div class="l"><?= e(t('events/story.005', 'Εθελοντές')) ?></div></div>
+        <div class="hero-stat"><div class="v"><?= e($sm['hours'] ?? 0) ?></div><div class="l"><?= e(t('events/story.006', 'Ώρες προσφοράς')) ?></div></div>
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['orders'] ?? 0) ?></div><div class="l"><?= e(t('events/story.007', 'Εντολές')) ?></div></div>
+        <div class="hero-stat"><div class="v"><?= (int) ($sm['pings'] ?? 0) ?></div><div class="l"><?= e(t('events/story.008', 'Στίγματα')) ?></div></div>
+        <div class="hero-stat"><div class="v"><?= $mediaCount ?></div><div class="l"><?= e(t('events/story.009', 'Φωτό / Βίντεο')) ?></div></div>
       </div>
     </div>
   </div>
 </header>
 
-<nav class="story-nav noprint" aria-label="Πλοήγηση απολογισμού">
+<nav class="story-nav noprint" aria-label="<?= e(t('events/story.090', 'Πλοήγηση απολογισμού')) ?>">
   <div class="containerx">
-    <a href="#summary">Σύνοψη</a>
-    <a href="#map-section">Χάρτης</a>
-    <a href="#teams">Ομάδες</a>
-    <a href="#timeline">Χρονολόγιο</a>
-    <?php if ($comms): ?><a href="#communications">Επικοινωνίες</a><?php endif; ?>
-    <a href="#media">Υλικό</a>
+    <a href="#summary"><?= e(t('events/story.010', 'Σύνοψη')) ?></a>
+    <a href="#map-section"><?= e(t('events/story.011', 'Χάρτης')) ?></a>
+    <a href="#teams"><?= e(t('events/story.004', 'Ομάδες')) ?></a>
+    <a href="#timeline"><?= e(t('events/story.012', 'Χρονολόγιο')) ?></a>
+    <?php if ($comms): ?><a href="#communications"><?= e(t('events/story.013', 'Επικοινωνίες')) ?></a><?php endif; ?>
+    <a href="#media"><?= e(t('events/story.014', 'Υλικό')) ?></a>
   </div>
 </nav>
 
 <main class="containerx">
   <?php if (!$download && !$publicMode): ?>
   <div class="toolbar noprint">
-    <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/events/' . ($ev['id'] ?? ''))) ?>"><i class="bi bi-arrow-left me-1"></i>Πίσω</a>
-    <button class="btn btn-sm btn-outline-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Εκτύπωση / PDF</button>
-    <a class="btn btn-sm btn-outline-success" href="<?= e(url('/events/' . ($ev['id'] ?? '') . '/story/download')) ?>"><i class="bi bi-download me-1"></i>Λήψη HTML</a>
-    <button class="btn btn-sm btn-outline-info" onclick="publishStory()"><i class="bi bi-share me-1"></i>Δημόσιος σύνδεσμος</button>
+    <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/events/' . ($ev['id'] ?? ''))) ?>"><i class="bi bi-arrow-left me-1"></i><?= e(t('events/story.015', 'Πίσω')) ?></a>
+    <button class="btn btn-sm btn-outline-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i><?= e(t('events/story.016', 'Εκτύπωση / PDF')) ?></button>
+    <a class="btn btn-sm btn-outline-success" href="<?= e(url('/events/' . ($ev['id'] ?? '') . '/story/download')) ?>"><i class="bi bi-download me-1"></i><?= e(t('events/story.017', 'Λήψη HTML')) ?></a>
+    <button class="btn btn-sm btn-outline-info" onclick="publishStory()"><i class="bi bi-share me-1"></i><?= e(t('events/story.018', 'Δημόσιος σύνδεσμος')) ?></button>
     <?php if (empty($public)): ?>
-      <a class="btn btn-sm btn-outline-secondary" href="?view=public"><i class="bi bi-eye me-1"></i>Δημόσια προβολή</a>
+      <a class="btn btn-sm btn-outline-secondary" href="?view=public"><i class="bi bi-eye me-1"></i><?= e(t('events/story.019', 'Δημόσια προβολή')) ?></a>
     <?php else: ?>
-      <a class="btn btn-sm btn-outline-secondary" href="?"><i class="bi bi-eye-fill me-1"></i>Εσωτερική προβολή</a>
+      <a class="btn btn-sm btn-outline-secondary" href="?"><i class="bi bi-eye-fill me-1"></i><?= e(t('events/story.020', 'Εσωτερική προβολή')) ?></a>
     <?php endif; ?>
   </div>
   <script>
@@ -334,20 +334,20 @@ foreach ($videos as $v) {
   <section class="section" id="summary">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Η εικόνα της <?= e($eventSingularLc) ?></div>
-        <h2>Από την κινητοποίηση μέχρι την ολοκλήρωση</h2>
-        <p class="section-sub">Συγκεντρωμένη εικόνα της επιχειρησιακής παρουσίας, της ανταπόκρισης των ομάδων και του υλικού που καταγράφηκε στο πεδίο.</p>
+        <div class="eyebrow"><?= e(t('events/story.021', 'Η εικόνα της')) ?> <?= e($eventSingularLc) ?></div>
+        <h2><?= e(t('events/story.022', 'Από την κινητοποίηση μέχρι την ολοκλήρωση')) ?></h2>
+        <p class="section-sub"><?= e(t('events/story.023', 'Συγκεντρωμένη εικόνα της επιχειρησιακής παρουσίας, της ανταπόκρισης των ομάδων και του υλικού που καταγράφηκε στο πεδίο.')) ?></p>
       </div>
     </div>
     <div class="impact-grid">
       <div class="panel impact-copy">
-        <p><?= $impactSentence ?> Καταγράφηκαν <?= (int) ($sm['pings'] ?? 0) ?> στίγματα, <?= (int) ($sm['orders'] ?? 0) ?> επιχειρησιακές εντολές και <?= $mediaCount ?> τεκμήρια από το πεδίο.</p>
+        <p><?= $impactSentence ?> <?= e(t('events/story.101', 'Καταγράφηκαν')) ?> <?= (int) ($sm['pings'] ?? 0) ?> <?= e(t('events/story.102', 'στίγματα,')) ?> <?= (int) ($sm['orders'] ?? 0) ?> <?= e(t('events/story.103', 'επιχειρησιακές εντολές και')) ?> <?= $mediaCount ?> <?= e(t('events/story.104', 'τεκμήρια από το πεδίο.')) ?></p>
       </div>
       <div class="panel impact-mini">
-        <div class="mini"><i class="bi bi-people-fill"></i><b><?= (int) ($sm['volunteers'] ?? 0) ?></b><span>συνολική δύναμη</span></div>
-        <div class="mini"><i class="bi bi-clock-history"></i><b><?= e($sm['hours'] ?? 0) ?></b><span>ώρες προσφοράς</span></div>
-        <div class="mini"><i class="bi bi-exclamation-triangle"></i><b><?= (int) ($sm['shortages'] ?? 0) ?></b><span>αναφορές ελλείψεων</span></div>
-        <div class="mini"><i class="bi bi-shield-check"></i><b><?= (int) ($sm['sos'] ?? 0) ?></b><span>SOS συμβάντα</span></div>
+        <div class="mini"><i class="bi bi-people-fill"></i><b><?= (int) ($sm['volunteers'] ?? 0) ?></b><span><?= e(t('events/story.025', 'συνολική δύναμη')) ?></span></div>
+        <div class="mini"><i class="bi bi-clock-history"></i><b><?= e($sm['hours'] ?? 0) ?></b><span><?= e(t('events/story.026', 'ώρες προσφοράς')) ?></span></div>
+        <div class="mini"><i class="bi bi-exclamation-triangle"></i><b><?= (int) ($sm['shortages'] ?? 0) ?></b><span><?= e(t('events/story.027', 'αναφορές ελλείψεων')) ?></span></div>
+        <div class="mini"><i class="bi bi-shield-check"></i><b><?= (int) ($sm['sos'] ?? 0) ?></b><span><?= e(t('events/story.028', 'SOS συμβάντα')) ?></span></div>
       </div>
     </div>
   </section>
@@ -355,43 +355,43 @@ foreach ($videos as $v) {
   <section class="section" id="map-section">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Live αποτύπωση</div>
-        <h2>Χάρτης <?= e($eventSingularLc) ?> & διαδρομές ομάδων</h2>
-        <p class="section-sub">Οι διαδρομές, τα σημεία ενδιαφέροντος και το υλικό πεδίου εμφανίζονται μαζί ώστε η ροή της <?= e($eventSingularLc) ?> να διαβάζεται με μια ματιά.</p>
+        <div class="eyebrow"><?= e(t('events/story.029', 'Live αποτύπωση')) ?></div>
+        <h2><?= e(t('events/story.011', 'Χάρτης')) ?> <?= e($eventSingularLc) ?> <?= e(t('events/story.105', '& διαδρομές ομάδων')) ?></h2>
+        <p class="section-sub"><?= e(t('events/story.106', 'Οι διαδρομές, τα σημεία ενδιαφέροντος και το υλικό πεδίου εμφανίζονται μαζί ώστε η ροή της')) ?> <?= e($eventSingularLc) ?> <?= e(t('events/story.107', 'να διαβάζεται με μια ματιά.')) ?></p>
       </div>
     </div>
     <div class="panel map-shell">
       <div class="map-stage">
         <div class="replay-panel">
           <button type="button" class="replay-btn" id="replayPlay"><i class="bi bi-play-fill"></i><span>Play</span></button>
-          <button type="button" class="replay-ghost" id="replayReset" title="Αρχή"><i class="bi bi-skip-backward-fill"></i></button>
-          <input type="range" min="0" max="0" value="0" class="replay-range" id="replayRange" aria-label="Χρονογραμμή replay">
-          <select class="replay-speed" id="replaySpeed" aria-label="Ταχύτητα replay">
+          <button type="button" class="replay-ghost" id="replayReset" title="<?= e(t('events/story.091', 'Αρχή')) ?>"><i class="bi bi-skip-backward-fill"></i></button>
+          <input type="range" min="0" max="0" value="0" class="replay-range" id="replayRange" aria-label="<?= e(t('events/story.092', 'Χρονογραμμή replay')) ?>">
+          <select class="replay-speed" id="replaySpeed" aria-label="<?= e(t('events/story.093', 'Ταχύτητα replay')) ?>">
             <option value="1">1x</option>
             <option value="2">2x</option>
             <option value="4">4x</option>
           </select>
         </div>
         <div class="movement-panel">
-          <button type="button" class="replay-btn" id="movementOverview"><i class="bi bi-signpost-split-fill"></i><span>Μετακινήσεις</span></button>
-          <select id="movementScope" aria-label="Ομάδες μετακινήσεων">
-            <option value="selected">Επιλεγμένες ομάδες</option>
-            <option value="all">Όλες οι ομάδες</option>
+          <button type="button" class="replay-btn" id="movementOverview"><i class="bi bi-signpost-split-fill"></i><span><?= e(t('events/story.032', 'Μετακινήσεις')) ?></span></button>
+          <select id="movementScope" aria-label="<?= e(t('events/story.094', 'Ομάδες μετακινήσεων')) ?>">
+            <option value="selected"><?= e(t('events/story.033', 'Επιλεγμένες ομάδες')) ?></option>
+            <option value="all"><?= e(t('events/story.034', 'Όλες οι ομάδες')) ?></option>
           </select>
-          <span class="movement-hint" id="movementHint">Δείχνει όλα τα βελάκια μετακίνησης με την ώρα τους.</span>
+          <span class="movement-hint" id="movementHint"><?= e(t('events/story.035', 'Δείχνει όλα τα βελάκια μετακίνησης με την ώρα τους.')) ?></span>
         </div>
         <div class="replay-current" id="replayCurrent">
           <div class="rc-icon" style="background:#64748b"><i class="bi bi-clock-history"></i></div>
           <div>
             <div class="rc-time">Replay <?= e($eventSingularLc) ?></div>
-            <div class="rc-title">Πατήστε Play για να εμφανιστούν τα γεγονότα με σειρά.</div>
-            <div class="rc-detail">Μπορείτε να σύρετε τη μπάρα χρόνου ή να φιλτράρετε ομάδες και τύπους γεγονότων.</div>
+            <div class="rc-title"><?= e(t('events/story.036', 'Πατήστε Play για να εμφανιστούν τα γεγονότα με σειρά.')) ?></div>
+            <div class="rc-detail"><?= e(t('events/story.037', 'Μπορείτε να σύρετε τη μπάρα χρόνου ή να φιλτράρετε ομάδες και τύπους γεγονότων.')) ?></div>
           </div>
         </div>
         <div id="map"></div>
       </div>
       <aside class="map-side">
-        <h3 class="h6 fw-bold mb-2">Φίλτρα ομάδων</h3>
+        <h3 class="h6 fw-bold mb-2"><?= e(t('events/story.038', 'Φίλτρα ομάδων')) ?></h3>
         <?php foreach ($teams as $t): ?>
           <label class="team-filter">
             <input type="checkbox" class="route-toggle" value="<?= (int) $t['id'] ?>" checked>
@@ -399,17 +399,17 @@ foreach ($videos as $v) {
             <span><?= e($t['name']) ?></span>
           </label>
         <?php endforeach; ?>
-        <div class="filter-group-title">Γεγονότα replay</div>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="gps_request" checked><i class="bi bi-broadcast-pin text-primary"></i><span>Ζητήθηκε στίγμα</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="gps_response" checked><i class="bi bi-geo-alt-fill text-success"></i><span>Απάντηση GPS</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="ping" checked><i class="bi bi-dot text-success"></i><span>Στίγματα ομάδων</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="photo" checked><i class="bi bi-camera-fill text-info"></i><span>Φωτογραφίες</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="video" checked><i class="bi bi-camera-video-fill text-info"></i><span>Βίντεο</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="incident" checked><i class="bi bi-exclamation-triangle-fill text-danger"></i><span>Περιστατικά / SOS</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="shortage" checked><i class="bi bi-tools text-warning"></i><span>Ελλείψεις</span></label>
-        <label class="event-filter"><input type="checkbox" class="event-toggle" value="order" checked><i class="bi bi-megaphone-fill text-secondary"></i><span>Σημεία / μετακινήσεις</span></label>
+        <div class="filter-group-title"><?= e(t('events/story.039', 'Γεγονότα replay')) ?></div>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="gps_request" checked><i class="bi bi-broadcast-pin text-primary"></i><span><?= e(t('events/story.040', 'Ζητήθηκε στίγμα')) ?></span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="gps_response" checked><i class="bi bi-geo-alt-fill text-success"></i><span><?= e(t('events/story.041', 'Απάντηση GPS')) ?></span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="ping" checked><i class="bi bi-dot text-success"></i><span><?= e(t('events/story.042', 'Στίγματα ομάδων')) ?></span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="photo" checked><i class="bi bi-camera-fill text-info"></i><span><?= e(t('events/story.043', 'Φωτογραφίες')) ?></span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="video" checked><i class="bi bi-camera-video-fill text-info"></i><span><?= e(t('events/story.044', 'Βίντεο')) ?></span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="incident" checked><i class="bi bi-exclamation-triangle-fill text-danger"></i><span><?= e(t('events/story.045', 'Περιστατικά / SOS')) ?></span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="shortage" checked><i class="bi bi-tools text-warning"></i><span><?= e(t('events/story.046', 'Ελλείψεις')) ?></span></label>
+        <label class="event-filter"><input type="checkbox" class="event-toggle" value="order" checked><i class="bi bi-megaphone-fill text-secondary"></i><span><?= e(t('events/story.047', 'Σημεία / μετακινήσεις')) ?></span></label>
         <div class="map-help">
-          <i class="bi bi-info-circle me-1"></i>Το replay δείχνει ζητήματα, αιτήματα GPS, απαντήσεις και στίγματα με χρονολογική σειρά.
+          <i class="bi bi-info-circle me-1"></i><?= e(t('events/story.048', 'Το replay δείχνει ζητήματα, αιτήματα GPS, απαντήσεις και στίγματα με χρονολογική σειρά.')) ?>
         </div>
       </aside>
     </div>
@@ -418,21 +418,21 @@ foreach ($videos as $v) {
   <section class="section">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Ανταπόκριση</div>
-        <h2>Χρόνοι απόκρισης ανά ομάδα</h2>
-        <p class="section-sub">Μέσος χρόνος σε αιτήματα στίγματος, φωτογραφίας, βίντεο και επιβεβαίωση εντολών.</p>
+        <div class="eyebrow"><?= e(t('events/story.049', 'Ανταπόκριση')) ?></div>
+        <h2><?= e(t('events/story.050', 'Χρόνοι απόκρισης ανά ομάδα')) ?></h2>
+        <p class="section-sub"><?= e(t('events/story.051', 'Μέσος χρόνος σε αιτήματα στίγματος, φωτογραφίας, βίντεο και επιβεβαίωση εντολών.')) ?></p>
       </div>
     </div>
     <div class="metrics-grid">
       <div class="panel table-wrap">
         <table>
           <thead><tr>
-            <th>Ομάδα</th>
-            <th class="num">Στίγμα</th>
-            <th class="num">Φωτό</th>
-            <th class="num">Βίντεο</th>
+            <th><?= e(t('events/story.052', 'Ομάδα')) ?></th>
+            <th class="num"><?= e(t('events/story.053', 'Στίγμα')) ?></th>
+            <th class="num"><?= e(t('events/story.054', 'Φωτό')) ?></th>
+            <th class="num"><?= e(t('events/story.044', 'Βίντεο')) ?></th>
             <th class="num">ACK</th>
-            <th class="num">Ανταπόκριση</th>
+            <th class="num"><?= e(t('events/story.049', 'Ανταπόκριση')) ?></th>
           </tr></thead>
           <tbody>
             <?php foreach ($metr as $m):
@@ -461,24 +461,22 @@ foreach ($videos as $v) {
   <section class="section" id="resources">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Διάθεση Πόρων</div>
-        <h2>Αιτήματα πόρων</h2>
+        <div class="eyebrow"><?= e(t('events/story.055', 'Διάθεση Πόρων')) ?></div>
+        <h2><?= e(t('events/story.056', 'Αιτήματα πόρων')) ?></h2>
         <p class="section-sub">
-          <?= (int) $res['sent'] ?> αιτήματα ·
-          <?= $res['accept_rate'] !== null ? (int) $res['accept_rate'] . '% αποδοχή' : 'χωρίς απάντηση' ?> ·
-          μέση απόκριση <?= e($res['response_stats']['avg_label']) ?> ·
-          μέση παράδοση <?= e($res['deliver_stats']['avg_label']) ?>
+          <?= (int) $res['sent'] ?> <?= e(t('events/story.108', 'αιτήματα ·')) ?>
+          <?= $res['accept_rate'] !== null ? (int) $res['accept_rate'] . '% αποδοχή' : 'χωρίς απάντηση' ?> <?= e(t('events/story.109', '· μέση απόκριση')) ?> <?= e($res['response_stats']['avg_label']) ?> <?= e(t('events/story.110', '· μέση παράδοση')) ?> <?= e($res['deliver_stats']['avg_label']) ?>
         </p>
       </div>
     </div>
     <div class="panel table-wrap">
       <table>
         <thead><tr>
-          <th>Πόρος</th>
-          <th>Ομάδα</th>
-          <th>Κατάσταση</th>
-          <th class="num">Απόκριση</th>
-          <th class="num">Παράδοση</th>
+          <th><?= e(t('events/story.058', 'Πόρος')) ?></th>
+          <th><?= e(t('events/story.052', 'Ομάδα')) ?></th>
+          <th><?= e(t('events/story.059', 'Κατάσταση')) ?></th>
+          <th class="num"><?= e(t('events/story.060', 'Απόκριση')) ?></th>
+          <th class="num"><?= e(t('events/story.061', 'Παράδοση')) ?></th>
         </tr></thead>
         <tbody>
           <?php
@@ -507,9 +505,9 @@ foreach ($videos as $v) {
   <section class="section" id="teams">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Αναγνώριση</div>
-        <h2>Οι ομάδες της <?= e($eventSingularLc) ?></h2>
-        <p class="section-sub">Κάθε κάρτα δείχνει την επιχειρησιακή παρουσία και τη συνεισφορά της ομάδας στον συνολικό απολογισμό.</p>
+        <div class="eyebrow"><?= e(t('events/story.062', 'Αναγνώριση')) ?></div>
+        <h2><?= e(t('events/story.063', 'Οι ομάδες της')) ?> <?= e($eventSingularLc) ?></h2>
+        <p class="section-sub"><?= e(t('events/story.064', 'Κάθε κάρτα δείχνει την επιχειρησιακή παρουσία και τη συνεισφορά της ομάδας στον συνολικό απολογισμό.')) ?></p>
       </div>
     </div>
     <div class="team-grid">
@@ -517,8 +515,8 @@ foreach ($videos as $v) {
         <article class="panel team-card" style="border-top-color:<?= e($t['color']) ?>">
           <h3><?= e($t['name']) ?></h3>
           <div class="rowx">
-            <div><div class="big"><?= (int) $t['people'] ?></div><div class="muted">άτομα παρόντα</div></div>
-            <div class="text-end"><div class="big"><?= e((string) $t['hours']) ?></div><div class="muted">ώρες</div></div>
+            <div><div class="big"><?= (int) $t['people'] ?></div><div class="muted"><?= e(t('events/story.065', 'άτομα παρόντα')) ?></div></div>
+            <div class="text-end"><div class="big"><?= e((string) $t['hours']) ?></div><div class="muted"><?= e(t('events/story.066', 'ώρες')) ?></div></div>
           </div>
           <div class="rowx muted">
             <span><i class="bi bi-box-arrow-in-right me-1"></i><?= $t['arrival'] ? e(gr_time($t['arrival'])) : '—' ?></span>
@@ -535,15 +533,15 @@ foreach ($videos as $v) {
   <section class="section" id="timeline">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Όπως συνέβη</div>
-        <h2>Χρονολόγιο γεγονότων</h2>
-        <p class="section-sub">Η <?= e($eventSingularLc) ?> χωρίζεται σε φάσεις για να φαίνεται καθαρά η επιχειρησιακή ροή.</p>
+        <div class="eyebrow"><?= e(t('events/story.067', 'Όπως συνέβη')) ?></div>
+        <h2><?= e(t('events/story.068', 'Χρονολόγιο γεγονότων')) ?></h2>
+        <p class="section-sub">Η <?= e($eventSingularLc) ?> <?= e(t('events/story.111', 'χωρίζεται σε φάσεις για να φαίνεται καθαρά η επιχειρησιακή ροή.')) ?></p>
       </div>
     </div>
     <div class="timeline-layout">
       <aside class="phase-list noprint">
         <?php foreach ($timelineGroups as $key => $group): if (!$group['items']) { continue; } ?>
-          <a class="phase" href="#phase-<?= e($key) ?>"><?= e($group['title']) ?><small><?= count($group['items']) ?> γεγονότα</small></a>
+          <a class="phase" href="#phase-<?= e($key) ?>"><?= e($group['title']) ?><small><?= count($group['items']) ?> <?= e(t('events/story.070', 'γεγονότα')) ?></small></a>
         <?php endforeach; ?>
       </aside>
       <div>
@@ -568,7 +566,7 @@ foreach ($videos as $v) {
             </div>
           </section>
         <?php endforeach; ?>
-        <?php if (!$tl): ?><div class="panel p-4 text-muted">Δεν καταγράφηκαν γεγονότα.</div><?php endif; ?>
+        <?php if (!$tl): ?><div class="panel p-4 text-muted"><?= e(t('events/story.071', 'Δεν καταγράφηκαν γεγονότα.')) ?></div><?php endif; ?>
       </div>
     </div>
   </section>
@@ -577,19 +575,19 @@ foreach ($videos as $v) {
   <section class="section" id="communications">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Επικοινωνίες πεδίου</div>
-        <h2>Διάλογοι φορέα και ομάδων</h2>
-        <p class="section-sub">Οι βασικές εντολές, ενημερώσεις και απαντήσεις της <?= e($eventSingularLc) ?>, με ευαίσθητα στοιχεία μασκαρισμένα όπου εντοπίζονται.</p>
+        <div class="eyebrow"><?= e(t('events/story.072', 'Επικοινωνίες πεδίου')) ?></div>
+        <h2><?= e(t('events/story.073', 'Διάλογοι φορέα και ομάδων')) ?></h2>
+        <p class="section-sub"><?= e(t('events/story.112', 'Οι βασικές εντολές, ενημερώσεις και απαντήσεις της')) ?> <?= e($eventSingularLc) ?><?= e(t('events/story.113', ', με ευαίσθητα στοιχεία μασκαρισμένα όπου εντοπίζονται.')) ?></p>
       </div>
     </div>
-    <div class="comm-toolbar noprint" aria-label="Φίλτρα επικοινωνιών">
-      <button type="button" class="comm-filter active" data-comm-filter="all">Όλα</button>
+    <div class="comm-toolbar noprint" aria-label="<?= e(t('events/story.095', 'Φίλτρα επικοινωνιών')) ?>">
+      <button type="button" class="comm-filter active" data-comm-filter="all"><?= e(t('events/story.075', 'Όλα')) ?></button>
       <button type="button" class="comm-filter" data-comm-filter="command"><?= e($orgLabel) ?></button>
-      <button type="button" class="comm-filter" data-comm-filter="team">Ομάδες</button>
-      <button type="button" class="comm-filter" data-comm-filter="order">Εντολές</button>
-      <button type="button" class="comm-filter" data-comm-filter="status">Ενημερώσεις</button>
-      <button type="button" class="comm-filter" data-comm-filter="move">Μετακινήσεις</button>
-      <button type="button" class="comm-filter" data-comm-filter="message">Μηνύματα</button>
+      <button type="button" class="comm-filter" data-comm-filter="team"><?= e(t('events/story.004', 'Ομάδες')) ?></button>
+      <button type="button" class="comm-filter" data-comm-filter="order"><?= e(t('events/story.007', 'Εντολές')) ?></button>
+      <button type="button" class="comm-filter" data-comm-filter="status"><?= e(t('events/story.076', 'Ενημερώσεις')) ?></button>
+      <button type="button" class="comm-filter" data-comm-filter="move"><?= e(t('events/story.032', 'Μετακινήσεις')) ?></button>
+      <button type="button" class="comm-filter" data-comm-filter="message"><?= e(t('events/story.077', 'Μηνύματα')) ?></button>
     </div>
     <div class="comm-list" id="commList">
       <?php foreach ($comms as $c): ?>
@@ -601,11 +599,11 @@ foreach ($videos as $v) {
               <span class="comm-actor <?= e($c['actor']) ?>"><?= e($c['actor_label']) ?></span>
               <?php if (!empty($c['team'])): ?><span class="team-tag"><?= e($c['team']) ?></span><?php endif; ?>
               <span class="comm-kind"><?= e($c['type_label']) ?></span>
-              <?php if (!empty($c['has_geo'])): ?><span><i class="bi bi-geo-alt-fill"></i>Σημείο χάρτη</span><?php endif; ?>
+              <?php if (!empty($c['has_geo'])): ?><span><i class="bi bi-geo-alt-fill"></i><?= e(t('events/story.078', 'Σημείο χάρτη')) ?></span><?php endif; ?>
             </div>
             <div class="comm-body"><?= e($c['body'] !== '' ? $c['body'] : 'Χωρίς κείμενο.') ?></div>
             <?php if (!empty($c['acknowledged_at'])): ?>
-              <div class="comm-ack"><i class="bi bi-check2-all me-1"></i>Επιβεβαιώθηκε <?= e(gr_time($c['acknowledged_at'])) ?></div>
+              <div class="comm-ack"><i class="bi bi-check2-all me-1"></i><?= e(t('events/story.079', 'Επιβεβαιώθηκε')) ?> <?= e(gr_time($c['acknowledged_at'])) ?></div>
             <?php endif; ?>
           </div>
         </article>
@@ -618,8 +616,8 @@ foreach ($videos as $v) {
   <section class="section">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Διαχείριση αναγκών</div>
-        <h2>Ελλείψεις / αναφορές</h2>
+        <div class="eyebrow"><?= e(t('events/story.080', 'Διαχείριση αναγκών')) ?></div>
+        <h2><?= e(t('events/story.081', 'Ελλείψεις / αναφορές')) ?></h2>
       </div>
     </div>
     <div class="short-grid">
@@ -636,7 +634,7 @@ foreach ($videos as $v) {
             <span class="pill <?= $pill ?>"><?= e($plabel) ?></span>
           </div>
           <div class="text-muted small mt-1"><?= e($teamNm) ?> · <?= e(shortage_type_label($sh['shortage_type'])) ?></div>
-          <div class="small mt-3"><i class="bi bi-stopwatch me-1"></i>Χρόνος επίλυσης: <strong><?= e($rt) ?></strong></div>
+          <div class="small mt-3"><i class="bi bi-stopwatch me-1"></i><?= e(t('events/story.082', 'Χρόνος επίλυσης:')) ?> <strong><?= e($rt) ?></strong></div>
         </article>
       <?php endforeach; ?>
     </div>
@@ -647,20 +645,20 @@ foreach ($videos as $v) {
   <section class="section" id="media">
     <div class="section-head">
       <div>
-        <div class="eyebrow">Από το πεδίο</div>
-        <h2>Οπτικό υλικό</h2>
-        <p class="section-sub">Φωτογραφίες και βίντεο που τεκμηριώνουν τη <?= e($eventSingularLc) ?>.</p>
+        <div class="eyebrow"><?= e(t('events/story.083', 'Από το πεδίο')) ?></div>
+        <h2><?= e(t('events/story.084', 'Οπτικό υλικό')) ?></h2>
+        <p class="section-sub"><?= e(t('events/story.114', 'Φωτογραφίες και βίντεο που τεκμηριώνουν τη')) ?> <?= e($eventSingularLc) ?>.</p>
       </div>
     </div>
     <div class="gallery">
       <?php $idx = 0; foreach ($photos as $p): ?>
-        <button type="button" class="media-card" data-gallery="<?= $idx++ ?>" aria-label="Άνοιγμα φωτογραφίας">
+        <button type="button" class="media-card" data-gallery="<?= $idx++ ?>" aria-label="<?= e(t('events/story.096', 'Άνοιγμα φωτογραφίας')) ?>">
           <img loading="lazy" src="<?= e($photoSrc($p)) ?>" alt="">
           <?php if (!empty($p['caption'])): ?><div class="media-caption"><?= e($p['caption']) ?></div><?php endif; ?>
         </button>
       <?php endforeach; ?>
       <?php foreach ($videos as $v): ?>
-        <button type="button" class="media-card" data-gallery="<?= $idx++ ?>" aria-label="Άνοιγμα βίντεο">
+        <button type="button" class="media-card" data-gallery="<?= $idx++ ?>" aria-label="<?= e(t('events/story.097', 'Άνοιγμα βίντεο')) ?>">
           <span class="play-badge"><i class="bi bi-play-fill"></i></span>
           <video muted preload="metadata" src="<?= e($videoSrc($v['id'])) ?>"></video>
           <div class="media-caption"><?= e($v['caption'] ?? 'Βίντεο') ?><?php if (!empty($v['duration_sec'])): ?> · <?= (int) $v['duration_sec'] ?>″<?php endif; ?></div>
@@ -673,19 +671,19 @@ foreach ($videos as $v) {
   <section class="section">
     <div class="thanks">
       <div>
-        <div class="eyebrow" style="color:#fbbf24">Ευχαριστούμε</div>
-        <h2>Η <?= e($eventSingularLc) ?> ολοκληρώθηκε χάρη στη συνεργασία όλων.</h2>
-        <p>Ο απολογισμός κρατά ζωντανή την εικόνα της προσφοράς και βοηθά τον φορέα να αναγνωρίζει την πραγματική συμβολή των εθελοντικών ομάδων.</p>
+        <div class="eyebrow" style="color:#fbbf24"><?= e(t('events/story.086', 'Ευχαριστούμε')) ?></div>
+        <h2>Η <?= e($eventSingularLc) ?> <?= e(t('events/story.115', 'ολοκληρώθηκε χάρη στη συνεργασία όλων.')) ?></h2>
+        <p><?= e(t('events/story.088', 'Ο απολογισμός κρατά ζωντανή την εικόνα της προσφοράς και βοηθά τον φορέα να αναγνωρίζει την πραγματική συμβολή των εθελοντικών ομάδων.')) ?></p>
       </div>
       <div style="font-size:3rem"><i class="bi bi-award"></i></div>
     </div>
   </section>
 
-  <div class="footer-note">Δημιουργήθηκε από το SynDrasi · <?= e(gr_datetime(date('Y-m-d H:i:s'))) ?></div>
+  <div class="footer-note"><?= e(t('events/story.089', 'Δημιουργήθηκε από το SynDrasi ·')) ?> <?= e(gr_datetime(date('Y-m-d H:i:s'))) ?></div>
 </main>
 
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Προβολή υλικού">
-  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Κλείσιμο"><i class="bi bi-x"></i></button>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="<?= e(t('events/story.098', 'Προβολή υλικού')) ?>">
+  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="<?= e(t('events/story.099', 'Κλείσιμο')) ?>"><i class="bi bi-x"></i></button>
   <div class="lightbox-frame">
     <div class="lightbox-media" id="lightboxMedia"></div>
     <div class="lightbox-cap" id="lightboxCap"></div>

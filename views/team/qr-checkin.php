@@ -43,10 +43,10 @@ $isDeparted    = $checkinStatus === 'departed';
 <div class="qr-wrap">
 
   <div class="text-center mb-3">
-    <div class="mut small text-uppercase" style="letter-spacing:1px"><i class="bi bi-qr-code-scan me-1"></i>QR Παρουσία</div>
+    <div class="mut small text-uppercase" style="letter-spacing:1px"><i class="bi bi-qr-code-scan me-1"></i><?= e(t('team/qr-checkin.001', 'QR Παρουσία')) ?></div>
     <h1 class="h4 fw-bold mt-1 mb-0"><?= e($event['title']) ?></h1>
     <div class="mut small mt-1">
-      Ομάδα: <strong><?= e($application['team_name'] ?? '—') ?></strong> · Εγκεκριμένα άτομα: <strong><?= $approved ?></strong>
+      <?= e(t('team/qr-checkin.002', 'Ομάδα:')) ?> <strong><?= e($application['team_name'] ?? '—') ?></strong> <?= e(t('team/qr-checkin.003', '· Εγκεκριμένα άτομα:')) ?> <strong><?= $approved ?></strong>
     </div>
   </div>
 
@@ -58,13 +58,13 @@ $isDeparted    = $checkinStatus === 'departed';
             : 'ΠΑΡΩΝ · ' . $checkinPeople . '/' . $approved . ' άτομα' ?>
     </div>
   <?php elseif ($isDeparted): ?>
-    <div class="qr-banner b-departed"><i class="bi bi-box-arrow-right me-1"></i>ΑΠΟΧΩΡΗΣΑΤΕ</div>
+    <div class="qr-banner b-departed"><i class="bi bi-box-arrow-right me-1"></i><?= e(t('team/qr-checkin.004', 'ΑΠΟΧΩΡΗΣΑΤΕ')) ?></div>
   <?php else: ?>
-    <div class="qr-banner b-idle"><i class="bi bi-clock me-1"></i>Δεν έχετε δηλώσει παρουσία</div>
+    <div class="qr-banner b-idle"><i class="bi bi-clock me-1"></i><?= e(t('team/qr-checkin.005', 'Δεν έχετε δηλώσει παρουσία')) ?></div>
   <?php endif; ?>
 
   <?php if (!$isActive): ?>
-    <div class="alert alert-warning text-center">Η <?= e($eventSingularLc) ?> δεν είναι ενεργή αυτή τη στιγμή.</div>
+    <div class="alert alert-warning text-center">Η <?= e($eventSingularLc) ?> <?= e(t('team/qr-checkin.012', 'δεν είναι ενεργή αυτή τη στιγμή.')) ?></div>
   <?php endif; ?>
 
   <div class="qr-card">
@@ -74,19 +74,19 @@ $isDeparted    = $checkinStatus === 'departed';
       <input type="hidden" name="status" value="present_full">
       <input type="hidden" name="_from" value="qr">
       <button type="submit" class="pbtn pbtn-full" <?= !$isActive ? 'disabled' : '' ?>>
-        <i class="bi bi-check-circle-fill"></i> Παρών — όλη η ομάδα (<?= $approved ?>)
+        <i class="bi bi-check-circle-fill"></i> <?= e(t('team/qr-checkin.013', 'Παρών — όλη η ομάδα (')) ?><?= $approved ?>)
       </button>
     </form>
 
     <!-- Μερική παρουσία -->
     <button type="button" class="pbtn pbtn-partial" onclick="document.getElementById('qrPartial').classList.toggle('d-none')" <?= !$isActive ? 'disabled' : '' ?>>
-      <i class="bi bi-people-fill"></i> Μερική παρουσία
+      <i class="bi bi-people-fill"></i> <?= e(t('team/qr-checkin.008', 'Μερική παρουσία')) ?>
     </button>
     <form id="qrPartial" class="d-none mb-2" method="post" action="<?= e(url('/team/operations/events/' . $eid . '/checkin')) ?>">
       <?= csrf_field() ?>
       <input type="hidden" name="status" value="present_partial">
       <input type="hidden" name="_from" value="qr">
-      <label class="form-label small mut">Αριθμός παρόντων ατόμων (1–<?= max(1, $approved - 1) ?>)</label>
+      <label class="form-label small mut"><?= e(t('team/qr-checkin.014', 'Αριθμός παρόντων ατόμων (1–')) ?><?= max(1, $approved - 1) ?>)</label>
       <div class="d-flex gap-2">
         <input type="number" name="present_people" class="form-control form-control-lg" min="1" max="<?= max(1, $approved - 1) ?>" required>
         <button type="submit" class="btn btn-warning btn-lg fw-bold" <?= !$isActive ? 'disabled' : '' ?>>OK</button>
@@ -100,14 +100,14 @@ $isDeparted    = $checkinStatus === 'departed';
       <input type="hidden" name="status" value="departed">
       <input type="hidden" name="_from" value="qr">
       <button type="submit" class="pbtn pbtn-departed" <?= !$isActive ? 'disabled' : '' ?>>
-        <i class="bi bi-box-arrow-right"></i> Αποχώρηση
+        <i class="bi bi-box-arrow-right"></i> <?= e(t('team/qr-checkin.010', 'Αποχώρηση')) ?>
       </button>
     </form>
   </div>
 
   <div class="text-center mt-3">
     <a href="<?= e(url('/team/live/' . $eid)) ?>" class="btn btn-sm btn-outline-light">
-      <i class="bi bi-grid-1x2 me-1"></i>Πλήρες Mobile Hub
+      <i class="bi bi-grid-1x2 me-1"></i><?= e(t('team/qr-checkin.011', 'Πλήρες Mobile Hub')) ?>
     </a>
   </div>
 

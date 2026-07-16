@@ -6,20 +6,20 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Ενεργές <?= e($eventPlural) ?></h1>
-    <p class="text-muted small mb-0"><?= e($eventPlural) ?> σε εξέλιξη ή αναμονή έναρξης.</p>
+    <h1 class="h3 mb-0"><?= e(t('events/active.001', 'Ενεργές')) ?> <?= e($eventPlural) ?></h1>
+    <p class="text-muted small mb-0"><?= e($eventPlural) ?> <?= e(t('events/active.002', 'σε εξέλιξη ή αναμονή έναρξης.')) ?></p>
   </div>
   <div class="d-flex gap-2">
     <a href="<?= e(url('/events/calendar')) ?>" class="btn btn-sm btn-outline-secondary">
-      <i class="bi bi-calendar3 me-1"></i>Ημερολόγιο
+      <i class="bi bi-calendar3 me-1"></i><?= e(t('events/active.003', 'Ημερολόγιο')) ?>
     </a>
     <a href="<?= e(url('/events/drafts')) ?>" class="btn btn-sm btn-outline-secondary">
-      <i class="bi bi-file-earmark me-1"></i>Πρόχειρα
+      <i class="bi bi-file-earmark me-1"></i><?= e(t('events/active.004', 'Πρόχειρα')) ?>
     </a>
     <?php if (!empty($templates)): ?>
     <div class="dropdown">
       <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" type="button">
-        <i class="bi bi-bookmark me-1"></i>Νέα από πρότυπο
+        <i class="bi bi-bookmark me-1"></i><?= e(t('events/active.005', 'Νέα από πρότυπο')) ?>
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <?php foreach ($templates as $tpl): ?>
@@ -28,7 +28,7 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
           <form method="post" action="<?= e(url('/event-templates/' . (int) $tpl['id'] . '/delete')) ?>"
                 onsubmit="return confirm('Διαγραφή προτύπου;')">
             <?= csrf_field() ?>
-            <button class="btn btn-sm btn-link text-danger p-0" title="Διαγραφή"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-link text-danger p-0" title="<?= e(t('events/active.014', 'Διαγραφή')) ?>"><i class="bi bi-trash"></i></button>
           </form>
         </li>
         <?php endforeach; ?>
@@ -43,13 +43,13 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
 
 <!-- Status navigation -->
 <ul class="nav nav-pills mb-3 small">
-  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events')) ?>">Ενεργές <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['active'] ?? 0) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/closed')) ?>">Κλειστές <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['closed'] ?? 0) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>">Ολοκληρωμένες <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['completed'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events')) ?>"><?= e(t('events/active.001', 'Ενεργές')) ?> <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['active'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/closed')) ?>"><?= e(t('events/active.006', 'Κλειστές')) ?> <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['closed'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>"><?= e(t('events/active.007', 'Ολοκληρωμένες')) ?> <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['completed'] ?? 0) ?></span></a></li>
 </ul>
 
 <?php if (!$events): ?>
-  <div class="alert alert-info">Δεν υπάρχουν ενεργές <?= e($eventPluralLc) ?> αυτή τη στιγμή.</div>
+  <div class="alert alert-info"><?= e(t('events/active.015', 'Δεν υπάρχουν ενεργές')) ?> <?= e($eventPluralLc) ?> <?= e(t('events/active.016', 'αυτή τη στιγμή.')) ?></div>
 <?php else: ?>
   <div class="card shadow-sm">
     <div class="table-responsive">
@@ -57,9 +57,9 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
         <thead class="table-light">
           <tr>
             <th><?= e($eventSingular) ?></th>
-            <th>Ημερομηνία</th>
-            <th>Κατάσταση</th>
-            <th class="text-center">Δηλώσεις</th>
+            <th><?= e(t('events/active.009', 'Ημερομηνία')) ?></th>
+            <th><?= e(t('events/active.010', 'Κατάσταση')) ?></th>
+            <th class="text-center"><?= e(t('events/active.011', 'Δηλώσεις')) ?></th>
             <th></th>
           </tr>
         </thead>
@@ -79,11 +79,11 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
               <td class="text-center">
                 <?= (int) $e['applications_count'] ?>
                 <?php if ((int) $e['pending_count'] > 0): ?>
-                  <span class="badge text-bg-warning ms-1"><?= (int) $e['pending_count'] ?> νέες</span>
+                  <span class="badge text-bg-warning ms-1"><?= (int) $e['pending_count'] ?> <?= e(t('events/active.012', 'νέες')) ?></span>
                 <?php endif; ?>
               </td>
               <td class="text-end text-nowrap">
-                <a href="<?= e(url('/events/' . $e['id'])) ?>" class="btn btn-sm btn-outline-primary">Προβολή</a>
+                <a href="<?= e(url('/events/' . $e['id'])) ?>" class="btn btn-sm btn-outline-primary"><?= e(t('events/active.013', 'Προβολή')) ?></a>
               </td>
             </tr>
           <?php endforeach; ?>

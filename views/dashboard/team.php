@@ -10,16 +10,16 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 <!-- Page header -->
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
   <div>
-    <h1 class="h3 mb-0">Πίνακας Ελέγχου</h1>
+    <h1 class="h3 mb-0"><?= e(t('dashboard/team.001', 'Πίνακας Ελέγχου')) ?></h1>
     <p class="text-muted small mb-0"><?= e($team['name']) ?> · <?= e($team['type'] ?? '') ?></p>
   </div>
   <?php if ($todayOperational): ?>
   <span class="badge bg-danger px-3 py-2" style="font-size:.8rem;animation:pulse-dot 1.5s infinite">
-    <i class="bi bi-broadcast me-1"></i><?= count($todayOperational) ?> <?= e($eventSingular) ?> σε Εξέλιξη
+    <i class="bi bi-broadcast me-1"></i><?= count($todayOperational) ?> <?= e($eventSingular) ?> <?= e(t('dashboard/team.002', 'σε Εξέλιξη')) ?>
   </span>
   <?php elseif ($availableEvents > 0): ?>
   <a href="<?= e(url('/team/events')) ?>" class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 text-decoration-none" style="font-size:.8rem">
-    <i class="bi bi-bell me-1"></i><?= $availableEvents ?> νέες <?= e($eventPluralLc) ?> διαθέσιμες
+    <i class="bi bi-bell me-1"></i><?= $availableEvents ?> <?= e(t('dashboard/team.011', 'νέες')) ?> <?= e($eventPluralLc) ?> <?= e(t('dashboard/team.032', 'διαθέσιμες')) ?>
   </a>
   <?php endif; ?>
 </div>
@@ -30,7 +30,7 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
   <div class="card-body p-4">
     <div class="section-hd" style="--c-primary:#e11d48">
       <span class="badge bg-danger me-1" style="font-size:.65rem;animation:pulse-dot 1.5s infinite">LIVE</span>
-      <?= e($eventPlural) ?> σε Εξέλιξη
+      <?= e($eventPlural) ?> <?= e(t('dashboard/team.002', 'σε Εξέλιξη')) ?>
     </div>
     <?php foreach ($todayOperational as $ev): ?>
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom py-3">
@@ -39,7 +39,7 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
         <div class="text-muted small mt-1">
           <i class="bi bi-clock me-1"></i><?= e(gr_time($ev['start_datetime'])) ?>–<?= e(gr_time($ev['end_datetime'])) ?>
           <?php if ($ev['location_name']): ?>· <i class="bi bi-geo-alt me-1"></i><?= e($ev['location_name']) ?><?php endif; ?>
-          · <i class="bi bi-people me-1"></i><?= (int) $ev['approved_people'] ?> εγκεκριμένα άτομα
+          · <i class="bi bi-people me-1"></i><?= (int) $ev['approved_people'] ?> <?= e(t('dashboard/team.004', 'εγκεκριμένα άτομα')) ?>
         </div>
       </div>
       <div class="d-flex gap-2 flex-wrap">
@@ -47,7 +47,7 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
           <i class="bi bi-broadcast me-1"></i>Live Mode
         </a>
         <a href="<?= e(url('/team/operations/events/' . $ev['id'])) ?>" class="btn btn-outline-danger btn-sm">
-          <i class="bi bi-list-ul me-1"></i>Λεπτομέρειες
+          <i class="bi bi-list-ul me-1"></i><?= e(t('dashboard/team.005', 'Λεπτομέρειες')) ?>
         </a>
         <?php if (!empty($ev['field_token'])): ?>
         <a href="<?= e(url('/f/' . $ev['field_token'])) ?>" class="btn btn-outline-secondary btn-sm" target="_blank">
@@ -67,29 +67,29 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
     <div class="ds-card g-rose h-100">
       <div class="ds-icon"><i class="bi bi-broadcast"></i></div>
       <div class="ds-val count-up" data-target="<?= count($todayOperational) ?>"><?= count($todayOperational) ?></div>
-      <div class="ds-lbl"><?= e($eventPlural) ?> σε Εξέλιξη</div>
+      <div class="ds-lbl"><?= e($eventPlural) ?> <?= e(t('dashboard/team.002', 'σε Εξέλιξη')) ?></div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="ds-card g-green h-100">
       <div class="ds-icon"><i class="bi bi-check2-circle"></i></div>
       <div class="ds-val count-up" data-target="<?= $completedThisYear ?>"><?= $completedThisYear ?></div>
-      <div class="ds-lbl">Ολοκληρωμένες <?= $year ?></div>
+      <div class="ds-lbl"><?= e(t('dashboard/team.006', 'Ολοκληρωμένες')) ?> <?= $year ?></div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="ds-card g-amber h-100">
       <div class="ds-icon"><i class="bi bi-clock-history"></i></div>
       <div class="ds-val"><?= number_format((float)($stats['volunteer_hours'] ?? 0), 1, ',', '.') ?></div>
-      <div class="ds-lbl">Ώρες Εθελοντισμού <?= $year ?></div>
+      <div class="ds-lbl"><?= e(t('dashboard/team.007', 'Ώρες Εθελοντισμού')) ?> <?= $year ?></div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="ds-card g-blue h-100">
       <div class="ds-icon"><i class="bi bi-people-fill"></i></div>
       <div class="ds-val count-up" data-target="<?= $activeMemberCount ?>"><?= $activeMemberCount ?></div>
-      <div class="ds-lbl">Ενεργά Μέλη</div>
-      <div class="ds-sub"><?= $memberCount ?> σύνολο</div>
+      <div class="ds-lbl"><?= e(t('dashboard/team.008', 'Ενεργά Μέλη')) ?></div>
+      <div class="ds-sub"><?= $memberCount ?> <?= e(t('dashboard/team.009', 'σύνολο')) ?></div>
     </div>
   </div>
 </div>
@@ -99,28 +99,28 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
   <div class="col-md-6">
     <div class="card border-0 shadow-sm h-100" style="border-radius:1rem">
       <div class="card-body p-4">
-        <div class="section-hd">Γρήγορες Ενέργειες</div>
+        <div class="section-hd"><?= e(t('dashboard/team.010', 'Γρήγορες Ενέργειες')) ?></div>
         <div class="d-grid gap-2">
           <a href="<?= e(url('/team/events')) ?>" class="btn btn-primary text-start">
             <i class="bi bi-calendar-event me-2"></i> <?= e($eventPlural) ?>
             <?php if ($availableEvents > 0): ?>
-            <span class="badge bg-warning text-dark ms-1"><?= $availableEvents ?> νέες</span>
+            <span class="badge bg-warning text-dark ms-1"><?= $availableEvents ?> <?= e(t('dashboard/team.011', 'νέες')) ?></span>
             <?php endif; ?>
           </a>
           <a href="<?= e(url('/team/applications')) ?>" class="btn btn-outline-primary text-start">
-            <i class="bi bi-inbox me-2"></i> Οι Δηλώσεις μας
+            <i class="bi bi-inbox me-2"></i> <?= e(t('dashboard/team.012', 'Οι Δηλώσεις μας')) ?>
             <?php if ($pendingApplications > 0): ?>
-            <span class="badge bg-warning text-dark ms-1"><?= $pendingApplications ?> σε αναμονή</span>
+            <span class="badge bg-warning text-dark ms-1"><?= $pendingApplications ?> <?= e(t('dashboard/team.013', 'σε αναμονή')) ?></span>
             <?php endif; ?>
           </a>
           <a href="<?= e(url('/team/members')) ?>" class="btn btn-outline-secondary text-start">
-            <i class="bi bi-people me-2"></i> Μέλη Ομάδας
+            <i class="bi bi-people me-2"></i> <?= e(t('dashboard/team.014', 'Μέλη Ομάδας')) ?>
           </a>
           <a href="<?= e(url('/team/statistics')) ?>" class="btn btn-outline-secondary text-start">
-            <i class="bi bi-bar-chart me-2"></i> Στατιστικά
+            <i class="bi bi-bar-chart me-2"></i> <?= e(t('dashboard/team.015', 'Στατιστικά')) ?>
           </a>
           <a href="<?= e(url('/notifications')) ?>" class="btn btn-outline-secondary text-start">
-            <i class="bi bi-bell me-2"></i> Ειδοποιήσεις
+            <i class="bi bi-bell me-2"></i> <?= e(t('dashboard/team.016', 'Ειδοποιήσεις')) ?>
           </a>
         </div>
       </div>
@@ -129,13 +129,13 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
   <div class="col-md-6">
     <div class="card border-0 shadow-sm h-100" style="border-radius:1rem">
       <div class="card-body p-4">
-        <div class="section-hd">Κατάσταση Ομάδας</div>
+        <div class="section-hd"><?= e(t('dashboard/team.017', 'Κατάσταση Ομάδας')) ?></div>
         <div class="d-flex flex-column gap-3">
           <!-- Consistency score -->
           <?php $score = $stats['consistency_score'] ?? null; ?>
           <div>
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="small fw-semibold text-muted">Αξιοπιστία (<?= $year ?>)</span>
+              <span class="small fw-semibold text-muted"><?= e(t('dashboard/team.033', 'Αξιοπιστία (')) ?><?= $year ?>)</span>
               <span class="small fw-bold <?= $score === null ? 'text-muted' : ($score >= 80 ? 'text-success' : ($score >= 50 ? 'text-warning' : 'text-danger')) ?>">
                 <?= $score !== null ? $score . '%' : '—' ?>
               </span>
@@ -145,19 +145,19 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
           <!-- Avg response time -->
           <?php $resp = $stats['avg_response_minutes'] ?? null; ?>
           <div class="d-flex justify-content-between">
-            <span class="small text-muted">Μέσος χρόνος δήλωσης</span>
+            <span class="small text-muted"><?= e(t('dashboard/team.019', 'Μέσος χρόνος δήλωσης')) ?></span>
             <span class="small fw-bold"><?= $resp !== null ? ($resp < 60 ? $resp . ' λεπτά' : round($resp/60, 1) . ' ώρες') : '—' ?></span>
           </div>
           <!-- Members -->
           <div class="d-flex justify-content-between">
-            <span class="small text-muted">Μέλη ομάδας</span>
-            <span class="small fw-bold"><?= $activeMemberCount ?> ενεργά / <?= $memberCount ?> σύνολο</span>
+            <span class="small text-muted"><?= e(t('dashboard/team.020', 'Μέλη ομάδας')) ?></span>
+            <span class="small fw-bold"><?= $activeMemberCount ?> <?= e(t('dashboard/team.034', 'ενεργά /')) ?> <?= $memberCount ?> <?= e(t('dashboard/team.009', 'σύνολο')) ?></span>
           </div>
           <!-- Pending applications -->
           <?php if ($pendingApplications > 0): ?>
           <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:#fff8e1;border:1px solid #ffe082">
-            <span class="small fw-semibold text-warning-emphasis"><i class="bi bi-hourglass-split me-1"></i><?= $pendingApplications ?> δηλώσεις σε αναμονή</span>
-            <a href="<?= e(url('/team/applications')) ?>" class="btn btn-sm btn-warning py-0 px-2">Προβολή</a>
+            <span class="small fw-semibold text-warning-emphasis"><i class="bi bi-hourglass-split me-1"></i><?= $pendingApplications ?> <?= e(t('dashboard/team.022', 'δηλώσεις σε αναμονή')) ?></span>
+            <a href="<?= e(url('/team/applications')) ?>" class="btn btn-sm btn-warning py-0 px-2"><?= e(t('dashboard/team.023', 'Προβολή')) ?></a>
           </div>
           <?php endif; ?>
         </div>
@@ -175,7 +175,7 @@ $upcoming = array_filter($upcomingApproved, fn($ev) => !in_array($ev['id'], $ope
 <?php if ($upcoming): ?>
 <div class="card border-0 shadow-sm mb-4" style="border-radius:1rem">
   <div class="card-body p-4">
-    <div class="section-hd">Εγκεκριμένες Επερχόμενες <?= e($eventPlural) ?></div>
+    <div class="section-hd"><?= e(t('dashboard/team.024', 'Εγκεκριμένες Επερχόμενες')) ?> <?= e($eventPlural) ?></div>
     <div class="row g-2 mt-1">
       <?php foreach ($upcoming as $ev): ?>
       <div class="col-md-6 col-lg-4">
@@ -188,8 +188,8 @@ $upcoming = array_filter($upcomingApproved, fn($ev) => !in_array($ev['id'], $ope
           <div class="text-muted small"><i class="bi bi-clock me-1"></i><?= e(gr_time($ev['start_datetime'])) ?>–<?= e(gr_time($ev['end_datetime'])) ?></div>
           <?php if ($ev['location_name']): ?><div class="text-muted small"><i class="bi bi-geo-alt me-1"></i><?= e($ev['location_name']) ?></div><?php endif; ?>
           <div class="d-flex justify-content-between align-items-center mt-2">
-            <span class="badge bg-light border text-dark" style="font-size:.65rem"><i class="bi bi-people me-1"></i><?= (int) $ev['approved_people'] ?> άτομα</span>
-            <a class="btn btn-sm btn-outline-primary py-0 px-2" href="<?= e(url('/team/events/' . $ev['id'])) ?>">Προβολή</a>
+            <span class="badge bg-light border text-dark" style="font-size:.65rem"><i class="bi bi-people me-1"></i><?= (int) $ev['approved_people'] ?> <?= e(t('dashboard/team.025', 'άτομα')) ?></span>
+            <a class="btn btn-sm btn-outline-primary py-0 px-2" href="<?= e(url('/team/events/' . $ev['id'])) ?>"><?= e(t('dashboard/team.023', 'Προβολή')) ?></a>
           </div>
         </div>
       </div>
@@ -201,10 +201,10 @@ $upcoming = array_filter($upcomingApproved, fn($ev) => !in_array($ev['id'], $ope
 <div class="card border-0 shadow-sm mb-4" style="border-radius:1rem">
   <div class="card-body p-4 text-center text-muted">
     <i class="bi bi-calendar3 fs-2 mb-2 d-block opacity-50"></i>
-    <div class="fw-semibold">Δεν υπάρχουν εγκεκριμένες επερχόμενες <?= e($eventPluralLc) ?></div>
+    <div class="fw-semibold"><?= e(t('dashboard/team.026', 'Δεν υπάρχουν εγκεκριμένες επερχόμενες')) ?> <?= e($eventPluralLc) ?></div>
     <?php if ($availableEvents > 0): ?>
-    <div class="small mt-1">Υπάρχουν <strong><?= $availableEvents ?></strong> <?= e($eventPluralLc) ?> διαθέσιμες για δήλωση.</div>
-    <a href="<?= e(url('/team/events')) ?>" class="btn btn-sm btn-primary mt-2">Δείτε τις <?= e($eventPluralLc) ?></a>
+    <div class="small mt-1"><?= e(t('dashboard/team.027', 'Υπάρχουν')) ?> <strong><?= $availableEvents ?></strong> <?= e($eventPluralLc) ?> <?= e(t('dashboard/team.028', 'διαθέσιμες για δήλωση.')) ?></div>
+    <a href="<?= e(url('/team/events')) ?>" class="btn btn-sm btn-primary mt-2"><?= e(t('dashboard/team.029', 'Δείτε τις')) ?> <?= e($eventPluralLc) ?></a>
     <?php endif; ?>
   </div>
 </div>
@@ -214,7 +214,7 @@ $upcoming = array_filter($upcomingApproved, fn($ev) => !in_array($ev['id'], $ope
 <?php if ($recentCompleted): ?>
 <div class="card border-0 shadow-sm" style="border-radius:1rem">
   <div class="card-body p-4">
-    <div class="section-hd">Πρόσφατη Δραστηριότητα</div>
+    <div class="section-hd"><?= e(t('dashboard/team.030', 'Πρόσφατη Δραστηριότητα')) ?></div>
     <div class="mt-2">
       <?php foreach ($recentCompleted as $ev): ?>
       <div class="d-flex align-items-center gap-3 border-bottom py-2">
@@ -231,7 +231,7 @@ $upcoming = array_filter($upcomingApproved, fn($ev) => !in_array($ev['id'], $ope
         </div>
         <div class="flex-shrink-0">
           <span class="badge bg-success-subtle text-success border border-success" style="font-size:.65rem">
-            <i class="bi bi-check2 me-1"></i>Ολοκλ.
+            <i class="bi bi-check2 me-1"></i><?= e(t('dashboard/team.031', 'Ολοκλ.')) ?>
           </span>
         </div>
       </div>

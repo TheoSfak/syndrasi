@@ -23,18 +23,18 @@ $short = function ($text, $len = 140) {
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
   <div>
-    <h1 class="h3 mb-1">Κέντρο Ελέγχου Ειδοποιήσεων</h1>
-    <p class="text-muted mb-0">Ενιαίο ιστορικό αποστολών ανά κανάλι, παραλήπτη και κατάσταση.</p>
+    <h1 class="h3 mb-1"><?= e(t('notification_center/index.001', 'Κέντρο Ελέγχου Ειδοποιήσεων')) ?></h1>
+    <p class="text-muted mb-0"><?= e(t('notification_center/index.002', 'Ενιαίο ιστορικό αποστολών ανά κανάλι, παραλήπτη και κατάσταση.')) ?></p>
   </div>
   <a class="btn btn-outline-secondary" href="<?= e(url('/settings#tab-notifications')) ?>">
-    <i class="bi bi-sliders me-1"></i>Ρυθμίσεις καναλιών
+    <i class="bi bi-sliders me-1"></i><?= e(t('notification_center/index.003', 'Ρυθμίσεις καναλιών')) ?>
   </a>
 </div>
 
 <?php if (empty($deliveryLogAvailable)): ?>
   <div class="alert alert-warning">
-    <div class="fw-semibold">Το νέο delivery log δεν έχει δημιουργηθεί ακόμα.</div>
-    <div class="small">Τρέξτε τις migrations για πλήρη ιστορικό SMS/Telegram/push. Μέχρι τότε φαίνονται όσα υπάρχουν από email και in-app ειδοποιήσεις.</div>
+    <div class="fw-semibold"><?= e(t('notification_center/index.004', 'Το νέο delivery log δεν έχει δημιουργηθεί ακόμα.')) ?></div>
+    <div class="small"><?= e(t('notification_center/index.005', 'Τρέξτε τις migrations για πλήρη ιστορικό SMS/Telegram/push. Μέχρι τότε φαίνονται όσα υπάρχουν από email και in-app ειδοποιήσεις.')) ?></div>
   </div>
 <?php endif; ?>
 
@@ -62,7 +62,7 @@ $short = function ($text, $len = 140) {
   <div class="card-body">
     <form method="get" action="<?= e(url('/notification-center')) ?>" class="row g-3 align-items-end">
       <div class="col-md-2">
-        <label class="form-label small fw-semibold">Κανάλι</label>
+        <label class="form-label small fw-semibold"><?= e(t('notification_center/index.006', 'Κανάλι')) ?></label>
         <select name="channel" class="form-select">
           <?php foreach (['all' => 'Όλα', 'email' => 'Email', 'sms' => 'SMS', 'telegram' => 'Telegram', 'push' => 'Push', 'in_app' => 'In-app'] as $value => $label): ?>
             <option value="<?= e($value) ?>" <?= $filters['channel'] === $value ? 'selected' : '' ?>><?= e($label) ?></option>
@@ -70,7 +70,7 @@ $short = function ($text, $len = 140) {
         </select>
       </div>
       <div class="col-md-2">
-        <label class="form-label small fw-semibold">Κατάσταση</label>
+        <label class="form-label small fw-semibold"><?= e(t('notification_center/index.007', 'Κατάσταση')) ?></label>
         <select name="status" class="form-select">
           <?php foreach (['all' => 'Όλες', 'queued' => 'Σε ουρά', 'sent' => 'Στάλθηκε', 'failed' => 'Απέτυχε', 'skipped' => 'Παραλείφθηκε', 'read' => 'Διαβάστηκε', 'unread' => 'Αδιάβαστη'] as $value => $label): ?>
             <option value="<?= e($value) ?>" <?= $filters['status'] === $value ? 'selected' : '' ?>><?= e($label) ?></option>
@@ -78,19 +78,19 @@ $short = function ($text, $len = 140) {
         </select>
       </div>
       <div class="col-md-2">
-        <label class="form-label small fw-semibold">Από</label>
+        <label class="form-label small fw-semibold"><?= e(t('notification_center/index.008', 'Από')) ?></label>
         <input type="date" name="date_from" class="form-control" value="<?= e($filters['date_from']) ?>">
       </div>
       <div class="col-md-2">
-        <label class="form-label small fw-semibold">Έως</label>
+        <label class="form-label small fw-semibold"><?= e(t('notification_center/index.009', 'Έως')) ?></label>
         <input type="date" name="date_to" class="form-control" value="<?= e($filters['date_to']) ?>">
       </div>
       <div class="col-md-3">
-        <label class="form-label small fw-semibold">Αναζήτηση</label>
-        <input type="search" name="q" class="form-control" value="<?= e($filters['q']) ?>" placeholder="παραλήπτης, θέμα, σφάλμα">
+        <label class="form-label small fw-semibold"><?= e(t('notification_center/index.010', 'Αναζήτηση')) ?></label>
+        <input type="search" name="q" class="form-control" value="<?= e($filters['q']) ?>" placeholder="<?= e(t('notification_center/index.025', 'παραλήπτης, θέμα, σφάλμα')) ?>">
       </div>
       <div class="col-md-1 d-grid">
-        <button class="btn btn-primary" type="submit" title="Φιλτράρισμα"><i class="bi bi-search"></i></button>
+        <button class="btn btn-primary" type="submit" title="<?= e(t('notification_center/index.026', 'Φιλτράρισμα')) ?>"><i class="bi bi-search"></i></button>
       </div>
     </form>
   </div>
@@ -100,24 +100,24 @@ $short = function ($text, $len = 140) {
   <div class="col-xl-9">
     <div class="card shadow-sm">
       <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <div class="fw-semibold"><i class="bi bi-activity me-1"></i>Ιστορικό αποστολών</div>
-        <span class="small text-muted">Εμφάνιση έως 150 πιο πρόσφατων αποτελεσμάτων</span>
+        <div class="fw-semibold"><i class="bi bi-activity me-1"></i><?= e(t('notification_center/index.011', 'Ιστορικό αποστολών')) ?></div>
+        <span class="small text-muted"><?= e(t('notification_center/index.012', 'Εμφάνιση έως 150 πιο πρόσφατων αποτελεσμάτων')) ?></span>
       </div>
       <div class="table-responsive">
         <table class="table align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Κανάλι</th>
-              <th>Παραλήπτης</th>
-              <th>Μήνυμα</th>
-              <th>Κατάσταση</th>
-              <th>Ώρα</th>
-              <th class="text-end">Ενέργεια</th>
+              <th><?= e(t('notification_center/index.006', 'Κανάλι')) ?></th>
+              <th><?= e(t('notification_center/index.013', 'Παραλήπτης')) ?></th>
+              <th><?= e(t('notification_center/index.014', 'Μήνυμα')) ?></th>
+              <th><?= e(t('notification_center/index.007', 'Κατάσταση')) ?></th>
+              <th><?= e(t('notification_center/index.015', 'Ώρα')) ?></th>
+              <th class="text-end"><?= e(t('notification_center/index.016', 'Ενέργεια')) ?></th>
             </tr>
           </thead>
           <tbody>
             <?php if (empty($items)): ?>
-              <tr><td colspan="6" class="text-center text-muted py-5">Δεν βρέθηκαν ειδοποιήσεις με τα τρέχοντα φίλτρα.</td></tr>
+              <tr><td colspan="6" class="text-center text-muted py-5"><?= e(t('notification_center/index.017', 'Δεν βρέθηκαν ειδοποιήσεις με τα τρέχοντα φίλτρα.')) ?></td></tr>
             <?php else: ?>
               <?php foreach ($items as $item): ?>
                 <?php
@@ -144,14 +144,14 @@ $short = function ($text, $len = 140) {
                   </td>
                   <td>
                     <span class="badge text-bg-<?= e($status[1]) ?>"><?= e($status[0]) ?></span>
-                    <?php if (!empty($item['attempts'])): ?><div class="small text-muted mt-1"><?= (int) $item['attempts'] ?> προσπάθειες</div><?php endif; ?>
+                    <?php if (!empty($item['attempts'])): ?><div class="small text-muted mt-1"><?= (int) $item['attempts'] ?> <?= e(t('notification_center/index.018', 'προσπάθειες')) ?></div><?php endif; ?>
                   </td>
                   <td class="small text-muted" style="min-width:120px"><?= e(gr_datetime($item['created_at'])) ?></td>
                   <td class="text-end">
                     <?php if ($canRetry): ?>
                       <form method="post" action="<?= e(url('/notification-center/mail/' . (int) $item['retry_mail_id'] . '/retry')) ?>">
                         <?= csrf_field() ?>
-                        <button class="btn btn-sm btn-outline-primary" type="submit" title="Επανάληψη αποστολής email">
+                        <button class="btn btn-sm btn-outline-primary" type="submit" title="<?= e(t('notification_center/index.027', 'Επανάληψη αποστολής email')) ?>">
                           <i class="bi bi-arrow-clockwise"></i>
                         </button>
                       </form>
@@ -170,7 +170,7 @@ $short = function ($text, $len = 140) {
 
   <div class="col-xl-3">
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white fw-semibold"><i class="bi bi-pie-chart me-1"></i>Ανά κανάλι</div>
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-pie-chart me-1"></i><?= e(t('notification_center/index.019', 'Ανά κανάλι')) ?></div>
       <ul class="list-group list-group-flush">
         <?php foreach ($channelLabels as $key => $meta): ?>
           <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
@@ -182,21 +182,21 @@ $short = function ($text, $len = 140) {
     </div>
 
     <div class="card shadow-sm">
-      <div class="card-header bg-white text-danger fw-semibold"><i class="bi bi-trash me-1"></i>Διαγραφή ιστορικού</div>
+      <div class="card-header bg-white text-danger fw-semibold"><i class="bi bi-trash me-1"></i><?= e(t('notification_center/index.020', 'Διαγραφή ιστορικού')) ?></div>
       <div class="card-body">
         <form method="post" action="<?= e(url('/notification-center/clear')) ?>"
               onsubmit="return confirm('Να διαγραφεί οριστικά το επιλεγμένο ιστορικό ειδοποιήσεων;');">
           <?= csrf_field() ?>
-          <label class="form-label small fw-semibold">Τι να διαγραφεί</label>
+          <label class="form-label small fw-semibold"><?= e(t('notification_center/index.021', 'Τι να διαγραφεί')) ?></label>
           <select name="scope" class="form-select mb-3">
-            <option value="all">Όλο το ιστορικό</option>
+            <option value="all"><?= e(t('notification_center/index.022', 'Όλο το ιστορικό')) ?></option>
             <option value="delivery">Email/SMS/Telegram/Push</option>
-            <option value="in_app">Μόνο in-app ειδοποιήσεις</option>
+            <option value="in_app"><?= e(t('notification_center/index.023', 'Μόνο in-app ειδοποιήσεις')) ?></option>
           </select>
-          <label class="form-label small fw-semibold">Πληκτρολογήστε DELETE</label>
+          <label class="form-label small fw-semibold"><?= e(t('notification_center/index.024', 'Πληκτρολογήστε DELETE')) ?></label>
           <input type="text" name="confirm" class="form-control mb-3" placeholder="DELETE" autocomplete="off">
           <button class="btn btn-outline-danger w-100" type="submit">
-            <i class="bi bi-trash me-1"></i>Διαγραφή ιστορικού
+            <i class="bi bi-trash me-1"></i><?= e(t('notification_center/index.020', 'Διαγραφή ιστορικού')) ?>
           </button>
         </form>
       </div>

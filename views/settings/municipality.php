@@ -13,7 +13,7 @@ $orgShort = $authorityContext['short_name'] ?? 'φορέας';
 $eventSingularLc = mb_strtolower($authorityContext['event_singular'] ?? 'Δράση', 'UTF-8');
 $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
 ?>
-<h1 class="h3 mb-1">Ρυθμίσεις Φορέα</h1>
+<h1 class="h3 mb-1"><?= e(t('settings/municipality.001', 'Ρυθμίσεις Φορέα')) ?></h1>
 <p class="text-muted mb-3"><?= e($authorityContext['official_name'] ?? $municipality['name']) ?></p>
 
 <?php
@@ -48,16 +48,16 @@ $tzOptions = [
 
 <ul class="nav nav-tabs mb-4" id="settingsTabs">
   <li class="nav-item"><a class="nav-link" href="#tab-mail"           data-bs-toggle="tab"><i class="bi bi-envelope me-1"></i>Email</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-mail-history"    data-bs-toggle="tab"><i class="bi bi-clock-history me-1"></i>Ιστορικό Email</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-map"            data-bs-toggle="tab"><i class="bi bi-map me-1"></i>Χάρτης</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-awards"         data-bs-toggle="tab"><i class="bi bi-trophy me-1"></i>Βραβεία</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-notifications"  data-bs-toggle="tab"><i class="bi bi-bell me-1"></i>Ειδοποιήσεις</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-mail-history"    data-bs-toggle="tab"><i class="bi bi-clock-history me-1"></i><?= e(t('settings/municipality.002', 'Ιστορικό Email')) ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-map"            data-bs-toggle="tab"><i class="bi bi-map me-1"></i><?= e(t('settings/municipality.003', 'Χάρτης')) ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-awards"         data-bs-toggle="tab"><i class="bi bi-trophy me-1"></i><?= e(t('settings/municipality.004', 'Βραβεία')) ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-notifications"  data-bs-toggle="tab"><i class="bi bi-bell me-1"></i><?= e(t('settings/municipality.005', 'Ειδοποιήσεις')) ?></a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-sms"            data-bs-toggle="tab"><i class="bi bi-chat-dots me-1"></i>SMS</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-telegram"       data-bs-toggle="tab"><i class="bi bi-telegram me-1"></i>Telegram</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-event-defaults" data-bs-toggle="tab"><i class="bi bi-calendar-plus me-1"></i><?= e($authorityContext['event_plural'] ?? 'Δράσεις') ?></a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-branding"       data-bs-toggle="tab"><i class="bi bi-palette me-1"></i>Εμφάνιση</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-members"          data-bs-toggle="tab"><i class="bi bi-people me-1"></i>Μέλη Ομάδων</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-email-templates" data-bs-toggle="tab"><i class="bi bi-envelope-paper me-1"></i>Πρότυπα Email</a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-branding"       data-bs-toggle="tab"><i class="bi bi-palette me-1"></i><?= e(t('settings/municipality.006', 'Εμφάνιση')) ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-members"          data-bs-toggle="tab"><i class="bi bi-people me-1"></i><?= e(t('settings/municipality.007', 'Μέλη Ομάδων')) ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-email-templates" data-bs-toggle="tab"><i class="bi bi-envelope-paper me-1"></i><?= e(t('settings/municipality.008', 'Πρότυπα Email')) ?></a></li>
 </ul>
 
 <div class="tab-content">
@@ -71,74 +71,74 @@ $tzOptions = [
           <div class="card-header bg-white fw-semibold"><i class="bi bi-envelope me-1"></i> Email / SMTP</div>
           <div class="card-body row g-3">
             <div class="col-12">
-              <label class="form-label">Τρόπος αποστολής email</label>
+              <label class="form-label"><?= e(t('settings/municipality.009', 'Τρόπος αποστολής email')) ?></label>
               <select name="mail_driver" class="form-select">
-                <option value="" <?= $driver === '' ? 'selected' : '' ?>>Προεπιλογή πλατφόρμας (<?= e(config('mail')['driver']) ?>)</option>
-                <option value="smtp" <?= $driver === 'smtp' ? 'selected' : '' ?>>SMTP (προτεινόμενο για πραγματική αποστολή)</option>
+                <option value="" <?= $driver === '' ? 'selected' : '' ?>><?= e(t('settings/municipality.214', 'Προεπιλογή πλατφόρμας (')) ?><?= e(config('mail')['driver']) ?>)</option>
+                <option value="smtp" <?= $driver === 'smtp' ? 'selected' : '' ?>><?= e(t('settings/municipality.011', 'SMTP (προτεινόμενο για πραγματική αποστολή)')) ?></option>
                 <option value="mail" <?= $driver === 'mail' ? 'selected' : '' ?>>PHP mail()</option>
-                <option value="log"  <?= $driver === 'log'  ? 'selected' : '' ?>>Μόνο καταγραφή (log, για δοκιμές)</option>
+                <option value="log"  <?= $driver === 'log'  ? 'selected' : '' ?>><?= e(t('settings/municipality.012', 'Μόνο καταγραφή (log, για δοκιμές)')) ?></option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Email αποστολέα (From)</label>
+              <label class="form-label"><?= e(t('settings/municipality.013', 'Email αποστολέα (From)')) ?></label>
               <input type="email" name="mail_from_email" class="form-control" value="<?= e($v('mail_from_email')) ?>" placeholder="no-reply@dimos.gr">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Όνομα αποστολέα</label>
+              <label class="form-label"><?= e(t('settings/municipality.014', 'Όνομα αποστολέα')) ?></label>
               <input type="text" name="mail_from_name" class="form-control" value="<?= e($v('mail_from_name')) ?>" placeholder="<?= e($municipality['name']) ?>">
             </div>
-            <div class="col-12"><hr class="my-1"><strong class="small text-muted">ΡΥΘΜΙΣΕΙΣ SMTP</strong></div>
+            <div class="col-12"><hr class="my-1"><strong class="small text-muted"><?= e(t('settings/municipality.015', 'ΡΥΘΜΙΣΕΙΣ SMTP')) ?></strong></div>
             <div class="col-md-8">
               <label class="form-label">SMTP Host</label>
-              <input type="text" name="smtp_host" class="form-control" value="<?= e($v('smtp_host')) ?>" placeholder="π.χ. smtp.gmail.com">
+              <input type="text" name="smtp_host" class="form-control" value="<?= e($v('smtp_host')) ?>" placeholder="<?= e(t('settings/municipality.207', 'π.χ. smtp.gmail.com')) ?>">
             </div>
             <div class="col-md-4">
-              <label class="form-label">Θύρα</label>
+              <label class="form-label"><?= e(t('settings/municipality.016', 'Θύρα')) ?></label>
               <input type="number" name="smtp_port" class="form-control" value="<?= e($v('smtp_port', '587')) ?>" placeholder="587">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Όνομα χρήστη SMTP</label>
+              <label class="form-label"><?= e(t('settings/municipality.017', 'Όνομα χρήστη SMTP')) ?></label>
               <input type="text" name="smtp_user" class="form-control" value="<?= e($v('smtp_user')) ?>" autocomplete="off">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Κωδικός SMTP</label>
+              <label class="form-label"><?= e(t('settings/municipality.018', 'Κωδικός SMTP')) ?></label>
               <input type="password" name="smtp_pass" class="form-control" autocomplete="new-password"
                      placeholder="<?= $v('smtp_pass') !== '' ? '••••••••  (αφήστε κενό για να μην αλλάξει)' : '' ?>">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Ασφάλεια σύνδεσης</label>
+              <label class="form-label"><?= e(t('settings/municipality.019', 'Ασφάλεια σύνδεσης')) ?></label>
               <select name="smtp_secure" class="form-select">
-                <option value="tls" <?= $v('smtp_secure', 'tls') === 'tls' ? 'selected' : '' ?>>STARTTLS (θύρα 587)</option>
-                <option value="ssl" <?= $v('smtp_secure') === 'ssl' ? 'selected' : '' ?>>SSL (θύρα 465)</option>
-                <option value=""   <?= ($v('smtp_secure', 'tls') === '' && isset($settings['smtp_secure'])) ? 'selected' : '' ?>>Χωρίς κρυπτογράφηση</option>
+                <option value="tls" <?= $v('smtp_secure', 'tls') === 'tls' ? 'selected' : '' ?>><?= e(t('settings/municipality.020', 'STARTTLS (θύρα 587)')) ?></option>
+                <option value="ssl" <?= $v('smtp_secure') === 'ssl' ? 'selected' : '' ?>><?= e(t('settings/municipality.021', 'SSL (θύρα 465)')) ?></option>
+                <option value=""   <?= ($v('smtp_secure', 'tls') === '' && isset($settings['smtp_secure'])) ? 'selected' : '' ?>><?= e(t('settings/municipality.022', 'Χωρίς κρυπτογράφηση')) ?></option>
               </select>
             </div>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
       <div class="col-lg-5">
         <div class="card shadow-sm mb-3">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> Δοκιμή αποστολής</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> <?= e(t('settings/municipality.024', 'Δοκιμή αποστολής')) ?></div>
           <div class="card-body">
-            <p class="small text-muted mb-3">Στέλνει δοκιμαστικό email στο <strong><?= e(current_user()['email']) ?></strong> με τις αποθηκευμένες ρυθμίσεις.</p>
+            <p class="small text-muted mb-3"><?= e(t('settings/municipality.025', 'Στέλνει δοκιμαστικό email στο')) ?> <strong><?= e(current_user()['email']) ?></strong> <?= e(t('settings/municipality.026', 'με τις αποθηκευμένες ρυθμίσεις.')) ?></p>
             <form method="post" action="<?= e(url('/settings/mail/test')) ?>">
               <?= csrf_field() ?>
-              <button class="btn btn-outline-primary w-100"><i class="bi bi-envelope-paper me-1"></i>Αποστολή δοκιμαστικού email</button>
+              <button class="btn btn-outline-primary w-100"><i class="bi bi-envelope-paper me-1"></i><?= e(t('settings/municipality.027', 'Αποστολή δοκιμαστικού email')) ?></button>
             </form>
           </div>
         </div>
         <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Τρέχουσα κατάσταση</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('settings/municipality.028', 'Τρέχουσα κατάσταση')) ?></div>
           <ul class="list-group list-group-flush small">
             <li class="list-group-item d-flex justify-content-between">
-              <span>Ενεργός τρόπος</span>
+              <span><?= e(t('settings/municipality.029', 'Ενεργός τρόπος')) ?></span>
               <strong><?= e($effective['driver']) ?><?= $driver === '' ? ' (προεπιλογή)' : '' ?></strong>
             </li>
             <li class="list-group-item d-flex justify-content-between">
-              <span>Αποστολέας</span>
+              <span><?= e(t('settings/municipality.030', 'Αποστολέας')) ?></span>
               <strong><?= e($effective['from_email']) ?></strong>
             </li>
             <?php if ($effective['driver'] === 'smtp'): ?>
@@ -170,7 +170,7 @@ $tzOptions = [
     ?>
     <?php if (empty($mailHistory['available'])): ?>
       <div class="alert alert-warning">
-        <div class="fw-semibold">Το ιστορικό email δεν είναι διαθέσιμο.</div>
+        <div class="fw-semibold"><?= e(t('settings/municipality.031', 'Το ιστορικό email δεν είναι διαθέσιμο.')) ?></div>
         <div class="small"><?= e($mailHistory['error'] ?? 'Δεν βρέθηκε ο πίνακας mail_queue.') ?></div>
       </div>
     <?php else: ?>
@@ -198,23 +198,23 @@ $tzOptions = [
         <div class="col-xl-8">
           <div class="card shadow-sm">
             <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
-              <div class="fw-semibold"><i class="bi bi-envelope-paper me-1"></i>Πρόσφατα email</div>
-              <span class="small text-muted">Τελευταίες 50 εγγραφές του φορέα</span>
+              <div class="fw-semibold"><i class="bi bi-envelope-paper me-1"></i><?= e(t('settings/municipality.032', 'Πρόσφατα email')) ?></div>
+              <span class="small text-muted"><?= e(t('settings/municipality.033', 'Τελευταίες 50 εγγραφές του φορέα')) ?></span>
             </div>
             <div class="table-responsive">
               <table class="table table-sm align-middle mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th>Παραλήπτης</th>
-                    <th>Θέμα</th>
-                    <th>Κατάσταση</th>
-                    <th>Δημιουργήθηκε</th>
-                    <th>Προσπάθειες</th>
+                    <th><?= e(t('settings/municipality.034', 'Παραλήπτης')) ?></th>
+                    <th><?= e(t('settings/municipality.035', 'Θέμα')) ?></th>
+                    <th><?= e(t('settings/municipality.036', 'Κατάσταση')) ?></th>
+                    <th><?= e(t('settings/municipality.037', 'Δημιουργήθηκε')) ?></th>
+                    <th><?= e(t('settings/municipality.038', 'Προσπάθειες')) ?></th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php if (empty($mailHistory['recent'])): ?>
-                    <tr><td colspan="5" class="text-center text-muted py-4">Δεν υπάρχει ιστορικό email για αυτόν τον φορέα.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4"><?= e(t('settings/municipality.039', 'Δεν υπάρχει ιστορικό email για αυτόν τον φορέα.')) ?></td></tr>
                   <?php else: ?>
                     <?php foreach ($mailHistory['recent'] as $row): ?>
                       <?php [$badge, $label] = $mailStatus($row); ?>
@@ -241,13 +241,13 @@ $tzOptions = [
 
         <div class="col-xl-4">
           <div class="card shadow-sm mb-3">
-            <div class="card-header bg-white fw-semibold"><i class="bi bi-bar-chart me-1"></i>Ανά ημέρα</div>
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-bar-chart me-1"></i><?= e(t('settings/municipality.040', 'Ανά ημέρα')) ?></div>
             <div class="table-responsive">
               <table class="table table-sm mb-0">
-                <thead class="table-light"><tr><th>Ημέρα</th><th>Σύνολο</th><th>OK</th><th>Fail</th></tr></thead>
+                <thead class="table-light"><tr><th><?= e(t('settings/municipality.041', 'Ημέρα')) ?></th><th><?= e(t('settings/municipality.042', 'Σύνολο')) ?></th><th>OK</th><th>Fail</th></tr></thead>
                 <tbody>
                   <?php if (empty($mailHistory['daily'])): ?>
-                    <tr><td colspan="4" class="text-muted text-center py-3">Δεν υπάρχουν στοιχεία.</td></tr>
+                    <tr><td colspan="4" class="text-muted text-center py-3"><?= e(t('settings/municipality.043', 'Δεν υπάρχουν στοιχεία.')) ?></td></tr>
                   <?php else: ?>
                     <?php foreach ($mailHistory['daily'] as $day): ?>
                       <tr>
@@ -264,10 +264,10 @@ $tzOptions = [
           </div>
 
           <div class="card shadow-sm mb-3">
-            <div class="card-header bg-white fw-semibold"><i class="bi bi-person-lines-fill me-1"></i>Συχνότεροι παραλήπτες</div>
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-person-lines-fill me-1"></i><?= e(t('settings/municipality.044', 'Συχνότεροι παραλήπτες')) ?></div>
             <ul class="list-group list-group-flush">
               <?php if (empty($mailHistory['recipients'])): ?>
-                <li class="list-group-item text-muted small">Δεν υπάρχουν παραλήπτες.</li>
+                <li class="list-group-item text-muted small"><?= e(t('settings/municipality.045', 'Δεν υπάρχουν παραλήπτες.')) ?></li>
               <?php else: ?>
                 <?php foreach ($mailHistory['recipients'] as $r): ?>
                   <li class="list-group-item d-flex justify-content-between gap-2">
@@ -280,16 +280,16 @@ $tzOptions = [
           </div>
 
           <div class="card shadow-sm border-danger">
-            <div class="card-header bg-white text-danger fw-semibold"><i class="bi bi-trash me-1"></i>Διαγραφή ιστορικού</div>
+            <div class="card-header bg-white text-danger fw-semibold"><i class="bi bi-trash me-1"></i><?= e(t('settings/municipality.046', 'Διαγραφή ιστορικού')) ?></div>
             <div class="card-body">
-              <p class="small text-muted">Διαγράφει όλες τις εγγραφές `mail_queue` αυτού του φορέα (<?= e($orgShort) ?>), μαζί με επιτυχημένες, αποτυχημένες και pending αποστολές.</p>
+              <p class="small text-muted"><?= e(t('settings/municipality.215', 'Διαγράφει όλες τις εγγραφές `mail_queue` αυτού του φορέα (')) ?><?= e($orgShort) ?><?= e(t('settings/municipality.216', '), μαζί με επιτυχημένες, αποτυχημένες και pending αποστολές.')) ?></p>
               <form method="post" action="<?= e(url('/settings/mail/history/clear')) ?>"
                     onsubmit="return confirm(<?= e(json_encode('Να διαγραφεί οριστικά όλο το ιστορικό email αυτού του φορέα;', JSON_UNESCAPED_UNICODE)) ?>);">
                 <?= csrf_field() ?>
-                <label class="form-label small fw-semibold">Πληκτρολογήστε DELETE</label>
+                <label class="form-label small fw-semibold"><?= e(t('settings/municipality.048', 'Πληκτρολογήστε DELETE')) ?></label>
                 <input type="text" name="confirm" class="form-control mb-2" placeholder="DELETE" autocomplete="off">
                 <button class="btn btn-outline-danger w-100" type="submit">
-                  <i class="bi bi-trash me-1"></i>Διαγραφή όλου του ιστορικού
+                  <i class="bi bi-trash me-1"></i><?= e(t('settings/municipality.049', 'Διαγραφή όλου του ιστορικού')) ?>
                 </button>
               </form>
             </div>
@@ -305,40 +305,40 @@ $tzOptions = [
       <div class="col-lg-6">
         <form method="post" action="<?= e(url('/settings/map')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-geo-alt me-1"></i> Προεπιλογές Επιχειρησιακού Χάρτη</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-geo-alt me-1"></i> <?= e(t('settings/municipality.050', 'Προεπιλογές Επιχειρησιακού Χάρτη')) ?></div>
           <div class="card-body row g-3">
-            <p class="text-muted small mb-0">Κέντρο και ζουμ χάρτη όταν μια <?= e($eventSingularLc) ?> δεν έχει καταχωρημένες συντεταγμένες.</p>
+            <p class="text-muted small mb-0"><?= e(t('settings/municipality.217', 'Κέντρο και ζουμ χάρτη όταν μια')) ?> <?= e($eventSingularLc) ?> <?= e(t('settings/municipality.218', 'δεν έχει καταχωρημένες συντεταγμένες.')) ?></p>
             <div class="col-md-6">
-              <label class="form-label">Γεωγρ. πλάτος (lat)</label>
-              <input type="text" name="map_lat" class="form-control" value="<?= e($v('map_lat')) ?>" placeholder="π.χ. 35.3387">
-              <div class="form-text">−90 έως 90 · κενό = fallback Ελλάδα</div>
+              <label class="form-label"><?= e(t('settings/municipality.052', 'Γεωγρ. πλάτος (lat)')) ?></label>
+              <input type="text" name="map_lat" class="form-control" value="<?= e($v('map_lat')) ?>" placeholder="<?= e(t('settings/municipality.208', 'π.χ. 35.3387')) ?>">
+              <div class="form-text"><?= e(t('settings/municipality.053', '−90 έως 90 · κενό = fallback Ελλάδα')) ?></div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Γεωγρ. μήκος (lng)</label>
-              <input type="text" name="map_lng" class="form-control" value="<?= e($v('map_lng')) ?>" placeholder="π.χ. 25.1442">
-              <div class="form-text">−180 έως 180</div>
+              <label class="form-label"><?= e(t('settings/municipality.054', 'Γεωγρ. μήκος (lng)')) ?></label>
+              <input type="text" name="map_lng" class="form-control" value="<?= e($v('map_lng')) ?>" placeholder="<?= e(t('settings/municipality.209', 'π.χ. 25.1442')) ?>">
+              <div class="form-text"><?= e(t('settings/municipality.055', '−180 έως 180')) ?></div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Επίπεδο ζουμ (1–19)</label>
+              <label class="form-label"><?= e(t('settings/municipality.056', 'Επίπεδο ζουμ (1–19)')) ?></label>
               <input type="number" name="map_zoom" min="1" max="19" class="form-control" value="<?= e($v('map_zoom', '13')) ?>">
-              <div class="form-text">13 = πόλη · 15 = οδός · 10 = νομός</div>
+              <div class="form-text"><?= e(t('settings/municipality.057', '13 = πόλη · 15 = οδός · 10 = νομός')) ?></div>
             </div>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
       <div class="col-lg-6">
         <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold">Παραδείγματα συντεταγμένων</div>
+          <div class="card-header bg-white fw-semibold"><?= e(t('settings/municipality.058', 'Παραδείγματα συντεταγμένων')) ?></div>
           <ul class="list-group list-group-flush small">
-            <li class="list-group-item d-flex justify-content-between"><span>Ηράκλειο Κρήτης</span><code>35.3387, 25.1442</code></li>
-            <li class="list-group-item d-flex justify-content-between"><span>Αθήνα</span><code>37.9838, 23.7275</code></li>
-            <li class="list-group-item d-flex justify-content-between"><span>Θεσσαλονίκη</span><code>40.6401, 22.9444</code></li>
-            <li class="list-group-item d-flex justify-content-between"><span>Πάτρα</span><code>38.2466, 21.7346</code></li>
-            <li class="list-group-item d-flex justify-content-between"><span>Λάρισα</span><code>39.6390, 22.4191</code></li>
-            <li class="list-group-item d-flex justify-content-between"><span>Ρόδος</span><code>36.4349, 28.2176</code></li>
+            <li class="list-group-item d-flex justify-content-between"><span><?= e(t('settings/municipality.059', 'Ηράκλειο Κρήτης')) ?></span><code>35.3387, 25.1442</code></li>
+            <li class="list-group-item d-flex justify-content-between"><span><?= e(t('settings/municipality.060', 'Αθήνα')) ?></span><code>37.9838, 23.7275</code></li>
+            <li class="list-group-item d-flex justify-content-between"><span><?= e(t('settings/municipality.061', 'Θεσσαλονίκη')) ?></span><code>40.6401, 22.9444</code></li>
+            <li class="list-group-item d-flex justify-content-between"><span><?= e(t('settings/municipality.062', 'Πάτρα')) ?></span><code>38.2466, 21.7346</code></li>
+            <li class="list-group-item d-flex justify-content-between"><span><?= e(t('settings/municipality.063', 'Λάρισα')) ?></span><code>39.6390, 22.4191</code></li>
+            <li class="list-group-item d-flex justify-content-between"><span><?= e(t('settings/municipality.064', 'Ρόδος')) ?></span><code>36.4349, 28.2176</code></li>
           </ul>
         </div>
       </div>
@@ -351,42 +351,42 @@ $tzOptions = [
       <div class="col-lg-6">
         <form method="post" action="<?= e(url('/settings/awards')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-trophy me-1"></i> Βαθμίδες Συμμετοχής</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-trophy me-1"></i> <?= e(t('settings/municipality.065', 'Βαθμίδες Συμμετοχής')) ?></div>
           <div class="card-body row g-3">
-            <p class="text-muted small mb-0">Αριθμός δράσεων που χρειάζεται μια ομάδα για κάθε βαθμίδα στην κατάταξη.</p>
+            <p class="text-muted small mb-0"><?= e(t('settings/municipality.066', 'Αριθμός δράσεων που χρειάζεται μια ομάδα για κάθε βαθμίδα στην κατάταξη.')) ?></p>
             <div class="col-md-4">
-              <label class="form-label">🥉 Χάλκινη</label>
+              <label class="form-label"><?= e(t('settings/municipality.067', '🥉 Χάλκινη')) ?></label>
               <input type="number" name="award_bronze_events" min="1" class="form-control" value="<?= e($v('award_bronze_events', '5')) ?>">
-              <div class="form-text">ελάχ. <?= e($eventPluralLc) ?></div>
+              <div class="form-text"><?= e(t('settings/municipality.068', 'ελάχ.')) ?> <?= e($eventPluralLc) ?></div>
             </div>
             <div class="col-md-4">
-              <label class="form-label">🥈 Ασημένια</label>
+              <label class="form-label"><?= e(t('settings/municipality.069', '🥈 Ασημένια')) ?></label>
               <input type="number" name="award_silver_events" min="1" class="form-control" value="<?= e($v('award_silver_events', '10')) ?>">
-              <div class="form-text">ελάχ. <?= e($eventPluralLc) ?></div>
+              <div class="form-text"><?= e(t('settings/municipality.068', 'ελάχ.')) ?> <?= e($eventPluralLc) ?></div>
             </div>
             <div class="col-md-4">
-              <label class="form-label">🥇 Χρυσή</label>
+              <label class="form-label"><?= e(t('settings/municipality.070', '🥇 Χρυσή')) ?></label>
               <input type="number" name="award_gold_events" min="1" class="form-control" value="<?= e($v('award_gold_events', '20')) ?>">
-              <div class="form-text">ελάχ. <?= e($eventPluralLc) ?></div>
+              <div class="form-text"><?= e(t('settings/municipality.068', 'ελάχ.')) ?> <?= e($eventPluralLc) ?></div>
             </div>
             <div class="col-12"><hr class="my-1"></div>
             <div class="col-md-8">
-              <label class="form-label">Ελάχ. <?= e($eventPluralLc) ?> για Συνέπεια & Απόκριση</label>
+              <label class="form-label"><?= e(t('settings/municipality.219', 'Ελάχ.')) ?> <?= e($eventPluralLc) ?> <?= e(t('settings/municipality.220', 'για Συνέπεια & Απόκριση')) ?></label>
               <input type="number" name="award_min_events" min="1" class="form-control" value="<?= e($v('award_min_events', '3')) ?>">
-              <div class="form-text">Ομάδες με λιγότερες <?= e($eventPluralLc) ?> δεν λαμβάνουν αυτά τα ποιοτικά βραβεία.</div>
+              <div class="form-text"><?= e(t('settings/municipality.221', 'Ομάδες με λιγότερες')) ?> <?= e($eventPluralLc) ?> <?= e(t('settings/municipality.222', 'δεν λαμβάνουν αυτά τα ποιοτικά βραβεία.')) ?></div>
             </div>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
       <div class="col-lg-6">
         <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Πώς λειτουργεί</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('settings/municipality.073', 'Πώς λειτουργεί')) ?></div>
           <div class="card-body small text-muted">
-            <p>Τα εικονίδια 🥉🥈🥇 εμφανίζονται δίπλα στο όνομα κάθε ομάδας στη σελίδα <strong>Επιβράβευση Ομάδων</strong>, βάσει του αριθμού δράσεων που συμμετείχε.</p>
-            <p>Τα τέσσερα ποιοτικά βραβεία (Καλύτερη Προσφορά, Πιο Δραστήρια κ.λπ.) ανακηρύσσονται ανεξάρτητα.</p>
+            <p><?= e(t('settings/municipality.074', 'Τα εικονίδια 🥉🥈🥇 εμφανίζονται δίπλα στο όνομα κάθε ομάδας στη σελίδα')) ?> <strong><?= e(t('settings/municipality.075', 'Επιβράβευση Ομάδων')) ?></strong><?= e(t('settings/municipality.076', ', βάσει του αριθμού δράσεων που συμμετείχε.')) ?></p>
+            <p><?= e(t('settings/municipality.077', 'Τα τέσσερα ποιοτικά βραβεία (Καλύτερη Προσφορά, Πιο Δραστήρια κ.λπ.) ανακηρύσσονται ανεξάρτητα.')) ?></p>
           </div>
         </div>
       </div>
@@ -399,9 +399,9 @@ $tzOptions = [
       <div class="col-lg-7">
         <form method="post" action="<?= e(url('/settings/notifications')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-bell me-1"></i> Κανάλι ειδοποιήσεων</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-bell me-1"></i> <?= e(t('settings/municipality.078', 'Κανάλι ειδοποιήσεων')) ?></div>
           <div class="card-body">
-            <p class="text-muted small">Οι in-app ειδοποιήσεις (κουδούνι) στέλνονται πάντα. Εδώ επιλέγετε αν θα αποστέλλεται επιπλέον <strong>Email</strong>, <strong>SMS</strong> ή <strong>και τα δύο</strong> ανά τύπο. Το Telegram ενεργοποιείται ανεξάρτητα ανά τύπο και απαιτεί ρυθμίσεις στην καρτέλα «Telegram».</p>
+            <p class="text-muted small"><?= e(t('settings/municipality.079', 'Οι in-app ειδοποιήσεις (κουδούνι) στέλνονται πάντα. Εδώ επιλέγετε αν θα αποστέλλεται επιπλέον')) ?> <strong>Email</strong>, <strong>SMS</strong> ή <strong><?= e(t('settings/municipality.080', 'και τα δύο')) ?></strong> <?= e(t('settings/municipality.081', 'ανά τύπο. Το Telegram ενεργοποιείται ανεξάρτητα ανά τύπο και απαιτεί ρυθμίσεις στην καρτέλα «Telegram».')) ?></p>
             <?php
             $eventSingular = $authorityContext['event_singular'] ?? 'Δράση';
             $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
@@ -474,8 +474,8 @@ $tzOptions = [
               <?php endforeach; ?>
             </div>
             <div class="border-top mt-3 pt-3">
-              <div class="fw-semibold mb-1"><i class="bi bi-broadcast-pin text-info me-1"></i>Επιχειρησιακές ειδοποιήσεις</div>
-              <p class="small text-muted mb-2">Οι in-app/push ειδοποιήσεις παραμένουν πάντα ενεργές. Εδώ επιλέγετε επιπλέον Email/SMS και Telegram ανά τύπο.</p>
+              <div class="fw-semibold mb-1"><i class="bi bi-broadcast-pin text-info me-1"></i><?= e(t('settings/municipality.082', 'Επιχειρησιακές ειδοποιήσεις')) ?></div>
+              <p class="small text-muted mb-2"><?= e(t('settings/municipality.083', 'Οι in-app/push ειδοποιήσεις παραμένουν πάντα ενεργές. Εδώ επιλέγετε επιπλέον Email/SMS και Telegram ανά τύπο.')) ?></p>
               <div class="list-group list-group-flush">
                 <?php foreach ($opsNotifTypes as [$type, $label, $desc]): $cur = $channelOf($type); $tgOn = ($settings['notify_telegram_' . $type] ?? '0') === '1'; ?>
                 <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 gap-3">
@@ -499,8 +499,8 @@ $tzOptions = [
               </div>
             </div>
             <div class="border-top mt-3 pt-3">
-              <div class="fw-semibold mb-1"><i class="bi bi-fire text-danger me-1"></i>Εξωτερικές πηγές</div>
-              <p class="small text-muted mb-2">Αποστολή μόνο μέσω Telegram. Τα συμβάντα Πυροσβεστικής αποστέλλονται μία φορά ανά συμβάν και ξανά μόνο αν αλλάξει σχετική κατάσταση.</p>
+              <div class="fw-semibold mb-1"><i class="bi bi-fire text-danger me-1"></i><?= e(t('settings/municipality.084', 'Εξωτερικές πηγές')) ?></div>
+              <p class="small text-muted mb-2"><?= e(t('settings/municipality.085', 'Αποστολή μόνο μέσω Telegram. Τα συμβάντα Πυροσβεστικής αποστέλλονται μία φορά ανά συμβάν και ξανά μόνο αν αλλάξει σχετική κατάσταση.')) ?></p>
               <div class="list-group list-group-flush">
                 <?php foreach ($telegramExternalTypes as [$type, $label, $desc]): $tgOn = ($settings['notify_telegram_' . $type] ?? '0') === '1'; ?>
                 <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 gap-3">
@@ -518,56 +518,56 @@ $tzOptions = [
               <div class="border rounded p-3 mt-3 bg-light">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                   <div>
-                    <div class="fw-semibold small">Χειροκίνητος έλεγχος χάρτη κινδύνου</div>
-                    <div class="small text-muted">Τρέχει τώρα τον ημερήσιο χάρτη Πολιτικής Προστασίας. Δεν στέλνει διπλά αν έχει ήδη σταλεί για την ίδια ημερομηνία.</div>
+                    <div class="fw-semibold small"><?= e(t('settings/municipality.086', 'Χειροκίνητος έλεγχος χάρτη κινδύνου')) ?></div>
+                    <div class="small text-muted"><?= e(t('settings/municipality.087', 'Τρέχει τώρα τον ημερήσιο χάρτη Πολιτικής Προστασίας. Δεν στέλνει διπλά αν έχει ήδη σταλεί για την ίδια ημερομηνία.')) ?></div>
                   </div>
                   <button type="submit" form="fireRiskManualForm" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-fire me-1"></i>Έλεγχος τώρα
+                    <i class="bi bi-fire me-1"></i><?= e(t('settings/municipality.088', 'Έλεγχος τώρα')) ?>
                   </button>
                 </div>
-                <div class="small text-muted mb-1">Cron κάθε 60 λεπτά:</div>
+                <div class="small text-muted mb-1"><?= e(t('settings/municipality.089', 'Cron κάθε 60 λεπτά:')) ?></div>
                 <code class="d-block small text-break"><?= e($fireRiskCronCommand) ?></code>
                 <hr>
-                <div class="fw-semibold small mb-2">Fallback όταν η Πολιτική Προστασία μπλοκάρει το server</div>
+                <div class="fw-semibold small mb-2"><?= e(t('settings/municipality.090', 'Fallback όταν η Πολιτική Προστασία μπλοκάρει το server')) ?></div>
                 <div class="row g-2 align-items-end">
                   <div class="col-md-4">
-                    <label class="form-label small mb-1" for="fireRiskUploadDate">Ημερομηνία χάρτη</label>
+                    <label class="form-label small mb-1" for="fireRiskUploadDate"><?= e(t('settings/municipality.091', 'Ημερομηνία χάρτη')) ?></label>
                     <input type="date" id="fireRiskUploadDate" name="map_date" form="fireRiskUploadForm" class="form-control form-control-sm" value="<?= e($fireRiskDefaultDate) ?>">
                   </div>
                   <div class="col-md-5">
-                    <label class="form-label small mb-1" for="fireRiskUploadFile">Εικόνα χάρτη</label>
+                    <label class="form-label small mb-1" for="fireRiskUploadFile"><?= e(t('settings/municipality.092', 'Εικόνα χάρτη')) ?></label>
                     <input type="file" id="fireRiskUploadFile" name="fire_risk_map" form="fireRiskUploadForm" class="form-control form-control-sm" accept="image/*">
                   </div>
                   <div class="col-md-3 d-grid">
                     <button type="submit" form="fireRiskUploadForm" class="btn btn-danger btn-sm">
-                      <i class="bi bi-upload me-1"></i>Ανέβασμα & αποστολή
+                      <i class="bi bi-upload me-1"></i><?= e(t('settings/municipality.093', 'Ανέβασμα & αποστολή')) ?>
                     </button>
                   </div>
                 </div>
-                <div class="small text-muted mt-2">Το upload αναλύει την εικόνα τοπικά, κρατά δημόσιο link για Telegram και δεν στέλνει δεύτερη ειδοποίηση για ίδια ημερομηνία.</div>
+                <div class="small text-muted mt-2"><?= e(t('settings/municipality.094', 'Το upload αναλύει την εικόνα τοπικά, κρατά δημόσιο link για Telegram και δεν στέλνει δεύτερη ειδοποίηση για ίδια ημερομηνία.')) ?></div>
                 <div class="small text-muted mt-2 mb-1">External fetcher upload:</div>
                 <code class="d-block small text-break"><?= e($fireRiskIngestCommand) ?></code>
               </div>
             </div>
           </div>
             <div class="border-top mt-1 pt-3 px-1 pb-2">
-              <div class="fw-semibold mb-1"><i class="bi bi-shield-exclamation text-warning me-1"></i>Ειδοποιήσεις Επιχείρησης (Ops)</div>
-              <p class="small text-muted mb-2">Εφαρμόζονται μόνο κατά τη διάρκεια ενεργών δράσεων. SOS, περιστατικό και εντολή αποστέλλονται forced και σε Telegram όταν υπάρχει ρύθμιση.</p>
+              <div class="fw-semibold mb-1"><i class="bi bi-shield-exclamation text-warning me-1"></i><?= e(t('settings/municipality.095', 'Ειδοποιήσεις Επιχείρησης (Ops)')) ?></div>
+              <p class="small text-muted mb-2"><?= e(t('settings/municipality.096', 'Εφαρμόζονται μόνο κατά τη διάρκεια ενεργών δράσεων. SOS, περιστατικό και εντολή αποστέλλονται forced και σε Telegram όταν υπάρχει ρύθμιση.')) ?></p>
               <div class="d-flex align-items-center gap-3 py-2">
                 <div class="flex-grow-1">
-                  <div class="fw-semibold small">Ειδοποίηση σίγης ομάδας</div>
-                  <div class="text-muted" style="font-size:12px">Αν ομάδα δεν στείλει GPS για τόσα λεπτά, ο αρχηγός λαμβάνει ειδοποίηση. <strong>0 = απενεργοποιημένο</strong>.</div>
+                  <div class="fw-semibold small"><?= e(t('settings/municipality.097', 'Ειδοποίηση σίγης ομάδας')) ?></div>
+                  <div class="text-muted" style="font-size:12px"><?= e(t('settings/municipality.098', 'Αν ομάδα δεν στείλει GPS για τόσα λεπτά, ο αρχηγός λαμβάνει ειδοποίηση.')) ?> <strong><?= e(t('settings/municipality.099', '0 = απενεργοποιημένο')) ?></strong>.</div>
                 </div>
                 <div class="d-flex align-items-center gap-1 flex-shrink-0">
                   <input type="number" name="ops_silent_team_minutes" min="0" max="120"
                          value="<?= e($settings['ops_silent_team_minutes'] ?? '20') ?>"
                          class="form-control form-control-sm text-center" style="width:72px">
-                  <span class="small text-muted">λεπτά</span>
+                  <span class="small text-muted"><?= e(t('settings/municipality.100', 'λεπτά')) ?></span>
                 </div>
               </div>
             </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
         <form id="fireRiskManualForm" method="post" action="<?= e(url('/settings/fire-risk-map/sync')) ?>">
@@ -579,11 +579,11 @@ $tzOptions = [
       </div>
       <div class="col-lg-5">
         <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Σημείωση</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('settings/municipality.101', 'Σημείωση')) ?></div>
           <div class="card-body small text-muted">
-            <p>Η απενεργοποίηση ενός τύπου δεν επηρεάζει τις in-app ειδοποιήσεις — αυτές εμφανίζονται πάντα στο κουδούνι.</p>
-            <p>Χρήσιμο όταν ο SMTP δεν έχει ρυθμιστεί ακόμα ή σε περίοδο δοκιμών για να αποφύγετε spam.</p>
-            <p class="mb-0"><strong>Ops:</strong> SOS, περιστατικά και εντολές φεύγουν forced και σε Telegram όταν έχει οριστεί Bot Token και Chat ID.</p>
+            <p><?= e(t('settings/municipality.102', 'Η απενεργοποίηση ενός τύπου δεν επηρεάζει τις in-app ειδοποιήσεις — αυτές εμφανίζονται πάντα στο κουδούνι.')) ?></p>
+            <p><?= e(t('settings/municipality.103', 'Χρήσιμο όταν ο SMTP δεν έχει ρυθμιστεί ακόμα ή σε περίοδο δοκιμών για να αποφύγετε spam.')) ?></p>
+            <p class="mb-0"><strong>Ops:</strong> <?= e(t('settings/municipality.104', 'SOS, περιστατικά και εντολές φεύγουν forced και σε Telegram όταν έχει οριστεί Bot Token και Chat ID.')) ?></p>
           </div>
         </div>
       </div>
@@ -600,27 +600,27 @@ $tzOptions = [
           <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-dots me-1"></i> SMS Gateway</div>
           <div class="card-body row g-3">
             <div class="col-12">
-              <label class="form-label">Τρόπος αποστολής SMS</label>
+              <label class="form-label"><?= e(t('settings/municipality.105', 'Τρόπος αποστολής SMS')) ?></label>
               <select name="sms_driver" class="form-select">
-                <option value=""       <?= $smsDriver === ''       ? 'selected' : '' ?>>Προεπιλογή πλατφόρμας (<?= e(config('sms')['driver']) ?>)</option>
+                <option value=""       <?= $smsDriver === ''       ? 'selected' : '' ?>><?= e(t('settings/municipality.214', 'Προεπιλογή πλατφόρμας (')) ?><?= e(config('sms')['driver']) ?>)</option>
                 <option value="smsbox" <?= $smsDriver === 'smsbox' ? 'selected' : '' ?>>smsbox.gr</option>
-                <option value="http"   <?= $smsDriver === 'http'   ? 'selected' : '' ?>>Γενικό HTTP gateway</option>
-                <option value="log"    <?= $smsDriver === 'log'    ? 'selected' : '' ?>>Μόνο καταγραφή (log, για δοκιμές)</option>
-                <option value="none"   <?= $smsDriver === 'none'   ? 'selected' : '' ?>>Απενεργοποιημένο</option>
+                <option value="http"   <?= $smsDriver === 'http'   ? 'selected' : '' ?>><?= e(t('settings/municipality.106', 'Γενικό HTTP gateway')) ?></option>
+                <option value="log"    <?= $smsDriver === 'log'    ? 'selected' : '' ?>><?= e(t('settings/municipality.012', 'Μόνο καταγραφή (log, για δοκιμές)')) ?></option>
+                <option value="none"   <?= $smsDriver === 'none'   ? 'selected' : '' ?>><?= e(t('settings/municipality.107', 'Απενεργοποιημένο')) ?></option>
               </select>
-              <div class="form-text">Για το <strong>smsbox.gr</strong> συμπληρώστε username + password (συνιστάται) ή επικολλήστε ένα ενεργό sesskey στο πεδίο «API Key / Password».</div>
+              <div class="form-text"><?= e(t('settings/municipality.108', 'Για το')) ?> <strong>smsbox.gr</strong> <?= e(t('settings/municipality.109', 'συμπληρώστε username + password (συνιστάται) ή επικολλήστε ένα ενεργό sesskey στο πεδίο «API Key / Password».')) ?></div>
             </div>
             <div class="col-md-5">
-              <label class="form-label">Όνομα αποστολέα (Sender / from)</label>
+              <label class="form-label"><?= e(t('settings/municipality.110', 'Όνομα αποστολέα (Sender / from)')) ?></label>
               <input type="text" name="sms_sender" class="form-control" value="<?= e($v('sms_sender')) ?>" placeholder="SynDrasi" maxlength="11">
-              <div class="form-text">Έως 11 χαρακτήρες (εγκεκριμένο alphanumeric sender ID).</div>
+              <div class="form-text"><?= e(t('settings/municipality.111', 'Έως 11 χαρακτήρες (εγκεκριμένο alphanumeric sender ID).')) ?></div>
             </div>
             <div class="col-md-7">
               <label class="form-label">Username (smsbox)</label>
-              <input type="text" name="sms_username" class="form-control" value="<?= e($v('sms_username')) ?>" autocomplete="off" placeholder="username λογαριασμού smsbox">
-              <div class="form-text">Αφήστε κενό αν θα χρησιμοποιήσετε απευθείας sesskey.</div>
+              <input type="text" name="sms_username" class="form-control" value="<?= e($v('sms_username')) ?>" autocomplete="off" placeholder="<?= e(t('settings/municipality.210', 'username λογαριασμού smsbox')) ?>">
+              <div class="form-text"><?= e(t('settings/municipality.112', 'Αφήστε κενό αν θα χρησιμοποιήσετε απευθείας sesskey.')) ?></div>
             </div>
-            <div class="col-12"><hr class="my-1"><strong class="small text-muted">ΔΙΑΠΙΣΤΕΥΤΗΡΙΑ</strong></div>
+            <div class="col-12"><hr class="my-1"><strong class="small text-muted"><?= e(t('settings/municipality.113', 'ΔΙΑΠΙΣΤΕΥΤΗΡΙΑ')) ?></strong></div>
             <div class="col-md-6">
               <label class="form-label">API Key / Password / sesskey</label>
               <input type="password" name="sms_api_key" class="form-control" autocomplete="new-password"
@@ -628,33 +628,33 @@ $tzOptions = [
               <div class="form-text"><?= $smsKeySet ? 'Υπάρχει ήδη αποθηκευμένο. Συμπληρώστε μόνο για αλλαγή.' : 'Με username → βάλτε password. Χωρίς username → βάλτε sesskey (λήγει σε 2 ώρες).' ?></div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Endpoint (μόνο για γενικό HTTP gateway)</label>
+              <label class="form-label"><?= e(t('settings/municipality.114', 'Endpoint (μόνο για γενικό HTTP gateway)')) ?></label>
               <input type="url" name="sms_endpoint" class="form-control" value="<?= e($v('sms_endpoint')) ?>" placeholder="https://api.provider.gr/send">
-              <div class="form-text">Το smsbox.gr δεν χρειάζεται endpoint.</div>
+              <div class="form-text"><?= e(t('settings/municipality.115', 'Το smsbox.gr δεν χρειάζεται endpoint.')) ?></div>
             </div>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
       <div class="col-lg-5">
         <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Πώς λειτουργεί</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('settings/municipality.073', 'Πώς λειτουργεί')) ?></div>
           <div class="card-body small text-muted">
-            <p>Τα <strong>credits SMS</strong> τα αγοράζετε απευθείας από τον πάροχο. Εδώ καταχωρείτε μόνο το κλειδί σύνδεσης ώστε η εφαρμογή να στέλνει μέσω του λογαριασμού σας.</p>
-            <p>Στην καρτέλα <strong>Ειδοποιήσεις</strong> επιλέγετε ανά τύπο αν θα φεύγει Email, SMS ή και τα δύο.</p>
-            <p>Σε λειτουργία <em>log</em>, τα μηνύματα γράφονται στο <code>storage/logs/sms.log</code> για δοκιμές χωρίς χρέωση.</p>
+            <p><?= e(t('settings/municipality.116', 'Τα')) ?> <strong>credits SMS</strong> <?= e(t('settings/municipality.117', 'τα αγοράζετε απευθείας από τον πάροχο. Εδώ καταχωρείτε μόνο το κλειδί σύνδεσης ώστε η εφαρμογή να στέλνει μέσω του λογαριασμού σας.')) ?></p>
+            <p><?= e(t('settings/municipality.118', 'Στην καρτέλα')) ?> <strong><?= e(t('settings/municipality.005', 'Ειδοποιήσεις')) ?></strong> <?= e(t('settings/municipality.119', 'επιλέγετε ανά τύπο αν θα φεύγει Email, SMS ή και τα δύο.')) ?></p>
+            <p><?= e(t('settings/municipality.120', 'Σε λειτουργία')) ?> <em>log</em><?= e(t('settings/municipality.121', ', τα μηνύματα γράφονται στο')) ?> <code>storage/logs/sms.log</code> <?= e(t('settings/municipality.122', 'για δοκιμές χωρίς χρέωση.')) ?></p>
           </div>
         </div>
         <div class="card shadow-sm mt-3">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> Δοκιμαστικό SMS</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> <?= e(t('settings/municipality.123', 'Δοκιμαστικό SMS')) ?></div>
           <div class="card-body">
-            <p class="small text-muted mb-2">Αποθηκεύστε πρώτα τις ρυθμίσεις, μετά στείλτε ένα δοκιμαστικό SMS.</p>
+            <p class="small text-muted mb-2"><?= e(t('settings/municipality.124', 'Αποθηκεύστε πρώτα τις ρυθμίσεις, μετά στείλτε ένα δοκιμαστικό SMS.')) ?></p>
             <form method="post" action="<?= e(url('/settings/sms/test')) ?>" class="d-flex gap-2">
               <?= csrf_field() ?>
-              <input type="text" name="test_to" class="form-control" placeholder="π.χ. 69XXXXXXXX" required>
-              <button class="btn btn-outline-primary" type="submit"><i class="bi bi-send me-1"></i>Αποστολή</button>
+              <input type="text" name="test_to" class="form-control" placeholder="<?= e(t('settings/municipality.211', 'π.χ. 69XXXXXXXX')) ?>" required>
+              <button class="btn btn-outline-primary" type="submit"><i class="bi bi-send me-1"></i><?= e(t('settings/municipality.125', 'Αποστολή')) ?></button>
             </form>
           </div>
         </div>
@@ -679,9 +679,9 @@ $tzOptions = [
             <div class="col-12">
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" name="telegram_enabled" id="telegramEnabled" value="1" <?= $tgEnabled ? 'checked' : '' ?>>
-                <label class="form-check-label fw-semibold" for="telegramEnabled">Ενεργοποίηση Telegram αποστολών</label>
+                <label class="form-check-label fw-semibold" for="telegramEnabled"><?= e(t('settings/municipality.126', 'Ενεργοποίηση Telegram αποστολών')) ?></label>
               </div>
-              <div class="form-text">Αφορά command group φορέα και group/channel ομάδων. Τα προσωπικά Telegram DM δεν είναι μέρος αυτού του MVP.</div>
+              <div class="form-text"><?= e(t('settings/municipality.127', 'Αφορά command group φορέα και group/channel ομάδων. Τα προσωπικά Telegram DM δεν είναι μέρος αυτού του MVP.')) ?></div>
             </div>
             <div class="col-12">
               <label class="form-label">Bot Token</label>
@@ -690,66 +690,65 @@ $tzOptions = [
               <div class="form-text"><?= $tgTokenSet ? 'Υπάρχει ήδη αποθηκευμένο token. Συμπληρώστε μόνο για αλλαγή.' : 'Δημιουργείται από το BotFather.' ?></div>
             </div>
             <div class="col-12">
-              <label class="form-label">Command / Φορέας Chat ID</label>
-              <input type="text" name="telegram_command_chat_id" class="form-control" value="<?= e($tgCommandChat) ?>" placeholder="π.χ. -1001234567890">
-              <div class="form-text">Group/channel όπου θα πηγαίνουν ειδοποιήσεις προς τον φορέα.</div>
+              <label class="form-label"><?= e(t('settings/municipality.128', 'Command / Φορέας Chat ID')) ?></label>
+              <input type="text" name="telegram_command_chat_id" class="form-control" value="<?= e($tgCommandChat) ?>" placeholder="<?= e(t('settings/municipality.212', 'π.χ. -1001234567890')) ?>">
+              <div class="form-text"><?= e(t('settings/municipality.129', 'Group/channel όπου θα πηγαίνουν ειδοποιήσεις προς τον φορέα.')) ?></div>
             </div>
             <div class="col-12">
-              <label class="form-label">Κοινό Chat ID ομάδων / εθελοντών</label>
-              <input type="text" name="telegram_team_chat_id" class="form-control" value="<?= e($tgTeamChat) ?>" placeholder="π.χ. -1001234567890">
-              <div class="form-text">Group όπου μπορούν να είναι μέσα όλες οι εθελοντικές ομάδες και οι admins. Χρησιμοποιείται για ειδοποιήσεις προς ομάδες όταν η ομάδα δεν έχει δικό της Telegram Chat ID.</div>
+              <label class="form-label"><?= e(t('settings/municipality.130', 'Κοινό Chat ID ομάδων / εθελοντών')) ?></label>
+              <input type="text" name="telegram_team_chat_id" class="form-control" value="<?= e($tgTeamChat) ?>" placeholder="<?= e(t('settings/municipality.212', 'π.χ. -1001234567890')) ?>">
+              <div class="form-text"><?= e(t('settings/municipality.131', 'Group όπου μπορούν να είναι μέσα όλες οι εθελοντικές ομάδες και οι admins. Χρησιμοποιείται για ειδοποιήσεις προς ομάδες όταν η ομάδα δεν έχει δικό της Telegram Chat ID.')) ?></div>
             </div>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
       <div class="col-lg-5">
         <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> Δοκιμαστικό Telegram</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-send-check me-1"></i> <?= e(t('settings/municipality.132', 'Δοκιμαστικό Telegram')) ?></div>
           <div class="card-body">
-            <p class="small text-muted mb-3">Αποθηκεύστε πρώτα τις ρυθμίσεις και μετά δοκιμάστε κάθε group.</p>
+            <p class="small text-muted mb-3"><?= e(t('settings/municipality.133', 'Αποθηκεύστε πρώτα τις ρυθμίσεις και μετά δοκιμάστε κάθε group.')) ?></p>
             <form method="post" action="<?= e(url('/settings/telegram/test')) ?>" class="d-grid gap-2">
               <?= csrf_field() ?>
               <button class="btn btn-outline-primary" name="test_target" value="command"><i class="bi bi-send me-1"></i>Test Command group</button>
-              <button class="btn btn-outline-info" name="test_target" value="teams"><i class="bi bi-people me-1"></i>Test κοινό group ομάδων</button>
+              <button class="btn btn-outline-info" name="test_target" value="teams"><i class="bi bi-people me-1"></i><?= e(t('settings/municipality.134', 'Test κοινό group ομάδων')) ?></button>
             </form>
           </div>
         </div>
         <div class="card shadow-sm mt-3">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στήσιμο bot</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('settings/municipality.135', 'Στήσιμο bot')) ?></div>
           <div class="card-body small text-muted">
             <ol class="ps-3 mb-3">
               <li class="mb-2">
-                Ανοίξτε το <a href="https://t.me/BotFather" target="_blank" rel="noopener">BotFather</a>, στείλτε <code>/newbot</code> και αντιγράψτε το <strong>Bot Token</strong>.
+                <?= e(t('settings/municipality.136', 'Ανοίξτε το')) ?> <a href="https://t.me/BotFather" target="_blank" rel="noopener">BotFather</a><?= e(t('settings/municipality.137', ', στείλτε')) ?> <code>/newbot</code> <?= e(t('settings/municipality.138', 'και αντιγράψτε το')) ?> <strong>Bot Token</strong>.
               </li>
               <li class="mb-2">
-                Δημιουργήστε ή ανοίξτε το Telegram group/channel και προσθέστε το bot ως μέλος. Για channels, δώστε στο bot δικαίωμα δημοσίευσης.
+                <?= e(t('settings/municipality.139', 'Δημιουργήστε ή ανοίξτε το Telegram group/channel και προσθέστε το bot ως μέλος. Για channels, δώστε στο bot δικαίωμα δημοσίευσης.')) ?>
               </li>
               <li class="mb-2">
-                Στείλτε ένα δοκιμαστικό μήνυμα μέσα στο group, π.χ. <code>test syndrasi</code>.
+                <?= e(t('settings/municipality.140', 'Στείλτε ένα δοκιμαστικό μήνυμα μέσα στο group, π.χ.')) ?> <code>test syndrasi</code>.
               </li>
               <li class="mb-2">
-                Ανοίξτε στον browser:
+                <?= e(t('settings/municipality.141', 'Ανοίξτε στον browser:')) ?>
                 <code>https://api.telegram.org/bot123456789:ABCdefYourRealToken/getUpdates</code>
-                αλλάζοντας το <code>123456789:ABCdefYourRealToken</code> με το πραγματικό Bot Token από το BotFather, χωρίς <code>&lt;</code> και <code>&gt;</code>.
-                Βρείτε το <code>chat.id</code>. Συνήθως τα group/channel IDs είναι αρνητικά, π.χ. <code>-1001234567890</code>.
+                <?= e(t('settings/municipality.142', 'αλλάζοντας το')) ?> <code>123456789:ABCdefYourRealToken</code> <?= e(t('settings/municipality.143', 'με το πραγματικό Bot Token από το BotFather, χωρίς')) ?> <code>&lt;</code> <?= e(t('settings/municipality.144', 'και')) ?> <code>&gt;</code><?= e(t('settings/municipality.145', '. Βρείτε το')) ?> <code>chat.id</code><?= e(t('settings/municipality.146', '. Συνήθως τα group/channel IDs είναι αρνητικά, π.χ.')) ?> <code>-1001234567890</code>.
               </li>
               <li class="mb-2">
-                Αν αυτό είναι το group του φορέα, βάλτε το ID στο <strong>Command / Φορέας Chat ID</strong>. Αν είναι το κοινό group όπου θα είναι μέσα όλες οι εθελοντικές ομάδες, βάλτε το και στο <strong>Κοινό Chat ID ομάδων / εθελοντών</strong>. Μπορεί να είναι το ίδιο ID και στα δύο πεδία.
+                <?= e(t('settings/municipality.147', 'Αν αυτό είναι το group του φορέα, βάλτε το ID στο')) ?> <strong><?= e(t('settings/municipality.128', 'Command / Φορέας Chat ID')) ?></strong><?= e(t('settings/municipality.148', '. Αν είναι το κοινό group όπου θα είναι μέσα όλες οι εθελοντικές ομάδες, βάλτε το και στο')) ?> <strong><?= e(t('settings/municipality.130', 'Κοινό Chat ID ομάδων / εθελοντών')) ?></strong><?= e(t('settings/municipality.149', '. Μπορεί να είναι το ίδιο ID και στα δύο πεδία.')) ?>
               </li>
               <li>
-                Πατήστε <strong>Αποστολή δοκιμαστικού</strong>. Αν το μήνυμα εμφανιστεί στο group, το Telegram είναι έτοιμο.
+                <?= e(t('settings/municipality.150', 'Πατήστε')) ?> <strong><?= e(t('settings/municipality.151', 'Αποστολή δοκιμαστικού')) ?></strong><?= e(t('settings/municipality.152', '. Αν το μήνυμα εμφανιστεί στο group, το Telegram είναι έτοιμο.')) ?>
               </li>
             </ol>
             <div class="border-top pt-3">
-              <div class="fw-semibold text-body mb-2">Groups ομάδων</div>
-              <p>Αν θέλετε ένα κοινό group για όλους τους εθελοντές/admins, βάλτε το <code>chat.id</code> στο <strong>Κοινό Chat ID ομάδων / εθελοντών</strong> και αφήστε κενά τα επιμέρους Telegram Chat ID των ομάδων.</p>
-              <p class="mb-0">Το πεδίο <strong>Εθελοντικές Ομάδες → Επεξεργασία → Telegram Chat ID ομάδας</strong> χρειάζεται μόνο αν κάποια ομάδα έχει δικό της ξεχωριστό Telegram group και θέλετε τα μηνύματά της να πηγαίνουν εκεί αντί για το κοινό group.</p>
+              <div class="fw-semibold text-body mb-2"><?= e(t('settings/municipality.153', 'Groups ομάδων')) ?></div>
+              <p><?= e(t('settings/municipality.154', 'Αν θέλετε ένα κοινό group για όλους τους εθελοντές/admins, βάλτε το')) ?> <code>chat.id</code> <?= e(t('settings/municipality.155', 'στο')) ?> <strong><?= e(t('settings/municipality.130', 'Κοινό Chat ID ομάδων / εθελοντών')) ?></strong> <?= e(t('settings/municipality.156', 'και αφήστε κενά τα επιμέρους Telegram Chat ID των ομάδων.')) ?></p>
+              <p class="mb-0"><?= e(t('settings/municipality.157', 'Το πεδίο')) ?> <strong><?= e(t('settings/municipality.158', 'Εθελοντικές Ομάδες → Επεξεργασία → Telegram Chat ID ομάδας')) ?></strong> <?= e(t('settings/municipality.159', 'χρειάζεται μόνο αν κάποια ομάδα έχει δικό της ξεχωριστό Telegram group και θέλετε τα μηνύματά της να πηγαίνουν εκεί αντί για το κοινό group.')) ?></p>
             </div>
             <div class="border-top pt-3 mt-3">
-              <div class="fw-semibold text-body mb-2">Χρήσιμα links</div>
+              <div class="fw-semibold text-body mb-2"><?= e(t('settings/municipality.160', 'Χρήσιμα links')) ?></div>
               <ul class="mb-0 ps-3">
                 <li><a href="https://core.telegram.org/bots/tutorial" target="_blank" rel="noopener">Telegram Bots tutorial</a></li>
                 <li><a href="https://core.telegram.org/bots/api#sendmessage" target="_blank" rel="noopener">Bot API: sendMessage</a></li>
@@ -768,26 +767,26 @@ $tzOptions = [
       <div class="col-lg-7">
         <form method="post" action="<?= e(url('/settings/event-defaults')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-plus me-1"></i> Προεπιλογές <?= e($authorityContext['event_plural'] ?? 'Δράσεων') ?></div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-plus me-1"></i> <?= e(t('settings/municipality.161', 'Προεπιλογές')) ?> <?= e($authorityContext['event_plural'] ?? 'Δράσεων') ?></div>
           <div class="card-body row g-3">
             <div class="col-md-5">
-              <label class="form-label">Προθεσμία δηλώσεων</label>
+              <label class="form-label"><?= e(t('settings/municipality.162', 'Προθεσμία δηλώσεων')) ?></label>
               <div class="input-group">
                 <input type="number" name="event_application_deadline_days" min="0" class="form-control"
                        value="<?= e($v('event_application_deadline_days', '0')) ?>">
-                <span class="input-group-text">ημέρες πριν</span>
+                <span class="input-group-text"><?= e(t('settings/municipality.163', 'ημέρες πριν')) ?></span>
               </div>
-              <div class="form-text">0 = χωρίς προθεσμία. Εμφανίζεται ως υπενθύμιση στη φόρμα <?= e($eventSingularLc) ?>.</div>
+              <div class="form-text"><?= e(t('settings/municipality.223', '0 = χωρίς προθεσμία. Εμφανίζεται ως υπενθύμιση στη φόρμα')) ?> <?= e($eventSingularLc) ?>.</div>
             </div>
             <div class="col-12">
-              <label class="form-label">Προεπιλεγμένες οδηγίες ομάδων</label>
+              <label class="form-label"><?= e(t('settings/municipality.165', 'Προεπιλεγμένες οδηγίες ομάδων')) ?></label>
               <textarea name="event_default_instructions" class="form-control" rows="4"
-                        placeholder="π.χ. Προσέλευση 30 λεπτά πριν την έναρξη. Υποχρεωτική στολή ομάδας."><?= e($v('event_default_instructions')) ?></textarea>
-              <div class="form-text">Προ-συμπληρώνεται στο πεδίο «Οδηγίες» κάθε νέας <?= e($eventSingularLc) ?>. Μπορείτε να το αλλάξετε ανά <?= e($eventSingularLc) ?>.</div>
+                        placeholder="<?= e(t('settings/municipality.213', 'π.χ. Προσέλευση 30 λεπτά πριν την έναρξη. Υποχρεωτική στολή ομάδας.')) ?>"><?= e($v('event_default_instructions')) ?></textarea>
+              <div class="form-text"><?= e(t('settings/municipality.224', 'Προ-συμπληρώνεται στο πεδίο «Οδηγίες» κάθε νέας')) ?> <?= e($eventSingularLc) ?><?= e(t('settings/municipality.225', '. Μπορείτε να το αλλάξετε ανά')) ?> <?= e($eventSingularLc) ?>.</div>
             </div>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
@@ -800,34 +799,34 @@ $tzOptions = [
       <div class="col-lg-7">
         <form method="post" action="<?= e(url('/settings/branding')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-palette me-1"></i> Εμφάνιση & Ζώνη Ώρας</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-palette me-1"></i> <?= e(t('settings/municipality.167', 'Εμφάνιση & Ζώνη Ώρας')) ?></div>
           <div class="card-body row g-3">
             <div class="col-12">
-              <label class="form-label">URL λογότυπου φορέα</label>
+              <label class="form-label"><?= e(t('settings/municipality.168', 'URL λογότυπου φορέα')) ?></label>
               <input type="url" name="branding_logo_url" class="form-control"
                      value="<?= e($v('branding_logo_url')) ?>"
                      placeholder="https://www.dimos.gr/logo.png">
-              <div class="form-text">Εμφανίζεται στο πλευρικό μενού (mobile) αντί για το εικονίδιο. PNG με διαφανές φόντο ιδανικά.</div>
+              <div class="form-text"><?= e(t('settings/municipality.169', 'Εμφανίζεται στο πλευρικό μενού (mobile) αντί για το εικονίδιο. PNG με διαφανές φόντο ιδανικά.')) ?></div>
             </div>
             <?php if ($v('branding_logo_url')): ?>
             <div class="col-12">
-              <label class="form-label small text-muted">Προεπισκόπηση</label><br>
+              <label class="form-label small text-muted"><?= e(t('settings/municipality.170', 'Προεπισκόπηση')) ?></label><br>
               <img src="<?= e($v('branding_logo_url')) ?>" alt="Logo"
                    style="max-height:60px;max-width:200px;object-fit:contain;border:1px solid #dee2e6;border-radius:6px;padding:6px;background:#fff;">
             </div>
             <?php endif; ?>
             <div class="col-md-7">
-              <label class="form-label">Ζώνη ώρας</label>
+              <label class="form-label"><?= e(t('settings/municipality.171', 'Ζώνη ώρας')) ?></label>
               <select name="timezone" class="form-select">
                 <?php foreach ($tzOptions as $tzVal => $tzLabel): ?>
                   <option value="<?= e($tzVal) ?>" <?= $v('timezone', 'Europe/Athens') === $tzVal ? 'selected' : '' ?>><?= e($tzLabel) ?></option>
                 <?php endforeach; ?>
               </select>
-              <div class="form-text">Επηρεάζει την εμφάνιση ημερομηνιών/ωρών στην πλατφόρμα.</div>
+              <div class="form-text"><?= e(t('settings/municipality.172', 'Επηρεάζει την εμφάνιση ημερομηνιών/ωρών στην πλατφόρμα.')) ?></div>
             </div>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
@@ -851,19 +850,18 @@ $tzOptions = [
       <div class="col-lg-8">
         <form method="post" action="<?= e(url('/settings/member-fields')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-people me-1"></i> Προαιρετικά πεδία μελών ομάδων</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-people me-1"></i> <?= e(t('settings/municipality.173', 'Προαιρετικά πεδία μελών ομάδων')) ?></div>
           <div class="card-body">
             <p class="text-muted small mb-3">
-              Τα πεδία <strong>Ονοματεπώνυμο</strong>, <strong>Τηλέφωνο</strong>, <strong>Email</strong>,
-              <strong>ΑΜ Πολιτικής Προστασίας</strong> κλπ. είναι πάντα διαθέσιμα.
-              Επιλέξτε ποια επιπλέον πεδία εμφανίζονται στη φόρμα μέλους.
+              <?= e(t('settings/municipality.174', 'Τα πεδία')) ?> <strong><?= e(t('settings/municipality.175', 'Ονοματεπώνυμο')) ?></strong>, <strong><?= e(t('settings/municipality.176', 'Τηλέφωνο')) ?></strong>, <strong>Email</strong>,
+              <strong><?= e(t('settings/municipality.177', 'ΑΜ Πολιτικής Προστασίας')) ?></strong> <?= e(t('settings/municipality.178', 'κλπ. είναι πάντα διαθέσιμα. Επιλέξτε ποια επιπλέον πεδία εμφανίζονται στη φόρμα μέλους.')) ?>
             </p>
             <table class="table table-sm align-middle">
               <thead class="table-light">
                 <tr>
-                  <th>Πεδίο</th>
-                  <th class="text-center" style="width:110px">Ορατό</th>
-                  <th class="text-center" style="width:130px">Υποχρεωτικό</th>
+                  <th><?= e(t('settings/municipality.179', 'Πεδίο')) ?></th>
+                  <th class="text-center" style="width:110px"><?= e(t('settings/municipality.180', 'Ορατό')) ?></th>
+                  <th class="text-center" style="width:130px"><?= e(t('settings/municipality.181', 'Υποχρεωτικό')) ?></th>
                 </tr>
               </thead>
               <tbody>
@@ -902,17 +900,17 @@ $tzOptions = [
             </table>
           </div>
           <div class="card-footer bg-white">
-            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση</button>
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.023', 'Αποθήκευση')) ?></button>
           </div>
         </form>
       </div>
       <div class="col-lg-4">
         <div class="card shadow-sm">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Οδηγίες</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('settings/municipality.182', 'Οδηγίες')) ?></div>
           <div class="card-body small text-muted">
-            <p><strong>Ορατό</strong>: εμφανίζεται στη φόρμα προσθήκης/επεξεργασίας μέλους.</p>
-            <p><strong>Υποχρεωτικό</strong>: αν ενεργοποιηθεί, ο team_admin δεν μπορεί να αποθηκεύσει μέλος χωρίς να συμπληρώσει αυτό το πεδίο.</p>
-            <p>Το «Υποχρεωτικό» ενεργοποιείται μόνο αν το πεδίο είναι ορατό.</p>
+            <p><strong><?= e(t('settings/municipality.180', 'Ορατό')) ?></strong><?= e(t('settings/municipality.183', ': εμφανίζεται στη φόρμα προσθήκης/επεξεργασίας μέλους.')) ?></p>
+            <p><strong><?= e(t('settings/municipality.181', 'Υποχρεωτικό')) ?></strong><?= e(t('settings/municipality.184', ': αν ενεργοποιηθεί, ο team_admin δεν μπορεί να αποθηκεύσει μέλος χωρίς να συμπληρώσει αυτό το πεδίο.')) ?></p>
+            <p><?= e(t('settings/municipality.185', 'Το «Υποχρεωτικό» ενεργοποιείται μόνο αν το πεδίο είναι ορατό.')) ?></p>
           </div>
         </div>
       </div>
@@ -926,8 +924,8 @@ $tzOptions = [
         <form method="post" action="<?= e(url('/settings/email-templates')) ?>">
           <?= csrf_field() ?>
           <div class="d-flex align-items-center justify-content-between mb-3">
-            <h2 class="h5 mb-0"><i class="bi bi-envelope-paper me-2"></i>Πρότυπα Email</h2>
-            <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Αποθήκευση όλων</button>
+            <h2 class="h5 mb-0"><i class="bi bi-envelope-paper me-2"></i><?= e(t('settings/municipality.008', 'Πρότυπα Email')) ?></h2>
+            <button class="btn btn-primary"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.186', 'Αποθήκευση όλων')) ?></button>
           </div>
 
           <div class="accordion" id="emailTplAccordion">
@@ -943,9 +941,9 @@ $tzOptions = [
                   <i class="bi <?= e($tplDef['icon']) ?> me-2 text-primary"></i>
                   <span class="fw-semibold me-2"><?= e($tplDef['label']) ?></span>
                   <?php if ($isCustom): ?>
-                    <span class="badge text-bg-warning ms-1 small">Προσαρμοσμένο</span>
+                    <span class="badge text-bg-warning ms-1 small"><?= e(t('settings/municipality.187', 'Προσαρμοσμένο')) ?></span>
                   <?php else: ?>
-                    <span class="badge text-bg-light text-muted ms-1 small">Προεπιλογή</span>
+                    <span class="badge text-bg-light text-muted ms-1 small"><?= e(t('settings/municipality.188', 'Προεπιλογή')) ?></span>
                   <?php endif; ?>
                   <span class="ms-auto me-3 small text-muted fw-normal d-none d-md-inline">
                     <i class="bi bi-people me-1"></i><?= e($tplDef['recipient']) ?>
@@ -958,7 +956,7 @@ $tzOptions = [
 
                   <!-- Subject -->
                   <div class="mb-3">
-                    <label class="form-label fw-semibold small">Θέμα email (Subject)</label>
+                    <label class="form-label fw-semibold small"><?= e(t('settings/municipality.189', 'Θέμα email (Subject)')) ?></label>
                     <input type="text" class="form-control"
                            name="tpl[<?= e($type) ?>][subject]"
                            id="subj_<?= e($type) ?>"
@@ -967,17 +965,17 @@ $tzOptions = [
 
                   <!-- Body -->
                   <div class="mb-3">
-                    <label class="form-label fw-semibold small">Σώμα email (Body)</label>
+                    <label class="form-label fw-semibold small"><?= e(t('settings/municipality.190', 'Σώμα email (Body)')) ?></label>
                     <textarea class="form-control font-monospace small"
                               name="tpl[<?= e($type) ?>][body]"
                               id="body_<?= e($type) ?>"
                               rows="8"><?= e($stored['body']) ?></textarea>
-                    <div class="form-text">Κλικ σε placeholder για εισαγωγή στο σημείο του cursor.</div>
+                    <div class="form-text"><?= e(t('settings/municipality.191', 'Κλικ σε placeholder για εισαγωγή στο σημείο του cursor.')) ?></div>
                   </div>
 
                   <!-- Placeholder badges -->
                   <div class="mb-3">
-                    <span class="small fw-semibold text-muted me-2">Μεταβλητές:</span>
+                    <span class="small fw-semibold text-muted me-2"><?= e(t('settings/municipality.192', 'Μεταβλητές:')) ?></span>
                     <?php foreach ($tplDef['vars'] as $varKey => $varLabel): ?>
                       <span class="badge text-bg-secondary me-1 mb-1 cursor-pointer tpl-var-badge"
                             style="font-size:.78rem;cursor:pointer;"
@@ -995,10 +993,10 @@ $tzOptions = [
                             data-type="<?= e($type) ?>"
                             data-default-subject="<?= e($tplDef['subject']) ?>"
                             data-default-body="<?= e($tplDef['body']) ?>">
-                      <i class="bi bi-arrow-counterclockwise me-1"></i>Επαναφορά αρχικών
+                      <i class="bi bi-arrow-counterclockwise me-1"></i><?= e(t('settings/municipality.193', 'Επαναφορά αρχικών')) ?>
                     </button>
                     <span class="small text-muted align-self-center">
-                      <i class="bi bi-people me-1"></i>Παραλήπτης: <?= e($tplDef['recipient']) ?>
+                      <i class="bi bi-people me-1"></i><?= e(t('settings/municipality.194', 'Παραλήπτης:')) ?> <?= e($tplDef['recipient']) ?>
                     </span>
                   </div>
 
@@ -1009,28 +1007,28 @@ $tzOptions = [
           </div><!-- /accordion -->
 
           <div class="mt-3 text-end">
-            <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Αποθήκευση όλων</button>
+            <button class="btn btn-primary"><i class="bi bi-save me-1"></i><?= e(t('settings/municipality.186', 'Αποθήκευση όλων')) ?></button>
           </div>
         </form>
       </div>
 
       <div class="col-xl-4">
         <div class="card shadow-sm mb-3">
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Πώς λειτουργεί</div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('settings/municipality.073', 'Πώς λειτουργεί')) ?></div>
           <div class="card-body small text-muted">
-            <p>Κάθε τύπος email έχει ένα <strong>Θέμα</strong> (Subject) και ένα <strong>Σώμα</strong> (Body).</p>
-            <p>Χρησιμοποιήστε τα <strong>{placeholders}</strong> για να εισάγετε δυναμικές τιμές που αντικαθίστανται αυτόματα κατά την αποστολή (π.χ. <code>{event_title}</code>).</p>
-            <p>Κάντε κλικ σε ένα badge placeholder για εισαγωγή στο cursor του textarea.</p>
-            <p>Τα emails στέλνονται ως <strong>HTML</strong> με αυτόματο wrapper που περιλαμβάνει το λογότυπο του φορέα (από την καρτέλα Εμφάνιση).</p>
+            <p><?= e(t('settings/municipality.195', 'Κάθε τύπος email έχει ένα')) ?> <strong><?= e(t('settings/municipality.035', 'Θέμα')) ?></strong> <?= e(t('settings/municipality.196', '(Subject) και ένα')) ?> <strong><?= e(t('settings/municipality.197', 'Σώμα')) ?></strong> (Body).</p>
+            <p><?= e(t('settings/municipality.198', 'Χρησιμοποιήστε τα')) ?> <strong>{placeholders}</strong> <?= e(t('settings/municipality.199', 'για να εισάγετε δυναμικές τιμές που αντικαθίστανται αυτόματα κατά την αποστολή (π.χ.')) ?> <code>{event_title}</code>).</p>
+            <p><?= e(t('settings/municipality.200', 'Κάντε κλικ σε ένα badge placeholder για εισαγωγή στο cursor του textarea.')) ?></p>
+            <p><?= e(t('settings/municipality.201', 'Τα emails στέλνονται ως')) ?> <strong>HTML</strong> <?= e(t('settings/municipality.202', 'με αυτόματο wrapper που περιλαμβάνει το λογότυπο του φορέα (από την καρτέλα Εμφάνιση).')) ?></p>
             <hr>
-            <p class="mb-0">Το κουμπί <strong>Επαναφορά αρχικών</strong> επαναφέρει το default κείμενο — η αλλαγή γίνεται μόνιμη μετά την Αποθήκευση.</p>
+            <p class="mb-0"><?= e(t('settings/municipality.203', 'Το κουμπί')) ?> <strong><?= e(t('settings/municipality.193', 'Επαναφορά αρχικών')) ?></strong> <?= e(t('settings/municipality.204', 'επαναφέρει το default κείμενο — η αλλαγή γίνεται μόνιμη μετά την Αποθήκευση.')) ?></p>
           </div>
         </div>
         <div class="card shadow-sm">
           <div class="card-header bg-white fw-semibold"><i class="bi bi-palette me-1"></i> Branding</div>
           <div class="card-body small text-muted">
-            <p class="mb-1">Το λογότυπο και το όνομα του φορέα εμφανίζονται αυτόματα στην κεφαλίδα κάθε email.</p>
-            <a href="#tab-branding" class="tpl-switch-tab">Ρύθμιση λογότυπου →</a>
+            <p class="mb-1"><?= e(t('settings/municipality.205', 'Το λογότυπο και το όνομα του φορέα εμφανίζονται αυτόματα στην κεφαλίδα κάθε email.')) ?></p>
+            <a href="#tab-branding" class="tpl-switch-tab"><?= e(t('settings/municipality.206', 'Ρύθμιση λογότυπου →')) ?></a>
           </div>
         </div>
       </div>

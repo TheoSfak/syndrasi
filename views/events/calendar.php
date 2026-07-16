@@ -182,8 +182,8 @@ $evJson = json_encode(array_map(fn($e) => [
 <!-- ── Header row ──────────────────────────────────────────────────────── -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Ημερολόγιο <?= e($eventPlural) ?></h1>
-    <p class="text-muted small mb-0">Κλικ σε <?= e($eventSingularLc) ?> για λεπτομέρειες.</p>
+    <h1 class="h3 mb-0"><?= e(t('events/calendar.001', 'Ημερολόγιο')) ?> <?= e($eventPlural) ?></h1>
+    <p class="text-muted small mb-0"><?= e(t('events/calendar.011', 'Κλικ σε')) ?> <?= e($eventSingularLc) ?> <?= e(t('events/calendar.012', 'για λεπτομέρειες.')) ?></p>
   </div>
   <?php if (current_role() === 'municipality_admin'): ?>
   <a href="<?= e(url('/events/create')) ?>" class="btn btn-primary">
@@ -194,10 +194,10 @@ $evJson = json_encode(array_map(fn($e) => [
 
 <!-- ── View switch tabs ────────────────────────────────────────────────── -->
 <ul class="nav nav-pills mb-3 gap-1">
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events')) ?>"><i class="bi bi-list-ul me-1"></i>Ενεργές</a></li>
-  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events/calendar')) ?>"><i class="bi bi-calendar3 me-1"></i>Ημερολόγιο</a></li>
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/drafts')) ?>"><i class="bi bi-file-earmark me-1"></i>Πρόχειρα</a></li>
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>"><i class="bi bi-archive me-1"></i>Αρχείο</a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events')) ?>"><i class="bi bi-list-ul me-1"></i><?= e(t('events/calendar.003', 'Ενεργές')) ?></a></li>
+  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events/calendar')) ?>"><i class="bi bi-calendar3 me-1"></i><?= e(t('events/calendar.001', 'Ημερολόγιο')) ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/drafts')) ?>"><i class="bi bi-file-earmark me-1"></i><?= e(t('events/calendar.004', 'Πρόχειρα')) ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>"><i class="bi bi-archive me-1"></i><?= e(t('events/calendar.005', 'Αρχείο')) ?></a></li>
 </ul>
 
 <!-- ── Month navigation ────────────────────────────────────────────────── -->
@@ -217,16 +217,16 @@ $evJson = json_encode(array_map(fn($e) => [
   <a href="<?= e(url('/events/calendar?m=' . date('Y-m'))) ?>"
      class="btn btn-outline-primary btn-sm ms-auto"
      <?= date('Y-m') === sprintf('%04d-%02d', $year, $month) ? 'disabled' : '' ?>>
-    Σήμερα
+    <?= e(t('events/calendar.006', 'Σήμερα')) ?>
   </a>
 
   <!-- View toggle: month / week -->
   <div class="btn-group btn-group-sm cal-view-toggle" role="group">
     <button type="button" class="btn btn-outline-secondary active" id="btnMonthView">
-      <i class="bi bi-calendar3 me-1"></i>Μήνας
+      <i class="bi bi-calendar3 me-1"></i><?= e(t('events/calendar.007', 'Μήνας')) ?>
     </button>
     <button type="button" class="btn btn-outline-secondary" id="btnWeekView">
-      <i class="bi bi-calendar-week me-1"></i>Εβδομάδα
+      <i class="bi bi-calendar-week me-1"></i><?= e(t('events/calendar.008', 'Εβδομάδα')) ?>
     </button>
   </div>
 </div>
@@ -271,7 +271,7 @@ $evJson = json_encode(array_map(fn($e) => [
             <?php $remaining = count($dayEvents) - $maxShow; ?>
             <?php if ($remaining > 0): ?>
               <span class="cal-more" onclick="showDayPopover('<?= e($dateKey) ?>', this)">
-                +<?= $remaining ?> ακόμη
+                +<?= $remaining ?> <?= e(t('events/calendar.013', 'ακόμη')) ?>
               </span>
             <?php endif; ?>
           </div>
@@ -325,7 +325,7 @@ $evJson = json_encode(array_map(fn($e) => [
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h6 class="modal-title" id="dayModalTitle"><?= e($eventPlural) ?> ημέρας</h6>
+        <h6 class="modal-title" id="dayModalTitle"><?= e($eventPlural) ?> <?= e(t('events/calendar.010', 'ημέρας')) ?></h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" id="dayModalBody"></div>

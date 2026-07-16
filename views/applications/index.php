@@ -5,16 +5,16 @@ $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
 $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 $orgLabel = $terms['short_name'] ?? 'Φορέας';
 ?>
-<h1 class="h3 mb-1">Δηλώσεις Συμμετοχής</h1>
+<h1 class="h3 mb-1"><?= e(t('applications/index.001', 'Δηλώσεις Συμμετοχής')) ?></h1>
 <p class="text-muted">
   <?= e($eventSingular) ?>: <a href="<?= e(url('/events/' . $event['id'])) ?>" class="fw-semibold text-decoration-none"><?= e($event['title']) ?></a>
   <?= status_badge($event['status']) ?> · <?= e(gr_datetime($event['start_datetime'])) ?>
-  · Ζητούμενα άτομα: <strong><?= (int) $event['requested_people'] ?></strong>
+  <?= e(t('applications/index.027', '· Ζητούμενα άτομα:')) ?> <strong><?= (int) $event['requested_people'] ?></strong>
 </p>
 
 <?php if (!$applications): ?>
   <div class="card shadow-sm"><div class="card-body text-muted">
-    Δεν υπάρχουν ακόμη δηλώσεις συμμετοχής για αυτή τη <?= e($eventSingularLc) ?>.
+    <?= e(t('applications/index.028', 'Δεν υπάρχουν ακόμη δηλώσεις συμμετοχής για αυτή τη')) ?> <?= e($eventSingularLc) ?>.
   </div></div>
 <?php else: ?>
 
@@ -31,17 +31,17 @@ $hasPending  = count($pendingApps) > 0;
           id="bulk-form" onsubmit="return confirmBulk()">
       <?= csrf_field() ?>
       <div class="d-flex flex-wrap align-items-center gap-3">
-        <span class="fw-semibold text-primary" id="selected-count">0 επιλεγμένες</span>
+        <span class="fw-semibold text-primary" id="selected-count"><?= e(t('applications/index.004', '0 επιλεγμένες')) ?></span>
         <div class="d-flex align-items-center gap-2">
-          <label class="small fw-semibold mb-0">Εγκεκριμένα άτομα (προεπιλογή = προσφερόμενα):</label>
+          <label class="small fw-semibold mb-0"><?= e(t('applications/index.005', 'Εγκεκριμένα άτομα (προεπιλογή = προσφερόμενα):')) ?></label>
         </div>
         <div class="ms-auto d-flex gap-2">
           <button type="submit" name="bulk_action" value="approve" class="btn btn-success btn-sm">
-            <i class="bi bi-check-all me-1"></i>Μαζική Έγκριση
+            <i class="bi bi-check-all me-1"></i><?= e(t('applications/index.006', 'Μαζική Έγκριση')) ?>
           </button>
           <button type="submit" name="bulk_action" value="reject" class="btn btn-outline-danger btn-sm"
                   onclick="document.getElementById('reject-confirm').value='1'">
-            <i class="bi bi-x-circle me-1"></i>Μαζική Απόρριψη
+            <i class="bi bi-x-circle me-1"></i><?= e(t('applications/index.007', 'Μαζική Απόρριψη')) ?>
           </button>
         </div>
         <input type="hidden" name="reject-confirm" id="reject-confirm" value="0">
@@ -55,7 +55,7 @@ $hasPending  = count($pendingApps) > 0;
 <div class="mb-2 d-flex align-items-center gap-3">
   <div class="form-check">
     <input class="form-check-input" type="checkbox" id="select-all">
-    <label class="form-check-label small fw-semibold" for="select-all">Επιλογή όλων εκκρεμών</label>
+    <label class="form-check-label small fw-semibold" for="select-all"><?= e(t('applications/index.008', 'Επιλογή όλων εκκρεμών')) ?></label>
   </div>
 </div>
 <?php endif; ?>
@@ -77,12 +77,12 @@ $hasPending  = count($pendingApps) > 0;
             <h2 class="h5 mb-1"><?= e($a['team_name']) ?> <?= status_badge($a['status']) ?></h2>
             <div class="text-muted small mb-2">
               <?= e($a['team_type'] ?: '') ?><?= $a['team_phone'] ? ' · ' . e($a['team_phone']) : '' ?>
-              · Υποβλήθηκε: <?= e(gr_datetime($a['submitted_at'])) ?>
+              <?= e(t('applications/index.009', '· Υποβλήθηκε:')) ?> <?= e(gr_datetime($a['submitted_at'])) ?>
             </div>
             <div class="mb-1">
-              <span class="badge text-bg-light text-dark border"><i class="bi bi-people me-1"></i><?= (int) $a['offered_people'] ?> άτομα</span>
-              <?php if ($a['offered_vehicle']): ?><span class="badge text-bg-light text-dark border"><i class="bi bi-truck me-1"></i>Όχημα</span><?php endif; ?>
-              <?php if ($a['offered_medical_equipment']): ?><span class="badge text-bg-light text-dark border"><i class="bi bi-heart-pulse me-1"></i>Υγειονομικός εξοπλισμός</span><?php endif; ?>
+              <span class="badge text-bg-light text-dark border"><i class="bi bi-people me-1"></i><?= (int) $a['offered_people'] ?> <?= e(t('applications/index.010', 'άτομα')) ?></span>
+              <?php if ($a['offered_vehicle']): ?><span class="badge text-bg-light text-dark border"><i class="bi bi-truck me-1"></i><?= e(t('applications/index.011', 'Όχημα')) ?></span><?php endif; ?>
+              <?php if ($a['offered_medical_equipment']): ?><span class="badge text-bg-light text-dark border"><i class="bi bi-heart-pulse me-1"></i><?= e(t('applications/index.012', 'Υγειονομικός εξοπλισμός')) ?></span><?php endif; ?>
             </div>
             <?php if (!empty($a['match'])): ?>
               <div class="border rounded p-2 bg-light mb-2" style="max-width:720px">
@@ -94,7 +94,7 @@ $hasPending  = count($pendingApps) > 0;
                 </div>
                 <?php if (!empty($a['match']['missing'])): ?>
                   <div class="small text-muted">
-                    Λείπουν:
+                    <?= e(t('applications/index.013', 'Λείπουν:')) ?>
                     <?php foreach (array_slice($a['match']['missing'], 0, 6) as $missing): ?>
                       <span class="badge text-bg-warning text-dark border"><?= e($missing) ?></span>
                     <?php endforeach; ?>
@@ -103,7 +103,7 @@ $hasPending  = count($pendingApps) > 0;
                     <?php endif; ?>
                   </div>
                 <?php else: ?>
-                  <div class="small text-success"><i class="bi bi-check-circle me-1"></i>Καλύπτει όλα τα βασικά ζητούμενα.</div>
+                  <div class="small text-success"><i class="bi bi-check-circle me-1"></i><?= e(t('applications/index.014', 'Καλύπτει όλα τα βασικά ζητούμενα.')) ?></div>
                 <?php endif; ?>
               </div>
             <?php endif; ?>
@@ -112,14 +112,13 @@ $hasPending  = count($pendingApps) > 0;
             <?php endif; ?>
             <?php if (!empty($a['history'])): ?>
               <div class="small text-muted mt-2">
-                <i class="bi bi-clock-history me-1"></i>Ιστορικό ομάδας:
-                <?= (int) $a['history']['events_count'] ?> ολοκληρωμένες <?= e($eventPluralLc) ?>,
-                <?= e(gr_number((float) $a['history']['total_hours'], 1)) ?> ώρες εθελοντισμού
-                · <a href="<?= e(url('/statistics/teams/' . $a['team_id'])) ?>">πλήρη στατιστικά</a>
+                <i class="bi bi-clock-history me-1"></i><?= e(t('applications/index.029', 'Ιστορικό ομάδας:')) ?>
+                <?= (int) $a['history']['events_count'] ?> <?= e(t('applications/index.030', 'ολοκληρωμένες')) ?> <?= e($eventPluralLc) ?>,
+                <?= e(gr_number((float) $a['history']['total_hours'], 1)) ?> <?= e(t('applications/index.031', 'ώρες εθελοντισμού ·')) ?> <a href="<?= e(url('/statistics/teams/' . $a['team_id'])) ?>"><?= e(t('applications/index.016', 'πλήρη στατιστικά')) ?></a>
               </div>
             <?php endif; ?>
             <?php if ($a['admin_comment']): ?>
-              <div class="small mt-2"><strong>Σχόλιο <?= e($orgLabel) ?>:</strong> <?= e($a['admin_comment']) ?></div>
+              <div class="small mt-2"><strong><?= e(t('applications/index.032', 'Σχόλιο')) ?> <?= e($orgLabel) ?>:</strong> <?= e($a['admin_comment']) ?></div>
             <?php endif; ?>
           </div>
         </div>
@@ -128,7 +127,7 @@ $hasPending  = count($pendingApps) > 0;
           <div style="min-width:280px">
             <!-- Per-app approved people for bulk (hidden, shown when checkbox ticked) -->
             <div class="bulk-people-input mb-2" id="bulk-people-<?= (int)$a['id'] ?>" style="display:none">
-              <label class="form-label small mb-1 text-primary">Άτομα (για μαζική έγκριση)</label>
+              <label class="form-label small mb-1 text-primary"><?= e(t('applications/index.018', 'Άτομα (για μαζική έγκριση)')) ?></label>
               <input type="number" min="1" max="<?= (int)$a['offered_people'] ?>"
                      class="form-control form-control-sm bulk-people-field"
                      value="<?= (int)$a['offered_people'] ?>"
@@ -137,26 +136,26 @@ $hasPending  = count($pendingApps) > 0;
             <form method="post" action="<?= e(url('/applications/' . $a['id'] . '/approve')) ?>" class="border rounded p-3 mb-2 bg-light"
                   onsubmit="return confirm('Να εγκριθεί η συμμετοχή της ομάδας;')">
               <?= csrf_field() ?>
-              <label class="form-label small mb-1">Εγκεκριμένα άτομα *</label>
+              <label class="form-label small mb-1"><?= e(t('applications/index.019', 'Εγκεκριμένα άτομα *')) ?></label>
               <input type="number" name="approved_people" class="form-control mb-2" min="1"
                      max="<?= (int) $a['offered_people'] ?>" value="<?= (int) $a['offered_people'] ?>" required>
-              <label class="form-label small mb-1">Οδηγίες / σχόλιο (προαιρετικό)</label>
-              <input type="text" name="admin_comment" class="form-control mb-2" placeholder="π.χ. σημείο συνάντησης">
-              <button class="btn btn-success w-100"><i class="bi bi-check-lg me-1"></i>Έγκριση</button>
+              <label class="form-label small mb-1"><?= e(t('applications/index.020', 'Οδηγίες / σχόλιο (προαιρετικό)')) ?></label>
+              <input type="text" name="admin_comment" class="form-control mb-2" placeholder="<?= e(t('applications/index.025', 'π.χ. σημείο συνάντησης')) ?>">
+              <button class="btn btn-success w-100"><i class="bi bi-check-lg me-1"></i><?= e(t('applications/index.021', 'Έγκριση')) ?></button>
             </form>
             <form method="post" action="<?= e(url('/applications/' . $a['id'] . '/reject')) ?>"
                   onsubmit="return confirm('Να απορριφθεί η δήλωση της ομάδας;')">
               <?= csrf_field() ?>
               <div class="input-group">
-                <input type="text" name="admin_comment" class="form-control" placeholder="Λόγος απόρριψης (προαιρετικό)">
-                <button class="btn btn-outline-danger"><i class="bi bi-x-lg me-1"></i>Απόρριψη</button>
+                <input type="text" name="admin_comment" class="form-control" placeholder="<?= e(t('applications/index.026', 'Λόγος απόρριψης (προαιρετικό)')) ?>">
+                <button class="btn btn-outline-danger"><i class="bi bi-x-lg me-1"></i><?= e(t('applications/index.022', 'Απόρριψη')) ?></button>
               </div>
             </form>
           </div>
         <?php elseif ($a['status'] === 'approved'): ?>
           <div class="text-end">
             <div class="fs-4 fw-bold text-success"><?= (int) $a['approved_people'] ?></div>
-            <div class="small text-muted">εγκεκριμένα άτομα</div>
+            <div class="small text-muted"><?= e(t('applications/index.023', 'εγκεκριμένα άτομα')) ?></div>
           </div>
         <?php endif; ?>
       </div>
@@ -167,7 +166,7 @@ $hasPending  = count($pendingApps) > 0;
 <?php endif; ?>
 
 <a class="btn btn-outline-secondary" href="<?= e(url('/exports/events/' . $event['id'] . '/applications')) ?>">
-  <i class="bi bi-download me-1"></i>Εξαγωγή δηλώσεων CSV
+  <i class="bi bi-download me-1"></i><?= e(t('applications/index.024', 'Εξαγωγή δηλώσεων CSV')) ?>
 </a>
 
 <?php if ($hasPending ?? false): ?>

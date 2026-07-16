@@ -180,8 +180,8 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
   <?php endif; ?>
   <div class="cover-mun"><?= e($orgName) ?></div>
   <div class="cover-star">⭐</div>
-  <div class="cover-title">Επιβράβευση<br>Εθελοντισμού</div>
-  <div class="cover-subtitle"><?= (int) $year ?> · Ετήσια Αναγνώριση Εθελοντικών Ομάδων</div>
+  <div class="cover-title"><?= e(t('reports/pdf_awards.001', 'Επιβράβευση')) ?><br><?= e(t('reports/pdf_awards.002', 'Εθελοντισμού')) ?></div>
+  <div class="cover-subtitle"><?= (int) $year ?> <?= e(t('reports/pdf_awards.003', '· Ετήσια Αναγνώριση Εθελοντικών Ομάδων')) ?></div>
   <div class="cover-year"><?= (int) $year ?></div>
 </div>
 
@@ -190,8 +190,8 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
   <div class="page-header">
     <span class="ph-icon">🏆</span>
     <div>
-      <h2>Βραβεία <?= (int) $year ?></h2>
-      <div class="ph-sub"><?= e($orgName) ?> · Εθελοντικές Ομάδες</div>
+      <h2><?= e(t('reports/pdf_awards.004', 'Βραβεία')) ?> <?= (int) $year ?></h2>
+      <div class="ph-sub"><?= e($orgName) ?> <?= e(t('reports/pdf_awards.005', '· Εθελοντικές Ομάδες')) ?></div>
     </div>
   </div>
 
@@ -220,24 +220,24 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
             </div>
             <div class="award-stat">
               <strong><?= number_format((float) ($w['volunteer_hours'] ?? 0), 1) ?></strong>
-              Ώρες εθελ.
+              <?= e(t('reports/pdf_awards.006', 'Ώρες εθελ.')) ?>
             </div>
             <?php if (isset($w['consistency_score']) && $w['consistency_score'] !== null): ?>
             <div class="award-stat">
               <strong><?= number_format((float) $w['consistency_score'], 1) ?>%</strong>
-              Συνέπεια
+              <?= e(t('reports/pdf_awards.007', 'Συνέπεια')) ?>
             </div>
             <?php endif; ?>
             <?php if (isset($w['avg_response_minutes']) && $w['avg_response_minutes'] !== null): ?>
             <div class="award-stat">
-              <strong><?= (int) $w['avg_response_minutes'] ?> λεπτά</strong>
-              Απόκριση
+              <strong><?= (int) $w['avg_response_minutes'] ?> <?= e(t('reports/pdf_awards.008', 'λεπτά')) ?></strong>
+              <?= e(t('reports/pdf_awards.009', 'Απόκριση')) ?>
             </div>
             <?php endif; ?>
           </div>
         <?php else: ?>
-          <div class="award-team">Δεν υπάρχουν αρκετά δεδομένα</div>
-          <div style="font-size:12px;color:#9ca3af">Απαιτούνται ολοκληρωμένες <?= e($eventPluralLc) ?>.</div>
+          <div class="award-team"><?= e(t('reports/pdf_awards.010', 'Δεν υπάρχουν αρκετά δεδομένα')) ?></div>
+          <div style="font-size:12px;color:#9ca3af"><?= e(t('reports/pdf_awards.018', 'Απαιτούνται ολοκληρωμένες')) ?> <?= e($eventPluralLc) ?>.</div>
         <?php endif; ?>
       </div>
     </div>
@@ -247,23 +247,23 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
   <!-- Ranking table -->
   <div style="margin-top:28px">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#6b7280;border-bottom:2px solid #e5e7eb;padding-bottom:8px;margin-bottom:14px">
-      Πλήρης Κατάταξη <?= (int) $year ?>
+      <?= e(t('reports/pdf_awards.012', 'Πλήρης Κατάταξη')) ?> <?= (int) $year ?>
     </div>
     <table class="rank-table">
       <thead>
         <tr>
           <th>#</th>
-          <th>Ομάδα</th>
-          <th>Τύπος</th>
+          <th><?= e(t('reports/pdf_awards.013', 'Ομάδα')) ?></th>
+          <th><?= e(t('reports/pdf_awards.014', 'Τύπος')) ?></th>
           <th class="text-center"><?= e($eventPlural) ?></th>
-          <th class="text-center">Ώρες εθελ.</th>
-          <th class="text-center">Εθελοντές</th>
-          <th class="text-center">Συνέπεια</th>
+          <th class="text-center"><?= e(t('reports/pdf_awards.006', 'Ώρες εθελ.')) ?></th>
+          <th class="text-center"><?= e(t('reports/pdf_awards.015', 'Εθελοντές')) ?></th>
+          <th class="text-center"><?= e(t('reports/pdf_awards.007', 'Συνέπεια')) ?></th>
         </tr>
       </thead>
       <tbody>
         <?php if (!$ranking): ?>
-          <tr><td colspan="7" style="color:#9ca3af;text-align:center;padding:20px">Δεν υπάρχουν δεδομένα για το <?= (int) $year ?>.</td></tr>
+          <tr><td colspan="7" style="color:#9ca3af;text-align:center;padding:20px"><?= e(t('reports/pdf_awards.019', 'Δεν υπάρχουν δεδομένα για το')) ?> <?= (int) $year ?>.</td></tr>
         <?php endif; ?>
         <?php foreach ($ranking as $i => $r):
           $pos = $i + 1;
@@ -290,8 +290,7 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
   </div>
 
   <div class="page-footer">
-    <?= e($mun['name'] ?? '') ?> · Εθελοντικός Συντονισμός · <?= (int) $year ?> ·
-    Παράχθηκε από το SynDrasi · <?= date('d/m/Y') ?>
+    <?= e($mun['name'] ?? '') ?> <?= e(t('reports/pdf_awards.020', '· Εθελοντικός Συντονισμός ·')) ?> <?= (int) $year ?> <?= e(t('reports/pdf_awards.021', '· Παράχθηκε από το SynDrasi ·')) ?> <?= date('d/m/Y') ?>
   </div>
 </div><!-- /page -->
 

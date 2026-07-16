@@ -8,19 +8,19 @@
     </h1>
     <p class="text-muted small mb-0">
       <?php if ($mob['location_name']): ?><i class="bi bi-geo-alt me-1"></i><?= e($mob['location_name']) ?> · <?php endif; ?>
-      Έναρξη <?= e(gr_datetime($mob['started_at'])) ?>
-      <?php if ($mob['creator_name']): ?> · από <?= e($mob['creator_name']) ?><?php endif; ?>
+      <?= e(t('mobilizations/show.019', 'Έναρξη')) ?> <?= e(gr_datetime($mob['started_at'])) ?>
+      <?php if ($mob['creator_name']): ?> <?= e(t('mobilizations/show.020', '· από')) ?> <?= e($mob['creator_name']) ?><?php endif; ?>
     </p>
   </div>
   <?php if ($mob['status'] !== 'stood_down'): ?>
-    <span class="badge text-bg-danger fs-6"><i class="bi bi-broadcast me-1"></i>Ενεργό</span>
+    <span class="badge text-bg-danger fs-6"><i class="bi bi-broadcast me-1"></i><?= e(t('mobilizations/show.002', 'Ενεργό')) ?></span>
     <form method="post" action="<?= e(url('/mobilizations/' . $mob['id'] . '/stand-down')) ?>"
           onsubmit="return confirm('Κλείσιμο του καλέσματος;');">
       <?= csrf_field() ?>
-      <button class="btn btn-outline-danger"><i class="bi bi-stop-circle me-1"></i>Λήξη Καλέσματος</button>
+      <button class="btn btn-outline-danger"><i class="bi bi-stop-circle me-1"></i><?= e(t('mobilizations/show.003', 'Λήξη Καλέσματος')) ?></button>
     </form>
   <?php else: ?>
-    <span class="badge text-bg-secondary fs-6">Έκλεισε <?= e(gr_time($mob['ended_at'])) ?></span>
+    <span class="badge text-bg-secondary fs-6"><?= e(t('mobilizations/show.004', 'Έκλεισε')) ?> <?= e(gr_time($mob['ended_at'])) ?></span>
   <?php endif; ?>
 </div>
 
@@ -54,15 +54,15 @@
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
-  <h2 class="h5 mb-0">Εθελοντές (<span data-count="targeted"><?= (int) ($c['targeted'] ?? 0) ?></span>)</h2>
-  <span class="small text-muted">Αυτόματη ανανέωση μετρητών · <span id="updatedAt"><?= e($snapshot['at'] ?? '') ?></span></span>
+  <h2 class="h5 mb-0"><?= e(t('mobilizations/show.005', 'Εθελοντές (')) ?><span data-count="targeted"><?= (int) ($c['targeted'] ?? 0) ?></span>)</h2>
+  <span class="small text-muted"><?= e(t('mobilizations/show.006', 'Αυτόματη ανανέωση μετρητών ·')) ?> <span id="updatedAt"><?= e($snapshot['at'] ?? '') ?></span></span>
 </div>
 
 <div class="card shadow-sm">
   <div class="table-responsive">
     <table class="table table-sm table-hover align-middle mb-0">
       <thead class="table-light">
-        <tr><th>Εθελοντής</th><th>Ομάδα</th><th>Απάντηση</th><th class="text-center">ETA</th><th>Κατάσταση</th><th></th></tr>
+        <tr><th><?= e(t('mobilizations/show.007', 'Εθελοντής')) ?></th><th><?= e(t('mobilizations/show.008', 'Ομάδα')) ?></th><th><?= e(t('mobilizations/show.009', 'Απάντηση')) ?></th><th class="text-center">ETA</th><th><?= e(t('mobilizations/show.010', 'Κατάσταση')) ?></th><th></th></tr>
       </thead>
       <tbody>
         <?php foreach (($snapshot['roster'] ?? []) as $r): ?>
@@ -70,15 +70,15 @@
             <td class="fw-semibold"><?= e($r['member_name']) ?></td>
             <td class="small text-muted"><?= e($r['team_name']) ?></td>
             <td>
-              <?php if ($r['response'] === 'coming'): ?><span class="badge text-bg-success">Έρχεται</span>
-              <?php elseif ($r['response'] === 'cant'): ?><span class="badge text-bg-secondary">Δεν μπορεί</span>
-              <?php elseif ($r['response'] === 'maybe'): ?><span class="badge text-bg-info">Ίσως</span>
-              <?php else: ?><span class="badge text-bg-warning">Αναμονή</span><?php endif; ?>
+              <?php if ($r['response'] === 'coming'): ?><span class="badge text-bg-success"><?= e(t('mobilizations/show.011', 'Έρχεται')) ?></span>
+              <?php elseif ($r['response'] === 'cant'): ?><span class="badge text-bg-secondary"><?= e(t('mobilizations/show.012', 'Δεν μπορεί')) ?></span>
+              <?php elseif ($r['response'] === 'maybe'): ?><span class="badge text-bg-info"><?= e(t('mobilizations/show.013', 'Ίσως')) ?></span>
+              <?php else: ?><span class="badge text-bg-warning"><?= e(t('mobilizations/show.014', 'Αναμονή')) ?></span><?php endif; ?>
             </td>
             <td class="text-center"><?= $r['eta_minutes'] !== null ? (int) $r['eta_minutes'] . '′' : '—' ?></td>
             <td>
-              <?php if ($r['departed_at']): ?><span class="text-muted small">Αποχώρησε <?= e(gr_time($r['departed_at'])) ?></span>
-              <?php elseif ($r['checked_in_at']): ?><span class="text-primary small"><i class="bi bi-check-circle-fill"></i> Στο σημείο <?= e(gr_time($r['checked_in_at'])) ?></span>
+              <?php if ($r['departed_at']): ?><span class="text-muted small"><?= e(t('mobilizations/show.015', 'Αποχώρησε')) ?> <?= e(gr_time($r['departed_at'])) ?></span>
+              <?php elseif ($r['checked_in_at']): ?><span class="text-primary small"><i class="bi bi-check-circle-fill"></i> <?= e(t('mobilizations/show.016', 'Στο σημείο')) ?> <?= e(gr_time($r['checked_in_at'])) ?></span>
               <?php else: ?><span class="text-muted small">—</span><?php endif; ?>
             </td>
             <td class="text-end">
@@ -87,14 +87,14 @@
                   <form method="post" action="<?= e(url('/mobilizations/' . $mob['id'] . '/checkin')) ?>" class="d-inline">
                     <?= csrf_field() ?>
                     <input type="hidden" name="response_id" value="<?= (int) $r['id'] ?>">
-                    <button class="btn btn-xs btn-outline-primary btn-sm py-0">Άφιξη</button>
+                    <button class="btn btn-xs btn-outline-primary btn-sm py-0"><?= e(t('mobilizations/show.017', 'Άφιξη')) ?></button>
                   </form>
                 <?php elseif (!$r['departed_at']): ?>
                   <form method="post" action="<?= e(url('/mobilizations/' . $mob['id'] . '/checkin')) ?>" class="d-inline">
                     <?= csrf_field() ?>
                     <input type="hidden" name="response_id" value="<?= (int) $r['id'] ?>">
                     <input type="hidden" name="action" value="depart">
-                    <button class="btn btn-outline-dark btn-sm py-0">Αποχώρηση</button>
+                    <button class="btn btn-outline-dark btn-sm py-0"><?= e(t('mobilizations/show.018', 'Αποχώρηση')) ?></button>
                   </form>
                 <?php endif; ?>
               <?php endif; ?>

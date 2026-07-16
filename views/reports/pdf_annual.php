@@ -167,10 +167,10 @@ $maxMonth = max(array_values($monthly)) ?: 1;
 
     <!-- Centre: report title -->
     <div class="cover-body" style="position:relative;padding:40px 0">
-      <div class="cover-label">Ετήσια Έκθεση</div>
+      <div class="cover-label"><?= e(t('reports/pdf_annual.001', 'Ετήσια Έκθεση')) ?></div>
       <div class="cover-year"><?= $year ?></div>
-      <div class="cover-title">Εθελοντισμός<?= "\n" ?><?= $year ?></div>
-      <div class="cover-desc">Ετήσια έκθεση <?= e($eventPluralLc) ?>, συμμετοχής ομάδων<br>και εθελοντικών ωρών</div>
+      <div class="cover-title"><?= e(t('reports/pdf_annual.002', 'Εθελοντισμός')) ?><?= "\n" ?><?= $year ?></div>
+      <div class="cover-desc"><?= e(t('reports/pdf_annual.029', 'Ετήσια έκθεση')) ?> <?= e($eventPluralLc) ?><?= e(t('reports/pdf_annual.030', ', συμμετοχής ομάδων')) ?><br><?= e(t('reports/pdf_annual.004', 'και εθελοντικών ωρών')) ?></div>
     </div>
 
     <!-- Summary stats -->
@@ -181,20 +181,20 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       </div>
       <div class="cover-stat">
         <div class="v"><?= $totalPeople ?: '—' ?></div>
-        <div class="l">Εθελοντές</div>
+        <div class="l"><?= e(t('reports/pdf_annual.005', 'Εθελοντές')) ?></div>
       </div>
       <div class="cover-stat">
         <div class="v"><?= number_format($totalHours, 0) ?: '—' ?></div>
-        <div class="l">Ώρες</div>
+        <div class="l"><?= e(t('reports/pdf_annual.006', 'Ώρες')) ?></div>
       </div>
       <div class="cover-stat">
         <div class="v"><?= $totalTeamSlots ?></div>
-        <div class="l">Συμμετοχές ομάδων</div>
+        <div class="l"><?= e(t('reports/pdf_annual.007', 'Συμμετοχές ομάδων')) ?></div>
       </div>
     </div>
 
     <div class="cover-footer">
-      Εκδόθηκε: <?= e(gr_date(date('Y-m-d'))) ?> &nbsp;·&nbsp; SynDrasi
+      <?= e(t('reports/pdf_annual.031', 'Εκδόθηκε:')) ?> <?= e(gr_date(date('Y-m-d'))) ?> &nbsp;·&nbsp; SynDrasi
     </div>
   </div>
 </div>
@@ -206,7 +206,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
 <div class="page">
   <div class="page-inner">
     <div class="page-header">
-      <div class="section-title"><i>&#128202;</i> Συνολική Εικόνα <?= $year ?></div>
+      <div class="section-title"><i>&#128202;</i> <?= e(t('reports/pdf_annual.008', 'Συνολική Εικόνα')) ?> <?= $year ?></div>
       <div class="page-meta"><?= e($orgName) ?> &nbsp;·&nbsp; <?= $year ?></div>
     </div>
 
@@ -218,21 +218,21 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       </div>
       <div class="s-card">
         <div class="v"><?= $totalTeamSlots ?></div>
-        <div class="l">Συμμετοχές ομάδων</div>
+        <div class="l"><?= e(t('reports/pdf_annual.007', 'Συμμετοχές ομάδων')) ?></div>
       </div>
       <div class="s-card">
         <div class="v"><?= $totalPeople ?: '—' ?></div>
-        <div class="l">Εθελοντές</div>
+        <div class="l"><?= e(t('reports/pdf_annual.005', 'Εθελοντές')) ?></div>
       </div>
       <div class="s-card">
         <div class="v"><?= number_format($totalHours, 1) ?></div>
-        <div class="l">Ώρες εθελοντισμού</div>
+        <div class="l"><?= e(t('reports/pdf_annual.009', 'Ώρες εθελοντισμού')) ?></div>
       </div>
     </div>
 
     <!-- Monthly chart -->
     <div class="chart-wrap">
-      <div class="chart-title">&#128197; <?= e($eventPlural) ?> ανά μήνα</div>
+      <div class="chart-title">&#128197; <?= e($eventPlural) ?> <?= e(t('reports/pdf_annual.032', 'ανά μήνα')) ?></div>
       <?php for ($m = 1; $m <= 12; $m++): ?>
         <?php $cnt = $monthly[$m]; $pct = $maxMonth > 0 ? round(($cnt / $maxMonth) * 100) : 0; ?>
         <div class="bar-row">
@@ -264,7 +264,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
 
     <div class="report-footer">
       <span><?= e($orgName) ?> &nbsp;·&nbsp; Εθελοντικός Συντονισμός</span>
-      <span>Ετήσια Έκθεση <?= $year ?></span>
+      <span><?= e(t('reports/pdf_annual.001', 'Ετήσια Έκθεση')) ?> <?= $year ?></span>
     </div>
   </div>
 </div>
@@ -285,12 +285,12 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       <thead>
         <tr>
           <th>#</th>
-          <th>Τίτλος</th>
-          <th>Κατηγορία</th>
-          <th>Ημερομηνία</th>
-          <th style="text-align:center">Ομάδες</th>
-          <th style="text-align:center">Εθελοντές</th>
-          <th style="text-align:center">Κατάσταση</th>
+          <th><?= e(t('reports/pdf_annual.010', 'Τίτλος')) ?></th>
+          <th><?= e(t('reports/pdf_annual.011', 'Κατηγορία')) ?></th>
+          <th><?= e(t('reports/pdf_annual.012', 'Ημερομηνία')) ?></th>
+          <th style="text-align:center"><?= e(t('reports/pdf_annual.013', 'Ομάδες')) ?></th>
+          <th style="text-align:center"><?= e(t('reports/pdf_annual.005', 'Εθελοντές')) ?></th>
+          <th style="text-align:center"><?= e(t('reports/pdf_annual.014', 'Κατάσταση')) ?></th>
         </tr>
       </thead>
       <tbody>
@@ -306,7 +306,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
             <?php if ($ev['status'] === 'completed'): ?>
               <span style="color:#065f46;font-weight:700">&#10003;</span>
             <?php else: ?>
-              <span style="color:#6b7280">Αρχ.</span>
+              <span style="color:#6b7280"><?= e(t('reports/pdf_annual.015', 'Αρχ.')) ?></span>
             <?php endif; ?>
           </td>
         </tr>
@@ -314,12 +314,12 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       </tbody>
     </table>
     <?php else: ?>
-      <p style="color:#9ca3af;text-align:center;margin-top:40px">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> για το <?= $year ?>.</p>
+      <p style="color:#9ca3af;text-align:center;margin-top:40px"><?= e(t('reports/pdf_annual.033', 'Δεν υπάρχουν ολοκληρωμένες')) ?> <?= e($eventPluralLc) ?> <?= e(t('reports/pdf_annual.034', 'για το')) ?> <?= $year ?>.</p>
     <?php endif; ?>
 
     <div class="report-footer">
       <span><?= e($orgName) ?></span>
-      <span>Ετήσια Έκθεση <?= $year ?> &nbsp;·&nbsp; σελ. 3</span>
+      <span><?= e(t('reports/pdf_annual.001', 'Ετήσια Έκθεση')) ?> <?= $year ?> &nbsp;·&nbsp; σελ. 3</span>
     </div>
   </div>
 </div>
@@ -332,7 +332,7 @@ $maxMonth = max(array_values($monthly)) ?: 1;
   <div class="page-inner">
     <div class="page-header">
       <div class="section-title">&#127942; Κατάταξη Ομάδων <?= $year ?></div>
-      <div class="page-meta">Βάσει ωρών εθελοντισμού</div>
+      <div class="page-meta"><?= e(t('reports/pdf_annual.017', 'Βάσει ωρών εθελοντισμού')) ?></div>
     </div>
 
     <?php if ($teamLeaderboard): ?>
@@ -340,10 +340,10 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       <thead>
         <tr>
           <th style="width:40px">#</th>
-          <th>Ομάδα</th>
+          <th><?= e(t('reports/pdf_annual.018', 'Ομάδα')) ?></th>
           <th style="text-align:center"><?= e($eventPlural) ?></th>
-          <th style="text-align:center">Παρουσίες μελών</th>
-          <th style="text-align:right">Ώρες</th>
+          <th style="text-align:center"><?= e(t('reports/pdf_annual.019', 'Παρουσίες μελών')) ?></th>
+          <th style="text-align:right"><?= e(t('reports/pdf_annual.006', 'Ώρες')) ?></th>
         </tr>
       </thead>
       <tbody>
@@ -364,14 +364,14 @@ $maxMonth = max(array_values($monthly)) ?: 1;
 
     <!-- Total row -->
     <div style="margin-top:16px;padding:10px 12px;background:#f0fdf4;border-radius:6px;display:flex;gap:24px;font-size:11px">
-      <span><strong>Σύνολο ωρών:</strong> <?= number_format($totalHours, 1) ?> ώρες</span>
-      <span><strong>Σύνολο <?= e($eventPluralLc) ?>:</strong> <?= $totalEvents ?></span>
-      <span><strong>Συμμετοχές ομάδων:</strong> <?= $totalTeamSlots ?></span>
+      <span><strong><?= e(t('reports/pdf_annual.020', 'Σύνολο ωρών:')) ?></strong> <?= number_format($totalHours, 1) ?> <?= e(t('reports/pdf_annual.021', 'ώρες')) ?></span>
+      <span><strong><?= e(t('reports/pdf_annual.035', 'Σύνολο')) ?> <?= e($eventPluralLc) ?>:</strong> <?= $totalEvents ?></span>
+      <span><strong><?= e(t('reports/pdf_annual.023', 'Συμμετοχές ομάδων:')) ?></strong> <?= $totalTeamSlots ?></span>
     </div>
 
     <?php else: ?>
-      <p style="color:#9ca3af;text-align:center;margin-top:40px">Δεν υπάρχουν δεδομένα συμμετοχής για το <?= $year ?>.<br>
-      <small>Τα δεδομένα ομάδων συμπληρώνονται κατά την αρχειοθέτηση <?= e($eventPluralLc) ?>.</small></p>
+      <p style="color:#9ca3af;text-align:center;margin-top:40px"><?= e(t('reports/pdf_annual.036', 'Δεν υπάρχουν δεδομένα συμμετοχής για το')) ?> <?= $year ?>.<br>
+      <small><?= e(t('reports/pdf_annual.037', 'Τα δεδομένα ομάδων συμπληρώνονται κατά την αρχειοθέτηση')) ?> <?= e($eventPluralLc) ?>.</small></p>
     <?php endif; ?>
 
     <!-- Signature area -->
@@ -379,22 +379,22 @@ $maxMonth = max(array_values($monthly)) ?: 1;
       <div style="display:flex;gap:40px">
         <div style="flex:1;text-align:center">
           <div style="border-top:1.5px solid #374151;margin:28px 16px 8px"></div>
-          <div style="font-size:10px;color:#6b7280">Υπεύθυνος Εθελοντισμού</div>
+          <div style="font-size:10px;color:#6b7280"><?= e(t('reports/pdf_annual.026', 'Υπεύθυνος Εθελοντισμού')) ?></div>
         </div>
         <div style="flex:1;text-align:center">
           <div style="border-top:1.5px solid #374151;margin:28px 16px 8px"></div>
-          <div style="font-size:10px;color:#6b7280">Εκπρόσωπος Φορέα</div>
+          <div style="font-size:10px;color:#6b7280"><?= e(t('reports/pdf_annual.027', 'Εκπρόσωπος Φορέα')) ?></div>
         </div>
         <div style="flex:1;text-align:center">
           <div style="border-top:1.5px solid #374151;margin:28px 16px 8px"></div>
-          <div style="font-size:10px;color:#6b7280">Ημερομηνία / Σφραγίδα</div>
+          <div style="font-size:10px;color:#6b7280"><?= e(t('reports/pdf_annual.028', 'Ημερομηνία / Σφραγίδα')) ?></div>
         </div>
       </div>
     </div>
 
     <div class="report-footer">
       <span><?= e($orgName) ?> &nbsp;·&nbsp; Εκδόθηκε <?= e(gr_date(date('Y-m-d'))) ?></span>
-      <span>Ετήσια Έκθεση <?= $year ?> &nbsp;·&nbsp; σελ. 4</span>
+      <span><?= e(t('reports/pdf_annual.001', 'Ετήσια Έκθεση')) ?> <?= $year ?> &nbsp;·&nbsp; σελ. 4</span>
     </div>
   </div>
 </div>

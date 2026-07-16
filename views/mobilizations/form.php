@@ -6,14 +6,14 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
 <div class="d-flex align-items-center mb-3 gap-2">
   <a href="<?= e(url('/mobilizations')) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
   <div>
-    <h1 class="h3 mb-0">Νέο Κάλεσμα Έκτακτης Ανάγκης</h1>
-    <p class="text-muted small mb-0">Θα σταλεί άμεση ειδοποίηση στους εθελοντές που θα επιλέξετε.</p>
+    <h1 class="h3 mb-0"><?= e(t('mobilizations/form.001', 'Νέο Κάλεσμα Έκτακτης Ανάγκης')) ?></h1>
+    <p class="text-muted small mb-0"><?= e(t('mobilizations/form.002', 'Θα σταλεί άμεση ειδοποίηση στους εθελοντές που θα επιλέξετε.')) ?></p>
   </div>
 </div>
 
 <div class="alert alert-warning small">
   <i class="bi bi-exclamation-triangle me-1"></i>
-  Το κάλεσμα ξεκινά <strong>αμέσως μόλις αποθηκευτεί</strong> και ειδοποιεί τους εθελοντές. Χρησιμοποιήστε το μόνο για πραγματικές ανάγκες.
+  <?= e(t('mobilizations/form.003', 'Το κάλεσμα ξεκινά')) ?> <strong><?= e(t('mobilizations/form.004', 'αμέσως μόλις αποθηκευτεί')) ?></strong> <?= e(t('mobilizations/form.005', 'και ειδοποιεί τους εθελοντές. Χρησιμοποιήστε το μόνο για πραγματικές ανάγκες.')) ?>
 </div>
 
 <form method="post" action="<?= e(url('/mobilizations')) ?>">
@@ -23,18 +23,18 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
       <div class="card shadow-sm mb-3">
         <div class="card-body">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Τίτλος / Περιστατικό <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold"><?= e(t('mobilizations/form.006', 'Τίτλος / Περιστατικό')) ?> <span class="text-danger">*</span></label>
             <input type="text" name="title" class="form-control" required maxlength="255"
-                   value="<?= e(old('title')) ?>" placeholder="π.χ. Πυρκαγιά στον Δήμο — άμεση συνδρομή">
+                   value="<?= e(old('title')) ?>" placeholder="<?= e(t('mobilizations/form.016', 'π.χ. Πυρκαγιά στον Δήμο — άμεση συνδρομή')) ?>">
           </div>
           <div class="mb-3">
-            <label class="form-label fw-semibold">Περιγραφή</label>
+            <label class="form-label fw-semibold"><?= e(t('mobilizations/form.007', 'Περιγραφή')) ?></label>
             <textarea name="description" class="form-control" rows="3"
-                      placeholder="Σύντομες οδηγίες, σημείο συγκέντρωσης, τι να φέρουν…"><?= e(old('description')) ?></textarea>
+                      placeholder="<?= e(t('mobilizations/form.017', 'Σύντομες οδηγίες, σημείο συγκέντρωσης, τι να φέρουν…')) ?>"><?= e(old('description')) ?></textarea>
           </div>
           <div class="row g-3">
             <div class="col-sm-6">
-              <label class="form-label fw-semibold">Σοβαρότητα</label>
+              <label class="form-label fw-semibold"><?= e(t('mobilizations/form.008', 'Σοβαρότητα')) ?></label>
               <select name="severity" class="form-select">
                 <?php foreach (['critical','high','medium','low'] as $sev): ?>
                   <option value="<?= $sev ?>" <?= old('severity','high') === $sev ? 'selected' : '' ?>>
@@ -44,9 +44,9 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
               </select>
             </div>
             <div class="col-sm-6">
-              <label class="form-label fw-semibold">Σχετική <?= e(mb_strtolower($eventSingular, 'UTF-8')) ?> (προαιρετικά)</label>
+              <label class="form-label fw-semibold"><?= e(t('mobilizations/form.021', 'Σχετική')) ?> <?= e(mb_strtolower($eventSingular, 'UTF-8')) ?> <?= e(t('mobilizations/form.022', '(προαιρετικά)')) ?></label>
               <select name="event_id" class="form-select">
-                <option value="">— Καμία —</option>
+                <option value=""><?= e(t('mobilizations/form.010', '— Καμία —')) ?></option>
                 <?php foreach ($events as $ev): ?>
                   <option value="<?= (int) $ev['id'] ?>"><?= e($ev['title']) ?></option>
                 <?php endforeach; ?>
@@ -58,12 +58,12 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
 
       <div class="card shadow-sm">
         <div class="card-body">
-          <label class="form-label fw-semibold">Τοποθεσία (προαιρετικά)</label>
+          <label class="form-label fw-semibold"><?= e(t('mobilizations/form.011', 'Τοποθεσία (προαιρετικά)')) ?></label>
           <input type="text" name="location_name" class="form-control mb-2"
-                 value="<?= e(old('location_name')) ?>" placeholder="Σημείο συγκέντρωσης / περιοχή">
+                 value="<?= e(old('location_name')) ?>" placeholder="<?= e(t('mobilizations/form.018', 'Σημείο συγκέντρωσης / περιοχή')) ?>">
           <div class="row g-2">
-            <div class="col"><input type="text" name="latitude" class="form-control" placeholder="Γεωγρ. πλάτος" value="<?= e(old('latitude')) ?>"></div>
-            <div class="col"><input type="text" name="longitude" class="form-control" placeholder="Γεωγρ. μήκος" value="<?= e(old('longitude')) ?>"></div>
+            <div class="col"><input type="text" name="latitude" class="form-control" placeholder="<?= e(t('mobilizations/form.019', 'Γεωγρ. πλάτος')) ?>" value="<?= e(old('latitude')) ?>"></div>
+            <div class="col"><input type="text" name="longitude" class="form-control" placeholder="<?= e(t('mobilizations/form.020', 'Γεωγρ. μήκος')) ?>" value="<?= e(old('longitude')) ?>"></div>
           </div>
         </div>
       </div>
@@ -72,12 +72,12 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
     <div class="col-lg-5">
       <div class="card shadow-sm">
         <div class="card-header bg-white fw-semibold">
-          <i class="bi bi-people me-1"></i>Ποιους να καλέσω
+          <i class="bi bi-people me-1"></i><?= e(t('mobilizations/form.012', 'Ποιους να καλέσω')) ?>
         </div>
         <div class="card-body">
-          <p class="small text-muted">Αφήστε τα όλα κενά για να κληθεί όλος ο φορέας (<?= e($orgLabel) ?>), ή επιλέξτε συγκεκριμένες ομάδες.</p>
+          <p class="small text-muted"><?= e(t('mobilizations/form.023', 'Αφήστε τα όλα κενά για να κληθεί όλος ο φορέας (')) ?><?= e($orgLabel) ?><?= e(t('mobilizations/form.024', '), ή επιλέξτε συγκεκριμένες ομάδες.')) ?></p>
           <?php if (empty($teams)): ?>
-            <p class="text-muted small mb-0">Δεν υπάρχουν ενεργές ομάδες.</p>
+            <p class="text-muted small mb-0"><?= e(t('mobilizations/form.014', 'Δεν υπάρχουν ενεργές ομάδες.')) ?></p>
           <?php else: ?>
             <?php foreach ($teams as $t): ?>
               <div class="form-check">
@@ -90,7 +90,7 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
       </div>
       <div class="d-grid mt-3">
         <button type="submit" class="btn btn-danger btn-lg">
-          <i class="bi bi-broadcast-pin me-1"></i>Έναρξη Καλέσματος
+          <i class="bi bi-broadcast-pin me-1"></i><?= e(t('mobilizations/form.015', 'Έναρξη Καλέσματος')) ?>
         </button>
       </div>
     </div>

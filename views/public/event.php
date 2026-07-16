@@ -58,7 +58,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
   <?php endif; ?>
   <div>
     <div class="name"><?= e($orgName) ?></div>
-    <div class="sub">Εθελοντικός Συντονισμός</div>
+    <div class="sub"><?= e(t('public/event.001', 'Εθελοντικός Συντονισμός')) ?></div>
   </div>
   <div class="ms-auto">
     <span class="badge text-bg-<?= e(status_color($event['status'])) ?> badge-status">
@@ -102,7 +102,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="col-4">
       <div class="stat-box">
         <div class="v"><?= (int) $event['requested_people'] ?></div>
-        <div class="l">Ζητούμενοι εθελοντές</div>
+        <div class="l"><?= e(t('public/event.002', 'Ζητούμενοι εθελοντές')) ?></div>
       </div>
     </div>
     <?php endif; ?>
@@ -110,7 +110,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="col-4">
       <div class="stat-box">
         <div class="v"><?= $approvedTeams ?></div>
-        <div class="l">Ομάδες συμμετοχής</div>
+        <div class="l"><?= e(t('public/event.003', 'Ομάδες συμμετοχής')) ?></div>
       </div>
     </div>
     <?php endif; ?>
@@ -121,7 +121,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
           <?= $event['requested_vehicle'] ? '<i class="bi bi-truck"></i>' : '' ?>
           <?= $event['requested_medical_equipment'] ? '<i class="bi bi-heart-pulse"></i>' : '' ?>
         </div>
-        <div class="l">Απαιτούμενος<br>εξοπλισμός</div>
+        <div class="l"><?= e(t('public/event.004', 'Απαιτούμενος')) ?><br><?= e(t('public/event.005', 'εξοπλισμός')) ?></div>
       </div>
     </div>
     <?php endif; ?>
@@ -133,7 +133,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="detail-row">
       <i class="bi bi-geo-alt-fill detail-icon"></i>
       <div>
-        <div class="detail-label">Τοποθεσία</div>
+        <div class="detail-label"><?= e(t('public/event.006', 'Τοποθεσία')) ?></div>
         <div class="detail-value"><?= e($event['location_name']) ?></div>
         <?php if ($event['address']): ?>
           <div style="font-size:.83rem;color:#64748b"><?= e($event['address']) ?></div>
@@ -145,7 +145,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="detail-row">
       <i class="bi bi-clock detail-icon"></i>
       <div>
-        <div class="detail-label">Έναρξη</div>
+        <div class="detail-label"><?= e(t('public/event.007', 'Έναρξη')) ?></div>
         <div class="detail-value"><?= e(gr_datetime($event['start_datetime'])) ?></div>
       </div>
     </div>
@@ -153,7 +153,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="detail-row">
       <i class="bi bi-clock-history detail-icon"></i>
       <div>
-        <div class="detail-label">Λήξη</div>
+        <div class="detail-label"><?= e(t('public/event.008', 'Λήξη')) ?></div>
         <div class="detail-value"><?= e(gr_datetime($event['end_datetime'])) ?></div>
       </div>
     </div>
@@ -162,7 +162,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="detail-row">
       <i class="bi bi-tag detail-icon"></i>
       <div>
-        <div class="detail-label">Κατηγορία</div>
+        <div class="detail-label"><?= e(t('public/event.009', 'Κατηγορία')) ?></div>
         <div class="detail-value"><?= e($event['category_name']) ?></div>
       </div>
     </div>
@@ -172,8 +172,8 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="detail-row">
       <i class="bi bi-people detail-icon"></i>
       <div>
-        <div class="detail-label">Ζητούμενα άτομα</div>
-        <div class="detail-value"><?= (int) $event['requested_people'] ?> εθελοντές</div>
+        <div class="detail-label"><?= e(t('public/event.010', 'Ζητούμενα άτομα')) ?></div>
+        <div class="detail-value"><?= (int) $event['requested_people'] ?> <?= e(t('public/event.011', 'εθελοντές')) ?></div>
       </div>
     </div>
     <?php endif; ?>
@@ -193,7 +193,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
     <div class="card-body py-2 px-3">
       <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($event['address']) ?>"
          target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-map me-1"></i>Άνοιγμα σε χάρτη
+        <i class="bi bi-map me-1"></i><?= e(t('public/event.012', 'Άνοιγμα σε χάρτη')) ?>
       </a>
     </div>
     <?php endif; ?>
@@ -203,7 +203,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
   <!-- Instructions -->
   <?php if ($event['instructions']): ?>
   <div class="instructions-box mb-3">
-    <div class="fw-semibold mb-2" style="color:#92400e"><i class="bi bi-info-circle me-1"></i>Οδηγίες συμμετοχής</div>
+    <div class="fw-semibold mb-2" style="color:#92400e"><i class="bi bi-info-circle me-1"></i><?= e(t('public/event.013', 'Οδηγίες συμμετοχής')) ?></div>
     <div style="white-space:pre-line;color:#78350f;font-size:.92rem"><?= e($event['instructions']) ?></div>
   </div>
   <?php endif; ?>
@@ -211,7 +211,7 @@ $orgIcon = $terms['icon'] ?? '🏛';
 </div><!-- /container -->
 
 <footer>
-  <?= e($eventSingular) ?> του φορέα <strong><?= e($orgName) ?></strong> μέσω SynDrasi
+  <?= e($eventSingular) ?> <?= e(t('public/event.014', 'του φορέα')) ?> <strong><?= e($orgName) ?></strong> μέσω SynDrasi
   &nbsp;·&nbsp; Αυτή η σελίδα είναι δημόσια προβολή — χωρίς προσωπικά δεδομένα.
 </footer>
 

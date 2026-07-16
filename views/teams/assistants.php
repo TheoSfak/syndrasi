@@ -1,31 +1,30 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Βοηθοί Αρχηγού</h1>
-    <p class="text-muted small mb-0">Ομάδα: <strong><?= e($team['name'] ?? '') ?></strong></p>
+    <h1 class="h3 mb-0"><?= e(t('teams/assistants.001', 'Βοηθοί Αρχηγού')) ?></h1>
+    <p class="text-muted small mb-0"><?= e(t('teams/assistants.002', 'Ομάδα:')) ?> <strong><?= e($team['name'] ?? '') ?></strong></p>
   </div>
   <a href="<?= e(url('/teams')) ?>" class="btn btn-outline-secondary btn-sm">
-    <i class="bi bi-arrow-left me-1"></i>Ομάδες
+    <i class="bi bi-arrow-left me-1"></i><?= e(t('teams/assistants.003', 'Ομάδες')) ?>
   </a>
 </div>
 
 <div class="alert alert-light border small">
-  Οι βοηθοί έχουν πρόσβαση ως υπεύθυνοι ομάδας, αλλά δεν μπορούν να ορίσουν ή να αφαιρέσουν άλλους βοηθούς.
-  Από εδώ ο διαχειριστής φορέα μπορεί να αφαιρέσει πρόσβαση σε περίπτωση ανάγκης.
+  <?= e(t('teams/assistants.004', 'Οι βοηθοί έχουν πρόσβαση ως υπεύθυνοι ομάδας, αλλά δεν μπορούν να ορίσουν ή να αφαιρέσουν άλλους βοηθούς. Από εδώ ο διαχειριστής φορέα μπορεί να αφαιρέσει πρόσβαση σε περίπτωση ανάγκης.')) ?>
 </div>
 
 <div class="card shadow-sm">
   <?php if (empty($assistants)): ?>
-    <div class="card-body text-muted">Δεν έχουν οριστεί Βοηθοί Αρχηγού για αυτή την ομάδα.</div>
+    <div class="card-body text-muted"><?= e(t('teams/assistants.005', 'Δεν έχουν οριστεί Βοηθοί Αρχηγού για αυτή την ομάδα.')) ?></div>
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-hover mb-0 align-middle">
         <thead class="table-light">
           <tr>
-            <th>Μέλος</th>
-            <th>Επικοινωνία</th>
+            <th><?= e(t('teams/assistants.006', 'Μέλος')) ?></th>
+            <th><?= e(t('teams/assistants.007', 'Επικοινωνία')) ?></th>
             <th>Login</th>
-            <th>Ορίστηκε</th>
-            <th class="text-muted small">Τελ. σύνδεση</th>
+            <th><?= e(t('teams/assistants.008', 'Ορίστηκε')) ?></th>
+            <th class="text-muted small"><?= e(t('teams/assistants.009', 'Τελ. σύνδεση')) ?></th>
             <th class="text-end"></th>
           </tr>
         </thead>
@@ -54,7 +53,7 @@
                       onsubmit="return confirm('Να αφαιρεθεί η πρόσβαση Βοηθού Αρχηγού;');">
                   <?= csrf_field() ?>
                   <button class="btn btn-sm btn-outline-danger">
-                    <i class="bi bi-shield-x me-1"></i>Αφαίρεση
+                    <i class="bi bi-shield-x me-1"></i><?= e(t('teams/assistants.010', 'Αφαίρεση')) ?>
                   </button>
                 </form>
               </td>

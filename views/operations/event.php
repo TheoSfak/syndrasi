@@ -145,7 +145,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
 <div class="ops-header">
   <div class="d-flex align-items-center gap-2 flex-wrap">
     <span class="ldot"></span>
-    <span class="fw-bold text-white" style="font-size:1rem;white-space:nowrap">Επιχειρησιακό Κέντρο</span>
+    <span class="fw-bold text-white" style="font-size:1rem;white-space:nowrap"><?= e(t('operations/event.001', 'Επιχειρησιακό Κέντρο')) ?></span>
     <span class="badge bg-success" id="liveBadge">◉ LIVE SSE</span>
     <span style="opacity:.35">·</span>
     <span class="fw-semibold text-white" style="font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px"><?= e($event['title']) ?></span>
@@ -155,18 +155,18 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     <div class="ms-auto d-flex align-items-center gap-2">
       <div class="ops-countdown-wrap text-white">
         <div class="ops-countdown" id="countdown">--</div>
-        <div style="font-size:.5rem;opacity:.6;text-transform:uppercase;letter-spacing:1px;margin-top:.15rem" id="cdLabel">Υπολειπόμενος χρόνος</div>
+        <div style="font-size:.5rem;opacity:.6;text-transform:uppercase;letter-spacing:1px;margin-top:.15rem" id="cdLabel"><?= e(t('operations/event.002', 'Υπολειπόμενος χρόνος')) ?></div>
       </div>
       <div class="d-flex gap-1 align-items-center">
         <button class="btn btn-sm btn-outline-light" id="btnDark" title="Mission Control Mode"><i class="bi bi-moon-stars-fill"></i></button>
-        <button class="btn btn-sm btn-outline-light" id="btnFull" title="Fullscreen χάρτης"><i class="bi bi-fullscreen"></i></button>
+        <button class="btn btn-sm btn-outline-light" id="btnFull" title="<?= e(t('operations/event.070', 'Fullscreen χάρτης')) ?>"><i class="bi bi-fullscreen"></i></button>
         <button class="btn btn-sm btn-outline-light" id="btnRefresh"><i class="bi bi-arrow-clockwise"></i></button>
-        <a class="btn btn-sm btn-outline-light" href="<?= e(url('/operations/events/' . $eid . '/gate-qr')) ?>" target="_blank" title="QR Πύλης — δήλωση παρουσίας"><i class="bi bi-qr-code"></i></a>
+        <a class="btn btn-sm btn-outline-light" href="<?= e(url('/operations/events/' . $eid . '/gate-qr')) ?>" target="_blank" title="<?= e(t('operations/event.071', 'QR Πύλης — δήλωση παρουσίας')) ?>"><i class="bi bi-qr-code"></i></a>
         <a class="btn btn-sm btn-outline-light" href="<?= e(url('/events/' . $eid)) ?>"><i class="bi bi-arrow-left"></i></a>
         <form method="post" action="<?= e(url('/events/' . $eid . '/close')) ?>"
               onsubmit="return confirm(<?= e(json_encode($closeConfirm, JSON_UNESCAPED_UNICODE)) ?>)">
           <input type="hidden" name="_token" value="<?= e($csrfToken) ?>">
-          <button class="btn btn-sm btn-danger" title="Κλείσιμο <?= e($eventSingular) ?>"><i class="bi bi-door-closed-fill"></i></button>
+          <button class="btn btn-sm btn-danger" title="<?= e(t('operations/event.057', 'Κλείσιμο')) ?> <?= e($eventSingular) ?>"><i class="bi bi-door-closed-fill"></i></button>
         </form>
       </div>
     </div>
@@ -174,12 +174,12 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
 
   <!-- Stats strip -->
   <div class="d-flex flex-wrap gap-2 mt-2">
-    <div class="ops-stat text-white" id="ss-teams"><div class="val" id="sv-teams">--</div><div class="lbl">Ομάδες</div></div>
+    <div class="ops-stat text-white" id="ss-teams"><div class="val" id="sv-teams">--</div><div class="lbl"><?= e(t('operations/event.003', 'Ομάδες')) ?></div></div>
     <div class="ops-stat text-white" id="ss-ci"><div class="val" id="sv-ci">--</div><div class="lbl">Check-in</div></div>
-    <div class="ops-stat text-white" id="ss-pers"><div class="val" id="sv-pers">--</div><div class="lbl">Προσωπικό</div></div>
-    <div class="ops-stat text-white" id="ss-cov"><div class="val" id="sv-cov">--%</div><div class="lbl">Κάλυψη</div></div>
-    <div class="ops-stat text-white" id="ss-sh"><div class="val" id="sv-sh">--</div><div class="lbl">Ελλείψεις</div></div>
-    <div class="ops-stat text-white ms-auto" style="opacity:.7"><div class="val" id="sv-clk">--</div><div class="lbl">Ενημέρωση</div></div>
+    <div class="ops-stat text-white" id="ss-pers"><div class="val" id="sv-pers">--</div><div class="lbl"><?= e(t('operations/event.004', 'Προσωπικό')) ?></div></div>
+    <div class="ops-stat text-white" id="ss-cov"><div class="val" id="sv-cov">--%</div><div class="lbl"><?= e(t('operations/event.005', 'Κάλυψη')) ?></div></div>
+    <div class="ops-stat text-white" id="ss-sh"><div class="val" id="sv-sh">--</div><div class="lbl"><?= e(t('operations/event.006', 'Ελλείψεις')) ?></div></div>
+    <div class="ops-stat text-white ms-auto" style="opacity:.7"><div class="val" id="sv-clk">--</div><div class="lbl"><?= e(t('operations/event.007', 'Ενημέρωση')) ?></div></div>
   </div>
 </div>
 
@@ -193,10 +193,10 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   <div class="col-12" id="shiftsRow" style="display:none">
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-clock-history me-1"></i>Βάρδιες</span>
+        <span><i class="bi bi-clock-history me-1"></i><?= e(t('operations/event.008', 'Βάρδιες')) ?></span>
         <span class="badge bg-primary" id="shiftsBadge">0</span>
       </div>
-      <div class="card-body py-2 px-3" id="shiftsBox"><div class="text-muted small">Φόρτωση βαρδιών…</div></div>
+      <div class="card-body py-2 px-3" id="shiftsBox"><div class="text-muted small"><?= e(t('operations/event.009', 'Φόρτωση βαρδιών…')) ?></div></div>
     </div>
   </div>
 
@@ -205,7 +205,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   <div class="col-12" id="pendingAppsRow" style="display:none">
     <div class="card" style="border:1.5px solid #f59e0b">
       <div class="card-header d-flex justify-content-between align-items-center" style="background:rgba(245,158,11,.1)">
-        <span><i class="bi bi-hourglass-split me-1 text-warning"></i><strong>Αιτήσεις Συμμετοχής</strong> <span class="fw-normal small text-muted">— υποβλήθηκαν κατά τη διάρκεια της <?= e($eventSingularLc) ?></span></span>
+        <span><i class="bi bi-hourglass-split me-1 text-warning"></i><strong><?= e(t('operations/event.010', 'Αιτήσεις Συμμετοχής')) ?></strong> <span class="fw-normal small text-muted"><?= e(t('operations/event.011', '— υποβλήθηκαν κατά τη διάρκεια της')) ?> <?= e($eventSingularLc) ?></span></span>
         <span class="badge bg-warning text-dark" id="pendingAppsBadge">0</span>
       </div>
       <div class="card-body p-2" id="pendingAppsBox"></div>
@@ -220,9 +220,9 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
       <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <span><i class="bi bi-journal-check me-1 text-primary"></i><strong><?= e($playbook['title']) ?></strong></span>
         <div class="d-flex flex-wrap gap-1">
-          <?php if (!empty($playbook['default_people'])): ?><span class="badge text-bg-light border"><?= (int) $playbook['default_people'] ?> άτομα</span><?php endif; ?>
-          <?php if (!empty($playbook['require_vehicle'])): ?><span class="badge text-bg-light border"><i class="bi bi-truck me-1"></i>Όχημα</span><?php endif; ?>
-          <?php if (!empty($playbook['require_medical'])): ?><span class="badge text-bg-light border"><i class="bi bi-heart-pulse me-1"></i>Υγειονομικό</span><?php endif; ?>
+          <?php if (!empty($playbook['default_people'])): ?><span class="badge text-bg-light border"><?= (int) $playbook['default_people'] ?> <?= e(t('operations/event.012', 'άτομα')) ?></span><?php endif; ?>
+          <?php if (!empty($playbook['require_vehicle'])): ?><span class="badge text-bg-light border"><i class="bi bi-truck me-1"></i><?= e(t('operations/event.013', 'Όχημα')) ?></span><?php endif; ?>
+          <?php if (!empty($playbook['require_medical'])): ?><span class="badge text-bg-light border"><i class="bi bi-heart-pulse me-1"></i><?= e(t('operations/event.014', 'Υγειονομικό')) ?></span><?php endif; ?>
         </div>
       </div>
       <div class="card-body py-3">
@@ -239,7 +239,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
             </div>
           </div>
           <div class="col-lg-3">
-            <div class="small text-muted mb-1">Δυνατότητες</div>
+            <div class="small text-muted mb-1"><?= e(t('operations/event.015', 'Δυνατότητες')) ?></div>
             <div class="d-flex flex-wrap gap-1">
               <?php foreach (($playbook['capabilities'] ?? []) as $cap): ?>
                 <span class="badge text-bg-secondary"><?= e($cap) ?></span>
@@ -247,7 +247,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
             </div>
           </div>
           <div class="col-lg-4">
-            <div class="small text-muted mb-1">Έτοιμα μηνύματα</div>
+            <div class="small text-muted mb-1"><?= e(t('operations/event.016', 'Έτοιμα μηνύματα')) ?></div>
             <div class="d-grid gap-1">
               <?php foreach (($playbook['messages'] ?? []) as $msg): ?>
                 <button type="button" class="btn btn-sm btn-outline-primary playbook-msg-btn js-pb-msg" data-message="<?= e($msg) ?>">
@@ -268,8 +268,8 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     <!-- Map -->
     <div class="card mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-map me-1 text-success"></i>Χάρτης <?= e($eventSingular) ?></span>
-        <span class="badge bg-secondary" id="mapBadge">0 ομάδες</span>
+        <span><i class="bi bi-map me-1 text-success"></i><?= e(t('operations/event.017', 'Χάρτης')) ?> <?= e($eventSingular) ?></span>
+        <span class="badge bg-secondary" id="mapBadge"><?= e(t('operations/event.018', '0 ομάδες')) ?></span>
       </div>
       <div class="card-body p-0">
         <div class="map-wrap" id="mapWrap">
@@ -287,28 +287,28 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     <!-- Map symbol legend (collapsed by default) -->
     <details class="mb-3" style="font-size:.72rem;color:#6c757d">
       <summary style="cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:4px;user-select:none">
-        <i class="bi bi-info-circle"></i> Υπόμνημα συμβόλων χάρτη
+        <i class="bi bi-info-circle"></i> <?= e(t('operations/event.019', 'Υπόμνημα συμβόλων χάρτη')) ?>
       </summary>
       <div class="d-flex flex-wrap gap-2 mt-2 ps-1">
         <span class="d-inline-flex align-items-center gap-1">
           <span style="width:12px;height:12px;border-radius:50%;background:#94a3b8;border:2px solid #22c55e;display:inline-block;flex-shrink:0"></span>
-          GPS στίγμα ομάδας
+          <?= e(t('operations/event.020', 'GPS στίγμα ομάδας')) ?>
         </span>
         <span class="d-inline-flex align-items-center gap-1" style="color:#f97316">
           <span style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:14px solid #f97316;display:inline-block;flex-shrink:0"></span>
-          Μετάβαση
+          <?= e(t('operations/event.021', 'Μετάβαση')) ?>
         </span>
         <span class="d-inline-flex align-items-center gap-1" style="color:#ef4444">
           <span style="width:11px;height:11px;background:#ef4444;transform:rotate(45deg);display:inline-block;flex-shrink:0"></span>
-          Περιστατικό
+          <?= e(t('operations/event.022', 'Περιστατικό')) ?>
         </span>
         <span class="d-inline-flex align-items-center gap-1" style="color:#8b5cf6">
           <span style="background:#8b5cf6;color:#fff;font-size:9px;width:14px;height:14px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1">★</span>
-          Σημείο ενδιαφέροντος
+          <?= e(t('operations/event.023', 'Σημείο ενδιαφέροντος')) ?>
         </span>
         <span class="d-inline-flex align-items-center gap-1">
           <span style="width:20px;border-top:2px dashed #94a3b8;display:inline-block;flex-shrink:0"></span>
-          Διαδρομή προς στόχο
+          <?= e(t('operations/event.024', 'Διαδρομή προς στόχο')) ?>
         </span>
       </div>
     </details>
@@ -316,27 +316,27 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     <!-- Teams -->
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-people me-1 text-primary"></i>Ομάδες</span>
+        <span><i class="bi bi-people me-1 text-primary"></i><?= e(t('operations/event.003', 'Ομάδες')) ?></span>
         <span class="badge bg-primary" id="teamBadge">--</span>
       </div>
       <!-- Bulk request toolbar: pick a target (all / a specific team) then request photo or GPS -->
       <div class="card-body p-2 pb-2 border-bottom">
         <div class="row g-1 align-items-end">
           <div class="col-12 col-sm-5">
-            <label class="form-label small mb-1">Ζήτησε από</label>
+            <label class="form-label small mb-1"><?= e(t('operations/event.025', 'Ζήτησε από')) ?></label>
             <select class="form-select form-select-sm" id="reqTargetTeam">
-              <option value="">📢 Όλες οι ομάδες</option>
+              <option value=""><?= e(t('operations/event.026', '📢 Όλες οι ομάδες')) ?></option>
             </select>
           </div>
           <div class="col-12 col-sm-7 d-flex gap-1">
-            <button type="button" class="btn btn-outline-info btn-sm flex-fill" id="bulkReqPhoto"><i class="bi bi-camera me-1"></i>Ζήτησε φωτό</button>
-            <button type="button" class="btn btn-outline-success btn-sm flex-fill" id="bulkReqGps"><i class="bi bi-geo-alt me-1"></i>Ζήτησε στίγμα</button>
-            <button type="button" class="btn btn-outline-warning btn-sm flex-fill" id="bulkReqVideo"><i class="bi bi-camera-video me-1"></i>Ζήτησε βίντεο</button>
+            <button type="button" class="btn btn-outline-info btn-sm flex-fill" id="bulkReqPhoto"><i class="bi bi-camera me-1"></i><?= e(t('operations/event.027', 'Ζήτησε φωτό')) ?></button>
+            <button type="button" class="btn btn-outline-success btn-sm flex-fill" id="bulkReqGps"><i class="bi bi-geo-alt me-1"></i><?= e(t('operations/event.028', 'Ζήτησε στίγμα')) ?></button>
+            <button type="button" class="btn btn-outline-warning btn-sm flex-fill" id="bulkReqVideo"><i class="bi bi-camera-video me-1"></i><?= e(t('operations/event.029', 'Ζήτησε βίντεο')) ?></button>
           </div>
         </div>
       </div>
       <div class="card-body p-2" id="teamsBox">
-        <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-clockwise spin me-1"></i>Φόρτωση…</div>
+        <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-clockwise spin me-1"></i><?= e(t('operations/event.030', 'Φόρτωση…')) ?></div>
       </div>
     </div>
   </div>
@@ -347,7 +347,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     <!-- Teams Board -->
     <div class="card" id="teamBoardCard">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-layout-three-columns me-1 text-info"></i>Πίνακας Ομάδων</span>
+        <span><i class="bi bi-layout-three-columns me-1 text-info"></i><?= e(t('operations/event.031', 'Πίνακας Ομάδων')) ?></span>
         <div class="d-flex align-items-center gap-2">
           <span class="ldot" style="width:7px;height:7px" title="LIVE"></span>
           <span class="small text-muted">LIVE</span>
@@ -357,27 +357,27 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
       <div class="row g-0 border-bottom text-center" id="boardSummary">
         <div class="col-4 py-2 border-end">
           <div class="board-num text-success" id="board-present">--</div>
-          <div class="text-muted board-lbl">Παρόντες</div>
+          <div class="text-muted board-lbl"><?= e(t('operations/event.032', 'Παρόντες')) ?></div>
         </div>
         <div class="col-4 py-2 border-end">
           <div class="board-num text-warning" id="board-transit">--</div>
-          <div class="text-muted board-lbl">Αδήλωτοι</div>
+          <div class="text-muted board-lbl"><?= e(t('operations/event.033', 'Αδήλωτοι')) ?></div>
         </div>
         <div class="col-4 py-2">
           <div class="board-num" id="board-approved">--</div>
-          <div class="text-muted board-lbl">Εγκεκριμένοι</div>
+          <div class="text-muted board-lbl"><?= e(t('operations/event.034', 'Εγκεκριμένοι')) ?></div>
         </div>
       </div>
       <!-- Team rows -->
       <div id="boardList" style="max-height:290px;overflow-y:auto">
-        <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-clockwise spin me-1"></i>Φόρτωση…</div>
+        <div class="text-muted small py-3 text-center"><i class="bi bi-arrow-clockwise spin me-1"></i><?= e(t('operations/event.030', 'Φόρτωση…')) ?></div>
       </div>
     </div>
 
     <!-- Photo Wall -->
     <div class="card" id="photoWallCard" style="display:none">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-images me-1 text-warning"></i>Φωτογραφίες Live</span>
+        <span><i class="bi bi-images me-1 text-warning"></i><?= e(t('operations/event.035', 'Φωτογραφίες Live')) ?></span>
         <span class="badge bg-warning text-dark" id="wallBadge">0</span>
       </div>
       <div class="card-body p-2" id="wallGrid"></div>
@@ -386,45 +386,45 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
     <!-- Shortage reports -->
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-exclamation-triangle me-1 text-danger"></i>Ελλείψεις</span>
+        <span><i class="bi bi-exclamation-triangle me-1 text-danger"></i><?= e(t('operations/event.006', 'Ελλείψεις')) ?></span>
         <span class="badge bg-danger" id="shBadge">0</span>
       </div>
       <div class="card-body p-2" id="shortagesBox">
-        <div class="text-muted small py-2 text-center">Φόρτωση…</div>
+        <div class="text-muted small py-2 text-center"><?= e(t('operations/event.030', 'Φόρτωση…')) ?></div>
       </div>
     </div>
 
     <!-- Resource dispatch requests (Smart Resource Dispatch) -->
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-box-seam me-1 text-primary"></i>Αιτήματα πόρων</span>
+        <span><i class="bi bi-box-seam me-1 text-primary"></i><?= e(t('operations/event.036', 'Αιτήματα πόρων')) ?></span>
         <span class="badge bg-primary" id="rrBadge">0</span>
       </div>
       <div class="card-body p-2" id="resReqBox">
-        <div class="text-muted small py-2 text-center">Κανένα αίτημα πόρου</div>
+        <div class="text-muted small py-2 text-center"><?= e(t('operations/event.037', 'Κανένα αίτημα πόρου')) ?></div>
       </div>
     </div>
 
     <!-- Activity feed -->
     <div class="card flex-grow-1">
       <div class="card-header">
-        <i class="bi bi-activity me-1 text-info"></i>Δραστηριότητα
+        <i class="bi bi-activity me-1 text-info"></i><?= e(t('operations/event.038', 'Δραστηριότητα')) ?>
       </div>
       <div class="card-body p-2 overflow-auto" style="max-height:260px" id="activityBox">
-        <div class="text-muted small py-2 text-center">Φόρτωση…</div>
+        <div class="text-muted small py-2 text-center"><?= e(t('operations/event.030', 'Φόρτωση…')) ?></div>
       </div>
     </div>
 
     <!-- Notes -->
     <div class="card">
-      <div class="card-header"><i class="bi bi-journal-text me-1 text-warning"></i>Σημειώσεις</div>
+      <div class="card-header"><i class="bi bi-journal-text me-1 text-warning"></i><?= e(t('operations/event.039', 'Σημειώσεις')) ?></div>
       <div class="card-body p-2">
         <form id="noteForm" class="d-flex gap-2 mb-2">
-          <input type="text" class="form-control form-control-sm" id="noteInput" placeholder="Νέα σημείωση…" maxlength="500">
+          <input type="text" class="form-control form-control-sm" id="noteInput" placeholder="<?= e(t('operations/event.072', 'Νέα σημείωση…')) ?>" maxlength="500">
           <button class="btn btn-sm btn-warning fw-bold" type="submit"><i class="bi bi-send"></i></button>
         </form>
         <div id="notesBox" style="max-height:160px;overflow-y:auto">
-          <div class="text-muted small text-center">Φόρτωση…</div>
+          <div class="text-muted small text-center"><?= e(t('operations/event.030', 'Φόρτωση…')) ?></div>
         </div>
       </div>
     </div>
@@ -435,47 +435,47 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
 <!-- ═══════════ COMMS (command ↔ teams) ═══════════ -->
 <div class="card mt-3">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-chat-dots me-1 text-primary"></i>Επικοινωνία με ομάδες</span>
+    <span><i class="bi bi-chat-dots me-1 text-primary"></i><?= e(t('operations/event.040', 'Επικοινωνία με ομάδες')) ?></span>
     <span class="badge bg-primary" id="msgBadge">0</span>
   </div>
   <div class="card-body">
     <div class="row g-2 align-items-end mb-3">
       <div class="col-md-3">
-        <label class="form-label small mb-1">Παραλήπτης</label>
+        <label class="form-label small mb-1"><?= e(t('operations/event.041', 'Παραλήπτης')) ?></label>
         <select class="form-select form-select-sm" id="cmsgTeam">
-          <option value="">📢 Όλες οι ομάδες (broadcast)</option>
+          <option value=""><?= e(t('operations/event.042', '📢 Όλες οι ομάδες (broadcast)')) ?></option>
         </select>
       </div>
       <div class="col-md-6">
-        <label class="form-label small mb-1">Μήνυμα / εντολή</label>
-        <input type="text" class="form-control form-control-sm" id="cmsgBody" maxlength="500" placeholder="Γράψτε μήνυμα ή εντολή…">
+        <label class="form-label small mb-1"><?= e(t('operations/event.043', 'Μήνυμα / εντολή')) ?></label>
+        <input type="text" class="form-control form-control-sm" id="cmsgBody" maxlength="500" placeholder="<?= e(t('operations/event.073', 'Γράψτε μήνυμα ή εντολή…')) ?>">
       </div>
       <div class="col-md-3 d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-primary flex-fill" id="cmsgSendMsg"><i class="bi bi-send me-1"></i>Μήνυμα</button>
-        <button type="button" class="btn btn-sm btn-warning flex-fill fw-bold" id="cmsgSendOrder" title="Στέλνεται ως εντολή — ζητά επιβεβαίωση λήψης από την ομάδα"><i class="bi bi-megaphone me-1"></i>Εντολή</button>
+        <button type="button" class="btn btn-sm btn-primary flex-fill" id="cmsgSendMsg"><i class="bi bi-send me-1"></i><?= e(t('operations/event.044', 'Μήνυμα')) ?></button>
+        <button type="button" class="btn btn-sm btn-warning flex-fill fw-bold" id="cmsgSendOrder" title="<?= e(t('operations/event.074', 'Στέλνεται ως εντολή — ζητά επιβεβαίωση λήψης από την ομάδα')) ?>"><i class="bi bi-megaphone me-1"></i><?= e(t('operations/event.045', 'Εντολή')) ?></button>
       </div>
     </div>
     <!-- Geo order: opens map-picker modal -->
     <div class="mb-3 pt-2 border-top">
       <button type="button" class="btn btn-sm btn-success w-100" data-bs-toggle="modal" data-bs-target="#geoOrderModal">
-        <i class="bi bi-geo-alt-fill me-1"></i>Νέα εντολή στον χάρτη (μετάβαση / περιστατικό / σημείο)
+        <i class="bi bi-geo-alt-fill me-1"></i><?= e(t('operations/event.046', 'Νέα εντολή στον χάρτη (μετάβαση / περιστατικό / σημείο)')) ?>
       </button>
     </div>
-    <div class="msg-thread" id="msgThread"><div class="text-muted small text-center">Καμία επικοινωνία ακόμη.</div></div>
+    <div class="msg-thread" id="msgThread"><div class="text-muted small text-center"><?= e(t('operations/event.047', 'Καμία επικοινωνία ακόμη.')) ?></div></div>
   </div>
 </div>
 
 <!-- ═══════════ ΔΩΜΑΤΙΟ ΕΠΙΧΕΙΡΗΣΗΣ (κοινό κανάλι) ═══════════ -->
 <div class="card mt-3">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-broadcast-pin me-1 text-success"></i>Δωμάτιο Επιχείρησης <span class="small text-muted fw-normal">— κοινό κανάλι όλων των ομάδων</span></span>
+    <span><i class="bi bi-broadcast-pin me-1 text-success"></i><?= e(t('operations/event.048', 'Δωμάτιο Επιχείρησης')) ?> <span class="small text-muted fw-normal"><?= e(t('operations/event.049', '— κοινό κανάλι όλων των ομάδων')) ?></span></span>
     <span class="badge bg-success" id="roomBadge">0</span>
   </div>
   <div class="card-body">
-    <div class="msg-thread" id="roomThread" style="max-height:260px"><div class="text-muted small text-center">Κανένα μήνυμα ακόμη.</div></div>
+    <div class="msg-thread" id="roomThread" style="max-height:260px"><div class="text-muted small text-center"><?= e(t('operations/event.050', 'Κανένα μήνυμα ακόμη.')) ?></div></div>
     <div class="input-group input-group-sm mt-2">
       <input type="text" class="form-control" id="roomInput" maxlength="500" placeholder="Μήνυμα προς όλους (<?= e($orgLabel) ?> + όλες οι ομάδες)…">
-      <button class="btn btn-success" type="button" id="roomSend"><i class="bi bi-send me-1"></i>Αποστολή</button>
+      <button class="btn btn-success" type="button" id="roomSend"><i class="bi bi-send me-1"></i><?= e(t('operations/event.051', 'Αποστολή')) ?></button>
     </div>
   </div>
 </div>
@@ -483,7 +483,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
 <!-- Φωτογραφίες ομάδων -->
 <div class="card mt-3" id="photosCard" style="display:none">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-images me-1 text-info"></i>Φωτογραφίες ομάδων</span>
+    <span><i class="bi bi-images me-1 text-info"></i><?= e(t('operations/event.052', 'Φωτογραφίες ομάδων')) ?></span>
     <span class="badge bg-info" id="photosBadge">0</span>
   </div>
   <div class="card-body p-2 d-flex flex-wrap gap-2" id="photosBox"></div>
@@ -492,7 +492,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
 <!-- Βίντεο ομάδων -->
 <div class="card mt-3" id="videosCard" style="display:none">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-camera-video me-1 text-warning"></i>Βίντεο πεδίου</span>
+    <span><i class="bi bi-camera-video me-1 text-warning"></i><?= e(t('operations/event.053', 'Βίντεο πεδίου')) ?></span>
     <span class="badge bg-warning text-dark" id="videosBadge">0</span>
   </div>
   <div class="card-body p-2 d-flex flex-wrap gap-2" id="videosBox"></div>
@@ -503,7 +503,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header py-2">
-        <h6 class="modal-title" id="videoModalLabel"><i class="bi bi-camera-video me-1"></i>Βίντεο</h6>
+        <h6 class="modal-title" id="videoModalLabel"><i class="bi bi-camera-video me-1"></i><?= e(t('operations/event.054', 'Βίντεο')) ?></h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-2 text-center">
@@ -511,9 +511,9 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
         <div id="videoModalCaption" class="small text-muted mt-2"></div>
       </div>
       <div class="modal-footer py-2">
-        <a id="videoModalDl" href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i>Αρχειοθέτηση</a>
-        <button type="button" id="videoModalDel" class="btn btn-sm btn-outline-danger" style="display:none"><i class="bi bi-trash me-1"></i>Διαγραφή</button>
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Κλείσιμο</button>
+        <a id="videoModalDl" href="#" class="btn btn-sm btn-outline-primary"><i class="bi bi-download me-1"></i><?= e(t('operations/event.055', 'Αρχειοθέτηση')) ?></a>
+        <button type="button" id="videoModalDel" class="btn btn-sm btn-outline-danger" style="display:none"><i class="bi bi-trash me-1"></i><?= e(t('operations/event.056', 'Διαγραφή')) ?></button>
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal"><?= e(t('operations/event.057', 'Κλείσιμο')) ?></button>
       </div>
     </div>
   </div>
@@ -524,39 +524,39 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header py-2">
-        <h6 class="modal-title"><i class="bi bi-geo-alt-fill me-1 text-success"></i>Νέα εντολή στον χάρτη</h6>
+        <h6 class="modal-title"><i class="bi bi-geo-alt-fill me-1 text-success"></i><?= e(t('operations/event.058', 'Νέα εντολή στον χάρτη')) ?></h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="d-flex gap-2 mb-2">
-          <input type="text" class="form-control form-control-sm" id="goSearch" placeholder="Γράψε διεύθυνση (π.χ. Λ. Κνωσού 10, Ηράκλειο)…">
-          <button type="button" class="btn btn-sm btn-outline-primary" id="goSearchBtn"><i class="bi bi-search me-1"></i>Αναζήτηση</button>
+          <input type="text" class="form-control form-control-sm" id="goSearch" placeholder="<?= e(t('operations/event.076', 'Γράψε διεύθυνση (π.χ. Λ. Κνωσού 10, Ηράκλειο)…')) ?>">
+          <button type="button" class="btn btn-sm btn-outline-primary" id="goSearchBtn"><i class="bi bi-search me-1"></i><?= e(t('operations/event.059', 'Αναζήτηση')) ?></button>
         </div>
         <div id="goSearchResults" class="list-group small mb-2" style="max-height:130px;overflow:auto"></div>
         <div id="goMap" style="height:300px;border-radius:8px;overflow:hidden;border:1px solid #dee2e6"></div>
-        <div class="small text-muted mt-1" id="goCoordsLabel"><i class="bi bi-info-circle me-1"></i>Κάνε κλικ στον χάρτη ή ψάξε διεύθυνση για να βάλεις πινέζα.</div>
+        <div class="small text-muted mt-1" id="goCoordsLabel"><i class="bi bi-info-circle me-1"></i><?= e(t('operations/event.060', 'Κάνε κλικ στον χάρτη ή ψάξε διεύθυνση για να βάλεις πινέζα.')) ?></div>
         <div class="row g-2 mt-1 align-items-end">
           <div class="col-md-4">
-            <label class="form-label small mb-1">Τύπος</label>
+            <label class="form-label small mb-1"><?= e(t('operations/event.061', 'Τύπος')) ?></label>
             <select class="form-select form-select-sm" id="goKind">
-              <option value="move">➡️ Μετάβαση εδώ</option>
-              <option value="incident">⚠️ Περιστατικό</option>
-              <option value="poi">📍 Σημείο ενδιαφέροντος</option>
+              <option value="move"><?= e(t('operations/event.062', '➡️ Μετάβαση εδώ')) ?></option>
+              <option value="incident"><?= e(t('operations/event.063', '⚠️ Περιστατικό')) ?></option>
+              <option value="poi"><?= e(t('operations/event.064', '📍 Σημείο ενδιαφέροντος')) ?></option>
             </select>
           </div>
           <div class="col-md-4">
-            <label class="form-label small mb-1">Ομάδα-παραλήπτης</label>
-            <select class="form-select form-select-sm" id="goTeam"><option value="">📢 Όλες οι ομάδες</option></select>
+            <label class="form-label small mb-1"><?= e(t('operations/event.065', 'Ομάδα-παραλήπτης')) ?></label>
+            <select class="form-select form-select-sm" id="goTeam"><option value=""><?= e(t('operations/event.026', '📢 Όλες οι ομάδες')) ?></option></select>
           </div>
           <div class="col-md-4">
-            <label class="form-label small mb-1">Σχόλιο</label>
-            <input type="text" class="form-control form-control-sm" id="goNote" maxlength="200" placeholder="προαιρετικό">
+            <label class="form-label small mb-1"><?= e(t('operations/event.066', 'Σχόλιο')) ?></label>
+            <input type="text" class="form-control form-control-sm" id="goNote" maxlength="200" placeholder="<?= e(t('operations/event.077', 'προαιρετικό')) ?>">
           </div>
         </div>
       </div>
       <div class="modal-footer py-2">
-        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Άκυρο</button>
-        <button type="button" class="btn btn-success btn-sm" id="goSendBtn"><i class="bi bi-send-fill me-1"></i>Αποστολή</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal"><?= e(t('operations/event.067', 'Άκυρο')) ?></button>
+        <button type="button" class="btn btn-success btn-sm" id="goSendBtn"><i class="bi bi-send-fill me-1"></i><?= e(t('operations/event.051', 'Αποστολή')) ?></button>
       </div>
     </div>
   </div>
@@ -567,7 +567,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header py-2">
-        <h6 class="modal-title" id="photoModalLabel"><i class="bi bi-people-fill me-1"></i>Φωτογραφία</h6>
+        <h6 class="modal-title" id="photoModalLabel"><i class="bi bi-people-fill me-1"></i><?= e(t('operations/event.068', 'Φωτογραφία')) ?></h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body text-center p-1" style="background:#111">
@@ -575,7 +575,7 @@ body.ops-dark .playbook-check { border-bottom-color:rgba(255,255,255,.08); }
         <div id="photoModalMeta" class="text-light small mt-2 mb-1" style="opacity:.85"></div>
       </div>
       <div class="modal-footer py-2">
-        <a id="photoModalDl" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>Άνοιγμα σε νέα καρτέλα</a>
+        <a id="photoModalDl" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i><?= e(t('operations/event.069', 'Άνοιγμα σε νέα καρτέλα')) ?></a>
       </div>
     </div>
   </div>

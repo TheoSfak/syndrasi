@@ -30,17 +30,17 @@ $qrUrl  = $scheme . '://' . $host . url('/team/qr-checkin/' . $eid);
 </head>
 <body>
 <div class="gate">
-  <div class="text-uppercase small mb-1" style="letter-spacing:1.5px;color:#94a3b8"><i class="bi bi-qr-code me-1"></i>QR Πύλης — Δήλωση Παρουσίας</div>
+  <div class="text-uppercase small mb-1" style="letter-spacing:1.5px;color:#94a3b8"><i class="bi bi-qr-code me-1"></i><?= e(t('operations/gate-qr.001', 'QR Πύλης — Δήλωση Παρουσίας')) ?></div>
   <h1 class="h3 mb-1"><?= e($event['title']) ?></h1>
-  <p class="mb-4" style="color:#cbd5e1">Σαρώστε με το κινητό σας για να δηλώσετε παρουσία της ομάδας σας.</p>
+  <p class="mb-4" style="color:#cbd5e1"><?= e(t('operations/gate-qr.002', 'Σαρώστε με το κινητό σας για να δηλώσετε παρουσία της ομάδας σας.')) ?></p>
 
   <div class="qrbox"><div id="qr"></div></div>
 
   <div class="urlbox"><?= e($qrUrl) ?></div>
 
   <div class="noprint mt-4 d-flex gap-2 justify-content-center">
-    <button class="btn btn-light" onclick="window.print()"><i class="bi bi-printer me-1"></i>Εκτύπωση</button>
-    <a class="btn btn-outline-light" href="<?= e(url('/operations/events/' . $eid)) ?>"><i class="bi bi-arrow-left me-1"></i>Πίσω</a>
+    <button class="btn btn-light" onclick="window.print()"><i class="bi bi-printer me-1"></i><?= e(t('operations/gate-qr.003', 'Εκτύπωση')) ?></button>
+    <a class="btn btn-outline-light" href="<?= e(url('/operations/events/' . $eid)) ?>"><i class="bi bi-arrow-left me-1"></i><?= e(t('operations/gate-qr.004', 'Πίσω')) ?></a>
   </div>
 </div>
 

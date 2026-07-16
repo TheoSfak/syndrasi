@@ -6,19 +6,19 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 $orgLabel = $terms['short_name'] ?? 'Φορέας';
 ?>
 <h1 class="h3 mb-1"><?= e($eventPlural) ?></h1>
-<p class="text-muted">Ενεργές <?= e($eventPluralLc) ?> του φορέα (<?= e($orgLabel) ?>) και ιστορικό συμμετοχών της ομάδας σας.</p>
+<p class="text-muted"><?= e(t('team/events.002', 'Ενεργές')) ?> <?= e($eventPluralLc) ?> <?= e(t('team/events.014', 'του φορέα (')) ?><?= e($orgLabel) ?><?= e(t('team/events.015', ') και ιστορικό συμμετοχών της ομάδας σας.')) ?></p>
 
 <!-- Nav pills -->
 <ul class="nav nav-pills mb-3 small" id="eventsNav">
   <li class="nav-item">
     <a class="nav-link active" href="#tab-active" data-bs-toggle="tab">
-      Ενεργές
+      <?= e(t('team/events.002', 'Ενεργές')) ?>
       <?php if ($events): ?><span class="badge text-bg-light ms-1"><?= count($events) ?></span><?php endif; ?>
     </a>
   </li>
   <li class="nav-item">
     <a class="nav-link" href="#tab-closed" data-bs-toggle="tab">
-      Κλειστές / Ολοκληρωμένες
+      <?= e(t('team/events.003', 'Κλειστές / Ολοκληρωμένες')) ?>
       <?php if ($closedEvents): ?><span class="badge text-bg-light ms-1"><?= count($closedEvents) ?></span><?php endif; ?>
     </a>
   </li>
@@ -30,7 +30,7 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
   <div class="tab-pane fade show active" id="tab-active">
     <?php if (!$events): ?>
       <div class="card shadow-sm"><div class="card-body text-muted">
-        Δεν υπάρχουν διαθέσιμες <?= e($eventPluralLc) ?> αυτή τη στιγμή.
+        <?= e(t('team/events.016', 'Δεν υπάρχουν διαθέσιμες')) ?> <?= e($eventPluralLc) ?> <?= e(t('team/events.017', 'αυτή τη στιγμή.')) ?>
       </div></div>
     <?php else: ?>
       <div class="row g-3">
@@ -46,15 +46,15 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
                   <i class="bi bi-tag me-1"></i><?= e($ev['category_name'] ?: 'Χωρίς κατηγορία') ?><br>
                   <i class="bi bi-calendar me-1"></i><?= e(gr_datetime($ev['start_datetime'])) ?><br>
                   <?php if ($ev['location_name']): ?><i class="bi bi-geo-alt me-1"></i><?= e($ev['location_name']) ?><br><?php endif; ?>
-                  <i class="bi bi-people me-1"></i>Ζητούνται <?= (int) $ev['requested_people'] ?> άτομα
+                  <i class="bi bi-people me-1"></i><?= e(t('team/events.018', 'Ζητούνται')) ?> <?= (int) $ev['requested_people'] ?> <?= e(t('team/events.007', 'άτομα')) ?>
                 </div>
 
                 <?php if ($ev['application_id']): ?>
                   <div class="mb-2">
-                    <span class="text-muted small">Η δήλωσή σας:</span>
+                    <span class="text-muted small"><?= e(t('team/events.006', 'Η δήλωσή σας:')) ?></span>
                     <?= status_badge($ev['application_status']) ?>
                     <?php if ($ev['application_status'] === 'approved'): ?>
-                      <span class="small text-success fw-semibold"><?= (int) $ev['approved_people'] ?> άτομα</span>
+                      <span class="small text-success fw-semibold"><?= (int) $ev['approved_people'] ?> <?= e(t('team/events.007', 'άτομα')) ?></span>
                     <?php endif; ?>
                   </div>
                 <?php endif; ?>
@@ -65,7 +65,7 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
                   </a>
                   <?php if ($ev['status'] === 'active' && $ev['application_status'] === 'approved'): ?>
                     <a href="<?= e(url('/team/operations/events/' . $ev['id'])) ?>" class="btn btn-warning">
-                      <i class="bi bi-geo-alt me-1"></i>Επιχειρησιακές Ενέργειες
+                      <i class="bi bi-geo-alt me-1"></i><?= e(t('team/events.008', 'Επιχειρησιακές Ενέργειες')) ?>
                     </a>
                   <?php endif; ?>
                 </div>
@@ -80,7 +80,7 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
   <!-- Κλειστές / Ολοκληρωμένες -->
   <div class="tab-pane fade" id="tab-closed">
     <?php if (!$closedEvents): ?>
-      <div class="card shadow-sm"><div class="card-body text-muted">Δεν υπάρχουν κλειστές <?= e($eventPluralLc) ?> με συμμετοχή της ομάδας σας.</div></div>
+      <div class="card shadow-sm"><div class="card-body text-muted"><?= e(t('team/events.019', 'Δεν υπάρχουν κλειστές')) ?> <?= e($eventPluralLc) ?> <?= e(t('team/events.020', 'με συμμετοχή της ομάδας σας.')) ?></div></div>
     <?php else: ?>
       <div class="card shadow-sm">
         <div class="table-responsive">
@@ -88,9 +88,9 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
             <thead class="table-light">
               <tr>
                 <th><?= e($eventSingular) ?></th>
-                <th>Ημερομηνία</th>
-                <th class="text-center">Άτομα</th>
-                <th>Κατάσταση</th>
+                <th><?= e(t('team/events.010', 'Ημερομηνία')) ?></th>
+                <th class="text-center"><?= e(t('team/events.011', 'Άτομα')) ?></th>
+                <th><?= e(t('team/events.012', 'Κατάσταση')) ?></th>
                 <th></th>
               </tr>
             </thead>
@@ -109,7 +109,7 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
                   </td>
                   <td><?= status_badge($ev['status']) ?></td>
                   <td class="text-end d-flex gap-1 justify-content-end">
-                    <a href="<?= e(url('/team/events/' . $ev['id'])) ?>" class="btn btn-sm btn-outline-secondary">Προβολή</a>
+                    <a href="<?= e(url('/team/events/' . $ev['id'])) ?>" class="btn btn-sm btn-outline-secondary"><?= e(t('team/events.013', 'Προβολή')) ?></a>
                     <?php if ($ev['status'] === 'completed'): ?>
                       <a href="<?= e(url('/team/events/' . $ev['id'] . '/debrief')) ?>"
                          class="btn btn-sm btn-outline-primary">

@@ -43,15 +43,15 @@ $kpis = [
 
 <!-- Used as the "Τάσεις" tab inside the Statistics page (header/year-selector live there). -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-  <p class="text-muted small mb-0">Διαχρονική εικόνα <?= (int)$years[0] ?>–<?= (int)end($years) ?> · εστίαση έτους <?= (int)$focus ?>.</p>
+  <p class="text-muted small mb-0"><?= e(t('analytics/index.015', 'Διαχρονική εικόνα')) ?> <?= (int)$years[0] ?>–<?= (int)end($years) ?> <?= e(t('analytics/index.016', '· εστίαση έτους')) ?> <?= (int)$focus ?>.</p>
   <div class="dropdown">
     <button class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-      <i class="bi bi-file-earmark-arrow-down me-1"></i>Εξαγωγή CSV
+      <i class="bi bi-file-earmark-arrow-down me-1"></i><?= e(t('analytics/index.002', 'Εξαγωγή CSV')) ?>
     </button>
     <ul class="dropdown-menu dropdown-menu-end">
-      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=yearly&year='.$focus)) ?>">Ετήσιες τάσεις</a></li>
-      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=category&year='.$focus)) ?>">Ανά κατηγορία</a></li>
-      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=teams&year='.$focus)) ?>">Ανά ομάδα</a></li>
+      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=yearly&year='.$focus)) ?>"><?= e(t('analytics/index.003', 'Ετήσιες τάσεις')) ?></a></li>
+      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=category&year='.$focus)) ?>"><?= e(t('analytics/index.004', 'Ανά κατηγορία')) ?></a></li>
+      <li><a class="dropdown-item" href="<?= e(url('/analytics/export?type=teams&year='.$focus)) ?>"><?= e(t('analytics/index.005', 'Ανά ομάδα')) ?></a></li>
     </ul>
   </div>
 </div>
@@ -89,17 +89,17 @@ $kpis = [
   <!-- Year-over-year trend -->
   <div class="col-lg-7">
     <div class="card h-100">
-      <div class="card-header fw-semibold"><i class="bi bi-bar-chart-line me-1 text-primary"></i>Διαχρονική τάση</div>
+      <div class="card-header fw-semibold"><i class="bi bi-bar-chart-line me-1 text-primary"></i><?= e(t('analytics/index.006', 'Διαχρονική τάση')) ?></div>
       <div class="card-body"><canvas id="yearChart" height="150"></canvas></div>
     </div>
   </div>
   <!-- Category breakdown -->
   <div class="col-lg-5">
     <div class="card h-100">
-      <div class="card-header fw-semibold"><i class="bi bi-pie-chart me-1 text-primary"></i>Ανά κατηγορία (<?= (int)$years[0] ?>–<?= (int)end($years) ?>)</div>
+      <div class="card-header fw-semibold"><i class="bi bi-pie-chart me-1 text-primary"></i><?= e(t('analytics/index.017', 'Ανά κατηγορία (')) ?><?= (int)$years[0] ?>–<?= (int)end($years) ?>)</div>
       <div class="card-body">
         <?php if (empty($byCategory)): ?>
-          <div class="text-muted small text-center py-4">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> στο διάστημα.</div>
+          <div class="text-muted small text-center py-4"><?= e(t('analytics/index.018', 'Δεν υπάρχουν ολοκληρωμένες')) ?> <?= e($eventPluralLc) ?> <?= e(t('analytics/index.019', 'στο διάστημα.')) ?></div>
         <?php else: ?>
           <canvas id="catChart" height="200"></canvas>
         <?php endif; ?>
@@ -112,14 +112,14 @@ $kpis = [
   <!-- Monthly compare -->
   <div class="col-lg-7">
     <div class="card h-100">
-      <div class="card-header fw-semibold"><i class="bi bi-calendar3 me-1 text-primary"></i><?= e($eventPlural) ?> ανά μήνα · <?= (int)$focus ?> vs <?= (int)$focus - 1 ?></div>
+      <div class="card-header fw-semibold"><i class="bi bi-calendar3 me-1 text-primary"></i><?= e($eventPlural) ?> <?= e(t('analytics/index.020', 'ανά μήνα ·')) ?> <?= (int)$focus ?> vs <?= (int)$focus - 1 ?></div>
       <div class="card-body"><canvas id="monthChart" height="150"></canvas></div>
     </div>
   </div>
   <!-- Response time trend -->
   <div class="col-lg-5">
     <div class="card h-100">
-      <div class="card-header fw-semibold"><i class="bi bi-stopwatch me-1 text-primary"></i>Χρόνος ανταπόκρισης (λεπτά)</div>
+      <div class="card-header fw-semibold"><i class="bi bi-stopwatch me-1 text-primary"></i><?= e(t('analytics/index.010', 'Χρόνος ανταπόκρισης (λεπτά)')) ?></div>
       <div class="card-body"><canvas id="respChart" height="200"></canvas></div>
     </div>
   </div>
@@ -127,19 +127,19 @@ $kpis = [
 
 <!-- Team trends table -->
 <div class="card mb-4">
-  <div class="card-header fw-semibold"><i class="bi bi-trophy me-1 text-primary"></i>Κορυφαίες ομάδες — εθελοντικές ώρες ανά έτος</div>
+  <div class="card-header fw-semibold"><i class="bi bi-trophy me-1 text-primary"></i><?= e(t('analytics/index.011', 'Κορυφαίες ομάδες — εθελοντικές ώρες ανά έτος')) ?></div>
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
         <tr>
-          <th>Ομάδα</th>
+          <th><?= e(t('analytics/index.012', 'Ομάδα')) ?></th>
           <?php foreach ($years as $y): ?><th class="text-center"><?= (int)$y ?></th><?php endforeach; ?>
-          <th class="text-end">Σύνολο ωρών</th>
+          <th class="text-end"><?= e(t('analytics/index.013', 'Σύνολο ωρών')) ?></th>
         </tr>
       </thead>
       <tbody>
         <?php if (empty($teamTrends)): ?>
-          <tr><td colspan="<?= count($years) + 2 ?>" class="text-center text-muted py-3">Δεν υπάρχουν δεδομένα.</td></tr>
+          <tr><td colspan="<?= count($years) + 2 ?>" class="text-center text-muted py-3"><?= e(t('analytics/index.014', 'Δεν υπάρχουν δεδομένα.')) ?></td></tr>
         <?php else: foreach ($teamTrends as $t): ?>
           <tr>
             <td class="fw-semibold"><?= e($t['team_name']) ?></td>

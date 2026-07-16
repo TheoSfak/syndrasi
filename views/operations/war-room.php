@@ -39,25 +39,25 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
 <div class="wr-header">
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
     <div>
-      <h1 class="h4 mb-1 fw-bold"><i class="bi bi-diagram-3 me-2"></i>Κέντρο Συντονισμού — Όλες οι <?= e($eventPlural) ?></h1>
-      <div class="small" style="opacity:.85">Συνολική εικόνα ενεργών επιχειρήσεων σε πραγματικό χρόνο.
+      <h1 class="h4 mb-1 fw-bold"><i class="bi bi-diagram-3 me-2"></i><?= e(t('operations/war-room.001', 'Κέντρο Συντονισμού — Όλες οι')) ?> <?= e($eventPlural) ?></h1>
+      <div class="small" style="opacity:.85"><?= e(t('operations/war-room.002', 'Συνολική εικόνα ενεργών επιχειρήσεων σε πραγματικό χρόνο.')) ?>
         <span id="liveBadge" class="badge bg-success ms-1">◉ LIVE SSE</span>
         <span class="ms-2"><i class="bi bi-clock me-1"></i><span id="wrClock">—</span></span>
       </div>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
-      <div class="wr-stat"><div class="val" id="t-events">0</div><div class="lbl">Ενεργές</div></div>
-      <div class="wr-stat"><div class="val" id="t-present">0</div><div class="lbl">Παρόντες</div></div>
-      <div class="wr-stat"><div class="val" id="t-cov">0%</div><div class="lbl">Κάλυψη</div></div>
-      <div class="wr-stat" id="t-sh-wrap"><div class="val" id="t-sh">0</div><div class="lbl">Ελλείψεις</div></div>
-      <button id="btnFull" class="btn btn-light btn-sm" title="Πλήρης οθόνη χάρτη"><i class="bi bi-arrows-fullscreen"></i></button>
+      <div class="wr-stat"><div class="val" id="t-events">0</div><div class="lbl"><?= e(t('operations/war-room.003', 'Ενεργές')) ?></div></div>
+      <div class="wr-stat"><div class="val" id="t-present">0</div><div class="lbl"><?= e(t('operations/war-room.004', 'Παρόντες')) ?></div></div>
+      <div class="wr-stat"><div class="val" id="t-cov">0%</div><div class="lbl"><?= e(t('operations/war-room.005', 'Κάλυψη')) ?></div></div>
+      <div class="wr-stat" id="t-sh-wrap"><div class="val" id="t-sh">0</div><div class="lbl"><?= e(t('operations/war-room.006', 'Ελλείψεις')) ?></div></div>
+      <button id="btnFull" class="btn btn-light btn-sm" title="<?= e(t('operations/war-room.010', 'Πλήρης οθόνη χάρτη')) ?>"><i class="bi bi-arrows-fullscreen"></i></button>
     </div>
   </div>
 </div>
 
 <div class="wr-grid">
   <div class="wr-list" id="evList">
-    <div class="wr-empty">Φόρτωση…</div>
+    <div class="wr-empty"><?= e(t('operations/war-room.007', 'Φόρτωση…')) ?></div>
   </div>
   <div class="wr-mapcol">
     <div class="wr-mapwrap" id="mapWrap">
@@ -281,14 +281,14 @@ $initJson = json_encode($snapshot ?? ['ok'=>true,'events'=>[],'totals'=>[]], JSO
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header py-2">
-        <h6 class="modal-title" id="photoModalLabel">Φωτογραφία</h6>
+        <h6 class="modal-title" id="photoModalLabel"><?= e(t('operations/war-room.008', 'Φωτογραφία')) ?></h6>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body text-center p-1" style="background:#111">
         <img id="photoModalImg" src="" alt="" style="max-width:100%;max-height:75vh">
       </div>
       <div class="modal-footer py-2">
-        <a id="photoModalDl" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i>Άνοιγμα σε νέα καρτέλα</a>
+        <a id="photoModalDl" href="#" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right me-1"></i><?= e(t('operations/war-room.009', 'Άνοιγμα σε νέα καρτέλα')) ?></a>
       </div>
     </div>
   </div>

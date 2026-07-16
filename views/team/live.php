@@ -472,7 +472,7 @@ body { min-height: 100dvh; }
 <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
 <div class="topbar">
   <a href="<?= e(url('/team/operations/events/' . $eid)) ?>" class="topbar-back">
-    <i class="bi bi-chevron-left"></i> Επιστροφή
+    <i class="bi bi-chevron-left"></i> <?= e(t('team/live.001', 'Επιστροφή')) ?>
   </a>
   <div class="topbar-event">
     <div class="topbar-event-name"><?= e($event['title']) ?></div>
@@ -481,7 +481,7 @@ body { min-height: 100dvh; }
       <?php if ($event['location_name']): ?> · <?= e($event['location_name']) ?><?php endif; ?>
     </div>
   </div>
-  <button class="topbar-refresh" onclick="window.location.reload()" title="Ανανέωση">
+  <button class="topbar-refresh" onclick="window.location.reload()" title="<?= e(t('team/live.056', 'Ανανέωση')) ?>">
     <i class="bi bi-arrow-clockwise" id="refreshIcon"></i>
   </button>
 </div>
@@ -502,7 +502,7 @@ foreach (flash_get() as $flash):
 <?php if (!$isActive): ?>
 <div class="inactive-notice">
   <i class="bi bi-hourglass-split"></i>
-  Η <?= e($eventSingularLc) ?> δεν είναι ακόμη ενεργή. Οι επιχειρησιακές ενέργειες ενεργοποιούνται όταν <?= e($orgLabel) ?> την ξεκινήσει.
+  Η <?= e($eventSingularLc) ?> <?= e(t('team/live.063', 'δεν είναι ακόμη ενεργή. Οι επιχειρησιακές ενέργειες ενεργοποιούνται όταν')) ?> <?= e($orgLabel) ?> <?= e(t('team/live.064', 'την ξεκινήσει.')) ?>
 </div>
 <?php endif; ?>
 
@@ -512,7 +512,7 @@ foreach (flash_get() as $flash):
   <div>
     <div><?= e($bannerLabel) ?></div>
     <?php if ($lastCheckin): ?>
-      <div class="banner-meta">Ενημέρωση: <?= e(gr_time($lastCheckin['checked_in_at'])) ?></div>
+      <div class="banner-meta"><?= e(t('team/live.003', 'Ενημέρωση:')) ?> <?= e(gr_time($lastCheckin['checked_in_at'])) ?></div>
     <?php endif; ?>
   </div>
 </div>
@@ -530,8 +530,8 @@ foreach (flash_get() as $flash):
     <button class="sos-btn" id="sosBtn" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-exclamation-octagon-fill sos-btn-icon"></i>
       <div style="flex:1">
-        <div class="sos-btn-label">SOS — ΚΙΝΔΥΝΟΣ</div>
-        <div class="sos-btn-sub">Πατήστε για άμεση κλήση βοήθειας προς <?= e($orgLabel) ?></div>
+        <div class="sos-btn-label"><?= e(t('team/live.004', 'SOS — ΚΙΝΔΥΝΟΣ')) ?></div>
+        <div class="sos-btn-sub"><?= e(t('team/live.005', 'Πατήστε για άμεση κλήση βοήθειας προς')) ?> <?= e($orgLabel) ?></div>
       </div>
     </button>
     <div class="sos-active-banner" id="sosBanner" style="display:none"></div>
@@ -542,19 +542,19 @@ foreach (flash_get() as $flash):
     <button class="loc-btn" id="locBtn" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-broadcast loc-btn-icon"></i>
       <div>
-        <div class="loc-btn-label">Αποστολή Στίγματος</div>
+        <div class="loc-btn-label"><?= e(t('team/live.006', 'Αποστολή Στίγματος')) ?></div>
         <div class="loc-btn-sub">
           <?php if ($lastPing): ?>
-            Τελευταίο: <?= e(gr_time($lastPing['created_at'])) ?>
+            <?= e(t('team/live.065', 'Τελευταίο:')) ?> <?= e(gr_time($lastPing['created_at'])) ?>
           <?php else: ?>
-            Στείλτε τη θέση σας προς <?= e($orgLabel) ?>
+            <?= e(t('team/live.066', 'Στείλτε τη θέση σας προς')) ?> <?= e($orgLabel) ?>
           <?php endif; ?>
         </div>
       </div>
       <i class="bi bi-chevron-right loc-btn-arrow"></i>
     </button>
     <div id="gpsBanner" style="display:none" class="req-banner">
-      <i class="bi bi-geo-alt-fill"></i> <?= e($orgLabel) ?> ζητά το στίγμα GPS σας — πατήστε «Αποστολή Στίγματος»
+      <i class="bi bi-geo-alt-fill"></i> <?= e($orgLabel) ?> <?= e(t('team/live.008', 'ζητά το στίγμα GPS σας — πατήστε «Αποστολή Στίγματος»')) ?>
     </div>
     <div id="locResult"></div>
   </div>
@@ -564,13 +564,13 @@ foreach (flash_get() as $flash):
     <button class="photo-toggle" id="photoToggle" onclick="togglePhoto()" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-camera-fill photo-toggle-icon"></i>
       <div>
-        <div class="photo-toggle-label">Αποστολή Φωτογραφίας</div>
-        <div class="photo-toggle-sub" id="photoToggleSub">Στείλτε φωτογραφία προς <?= e($orgLabel) ?></div>
+        <div class="photo-toggle-label"><?= e(t('team/live.009', 'Αποστολή Φωτογραφίας')) ?></div>
+        <div class="photo-toggle-sub" id="photoToggleSub"><?= e(t('team/live.010', 'Στείλτε φωτογραφία προς')) ?> <?= e($orgLabel) ?></div>
       </div>
       <i class="bi bi-chevron-right photo-toggle-arrow" id="photoArrow"></i>
     </button>
     <div id="photoBanner" style="display:none" class="req-banner">
-      <i class="bi bi-camera-fill"></i> <?= e($orgLabel) ?> ζητά φωτογραφία — τραβήξτε ή επιλέξτε μία παρακάτω
+      <i class="bi bi-camera-fill"></i> <?= e($orgLabel) ?> <?= e(t('team/live.011', 'ζητά φωτογραφία — τραβήξτε ή επιλέξτε μία παρακάτω')) ?>
     </div>
     <div id="photoUploadForm">
       <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/photo')) ?>"
@@ -581,16 +581,16 @@ foreach (flash_get() as $flash):
         <input type="hidden" name="longitude"  id="photoLng">
         <input type="hidden" name="request_id" id="photoRequestId">
         <div class="form-group">
-          <label class="form-group" style="font-size:12px;color:#9ca3af;font-weight:600">Φωτογραφία *</label>
+          <label class="form-group" style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('team/live.012', 'Φωτογραφία *')) ?></label>
           <input type="file" name="photo" accept="image/*" capture="environment"
                  class="photo-file-input" id="photoFile" required>
         </div>
         <div class="form-group">
-          <label style="font-size:12px;color:#9ca3af;font-weight:600">Λεζάντα (προαιρετικό)</label>
-          <input type="text" name="caption" class="form-input" placeholder="π.χ. Κατάσταση στο σημείο…" maxlength="200">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('team/live.013', 'Λεζάντα (προαιρετικό)')) ?></label>
+          <input type="text" name="caption" class="form-input" placeholder="<?= e(t('team/live.057', 'π.χ. Κατάσταση στο σημείο…')) ?>" maxlength="200">
         </div>
         <button type="button" class="photo-submit" id="photoSubmitBtn" onclick="submitPhoto()">
-          <i class="bi bi-camera-fill"></i> Αποστολή Φωτογραφίας
+          <i class="bi bi-camera-fill"></i> <?= e(t('team/live.009', 'Αποστολή Φωτογραφίας')) ?>
         </button>
       </form>
     </div>
@@ -600,13 +600,13 @@ foreach (flash_get() as $flash):
     <button class="photo-toggle" id="videoToggle" onclick="toggleVideo()" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-camera-video-fill photo-toggle-icon"></i>
       <div>
-        <div class="photo-toggle-label">Αποστολή Βίντεο</div>
-        <div class="photo-toggle-sub" id="videoToggleSub">Στείλτε σύντομο βίντεο προς <?= e($orgLabel) ?></div>
+        <div class="photo-toggle-label"><?= e(t('team/live.014', 'Αποστολή Βίντεο')) ?></div>
+        <div class="photo-toggle-sub" id="videoToggleSub"><?= e(t('team/live.015', 'Στείλτε σύντομο βίντεο προς')) ?> <?= e($orgLabel) ?></div>
       </div>
       <i class="bi bi-chevron-right photo-toggle-arrow" id="videoArrow"></i>
     </button>
     <div id="videoBanner" style="display:none" class="req-banner">
-      <i class="bi bi-camera-video-fill"></i> <span id="videoBannerText"><?= e($orgLabel) ?> ζητά βίντεο — τραβήξτε ή επιλέξτε ένα παρακάτω</span>
+      <i class="bi bi-camera-video-fill"></i> <span id="videoBannerText"><?= e($orgLabel) ?> <?= e(t('team/live.016', 'ζητά βίντεο — τραβήξτε ή επιλέξτε ένα παρακάτω')) ?></span>
     </div>
     <div id="videoUploadForm">
       <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/video')) ?>"
@@ -617,16 +617,16 @@ foreach (flash_get() as $flash):
         <input type="hidden" name="longitude"  id="videoLng">
         <input type="hidden" name="request_id" id="videoRequestId">
         <div class="form-group">
-          <label class="form-group" style="font-size:12px;color:#9ca3af;font-weight:600">Βίντεο * (30–40'')</label>
+          <label class="form-group" style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('team/live.017', 'Βίντεο * (30–40\'\')')) ?></label>
           <input type="file" name="video" accept="video/*" capture="environment"
                  class="photo-file-input" id="videoFile" required>
         </div>
         <div class="form-group">
-          <label style="font-size:12px;color:#9ca3af;font-weight:600">Λεζάντα (προαιρετικό)</label>
-          <input type="text" name="caption" class="form-input" placeholder="π.χ. Κατάσταση στο σημείο…" maxlength="200">
+          <label style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('team/live.013', 'Λεζάντα (προαιρετικό)')) ?></label>
+          <input type="text" name="caption" class="form-input" placeholder="<?= e(t('team/live.057', 'π.χ. Κατάσταση στο σημείο…')) ?>" maxlength="200">
         </div>
         <button type="button" class="photo-submit" id="videoSubmitBtn" onclick="submitVideo()">
-          <i class="bi bi-camera-video-fill"></i> Αποστολή Βίντεο
+          <i class="bi bi-camera-video-fill"></i> <?= e(t('team/live.014', 'Αποστολή Βίντεο')) ?>
         </button>
       </form>
     </div>
@@ -634,8 +634,8 @@ foreach (flash_get() as $flash):
 
   <!-- ── Χάρτης ──────────────────────────────────────────────────────── -->
   <div class="action-card">
-    <div class="presence-header"><i class="bi bi-map"></i> Χάρτης <?= e($eventSingular) ?>
-      <?php if ($lastPing): ?><span style="font-size:12px;font-weight:400;color:#7ab5ae;margin-left:auto">Στίγμα: <?= e(gr_time($lastPing['created_at'])) ?></span><?php endif; ?>
+    <div class="presence-header"><i class="bi bi-map"></i> <?= e(t('team/live.018', 'Χάρτης')) ?> <?= e($eventSingular) ?>
+      <?php if ($lastPing): ?><span style="font-size:12px;font-weight:400;color:#7ab5ae;margin-left:auto"><?= e(t('team/live.019', 'Στίγμα:')) ?> <?= e(gr_time($lastPing['created_at'])) ?></span><?php endif; ?>
     </div>
     <div id="teamMap" style="height:240px;background:#0a1414"></div>
   </div>
@@ -644,8 +644,8 @@ foreach (flash_get() as $flash):
   <div class="action-card">
     <div class="presence-header">
       <i class="bi bi-person-check"></i>
-      Δήλωση Παρουσίας
-      <span style="font-size:12px;font-weight:400;color:#7ab5ae;margin-left:auto"><?= $approved ?> εγκεκριμένα</span>
+      <?= e(t('team/live.020', 'Δήλωση Παρουσίας')) ?>
+      <span style="font-size:12px;font-weight:400;color:#7ab5ae;margin-left:auto"><?= $approved ?> <?= e(t('team/live.021', 'εγκεκριμένα')) ?></span>
     </div>
     <div class="presence-btns">
       <!-- Full -->
@@ -655,14 +655,14 @@ foreach (flash_get() as $flash):
         <input type="hidden" name="_from" value="live">
         <button type="submit" class="pres-btn pres-btn-full" <?= !$isActive ? 'disabled' : '' ?>>
           <i class="bi bi-check2-all"></i>
-          Πλήρης<br><span style="font-size:10px;font-weight:400"><?= $approved ?> άτομα</span>
+          <?= e(t('team/live.022', 'Πλήρης')) ?><br><span style="font-size:10px;font-weight:400"><?= $approved ?> <?= e(t('team/live.023', 'άτομα')) ?></span>
         </button>
       </form>
       <!-- Partial -->
       <button type="button" class="pres-btn pres-btn-partial" id="partialToggle"
               onclick="togglePartial()" <?= !$isActive ? 'disabled' : '' ?>>
         <i class="bi bi-check2"></i>
-        Μερική<br><span style="font-size:10px;font-weight:400">λιγότερα άτομα</span>
+        <?= e(t('team/live.024', 'Μερική')) ?><br><span style="font-size:10px;font-weight:400"><?= e(t('team/live.025', 'λιγότερα άτομα')) ?></span>
       </button>
       <!-- Departed -->
       <form method="post" action="<?= e(url('/team/operations/events/' . $eid . '/checkin')) ?>"
@@ -672,7 +672,7 @@ foreach (flash_get() as $flash):
         <input type="hidden" name="_from" value="live">
         <button type="submit" class="pres-btn pres-btn-departed" <?= !$isActive ? 'disabled' : '' ?>>
           <i class="bi bi-box-arrow-right"></i>
-          Αποχώρηση
+          <?= e(t('team/live.026', 'Αποχώρηση')) ?>
         </button>
       </form>
     </div>
@@ -693,10 +693,10 @@ foreach (flash_get() as $flash):
                  min="1" max="<?= max(1, $approved - 1) ?>"
                  value="<?= max(1, $approved - 1) ?>" required>
           <button type="submit" class="partial-submit">
-            <i class="bi bi-check-lg"></i> Δήλωση
+            <i class="bi bi-check-lg"></i> <?= e(t('team/live.027', 'Δήλωση')) ?>
           </button>
         </div>
-        <div class="partial-hint">Εγκεκριμένα: <?= $approved ?> άτομα</div>
+        <div class="partial-hint"><?= e(t('team/live.067', 'Εγκεκριμένα:')) ?> <?= $approved ?> <?= e(t('team/live.023', 'άτομα')) ?></div>
       </form>
     </div>
   </div>
@@ -707,8 +707,8 @@ foreach (flash_get() as $flash):
             onclick="toggleShortage()" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-exclamation-triangle shortage-toggle-icon"></i>
       <div>
-        <div class="shortage-toggle-label">Αναφορά Έλλειψης</div>
-        <div class="shortage-toggle-sub">Ειδοποιήστε άμεσα <?= e($orgLabel) ?></div>
+        <div class="shortage-toggle-label"><?= e(t('team/live.029', 'Αναφορά Έλλειψης')) ?></div>
+        <div class="shortage-toggle-sub"><?= e(t('team/live.030', 'Ειδοποιήστε άμεσα')) ?> <?= e($orgLabel) ?></div>
       </div>
       <i class="bi bi-chevron-right shortage-toggle-arrow" id="shortageArrow"></i>
     </button>
@@ -721,39 +721,39 @@ foreach (flash_get() as $flash):
         <input type="hidden" name="severity" id="severityInput" value="medium">
 
         <div class="form-group">
-          <label>Τύπος έλλειψης</label>
+          <label><?= e(t('team/live.031', 'Τύπος έλλειψης')) ?></label>
           <select name="shortage_type" class="form-select" required>
-            <option value="people">👥 Άτομα</option>
-            <option value="equipment">🔧 Εξοπλισμός</option>
-            <option value="medical_supplies">🏥 Υγειονομικό υλικό</option>
-            <option value="vehicle">🚗 Όχημα</option>
-            <option value="other">📋 Άλλο</option>
+            <option value="people"><?= e(t('team/live.032', '👥 Άτομα')) ?></option>
+            <option value="equipment"><?= e(t('team/live.033', '🔧 Εξοπλισμός')) ?></option>
+            <option value="medical_supplies"><?= e(t('team/live.034', '🏥 Υγειονομικό υλικό')) ?></option>
+            <option value="vehicle"><?= e(t('team/live.035', '🚗 Όχημα')) ?></option>
+            <option value="other"><?= e(t('team/live.036', '📋 Άλλο')) ?></option>
           </select>
         </div>
 
         <div class="form-group">
-          <label>Σοβαρότητα</label>
+          <label><?= e(t('team/live.037', 'Σοβαρότητα')) ?></label>
           <div class="severity-grid">
-            <button type="button" class="sev-btn sev-low" data-val="low" onclick="setSeverity('low')">Χαμηλή</button>
-            <button type="button" class="sev-btn sev-medium selected" data-val="medium" onclick="setSeverity('medium')">Μεσαία</button>
-            <button type="button" class="sev-btn sev-high" data-val="high" onclick="setSeverity('high')">Υψηλή</button>
-            <button type="button" class="sev-btn sev-critical" data-val="critical" onclick="setSeverity('critical')">Κρίσιμη</button>
+            <button type="button" class="sev-btn sev-low" data-val="low" onclick="setSeverity('low')"><?= e(t('team/live.038', 'Χαμηλή')) ?></button>
+            <button type="button" class="sev-btn sev-medium selected" data-val="medium" onclick="setSeverity('medium')"><?= e(t('team/live.039', 'Μεσαία')) ?></button>
+            <button type="button" class="sev-btn sev-high" data-val="high" onclick="setSeverity('high')"><?= e(t('team/live.040', 'Υψηλή')) ?></button>
+            <button type="button" class="sev-btn sev-critical" data-val="critical" onclick="setSeverity('critical')"><?= e(t('team/live.041', 'Κρίσιμη')) ?></button>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Σύντομος τίτλος *</label>
-          <input type="text" name="title" class="form-input" required placeholder="π.χ. Λείπουν 2 άτομα">
+          <label><?= e(t('team/live.042', 'Σύντομος τίτλος *')) ?></label>
+          <input type="text" name="title" class="form-input" required placeholder="<?= e(t('team/live.058', 'π.χ. Λείπουν 2 άτομα')) ?>">
         </div>
 
         <div class="form-group">
-          <label>Περιγραφή (προαιρετικό)</label>
-          <textarea name="description" class="form-textarea" rows="2" placeholder="Επιπλέον λεπτομέρειες..."></textarea>
+          <label><?= e(t('team/live.043', 'Περιγραφή (προαιρετικό)')) ?></label>
+          <textarea name="description" class="form-textarea" rows="2" placeholder="<?= e(t('team/live.059', 'Επιπλέον λεπτομέρειες...')) ?>"></textarea>
         </div>
 
         <button type="submit" class="shortage-submit"
                 onclick="return confirm(<?= e(json_encode('Αποστολή αναφοράς έλλειψης προς ' . $orgLabel . ';', JSON_UNESCAPED_UNICODE)) ?>)">
-          <i class="bi bi-send-fill"></i> Αποστολή Αναφοράς
+          <i class="bi bi-send-fill"></i> <?= e(t('team/live.044', 'Αποστολή Αναφοράς')) ?>
         </button>
       </form>
     </div>
@@ -762,7 +762,7 @@ foreach (flash_get() as $flash):
   <!-- ── Shortage history (live-updated by poll) ───────────────────────── -->
   <div id="shortageHistory">
     <?php if ($shortages): ?>
-    <div class="section-title"><i class="bi bi-clock-history me-1"></i>Αναφορές μας σε αυτή τη <?= e($eventSingularLc) ?></div>
+    <div class="section-title"><i class="bi bi-clock-history me-1"></i><?= e(t('team/live.045', 'Αναφορές μας σε αυτή τη')) ?> <?= e($eventSingularLc) ?></div>
     <?php foreach ($shortages as $sh): ?>
       <div class="shortage-item">
         <div class="shortage-row">
@@ -783,37 +783,37 @@ foreach (flash_get() as $flash):
 
   <!-- ── Γρήγορη ενημέρωση (status pings) ────────────────────────────── -->
   <div class="action-card">
-    <div class="presence-header"><i class="bi bi-lightning-charge"></i> Γρήγορη ενημέρωση</div>
+    <div class="presence-header"><i class="bi bi-lightning-charge"></i> <?= e(t('team/live.046', 'Γρήγορη ενημέρωση')) ?></div>
     <div class="ping-grid">
-      <button type="button" class="ping-btn" data-code="arrived" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-geo-alt-fill"></i> Φτάσαμε στο σημείο</button>
-      <button type="button" class="ping-btn" data-code="task_complete" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-check2-circle"></i> Ολοκληρώθηκε</button>
-      <button type="button" class="ping-btn" data-code="need_backup" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-people-fill"></i> Χρειαζόμαστε ενίσχυση</button>
-      <button type="button" class="ping-btn" data-code="returning" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-box-arrow-left"></i> Επιστροφή στη βάση</button>
-      <button type="button" class="ping-btn full" data-code="incident" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-exclamation-triangle-fill"></i> Έχουμε περιστατικό</button>
+      <button type="button" class="ping-btn" data-code="arrived" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-geo-alt-fill"></i> <?= e(t('team/live.047', 'Φτάσαμε στο σημείο')) ?></button>
+      <button type="button" class="ping-btn" data-code="task_complete" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-check2-circle"></i> <?= e(t('team/live.048', 'Ολοκληρώθηκε')) ?></button>
+      <button type="button" class="ping-btn" data-code="need_backup" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-people-fill"></i> <?= e(t('team/live.049', 'Χρειαζόμαστε ενίσχυση')) ?></button>
+      <button type="button" class="ping-btn" data-code="returning" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-box-arrow-left"></i> <?= e(t('team/live.050', 'Επιστροφή στη βάση')) ?></button>
+      <button type="button" class="ping-btn full" data-code="incident" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-exclamation-triangle-fill"></i> <?= e(t('team/live.051', 'Έχουμε περιστατικό')) ?></button>
     </div>
   </div>
 
   <!-- ── Επικοινωνία με τον φορέα ──────────────────────────────────────── -->
   <div class="action-card">
-    <div class="presence-header"><i class="bi bi-chat-dots"></i> Επικοινωνία · <?= e($orgLabel) ?></div>
-    <div class="msg-list" id="msgList"><div class="msg-empty">Φόρτωση…</div></div>
+    <div class="presence-header"><i class="bi bi-chat-dots"></i> <?= e(t('team/live.052', 'Επικοινωνία ·')) ?> <?= e($orgLabel) ?></div>
+    <div class="msg-list" id="msgList"><div class="msg-empty"><?= e(t('team/live.053', 'Φόρτωση…')) ?></div></div>
     <div class="msg-compose">
       <input type="text" id="msgInput" placeholder="Μήνυμα προς <?= e($orgLabel) ?>…" maxlength="500">
-      <button type="button" id="msgSend" title="Αποστολή"><i class="bi bi-send"></i></button>
+      <button type="button" id="msgSend" title="<?= e(t('team/live.061', 'Αποστολή')) ?>"><i class="bi bi-send"></i></button>
     </div>
   </div>
 
   <!-- ── Δωμάτιο Επιχείρησης (κοινό κανάλι) ──────────────────────────── -->
   <div class="action-card">
-    <div class="presence-header"><i class="bi bi-broadcast-pin"></i> Δωμάτιο Επιχείρησης</div>
-    <div class="msg-list" id="roomList"><div class="msg-empty">Φόρτωση…</div></div>
+    <div class="presence-header"><i class="bi bi-broadcast-pin"></i> <?= e(t('team/live.054', 'Δωμάτιο Επιχείρησης')) ?></div>
+    <div class="msg-list" id="roomList"><div class="msg-empty"><?= e(t('team/live.053', 'Φόρτωση…')) ?></div></div>
     <div class="msg-compose">
-      <input type="text" id="roomInput" placeholder="Μήνυμα προς όλους…" maxlength="500">
-      <button type="button" id="roomSend" title="Αποστολή"><i class="bi bi-send"></i></button>
+      <input type="text" id="roomInput" placeholder="<?= e(t('team/live.062', 'Μήνυμα προς όλους…')) ?>" maxlength="500">
+      <button type="button" id="roomSend" title="<?= e(t('team/live.061', 'Αποστολή')) ?>"><i class="bi bi-send"></i></button>
     </div>
   </div>
 
-  <div id="wakeLockIndicator"><i class="bi bi-phone"></i> Η οθόνη παραμένει ενεργή</div>
+  <div id="wakeLockIndicator"><i class="bi bi-phone"></i> <?= e(t('team/live.055', 'Η οθόνη παραμένει ενεργή')) ?></div>
 </div><!-- .hub-body -->
 
 <script>

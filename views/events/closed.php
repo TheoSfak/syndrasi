@@ -6,19 +6,19 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Κλειστές <?= e($eventPlural) ?></h1>
-    <p class="text-muted small mb-0"><?= e($eventPlural) ?> που έληξαν — εκκρεμεί αρχειοθέτηση και τελικές διορθώσεις.</p>
+    <h1 class="h3 mb-0"><?= e(t('events/closed.001', 'Κλειστές')) ?> <?= e($eventPlural) ?></h1>
+    <p class="text-muted small mb-0"><?= e($eventPlural) ?> <?= e(t('events/closed.002', 'που έληξαν — εκκρεμεί αρχειοθέτηση και τελικές διορθώσεις.')) ?></p>
   </div>
 </div>
 
 <ul class="nav nav-pills mb-3 small">
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events')) ?>">Ενεργές <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['active'] ?? 0) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events/closed')) ?>">Κλειστές <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['closed'] ?? 0) ?></span></a></li>
-  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>">Ολοκληρωμένες <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['completed'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events')) ?>"><?= e(t('events/closed.003', 'Ενεργές')) ?> <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['active'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link active" href="<?= e(url('/events/closed')) ?>"><?= e(t('events/closed.001', 'Κλειστές')) ?> <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['closed'] ?? 0) ?></span></a></li>
+  <li class="nav-item"><a class="nav-link" href="<?= e(url('/events/completed')) ?>"><?= e(t('events/closed.004', 'Ολοκληρωμένες')) ?> <span class="badge text-bg-light ms-1"><?= (int) ($tabCounts['completed'] ?? 0) ?></span></a></li>
 </ul>
 
 <?php if (!$events): ?>
-  <div class="alert alert-success">Δεν υπάρχουν κλειστές <?= e($eventPluralLc) ?> προς αρχειοθέτηση.</div>
+  <div class="alert alert-success"><?= e(t('events/closed.010', 'Δεν υπάρχουν κλειστές')) ?> <?= e($eventPluralLc) ?> <?= e(t('events/closed.011', 'προς αρχειοθέτηση.')) ?></div>
 <?php else: ?>
   <div class="card shadow-sm">
     <div class="table-responsive">
@@ -26,8 +26,8 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
         <thead class="table-light">
           <tr>
             <th><?= e($eventSingular) ?></th>
-            <th>Ημερομηνία</th>
-            <th class="text-center">Εγκεκρ. Ομάδες</th>
+            <th><?= e(t('events/closed.006', 'Ημερομηνία')) ?></th>
+            <th class="text-center"><?= e(t('events/closed.007', 'Εγκεκρ. Ομάδες')) ?></th>
             <th></th>
           </tr>
         </thead>
@@ -47,9 +47,9 @@ $eventSingular = $terms['event_singular'] ?? 'Δράση';
               <td class="text-end text-nowrap">
                 <a href="<?= e(url('/events/' . $e['id'] . '/reconcile')) ?>"
                    class="btn btn-sm btn-warning me-1">
-                  <i class="bi bi-clipboard-check me-1"></i>Απολογισμός-Στοιχεία
+                  <i class="bi bi-clipboard-check me-1"></i><?= e(t('events/closed.008', 'Απολογισμός-Στοιχεία')) ?>
                 </a>
-                <a href="<?= e(url('/events/' . $e['id'])) ?>" class="btn btn-sm btn-outline-secondary">Προβολή</a>
+                <a href="<?= e(url('/events/' . $e['id'])) ?>" class="btn btn-sm btn-outline-secondary"><?= e(t('events/closed.009', 'Προβολή')) ?></a>
               </td>
             </tr>
           <?php endforeach; ?>

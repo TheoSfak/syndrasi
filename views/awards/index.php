@@ -4,10 +4,10 @@ $eventPlural = $terms['event_plural'] ?? 'Δράσεις';
 $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-1 gap-2">
-  <h1 class="h3 mb-0">Επιβράβευση Ομάδων</h1>
+  <h1 class="h3 mb-0"><?= e(t('awards/index.001', 'Επιβράβευση Ομάδων')) ?></h1>
   <div class="d-flex align-items-center gap-2">
     <form method="get" action="<?= e(url('/awards')) ?>" class="d-flex align-items-center gap-2">
-      <label class="small text-muted">Έτος</label>
+      <label class="small text-muted"><?= e(t('awards/index.002', 'Έτος')) ?></label>
       <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
         <?php for ($y = (int) date('Y'); $y >= (int) date('Y') - 5; $y--): ?>
           <option value="<?= $y ?>" <?= $y === $year ? 'selected' : '' ?>><?= $y ?></option>
@@ -15,11 +15,11 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
       </select>
     </form>
     <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('/exports/awards?year=' . $year)) ?>">
-      <i class="bi bi-download me-1"></i>Εξαγωγή CSV
+      <i class="bi bi-download me-1"></i><?= e(t('awards/index.003', 'Εξαγωγή CSV')) ?>
     </a>
   </div>
 </div>
-<p class="text-muted">Αυτόματη ετήσια κατάταξη και αναγνώριση της προσφοράς των εθελοντικών ομάδων.</p>
+<p class="text-muted"><?= e(t('awards/index.004', 'Αυτόματη ετήσια κατάταξη και αναγνώριση της προσφοράς των εθελοντικών ομάδων.')) ?></p>
 
 <?php
 $cards = [
@@ -41,7 +41,7 @@ $cards = [
             <div class="fw-bold"><?= e($w['team_name']) ?></div>
             <div class="small text-muted mt-1"><?= e($c['metric']($w)) ?></div>
           <?php else: ?>
-            <div class="text-muted">— Δεν υπάρχουν επαρκή δεδομένα —</div>
+            <div class="text-muted"><?= e(t('awards/index.005', '— Δεν υπάρχουν επαρκή δεδομένα —')) ?></div>
           <?php endif; ?>
         </div>
       </div>
@@ -52,7 +52,7 @@ $cards = [
 <div class="card shadow-sm">
   <?php $t = $awards['thresholds']; ?>
   <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-list-ol me-1"></i> Πλήρης κατάταξη <?= (int) $year ?></span>
+    <span><i class="bi bi-list-ol me-1"></i> <?= e(t('awards/index.006', 'Πλήρης κατάταξη')) ?> <?= (int) $year ?></span>
     <span class="small text-muted fw-normal">
       🥉 <?= (int) $t['bronze_events'] ?>+ <?= e($eventPluralLc) ?> &nbsp;
       🥈 <?= (int) $t['silver_events'] ?>+ &nbsp;
@@ -60,11 +60,11 @@ $cards = [
     </span>
   </div>
   <?php if (!$awards['ranking']): ?>
-    <div class="card-body text-muted">Δεν υπάρχουν δεδομένα ομάδων για αυτό το έτος.</div>
+    <div class="card-body text-muted"><?= e(t('awards/index.007', 'Δεν υπάρχουν δεδομένα ομάδων για αυτό το έτος.')) ?></div>
   <?php else: ?>
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead><tr><th>#</th><th>Ομάδα</th><th><?= e($eventPlural) ?></th><th>Ώρες εθελοντισμού</th><th>Συνέπεια</th><th>Μέση απόκριση</th></tr></thead>
+        <thead><tr><th>#</th><th><?= e(t('awards/index.008', 'Ομάδα')) ?></th><th><?= e($eventPlural) ?></th><th><?= e(t('awards/index.009', 'Ώρες εθελοντισμού')) ?></th><th><?= e(t('awards/index.010', 'Συνέπεια')) ?></th><th><?= e(t('awards/index.011', 'Μέση απόκριση')) ?></th></tr></thead>
         <tbody>
           <?php foreach ($awards['ranking'] as $i => $r): ?>
             <tr>
@@ -77,9 +77,9 @@ $cards = [
               <td>
                 <strong><?= e($r['team_name']) ?></strong>
                 <span class="text-muted small"><?= e($r['team_type'] ?: '') ?></span>
-                <?php if ($r['tier'] === 'gold'):   ?><span title="Χρυσή συμμετοχή">🥇</span>
-                <?php elseif ($r['tier'] === 'silver'): ?><span title="Ασημένια συμμετοχή">🥈</span>
-                <?php elseif ($r['tier'] === 'bronze'): ?><span title="Χάλκινη συμμετοχή">🥉</span>
+                <?php if ($r['tier'] === 'gold'):   ?><span title="<?= e(t('awards/index.012', 'Χρυσή συμμετοχή')) ?>">🥇</span>
+                <?php elseif ($r['tier'] === 'silver'): ?><span title="<?= e(t('awards/index.013', 'Ασημένια συμμετοχή')) ?>">🥈</span>
+                <?php elseif ($r['tier'] === 'bronze'): ?><span title="<?= e(t('awards/index.014', 'Χάλκινη συμμετοχή')) ?>">🥉</span>
                 <?php endif; ?>
               </td>
               <td><?= (int) $r['events_count'] ?></td>

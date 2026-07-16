@@ -75,7 +75,7 @@ function sidebar_active($path, $currentPath, $base)
 
   <div class="offcanvas-header d-lg-none">
     <span class="navbar-brand text-white fw-bold mb-0"><i class="bi bi-people-fill me-1"></i> SynDrasi</span>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Κλείσιμο"></button>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="<?= e(t('layouts/sidebar.002', 'Κλείσιμο')) ?>"></button>
   </div>
 
   <?php if (!empty($sidebarLogoUrl)): ?>
@@ -84,7 +84,7 @@ function sidebar_active($path, $currentPath, $base)
   </div>
   <?php endif; ?>
 
-  <div class="sidebar-label">Μενού</div>
+  <div class="sidebar-label"><?= e(t('layouts/sidebar.001', 'Μενού')) ?></div>
 
   <ul class="nav flex-column mb-auto px-1 pb-4">
     <?php foreach ($menus as $m): ?>

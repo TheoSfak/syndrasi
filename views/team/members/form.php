@@ -21,33 +21,33 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
       <!-- Fixed fields -->
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label">Ονοματεπώνυμο <span class="text-danger">*</span></label>
+          <label class="form-label"><?= e(t('team/members/form.001', 'Ονοματεπώνυμο')) ?> <span class="text-danger">*</span></label>
           <input type="text" name="full_name" class="form-control" value="<?= $v('full_name') ?>" required>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Τηλέφωνο <span class="text-danger">*</span></label>
+          <label class="form-label"><?= e(t('team/members/form.002', 'Τηλέφωνο')) ?> <span class="text-danger">*</span></label>
           <input type="tel" name="phone" class="form-control" value="<?= $v('phone') ?>" required>
         </div>
         <div class="col-md-6">
           <label class="form-label">Email</label>
           <input type="email" name="email" class="form-control" value="<?= $v('email') ?>">
-          <div class="form-text">Χρησιμοποιείται για αποστολή ειδοποίησης συμμετοχής σε <?= e($eventSingularLc) ?>.</div>
+          <div class="form-text"><?= e(t('team/members/form.012', 'Χρησιμοποιείται για αποστολή ειδοποίησης συμμετοχής σε')) ?> <?= e($eventSingularLc) ?>.</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Ημερομηνία Γέννησης</label>
+          <label class="form-label"><?= e(t('team/members/form.004', 'Ημερομηνία Γέννησης')) ?></label>
           <input type="date" name="date_of_birth" class="form-control" value="<?= $v('date_of_birth') ?>">
         </div>
         <div class="col-md-8">
-          <label class="form-label">Διεύθυνση</label>
+          <label class="form-label"><?= e(t('team/members/form.005', 'Διεύθυνση')) ?></label>
           <input type="text" name="address" class="form-control" value="<?= $v('address') ?>">
         </div>
         <div class="col-md-4">
-          <label class="form-label">ΑΜ Πολιτικής Προστασίας</label>
+          <label class="form-label"><?= e(t('team/members/form.006', 'ΑΜ Πολιτικής Προστασίας')) ?></label>
           <input type="text" name="civil_protection_registry_no" class="form-control" value="<?= $v('civil_protection_registry_no') ?>">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Ειδικότητα / Ρόλος στην ομάδα</label>
-          <input type="text" name="role_in_team" class="form-control" value="<?= $v('role_in_team') ?>" placeholder="π.χ. Διασώστης, Οδηγός, Πρώτες Βοήθειες">
+          <label class="form-label"><?= e(t('team/members/form.007', 'Ειδικότητα / Ρόλος στην ομάδα')) ?></label>
+          <input type="text" name="role_in_team" class="form-control" value="<?= $v('role_in_team') ?>" placeholder="<?= e(t('team/members/form.011', 'π.χ. Διασώστης, Οδηγός, Πρώτες Βοήθειες')) ?>">
         </div>
       </div>
 
@@ -57,7 +57,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
       if ($visibleOptional):
       ?>
       <hr class="my-4">
-      <h6 class="text-muted mb-3">Επιπλέον Στοιχεία</h6>
+      <h6 class="text-muted mb-3"><?= e(t('team/members/form.008', 'Επιπλέον Στοιχεία')) ?></h6>
       <div class="row g-3">
         <?php foreach ($visibleOptional as $field => $conf):
           $required = !empty($conf['required']);
@@ -87,7 +87,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
       <!-- Notes -->
       <div class="row g-3 mt-1">
         <div class="col-12">
-          <label class="form-label">Σημειώσεις</label>
+          <label class="form-label"><?= e(t('team/members/form.009', 'Σημειώσεις')) ?></label>
           <textarea name="notes" class="form-control" rows="2"><?= $v('notes') ?></textarea>
         </div>
       </div>
@@ -96,7 +96,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
         <button type="submit" class="btn btn-primary">
           <i class="bi bi-check-lg me-1"></i><?= $isEdit ? 'Αποθήκευση' : 'Προσθήκη Μέλους' ?>
         </button>
-        <a href="<?= e(url('/team/members')) ?>" class="btn btn-outline-secondary">Ακύρωση</a>
+        <a href="<?= e(url('/team/members')) ?>" class="btn btn-outline-secondary"><?= e(t('team/members/form.010', 'Ακύρωση')) ?></a>
       </div>
     </form>
   </div>

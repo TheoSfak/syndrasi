@@ -90,7 +90,7 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
 <div class="topbar">
   <div class="ev"><i class="bi bi-broadcast me-1"></i><?= e($app['event_title']) ?></div>
   <div class="meta"><?= e(gr_time($app['start_datetime'])) ?>–<?= e(gr_time($app['end_datetime'])) ?><?php if ($app['location_name']): ?> · <?= e($app['location_name']) ?><?php endif; ?></div>
-  <div class="who"><i class="bi bi-person-badge me-1"></i><?= e($app['team_name']) ?> · Υπεύθυνος: <?= e($cname) ?></div>
+  <div class="who"><i class="bi bi-person-badge me-1"></i><?= e($app['team_name']) ?> <?= e(t('field/hub.001', '· Υπεύθυνος:')) ?> <?= e($cname) ?></div>
 </div>
 
 <div class="body">
@@ -103,7 +103,7 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
   <?php endforeach; ?>
 
   <?php if (!$isActive): ?>
-  <div class="inactive"><i class="bi bi-hourglass-split"></i> Η <?= e($eventSingularLc) ?> δεν είναι ενεργή αυτή τη στιγμή.</div>
+  <div class="inactive"><i class="bi bi-hourglass-split"></i> Η <?= e($eventSingularLc) ?> <?= e(t('field/hub.051', 'δεν είναι ενεργή αυτή τη στιγμή.')) ?></div>
   <?php endif; ?>
 
   <!-- Pinned orders -->
@@ -114,14 +114,14 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
 
   <!-- Offline indicator (shown after 2 consecutive poll failures) -->
   <div id="offlineBanner" role="alert" aria-live="assertive" style="display:none;background:#7c2d12;color:#fef2f2;border:1px solid #ef4444;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;gap:10px;align-items:center">
-    <i class="bi bi-wifi-off"></i> Δεν υπάρχει σύνδεση — εμφανίζονται τελευταία δεδομένα.
+    <i class="bi bi-wifi-off"></i> <?= e(t('field/hub.003', 'Δεν υπάρχει σύνδεση — εμφανίζονται τελευταία δεδομένα.')) ?>
   </div>
 
   <!-- SOS -->
   <div>
     <button class="sos-btn" id="sosBtn" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-exclamation-octagon-fill sos-ico"></i>
-      <div style="flex:1"><div class="sos-lbl">SOS — ΚΙΝΔΥΝΟΣ</div><div class="sos-sub">Άμεση κλήση βοήθειας προς <?= e($orgLabel) ?></div></div>
+      <div style="flex:1"><div class="sos-lbl"><?= e(t('field/hub.004', 'SOS — ΚΙΝΔΥΝΟΣ')) ?></div><div class="sos-sub"><?= e(t('field/hub.005', 'Άμεση κλήση βοήθειας προς')) ?> <?= e($orgLabel) ?></div></div>
     </button>
     <div class="sos-banner" id="sosBanner" role="alert" aria-live="assertive" style="display:none"></div>
   </div>
@@ -129,11 +129,11 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
   <!-- Στίγμα -->
   <div class="card">
     <div id="gpsReqBanner" style="margin:14px 14px 0;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($gpsRequest) ? 'block' : 'none' ?>">
-      <i class="bi bi-geo-alt-fill me-1"></i> <?= e($orgLabel) ?> ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».
+      <i class="bi bi-geo-alt-fill me-1"></i> <?= e($orgLabel) ?> <?= e(t('field/hub.006', 'ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».')) ?>
     </div>
     <button class="big-btn" id="locBtn" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-geo-alt-fill big-ico"></i>
-      <div style="flex:1"><div class="big-lbl">Αποστολή Στίγματος</div><div class="big-sub">Στείλτε τη θέση σας προς <?= e($orgLabel) ?></div></div>
+      <div style="flex:1"><div class="big-lbl"><?= e(t('field/hub.007', 'Αποστολή Στίγματος')) ?></div><div class="big-sub"><?= e(t('field/hub.008', 'Στείλτε τη θέση σας προς')) ?> <?= e($orgLabel) ?></div></div>
       <i class="bi bi-chevron-right" style="opacity:.5"></i>
     </button>
     <div id="locRes" style="padding:10px 18px 14px"></div>
@@ -141,48 +141,48 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
 
   <!-- Map -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-map"></i> Χάρτης <?= e($eventSingular) ?></div>
+    <div class="hdr"><i class="bi bi-map"></i> <?= e(t('field/hub.009', 'Χάρτης')) ?> <?= e($eventSingular) ?></div>
     <div id="teamMap" style="height:240px;background:#0a1414"></div>
   </div>
 
   <!-- Status pings -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-lightning-charge"></i> Γρήγορη ενημέρωση</div>
+    <div class="hdr"><i class="bi bi-lightning-charge"></i> <?= e(t('field/hub.010', 'Γρήγορη ενημέρωση')) ?></div>
     <div class="pings">
-      <button class="ping" data-code="arrived" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-geo-alt-fill"></i> Φτάσαμε στο σημείο</button>
-      <button class="ping" data-code="task_complete" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-check2-circle"></i> Ολοκληρώθηκε</button>
-      <button class="ping" data-code="need_backup" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-people-fill"></i> Χρειαζόμαστε ενίσχυση</button>
-      <button class="ping" data-code="returning" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-box-arrow-left"></i> Επιστροφή στη βάση</button>
-      <button class="ping full" data-code="incident" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-exclamation-triangle-fill"></i> Έχουμε περιστατικό</button>
+      <button class="ping" data-code="arrived" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-geo-alt-fill"></i> <?= e(t('field/hub.011', 'Φτάσαμε στο σημείο')) ?></button>
+      <button class="ping" data-code="task_complete" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-check2-circle"></i> <?= e(t('field/hub.012', 'Ολοκληρώθηκε')) ?></button>
+      <button class="ping" data-code="need_backup" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-people-fill"></i> <?= e(t('field/hub.013', 'Χρειαζόμαστε ενίσχυση')) ?></button>
+      <button class="ping" data-code="returning" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-box-arrow-left"></i> <?= e(t('field/hub.014', 'Επιστροφή στη βάση')) ?></button>
+      <button class="ping full" data-code="incident" <?= !$isActive ? 'disabled' : '' ?>><i class="bi bi-exclamation-triangle-fill"></i> <?= e(t('field/hub.015', 'Έχουμε περιστατικό')) ?></button>
     </div>
   </div>
 
   <!-- Photo -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-camera"></i> Αποστολή φωτογραφίας</div>
+    <div class="hdr"><i class="bi bi-camera"></i> <?= e(t('field/hub.016', 'Αποστολή φωτογραφίας')) ?></div>
     <div id="photoReqBanner" style="margin:0 14px 8px;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($photoRequest) ? 'block' : 'none' ?>">
-      <i class="bi bi-camera-fill me-1"></i> <?= e($orgLabel) ?> ζήτησε φωτογραφία — τραβήξτε/ανεβάστε μία παρακάτω.
+      <i class="bi bi-camera-fill me-1"></i> <?= e($orgLabel) ?> <?= e(t('field/hub.017', 'ζήτησε φωτογραφία — τραβήξτε/ανεβάστε μία παρακάτω.')) ?>
     </div>
     <form method="post" action="<?= e(url('/f/' . $token . '/photo')) ?>" enctype="multipart/form-data" id="photoForm">
       <?= csrf_field() ?>
       <input type="hidden" name="latitude" id="phLat"><input type="hidden" name="longitude" id="phLng">
-      <div class="field"><label>Φωτογραφία</label><input type="file" name="photo" accept="image/*" capture="environment" required></div>
-      <div class="field"><label>Σχόλιο (προαιρετικό)</label><input type="text" name="caption" maxlength="255" placeholder="π.χ. σημείο, κατάσταση"></div>
-      <div class="field"><button class="submit" id="phBtn"><i class="bi bi-upload me-1"></i>Αποστολή</button></div>
+      <div class="field"><label><?= e(t('field/hub.018', 'Φωτογραφία')) ?></label><input type="file" name="photo" accept="image/*" capture="environment" required></div>
+      <div class="field"><label><?= e(t('field/hub.019', 'Σχόλιο (προαιρετικό)')) ?></label><input type="text" name="caption" maxlength="255" placeholder="<?= e(t('field/hub.046', 'π.χ. σημείο, κατάσταση')) ?>"></div>
+      <div class="field"><button class="submit" id="phBtn"><i class="bi bi-upload me-1"></i><?= e(t('field/hub.020', 'Αποστολή')) ?></button></div>
     </form>
   </div>
 
 
   <!-- Video -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-camera-video"></i> Αποστολή βίντεο</div>
+    <div class="hdr"><i class="bi bi-camera-video"></i> <?= e(t('field/hub.021', 'Αποστολή βίντεο')) ?></div>
     <div id="videoReqBanner" style="margin:0 14px 8px;padding:10px 12px;border-radius:10px;background:#13243a;border:1px solid #1e3a5f;color:#cfe3ff;font-size:13px;font-weight:600;display:<?= !empty($videoRequest) ? 'block' : 'none' ?>">
       <i class="bi bi-camera-video-fill me-1"></i> <span id="videoReqText"><?= (!empty($videoRequest) && !empty($videoRequest['instructions'])) ? e($videoRequest['instructions']) : e($orgLabel) . ' ζήτησε σύντομο βίντεο — τραβήξτε/ανεβάστε ένα παρακάτω.' ?></span>
     </div>
 
     <div id="vidIdle" style="padding:0 14px 14px">
-      <button type="button" class="submit" id="vidRecordBtn"><i class="bi bi-record-circle me-1"></i>Τράβα τώρα (<span id="vidMax"><?= !empty($videoRequest['max_seconds']) ? (int) $videoRequest['max_seconds'] : 40 ?></span>'')</button>
-      <label class="submit" for="vidGallery" style="background:#1f3a3a;margin-top:8px;display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="bi bi-images me-1"></i>Από gallery</label>
+      <button type="button" class="submit" id="vidRecordBtn"><i class="bi bi-record-circle me-1"></i><?= e(t('field/hub.022', 'Τράβα τώρα (')) ?><span id="vidMax"><?= !empty($videoRequest['max_seconds']) ? (int) $videoRequest['max_seconds'] : 40 ?></span>'')</button>
+      <label class="submit" for="vidGallery" style="background:#1f3a3a;margin-top:8px;display:flex;align-items:center;justify-content:center;cursor:pointer"><i class="bi bi-images me-1"></i><?= e(t('field/hub.023', 'Από gallery')) ?></label>
       <input id="vidGallery" type="file" accept="video/*" capture="environment" style="display:none">
       <div id="vidErr" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:#3a1620;border:1px solid #6a2330;color:#ffd9df;font-size:12px"></div>
     </div>
@@ -197,23 +197,23 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
       <div style="display:flex;justify-content:center;margin-top:10px">
         <button type="button" id="vidShutter" aria-label="Record" style="width:64px;height:64px;border-radius:50%;border:4px solid #fff;background:#e23b4e;cursor:pointer"></button>
       </div>
-      <button type="button" class="submit" id="vidCancel" style="background:#333;margin-top:10px">Άκυρο</button>
+      <button type="button" class="submit" id="vidCancel" style="background:#333;margin-top:10px"><?= e(t('field/hub.024', 'Άκυρο')) ?></button>
     </div>
 
     <div id="vidReview" style="display:none;padding:0 14px 14px">
       <video id="vidReviewPlayer" controls playsinline style="width:100%;border-radius:12px;background:#000;display:block"></video>
-      <div class="field"><label>Λεζάντα (προαιρετικά)</label><input type="text" id="vidCaption" maxlength="200" placeholder="π.χ. σημείο, κατάσταση"></div>
+      <div class="field"><label><?= e(t('field/hub.025', 'Λεζάντα (προαιρετικά)')) ?></label><input type="text" id="vidCaption" maxlength="200" placeholder="<?= e(t('field/hub.046', 'π.χ. σημείο, κατάσταση')) ?>"></div>
       <div id="vidProg" style="display:none;height:8px;background:#0d1a1a;border-radius:999px;overflow:hidden;margin:8px 0"><div id="vidProgBar" style="height:100%;width:0;background:#0e7490;transition:width .2s"></div></div>
       <div style="display:flex;gap:8px">
-        <button type="button" class="submit" id="vidRetake" style="background:#333;flex:1">↺ Ξανά</button>
-        <button type="button" class="submit" id="vidSend" style="flex:2"><i class="bi bi-upload me-1"></i>Αποστολή</button>
+        <button type="button" class="submit" id="vidRetake" style="background:#333;flex:1"><?= e(t('field/hub.026', '↺ Ξανά')) ?></button>
+        <button type="button" class="submit" id="vidSend" style="flex:2"><i class="bi bi-upload me-1"></i><?= e(t('field/hub.020', 'Αποστολή')) ?></button>
       </div>
     </div>
   </div>
   <!-- Comms (read + ack + compose) -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-chat-dots"></i> Επικοινωνία · <?= e($orgLabel) ?></div>
-    <div class="msg-list" id="msgList"><div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Φόρτωση…</div></div>
+    <div class="hdr"><i class="bi bi-chat-dots"></i> <?= e(t('field/hub.027', 'Επικοινωνία ·')) ?> <?= e($orgLabel) ?></div>
+    <div class="msg-list" id="msgList"><div style="color:#4b7070;font-size:12px;text-align:center;padding:14px"><?= e(t('field/hub.028', 'Φόρτωση…')) ?></div></div>
     <div style="display:flex;gap:8px;padding:0 14px 14px">
       <input type="text" id="msgInput" maxlength="500" placeholder="Μήνυμα προς <?= e($orgLabel ?? 'τον Δήμο') ?>…"
              style="flex:1;background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:14px;padding:12px;outline:none">
@@ -226,8 +226,8 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
     <button type="button" id="shortageToggle" onclick="toggleShortage()"
             style="width:100%;padding:22px 20px;background:#1a1111;border:none;border-radius:18px;color:#f87171;cursor:pointer;display:flex;align-items:center;gap:16px;text-align:left" <?= !$isActive ? 'disabled' : '' ?>>
       <i class="bi bi-exclamation-triangle" style="font-size:34px;flex-shrink:0"></i>
-      <div style="flex:1"><div style="font-size:18px;font-weight:800;color:#e8f5f4">Αναφορά Έλλειψης</div>
-        <div style="font-size:12px;color:#f87171;margin-top:2px">Ειδοποιήστε άμεσα <?= e($orgLabel) ?></div></div>
+      <div style="flex:1"><div style="font-size:18px;font-weight:800;color:#e8f5f4"><?= e(t('field/hub.029', 'Αναφορά Έλλειψης')) ?></div>
+        <div style="font-size:12px;color:#f87171;margin-top:2px"><?= e(t('field/hub.030', 'Ειδοποιήστε άμεσα')) ?> <?= e($orgLabel) ?></div></div>
       <i class="bi bi-chevron-right" id="shortageArrow" style="opacity:.5;transition:transform .2s"></i>
     </button>
     <div id="shortageForm" style="display:none;border-top:1px solid #2a1818">
@@ -235,37 +235,37 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
         <?= csrf_field() ?>
         <input type="hidden" name="severity" id="shSeverityInput" value="medium">
         <div style="display:flex;flex-direction:column;gap:4px">
-          <label style="font-size:12px;color:#9ca3af;font-weight:600">Τύπος έλλειψης</label>
+          <label style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('field/hub.031', 'Τύπος έλλειψης')) ?></label>
           <select name="shortage_type" required style="background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:15px;padding:12px 14px;outline:none;width:100%">
-            <option value="people">👥 Άτομα</option>
-            <option value="equipment">🔧 Εξοπλισμός</option>
-            <option value="medical_supplies">🏥 Υγειονομικό υλικό</option>
-            <option value="vehicle">🚗 Όχημα</option>
-            <option value="other">📋 Άλλο</option>
+            <option value="people"><?= e(t('field/hub.032', '👥 Άτομα')) ?></option>
+            <option value="equipment"><?= e(t('field/hub.033', '🔧 Εξοπλισμός')) ?></option>
+            <option value="medical_supplies"><?= e(t('field/hub.034', '🏥 Υγειονομικό υλικό')) ?></option>
+            <option value="vehicle"><?= e(t('field/hub.035', '🚗 Όχημα')) ?></option>
+            <option value="other"><?= e(t('field/hub.036', '📋 Άλλο')) ?></option>
           </select>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
-          <label style="font-size:12px;color:#9ca3af;font-weight:600">Σοβαρότητα</label>
+          <label style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('field/hub.037', 'Σοβαρότητα')) ?></label>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
-            <button type="button" class="sh-sev" data-val="low"      onclick="setShSev('low')"      style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#1a2e1a;color:#86efac">Χαμηλή</button>
-            <button type="button" class="sh-sev" data-val="medium"   onclick="setShSev('medium')"   style="padding:10px 4px;border-radius:8px;border:2px solid #fde047;font-size:11px;font-weight:700;cursor:pointer;background:#2a2a0d;color:#fde047">Μεσαία</button>
-            <button type="button" class="sh-sev" data-val="high"     onclick="setShSev('high')"     style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#2a1a0d;color:#fb923c">Υψηλή</button>
-            <button type="button" class="sh-sev" data-val="critical" onclick="setShSev('critical')" style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#2a0d0d;color:#f87171">Κρίσιμη</button>
+            <button type="button" class="sh-sev" data-val="low"      onclick="setShSev('low')"      style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#1a2e1a;color:#86efac"><?= e(t('field/hub.038', 'Χαμηλή')) ?></button>
+            <button type="button" class="sh-sev" data-val="medium"   onclick="setShSev('medium')"   style="padding:10px 4px;border-radius:8px;border:2px solid #fde047;font-size:11px;font-weight:700;cursor:pointer;background:#2a2a0d;color:#fde047"><?= e(t('field/hub.039', 'Μεσαία')) ?></button>
+            <button type="button" class="sh-sev" data-val="high"     onclick="setShSev('high')"     style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#2a1a0d;color:#fb923c"><?= e(t('field/hub.040', 'Υψηλή')) ?></button>
+            <button type="button" class="sh-sev" data-val="critical" onclick="setShSev('critical')" style="padding:10px 4px;border-radius:8px;border:2px solid transparent;font-size:11px;font-weight:700;cursor:pointer;background:#2a0d0d;color:#f87171"><?= e(t('field/hub.041', 'Κρίσιμη')) ?></button>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
-          <label style="font-size:12px;color:#9ca3af;font-weight:600">Σύντομος τίτλος *</label>
-          <input type="text" name="title" required placeholder="π.χ. Λείπουν 2 άτομα"
+          <label style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('field/hub.042', 'Σύντομος τίτλος *')) ?></label>
+          <input type="text" name="title" required placeholder="<?= e(t('field/hub.048', 'π.χ. Λείπουν 2 άτομα')) ?>"
                  style="background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:15px;padding:12px 14px;outline:none;width:100%">
         </div>
         <div style="display:flex;flex-direction:column;gap:4px">
-          <label style="font-size:12px;color:#9ca3af;font-weight:600">Περιγραφή (προαιρετικό)</label>
-          <textarea name="description" rows="2" placeholder="Επιπλέον λεπτομέρειες…"
+          <label style="font-size:12px;color:#9ca3af;font-weight:600"><?= e(t('field/hub.043', 'Περιγραφή (προαιρετικό)')) ?></label>
+          <textarea name="description" rows="2" placeholder="<?= e(t('field/hub.049', 'Επιπλέον λεπτομέρειες…')) ?>"
                     style="background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:15px;padding:12px 14px;outline:none;width:100%;resize:none"></textarea>
         </div>
         <button type="submit" onclick="return confirm('Αποστολή αναφοράς έλλειψης προς <?= e(addslashes($orgLabel)) ?>;')"
                 style="background:#b91c1c;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;padding:16px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
-          <i class="bi bi-send-fill"></i> Αποστολή Αναφοράς
+          <i class="bi bi-send-fill"></i> <?= e(t('field/hub.044', 'Αποστολή Αναφοράς')) ?>
         </button>
       </form>
     </div>
@@ -273,10 +273,10 @@ $orgLabel = $orgLabel ?? ($terms['short_name'] ?? 'Φορέας');
 
   <!-- Δωμάτιο Επιχείρησης (κοινό κανάλι) -->
   <div class="card">
-    <div class="hdr"><i class="bi bi-broadcast-pin"></i> Δωμάτιο Επιχείρησης</div>
-    <div class="msg-list" id="roomList"><div style="color:#4b7070;font-size:12px;text-align:center;padding:14px">Φόρτωση…</div></div>
+    <div class="hdr"><i class="bi bi-broadcast-pin"></i> <?= e(t('field/hub.045', 'Δωμάτιο Επιχείρησης')) ?></div>
+    <div class="msg-list" id="roomList"><div style="color:#4b7070;font-size:12px;text-align:center;padding:14px"><?= e(t('field/hub.028', 'Φόρτωση…')) ?></div></div>
     <div style="display:flex;gap:8px;padding:0 14px 14px">
-      <input type="text" id="roomInput" maxlength="500" placeholder="Μήνυμα προς όλους…" style="flex:1;background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:14px;padding:12px;outline:none">
+      <input type="text" id="roomInput" maxlength="500" placeholder="<?= e(t('field/hub.050', 'Μήνυμα προς όλους…')) ?>" style="flex:1;background:#0d1a1a;border:1px solid #1e3333;border-radius:10px;color:#e8f5f4;font-size:14px;padding:12px;outline:none">
       <button type="button" id="roomSend" style="background:#0e7490;color:#fff;border:none;border-radius:10px;padding:0 16px;font-size:18px;cursor:pointer"><i class="bi bi-send"></i></button>
     </div>
   </div>

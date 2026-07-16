@@ -10,7 +10,7 @@
     ?>
     <i class="bi <?= $icon ?> flex-shrink-0 mt-1"></i>
     <span><?= e($f['message']) ?></span>
-    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Κλείσιμο"></button>
+    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="<?= e(t('layouts/flash.001', 'Κλείσιμο')) ?>"></button>
   </div>
 <?php endforeach; ?>
 <script>

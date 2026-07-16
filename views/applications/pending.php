@@ -2,12 +2,12 @@
 $terms = authority_context(current_municipality_id());
 $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
 ?>
-<h1 class="h3 mb-1">Δηλώσεις Συμμετοχής</h1>
-<p class="text-muted">Όλες οι εκκρεμείς δηλώσεις ομάδων, ομαδοποιημένες ανά <?= e($eventSingularLc) ?>.</p>
+<h1 class="h3 mb-1"><?= e(t('applications/pending.001', 'Δηλώσεις Συμμετοχής')) ?></h1>
+<p class="text-muted"><?= e(t('applications/pending.006', 'Όλες οι εκκρεμείς δηλώσεις ομάδων, ομαδοποιημένες ανά')) ?> <?= e($eventSingularLc) ?>.</p>
 
 <?php if (!$applications): ?>
   <div class="card shadow-sm"><div class="card-body text-muted">
-    Δεν υπάρχουν εκκρεμείς δηλώσεις συμμετοχής. Όλα είναι ενημερωμένα!
+    <?= e(t('applications/pending.003', 'Δεν υπάρχουν εκκρεμείς δηλώσεις συμμετοχής. Όλα είναι ενημερωμένα!')) ?>
   </div></div>
 <?php else: ?>
   <?php
@@ -26,7 +26,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
           <span class="text-muted small ms-2"><?= e(gr_datetime($g['start'])) ?></span>
         </div>
         <a class="btn btn-sm btn-primary" href="<?= e(url('/events/' . $eventId . '/applications')) ?>">
-          <i class="bi bi-pencil-square me-1"></i>Εγκρίσεις
+          <i class="bi bi-pencil-square me-1"></i><?= e(t('applications/pending.004', 'Εγκρίσεις')) ?>
         </a>
       </div>
       <ul class="list-group list-group-flush">
@@ -34,7 +34,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
           <li class="list-group-item d-flex flex-wrap justify-content-between gap-2">
             <div>
               <strong><?= e($a['team_name']) ?></strong>
-              — <?= (int) $a['offered_people'] ?> άτομα
+              — <?= (int) $a['offered_people'] ?> <?= e(t('applications/pending.007', 'άτομα')) ?>
               <?= $a['offered_vehicle'] ? '· όχημα' : '' ?>
               <?= $a['offered_medical_equipment'] ? '· υγειον. εξοπλισμός' : '' ?>
             </div>

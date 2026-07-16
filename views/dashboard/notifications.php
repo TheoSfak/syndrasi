@@ -3,17 +3,17 @@ $terms = authority_context(current_municipality_id());
 $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
-  <h1 class="h3 mb-0">Ειδοποιήσεις</h1>
+  <h1 class="h3 mb-0"><?= e(t('dashboard/notifications.001', 'Ειδοποιήσεις')) ?></h1>
   <form method="post" action="<?= e(url('/notifications/read-all')) ?>">
     <?= csrf_field() ?>
-    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-check2-all me-1"></i>Όλες ως αναγνωσμένες</button>
+    <button class="btn btn-outline-secondary btn-sm"><i class="bi bi-check2-all me-1"></i><?= e(t('dashboard/notifications.002', 'Όλες ως αναγνωσμένες')) ?></button>
   </form>
 </div>
-<p class="text-muted">Ενημερώσεις για <?= e($eventPluralLc) ?>, δηλώσεις και επιχειρησιακά συμβάντα.</p>
+<p class="text-muted"><?= e(t('dashboard/notifications.007', 'Ενημερώσεις για')) ?> <?= e($eventPluralLc) ?><?= e(t('dashboard/notifications.008', ', δηλώσεις και επιχειρησιακά συμβάντα.')) ?></p>
 
 <div class="card shadow-sm">
   <?php if (!$notifications): ?>
-    <div class="card-body text-muted">Δεν υπάρχουν ειδοποιήσεις.</div>
+    <div class="card-body text-muted"><?= e(t('dashboard/notifications.004', 'Δεν υπάρχουν ειδοποιήσεις.')) ?></div>
   <?php else: ?>
     <ul class="list-group list-group-flush">
       <?php foreach ($notifications as $n): ?>
@@ -21,14 +21,14 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
           <div class="d-flex flex-wrap justify-content-between gap-2">
             <div>
               <strong><?= e($n['title']) ?></strong>
-              <?php if (!$n['is_read']): ?><span class="badge text-bg-info ms-1">Νέα</span><?php endif; ?>
+              <?php if (!$n['is_read']): ?><span class="badge text-bg-info ms-1"><?= e(t('dashboard/notifications.005', 'Νέα')) ?></span><?php endif; ?>
               <div class="small text-muted mt-1" style="white-space:pre-line"><?= e($n['message']) ?></div>
               <div class="small text-muted mt-1"><?= e(gr_datetime($n['created_at'])) ?></div>
             </div>
             <?php if (!$n['is_read']): ?>
               <form method="post" action="<?= e(url('/notifications/' . $n['id'] . '/read')) ?>">
                 <?= csrf_field() ?>
-                <button class="btn btn-sm btn-outline-secondary">Αναγνωσμένη</button>
+                <button class="btn btn-sm btn-outline-secondary"><?= e(t('dashboard/notifications.006', 'Αναγνωσμένη')) ?></button>
               </form>
             <?php endif; ?>
           </div>

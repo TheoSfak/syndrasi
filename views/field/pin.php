@@ -30,8 +30,8 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
 <body>
   <div class="box">
     <div class="logo"><i class="bi bi-shield-lock-fill"></i></div>
-    <h1>Πεδίο <?= e($eventSingularLc) ?></h1>
-    <div class="sub"><?= e($app['event_title'] ?? '') ?><br>Εισάγετε το 4ψήφιο PIN που σας στάλθηκε.</div>
+    <h1><?= e(t('field/pin.001', 'Πεδίο')) ?> <?= e($eventSingularLc) ?></h1>
+    <div class="sub"><?= e($app['event_title'] ?? '') ?><br><?= e(t('field/pin.002', 'Εισάγετε το 4ψήφιο PIN που σας στάλθηκε.')) ?></div>
 
     <form method="post" action="<?= e(url('/f/' . $token . '/pin')) ?>">
       <?= csrf_field() ?>
@@ -39,12 +39,12 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
              maxlength="4" autocomplete="one-time-code" autofocus placeholder="••••"
              oninput="this.value=this.value.replace(/[^0-9]/g,'')">
       <?php if (!empty($error)): ?>
-        <div class="err"><i class="bi bi-x-circle me-1"></i>Λάθος PIN. Δοκιμάστε ξανά.</div>
+        <div class="err"><i class="bi bi-x-circle me-1"></i><?= e(t('field/pin.003', 'Λάθος PIN. Δοκιμάστε ξανά.')) ?></div>
       <?php endif; ?>
-      <button class="btn" type="submit"><i class="bi bi-unlock me-1"></i>Είσοδος</button>
+      <button class="btn" type="submit"><i class="bi bi-unlock me-1"></i><?= e(t('field/pin.004', 'Είσοδος')) ?></button>
     </form>
 
-    <div class="hint">Μετά τη σωστή εισαγωγή, η συσκευή σας θα θυμάται το PIN.<br>Αν δεν το γνωρίζετε, ζητήστε το από τον υπεύθυνο της ομάδας σας.</div>
+    <div class="hint"><?= e(t('field/pin.005', 'Μετά τη σωστή εισαγωγή, η συσκευή σας θα θυμάται το PIN.')) ?><br><?= e(t('field/pin.006', 'Αν δεν το γνωρίζετε, ζητήστε το από τον υπεύθυνο της ομάδας σας.')) ?></div>
   </div>
 </body>
 </html>

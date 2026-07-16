@@ -19,11 +19,11 @@ $teamsByMuni = $teamsByMuni ?? [];
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <div>
-    <h1 class="h3 mb-0">Χρήστες</h1>
-    <p class="text-muted small mb-0">Διαχείριση όλων των λογαριασμών της πλατφόρμας.</p>
+    <h1 class="h3 mb-0"><?= e(t('settings/users.001', 'Χρήστες')) ?></h1>
+    <p class="text-muted small mb-0"><?= e(t('settings/users.002', 'Διαχείριση όλων των λογαριασμών της πλατφόρμας.')) ?></p>
   </div>
   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newUserModal">
-    <i class="bi bi-plus-lg me-1"></i>Νέος Χρήστης
+    <i class="bi bi-plus-lg me-1"></i><?= e(t('settings/users.003', 'Νέος Χρήστης')) ?>
   </button>
 </div>
 
@@ -32,11 +32,11 @@ $teamsByMuni = $teamsByMuni ?? [];
   <div class="card-body py-2">
     <div class="row g-2 align-items-center">
       <div class="col-md-4">
-        <input type="text" id="userSearch" class="form-control form-control-sm" placeholder="Αναζήτηση ονόματος / email…">
+        <input type="text" id="userSearch" class="form-control form-control-sm" placeholder="<?= e(t('settings/users.027', 'Αναζήτηση ονόματος / email…')) ?>">
       </div>
       <div class="col-md-3">
         <select id="filterRole" class="form-select form-select-sm">
-          <option value="">Όλοι οι ρόλοι</option>
+          <option value=""><?= e(t('settings/users.004', 'Όλοι οι ρόλοι')) ?></option>
           <?php foreach ($roleLabels as $k => $lbl): ?>
             <option value="<?= e($k) ?>"><?= e($lbl) ?></option>
           <?php endforeach; ?>
@@ -44,7 +44,7 @@ $teamsByMuni = $teamsByMuni ?? [];
       </div>
       <div class="col-md-3">
         <select id="filterMuni" class="form-select form-select-sm">
-          <option value="">Όλοι οι φορείς</option>
+          <option value=""><?= e(t('settings/users.005', 'Όλοι οι φορείς')) ?></option>
           <?php foreach ($municipalities as $mun): ?>
             <option value="<?= (int) $mun['id'] ?>"><?= e($mun['name']) ?></option>
           <?php endforeach; ?>
@@ -61,11 +61,11 @@ $teamsByMuni = $teamsByMuni ?? [];
     <table class="table table-hover mb-0 align-middle" id="usersTable">
       <thead class="table-light">
         <tr>
-          <th>Όνομα / Email</th>
-          <th>Ρόλος</th>
-          <th>Φορέας / Ομάδα</th>
-          <th>Κατάσταση</th>
-          <th class="text-muted small">Τελ. σύνδεση</th>
+          <th><?= e(t('settings/users.006', 'Όνομα / Email')) ?></th>
+          <th><?= e(t('settings/users.007', 'Ρόλος')) ?></th>
+          <th><?= e(t('settings/users.008', 'Φορέας / Ομάδα')) ?></th>
+          <th><?= e(t('settings/users.009', 'Κατάσταση')) ?></th>
+          <th class="text-muted small"><?= e(t('settings/users.010', 'Τελ. σύνδεση')) ?></th>
           <th class="text-end"></th>
         </tr>
       </thead>
@@ -99,13 +99,13 @@ $teamsByMuni = $teamsByMuni ?? [];
               <!-- Edit -->
               <button class="btn btn-sm btn-outline-secondary me-1"
                       onclick="openEditUser(<?= htmlspecialchars(json_encode($u), ENT_QUOTES) ?>)"
-                      title="Επεξεργασία">
+                      title="<?= e(t('settings/users.028', 'Επεξεργασία')) ?>">
                 <i class="bi bi-pencil"></i>
               </button>
               <!-- Reset password -->
               <button class="btn btn-sm btn-outline-secondary me-1"
                       onclick="openResetPw(<?= (int) $u['id'] ?>, '<?= e(addslashes($u['name'])) ?>')"
-                      title="Επαναφορά κωδικού">
+                      title="<?= e(t('settings/users.029', 'Επαναφορά κωδικού')) ?>">
                 <i class="bi bi-key"></i>
               </button>
               <!-- Impersonate -->
@@ -143,17 +143,17 @@ $teamsByMuni = $teamsByMuni ?? [];
     <form method="post" action="<?= e(url('/admin/users/store')) ?>" class="modal-content">
       <?= csrf_field() ?>
       <div class="modal-header">
-        <h5 class="modal-title">Νέος Χρήστης</h5>
+        <h5 class="modal-title"><?= e(t('settings/users.003', 'Νέος Χρήστης')) ?></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="row g-2">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Όνομα <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold"><?= e(t('settings/users.011', 'Όνομα')) ?> <span class="text-danger">*</span></label>
             <input type="text" name="name" class="form-control" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Τηλέφωνο</label>
+            <label class="form-label fw-semibold"><?= e(t('settings/users.012', 'Τηλέφωνο')) ?></label>
             <input type="text" name="phone" class="form-control">
           </div>
         </div>
@@ -162,7 +162,7 @@ $teamsByMuni = $teamsByMuni ?? [];
           <input type="email" name="email" class="form-control" required>
         </div>
         <div class="mt-2">
-          <label class="form-label fw-semibold">Ρόλος <span class="text-danger">*</span></label>
+          <label class="form-label fw-semibold"><?= e(t('settings/users.007', 'Ρόλος')) ?> <span class="text-danger">*</span></label>
           <select name="role" id="newRole" class="form-select" required onchange="syncTeamDropdown('newMuni','newTeam','newRole')">
             <?php foreach ($roleLabels as $k => $lbl): ?>
               <option value="<?= e($k) ?>"><?= e($lbl) ?></option>
@@ -170,29 +170,29 @@ $teamsByMuni = $teamsByMuni ?? [];
           </select>
         </div>
         <div class="mt-2" id="newMuniWrap">
-          <label class="form-label fw-semibold">Φορέας</label>
+          <label class="form-label fw-semibold"><?= e(t('settings/users.013', 'Φορέας')) ?></label>
           <select name="municipality_id" id="newMuni" class="form-select" onchange="syncTeamDropdown('newMuni','newTeam','newRole')">
-            <option value="">— Επιλέξτε —</option>
+            <option value=""><?= e(t('settings/users.014', '— Επιλέξτε —')) ?></option>
             <?php foreach ($municipalities as $mun): ?>
               <option value="<?= (int) $mun['id'] ?>"><?= e($mun['name']) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
         <div class="mt-2" id="newTeamWrap" style="display:none">
-          <label class="form-label fw-semibold">Ομάδα (για υπεύθυνο ομάδας)</label>
+          <label class="form-label fw-semibold"><?= e(t('settings/users.015', 'Ομάδα (για υπεύθυνο ομάδας)')) ?></label>
           <select name="team_id" id="newTeam" class="form-select">
-            <option value="">— Επιλέξτε φορέα πρώτα —</option>
+            <option value=""><?= e(t('settings/users.016', '— Επιλέξτε φορέα πρώτα —')) ?></option>
           </select>
         </div>
         <div class="mt-2">
-          <label class="form-label fw-semibold">Κωδικός <span class="text-danger">*</span></label>
+          <label class="form-label fw-semibold"><?= e(t('settings/users.017', 'Κωδικός')) ?> <span class="text-danger">*</span></label>
           <input type="password" name="password" class="form-control" minlength="8" required>
-          <div class="form-text">Τουλάχιστον 8 χαρακτήρες.</div>
+          <div class="form-text"><?= e(t('settings/users.018', 'Τουλάχιστον 8 χαρακτήρες.')) ?></div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Άκυρο</button>
-        <button class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Δημιουργία</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= e(t('settings/users.019', 'Άκυρο')) ?></button>
+        <button class="btn btn-primary"><i class="bi bi-person-plus me-1"></i><?= e(t('settings/users.020', 'Δημιουργία')) ?></button>
       </div>
     </form>
   </div>
@@ -204,17 +204,17 @@ $teamsByMuni = $teamsByMuni ?? [];
     <form method="post" action="" id="editUserForm" class="modal-content">
       <?= csrf_field() ?>
       <div class="modal-header">
-        <h5 class="modal-title">Επεξεργασία Χρήστη</h5>
+        <h5 class="modal-title"><?= e(t('settings/users.021', 'Επεξεργασία Χρήστη')) ?></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <div class="row g-2">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Όνομα <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold"><?= e(t('settings/users.011', 'Όνομα')) ?> <span class="text-danger">*</span></label>
             <input type="text" name="name" id="editName" class="form-control" required>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Τηλέφωνο</label>
+            <label class="form-label fw-semibold"><?= e(t('settings/users.012', 'Τηλέφωνο')) ?></label>
             <input type="text" name="phone" id="editPhone" class="form-control">
           </div>
         </div>
@@ -223,7 +223,7 @@ $teamsByMuni = $teamsByMuni ?? [];
           <input type="email" name="email" id="editEmail" class="form-control" required>
         </div>
         <div class="mt-2">
-          <label class="form-label fw-semibold">Ρόλος <span class="text-danger">*</span></label>
+          <label class="form-label fw-semibold"><?= e(t('settings/users.007', 'Ρόλος')) ?> <span class="text-danger">*</span></label>
           <select name="role" id="editRole" class="form-select" required onchange="syncTeamDropdown('editMuni','editTeam','editRole')">
             <?php foreach ($roleLabels as $k => $lbl): ?>
               <option value="<?= e($k) ?>"><?= e($lbl) ?></option>
@@ -231,24 +231,24 @@ $teamsByMuni = $teamsByMuni ?? [];
           </select>
         </div>
         <div class="mt-2" id="editMuniWrap">
-          <label class="form-label fw-semibold">Φορέας</label>
+          <label class="form-label fw-semibold"><?= e(t('settings/users.013', 'Φορέας')) ?></label>
           <select name="municipality_id" id="editMuni" class="form-select" onchange="syncTeamDropdown('editMuni','editTeam','editRole')">
-            <option value="">— Επιλέξτε —</option>
+            <option value=""><?= e(t('settings/users.014', '— Επιλέξτε —')) ?></option>
             <?php foreach ($municipalities as $mun): ?>
               <option value="<?= (int) $mun['id'] ?>"><?= e($mun['name']) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
         <div class="mt-2" id="editTeamWrap" style="display:none">
-          <label class="form-label fw-semibold">Ομάδα</label>
+          <label class="form-label fw-semibold"><?= e(t('settings/users.022', 'Ομάδα')) ?></label>
           <select name="team_id" id="editTeam" class="form-select">
             <option value="">—</option>
           </select>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Άκυρο</button>
-        <button class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Αποθήκευση</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= e(t('settings/users.019', 'Άκυρο')) ?></button>
+        <button class="btn btn-primary"><i class="bi bi-check-lg me-1"></i><?= e(t('settings/users.023', 'Αποθήκευση')) ?></button>
       </div>
     </form>
   </div>
@@ -260,16 +260,16 @@ $teamsByMuni = $teamsByMuni ?? [];
     <form method="post" action="" id="resetPwForm" class="modal-content">
       <?= csrf_field() ?>
       <div class="modal-header">
-        <h5 class="modal-title">Επαναφορά Κωδικού</h5>
+        <h5 class="modal-title"><?= e(t('settings/users.024', 'Επαναφορά Κωδικού')) ?></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p class="mb-2 text-muted small">Νέος κωδικός για <strong id="resetPwName"></strong>:</p>
-        <input type="password" name="password" class="form-control" minlength="8" required placeholder="Τουλάχιστον 8 χαρακτήρες">
+        <p class="mb-2 text-muted small"><?= e(t('settings/users.025', 'Νέος κωδικός για')) ?> <strong id="resetPwName"></strong>:</p>
+        <input type="password" name="password" class="form-control" minlength="8" required placeholder="<?= e(t('settings/users.030', 'Τουλάχιστον 8 χαρακτήρες')) ?>">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Άκυρο</button>
-        <button class="btn btn-warning btn-sm"><i class="bi bi-key me-1"></i>Αλλαγή</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><?= e(t('settings/users.019', 'Άκυρο')) ?></button>
+        <button class="btn btn-warning btn-sm"><i class="bi bi-key me-1"></i><?= e(t('settings/users.026', 'Αλλαγή')) ?></button>
       </div>
     </form>
   </div>

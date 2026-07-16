@@ -29,20 +29,20 @@ if (is_array($oldRequestedItems)) {
 $requestedItemsExtra = old('requested_items_extra', '');
 ?>
 <h1 class="h3 mb-1"><?= e($isEdit ? 'Επεξεργασία ' . $eventSingular : $eventNew) ?></h1>
-<p class="text-muted">Συμπληρώστε τα στοιχεία της <?= e($eventSingularLc) ?>. Τα πεδία με * είναι υποχρεωτικά.</p>
+<p class="text-muted"><?= e(t('events/form.031', 'Συμπληρώστε τα στοιχεία της')) ?> <?= e($eventSingularLc) ?><?= e(t('events/form.032', '. Τα πεδία με * είναι υποχρεωτικά.')) ?></p>
 
 <form method="post" action="<?= e(url($isEdit ? '/events/' . $event['id'] . '/update' : '/events/store')) ?>" class="card shadow-sm">
   <?= csrf_field() ?>
   <?php if (!empty($templateId)): ?><input type="hidden" name="template_id" value="<?= (int) $templateId ?>"><?php endif; ?>
   <div class="card-body row g-3">
     <div class="col-md-8">
-      <label class="form-label">Τίτλος <?= e($eventSingularLc) ?> *</label>
+      <label class="form-label"><?= e(t('events/form.033', 'Τίτλος')) ?> <?= e($eventSingularLc) ?> *</label>
       <input type="text" name="title" class="form-control" required value="<?= e($v('title')) ?>">
     </div>
     <div class="col-md-4">
-      <label class="form-label">Τύπος <?= e($eventSingularLc) ?></label>
+      <label class="form-label"><?= e(t('events/form.003', 'Τύπος')) ?> <?= e($eventSingularLc) ?></label>
       <select name="category_id" id="categorySelect" class="form-select">
-        <option value="">— Επιλέξτε —</option>
+        <option value=""><?= e(t('events/form.004', '— Επιλέξτε —')) ?></option>
         <?php foreach ($categories as $c): ?>
           <option value="<?= (int) $c['id'] ?>" <?= (int) $v('category_id') === (int) $c['id'] ? 'selected' : '' ?>><?= e($c['name']) ?></option>
         <?php endforeach; ?>
@@ -57,12 +57,12 @@ $requestedItemsExtra = old('requested_items_extra', '');
             <div class="small text-muted" id="playbookSummary"></div>
           </div>
           <button type="button" class="btn btn-sm btn-outline-primary" id="applyPlaybookBtn">
-            <i class="bi bi-magic me-1"></i>Εφαρμογή playbook
+            <i class="bi bi-magic me-1"></i><?= e(t('events/form.005', 'Εφαρμογή playbook')) ?>
           </button>
         </div>
         <div class="row g-2 small">
           <div class="col-md-4">
-            <div class="text-muted mb-1">Δυνατότητες</div>
+            <div class="text-muted mb-1"><?= e(t('events/form.006', 'Δυνατότητες')) ?></div>
             <div class="d-flex flex-wrap gap-1" id="playbookCaps"></div>
           </div>
           <div class="col-md-4">
@@ -70,7 +70,7 @@ $requestedItemsExtra = old('requested_items_extra', '');
             <ul class="mb-0 ps-3" id="playbookChecklist"></ul>
           </div>
           <div class="col-md-4">
-            <div class="text-muted mb-1">Έτοιμα μηνύματα</div>
+            <div class="text-muted mb-1"><?= e(t('events/form.007', 'Έτοιμα μηνύματα')) ?></div>
             <ul class="mb-0 ps-3" id="playbookMessages"></ul>
           </div>
         </div>
@@ -78,16 +78,16 @@ $requestedItemsExtra = old('requested_items_extra', '');
     </div>
 
     <div class="col-12">
-      <label class="form-label">Περιγραφή</label>
+      <label class="form-label"><?= e(t('events/form.008', 'Περιγραφή')) ?></label>
       <textarea name="description" class="form-control" rows="3"><?= e($v('description')) ?></textarea>
     </div>
 
     <div class="col-md-6">
-      <label class="form-label">Τοποθεσία</label>
-      <input type="text" name="location_name" class="form-control" value="<?= e($v('location_name')) ?>" placeholder="π.χ. Πλατεία Ελευθερίας">
+      <label class="form-label"><?= e(t('events/form.009', 'Τοποθεσία')) ?></label>
+      <input type="text" name="location_name" class="form-control" value="<?= e($v('location_name')) ?>" placeholder="<?= e(t('events/form.026', 'π.χ. Πλατεία Ελευθερίας')) ?>">
     </div>
     <div class="col-md-6">
-      <label class="form-label">Διεύθυνση</label>
+      <label class="form-label"><?= e(t('events/form.010', 'Διεύθυνση')) ?></label>
       <input type="text" name="address" class="form-control" value="<?= e($v('address')) ?>">
     </div>
 
@@ -95,15 +95,15 @@ $requestedItemsExtra = old('requested_items_extra', '');
       <label class="form-label d-flex align-items-center gap-2">
         <i class="bi bi-geo-alt-fill text-danger"></i>
         Google Maps URL
-        <span id="mapsParseStatus" class="badge bg-success d-none">✓ Συντεταγμένες εξήχθησαν</span>
-        <span id="mapsParseError"  class="badge bg-danger  d-none">✗ Δεν βρέθηκαν συντεταγμένες</span>
+        <span id="mapsParseStatus" class="badge bg-success d-none"><?= e(t('events/form.011', '✓ Συντεταγμένες εξήχθησαν')) ?></span>
+        <span id="mapsParseError"  class="badge bg-danger  d-none"><?= e(t('events/form.012', '✗ Δεν βρέθηκαν συντεταγμένες')) ?></span>
       </label>
       <div class="input-group">
         <span class="input-group-text bg-white"><i class="bi bi-link-45deg text-muted"></i></span>
         <input type="text" id="mapsUrlInput" class="form-control"
-               placeholder="Επικολλήστε σύνδεσμο Google Maps…"
+               placeholder="<?= e(t('events/form.027', 'Επικολλήστε σύνδεσμο Google Maps…')) ?>"
                value="">
-        <button type="button" class="btn btn-outline-secondary" id="mapsClearBtn" title="Καθαρισμός">
+        <button type="button" class="btn btn-outline-secondary" id="mapsClearBtn" title="<?= e(t('events/form.028', 'Καθαρισμός')) ?>">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
@@ -111,7 +111,7 @@ $requestedItemsExtra = old('requested_items_extra', '');
         📍 <span id="mapsLatDisplay"><?= e($v('latitude')) ?></span> , <span id="mapsLngDisplay"><?= e($v('longitude')) ?></span>
       </div>
       <div class="form-text text-muted">
-        Ανοίξτε τη τοποθεσία στο Google Maps, αντιγράψτε τον σύνδεσμο από τη γραμμή διευθύνσεων και επικολλήστε τον εδώ.
+        <?= e(t('events/form.013', 'Ανοίξτε τη τοποθεσία στο Google Maps, αντιγράψτε τον σύνδεσμο από τη γραμμή διευθύνσεων και επικολλήστε τον εδώ.')) ?>
       </div>
       <!-- Hidden fields actually submitted to the server -->
       <input type="hidden" name="latitude"  id="latField" value="<?= e($v('latitude')) ?>">
@@ -121,23 +121,23 @@ $requestedItemsExtra = old('requested_items_extra', '');
     <div class="col-md-6">
       <div class="row g-3">
         <div class="col-6">
-          <label class="form-label">Έναρξη *</label>
+          <label class="form-label"><?= e(t('events/form.014', 'Έναρξη *')) ?></label>
           <input type="datetime-local" name="start_datetime" class="form-control" required value="<?= e($dtVal('start_datetime')) ?>">
         </div>
         <div class="col-6">
-          <label class="form-label">Λήξη *</label>
+          <label class="form-label"><?= e(t('events/form.015', 'Λήξη *')) ?></label>
           <input type="datetime-local" name="end_datetime" class="form-control" required value="<?= e($dtVal('end_datetime')) ?>">
         </div>
       </div>
     </div>
 
     <div class="col-lg-4">
-      <label class="form-label">Ζητούμενα άτομα</label>
+      <label class="form-label"><?= e(t('events/form.016', 'Ζητούμενα άτομα')) ?></label>
       <input type="number" name="requested_people" id="reqPeople" min="0" class="form-control" value="<?= e($v('requested_people', 0)) ?>">
     </div>
     <div class="col-lg-8">
       <label class="form-label d-flex align-items-center justify-content-between gap-2">
-        <span>Ζητούμενα αντικείμενα</span>
+        <span><?= e(t('events/form.017', 'Ζητούμενα αντικείμενα')) ?></span>
         <span class="badge text-bg-light border" id="reqItemsCount"><?= count($requestedItems) ?></span>
       </label>
       <div class="border rounded p-2 bg-light">
@@ -149,40 +149,40 @@ $requestedItemsExtra = old('requested_items_extra', '');
             </label>
           <?php endforeach; ?>
         </div>
-        <textarea name="requested_items_extra" id="requestedItemsExtra" class="form-control form-control-sm" rows="2" placeholder="Έξτρα αντικείμενα, ένα ανά γραμμή"><?= e($requestedItemsExtra) ?></textarea>
+        <textarea name="requested_items_extra" id="requestedItemsExtra" class="form-control form-control-sm" rows="2" placeholder="<?= e(t('events/form.029', 'Έξτρα αντικείμενα, ένα ανά γραμμή')) ?>"><?= e($requestedItemsExtra) ?></textarea>
       </div>
-      <div class="form-text">Τα αντικείμενα του playbook έρχονται προ-ενεργοποιημένα. Ξετσεκάρετε όσα δεν χρειάζονται ή προσθέστε νέα.</div>
+      <div class="form-text"><?= e(t('events/form.018', 'Τα αντικείμενα του playbook έρχονται προ-ενεργοποιημένα. Ξετσεκάρετε όσα δεν χρειάζονται ή προσθέστε νέα.')) ?></div>
     </div>
     <div class="col-md-6 d-flex align-items-center">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="requested_vehicle" id="reqVehicle" value="1" <?= $v('requested_vehicle') ? 'checked' : '' ?>>
-        <label class="form-check-label" for="reqVehicle">Απαιτείται όχημα</label>
+        <label class="form-check-label" for="reqVehicle"><?= e(t('events/form.019', 'Απαιτείται όχημα')) ?></label>
       </div>
     </div>
     <div class="col-md-6 d-flex align-items-center">
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="requested_medical_equipment" id="reqMedical" value="1" <?= $v('requested_medical_equipment') ? 'checked' : '' ?>>
-        <label class="form-check-label" for="reqMedical">Απαιτείται υγειονομικός εξοπλισμός</label>
+        <label class="form-check-label" for="reqMedical"><?= e(t('events/form.020', 'Απαιτείται υγειονομικός εξοπλισμός')) ?></label>
       </div>
     </div>
 
     <div class="col-12">
-      <label class="form-label">Οδηγίες προς τις ομάδες</label>
-      <textarea name="instructions" id="instructionsField" class="form-control" rows="2" placeholder="π.χ. Προσέλευση 30 λεπτά πριν την έναρξη."><?= e($v('instructions', !$isEdit ? ($defaultInstructions ?? '') : '')) ?></textarea>
+      <label class="form-label"><?= e(t('events/form.021', 'Οδηγίες προς τις ομάδες')) ?></label>
+      <textarea name="instructions" id="instructionsField" class="form-control" rows="2" placeholder="<?= e(t('events/form.030', 'π.χ. Προσέλευση 30 λεπτά πριν την έναρξη.')) ?>"><?= e($v('instructions', !$isEdit ? ($defaultInstructions ?? '') : '')) ?></textarea>
     </div>
   </div>
 
   <div class="card-footer d-flex flex-wrap gap-2">
     <?php if ($isEdit): ?>
-      <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i>Αποθήκευση αλλαγών</button>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i><?= e(t('events/form.022', 'Αποθήκευση αλλαγών')) ?></button>
     <?php else: ?>
-      <button class="btn btn-outline-secondary" type="submit" name="action" value="draft"><i class="bi bi-file-earmark me-1"></i>Αποθήκευση ως πρόχειρη</button>
+      <button class="btn btn-outline-secondary" type="submit" name="action" value="draft"><i class="bi bi-file-earmark me-1"></i><?= e(t('events/form.023', 'Αποθήκευση ως πρόχειρη')) ?></button>
       <button class="btn btn-primary" type="submit" name="action" value="publish"
               onclick="return confirm('Η <?= e($eventSingularLc) ?> θα δημοσιευθεί και όλες οι ενεργές ομάδες θα ειδοποιηθούν. Συνέχεια;')">
-        <i class="bi bi-megaphone me-1"></i>Δημοσίευση στις ομάδες
+        <i class="bi bi-megaphone me-1"></i><?= e(t('events/form.024', 'Δημοσίευση στις ομάδες')) ?>
       </button>
     <?php endif; ?>
-    <a class="btn btn-link text-muted" href="<?= e(url('/events')) ?>">Άκυρο</a>
+    <a class="btn btn-link text-muted" href="<?= e(url('/events')) ?>"><?= e(t('events/form.025', 'Άκυρο')) ?></a>
   </div>
 </form>
 

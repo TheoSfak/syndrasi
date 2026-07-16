@@ -9,7 +9,7 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
 <html lang="el">
 <head>
 <meta charset="UTF-8">
-<title>Πιστοποιητικό Εθελοντή — <?= e($member['full_name']) ?></title>
+<title><?= e(t('team/member_certificate.001', 'Πιστοποιητικό Εθελοντή —')) ?> <?= e($member['full_name']) ?></title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -160,28 +160,27 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
         <div class="mun-sub">Εθελοντικός Συντονισμός &amp; Πολιτική Προστασία</div>
       </div>
       <div style="margin-left:auto">
-        <div class="cert-date">Εκδόθηκε: <?= e(gr_date(date('Y-m-d'))) ?></div>
+        <div class="cert-date"><?= e(t('team/member_certificate.002', 'Εκδόθηκε:')) ?> <?= e(gr_date(date('Y-m-d'))) ?></div>
       </div>
     </div>
 
-    <div class="cert-headline">Πιστοποιητικό Εθελοντικής <?= e($eventSingular) ?></div>
+    <div class="cert-headline"><?= e(t('team/member_certificate.003', 'Πιστοποιητικό Εθελοντικής')) ?> <?= e($eventSingular) ?></div>
 
-    <div class="cert-title">Βεβαίωση<br>Εθελοντικής Συμμετοχής</div>
+    <div class="cert-title"><?= e(t('team/member_certificate.004', 'Βεβαίωση')) ?><br><?= e(t('team/member_certificate.005', 'Εθελοντικής Συμμετοχής')) ?></div>
 
-    <div class="cert-body">Πιστοποιείται ότι ο/η εθελοντής</div>
+    <div class="cert-body"><?= e(t('team/member_certificate.006', 'Πιστοποιείται ότι ο/η εθελοντής')) ?></div>
 
     <div class="cert-name"><?= e($member['full_name']) ?></div>
 
     <div class="cert-team-label">
-      Ομάδα: <strong><?= e($teamName) ?></strong>
+      <?= e(t('team/member_certificate.007', 'Ομάδα:')) ?> <strong><?= e($teamName) ?></strong>
       <?php if ($member['role_in_team']): ?>
         · <?= e($member['role_in_team']) ?>
       <?php endif; ?>
     </div>
 
     <div class="cert-body">
-      συμμετείχε σε εθελοντικές <?= e($eventPluralLc) ?> του φορέα ως μέλος της ομάδας πολιτικής προστασίας
-      με τα παρακάτω συνολικά στοιχεία:
+      <?= e(t('team/member_certificate.017', 'συμμετείχε σε εθελοντικές')) ?> <?= e($eventPluralLc) ?> <?= e(t('team/member_certificate.018', 'του φορέα ως μέλος της ομάδας πολιτικής προστασίας με τα παρακάτω συνολικά στοιχεία:')) ?>
     </div>
 
     <div class="cert-stats">
@@ -191,12 +190,12 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
       </div>
       <div class="cert-stat">
         <div class="v"><?= number_format((float)($stats['total_hours'] ?? 0), 1) ?></div>
-        <div class="l">Ώρες εθελοντισμού</div>
+        <div class="l"><?= e(t('team/member_certificate.009', 'Ώρες εθελοντισμού')) ?></div>
       </div>
       <?php if ((int) $stats['times_commander'] > 0): ?>
       <div class="cert-stat">
         <div class="v"><?= (int) $stats['times_commander'] ?></div>
-        <div class="l">Φορές Υπεύθυνος</div>
+        <div class="l"><?= e(t('team/member_certificate.010', 'Φορές Υπεύθυνος')) ?></div>
       </div>
       <?php endif; ?>
     </div>
@@ -208,8 +207,8 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
       <thead>
         <tr>
           <th><?= e($eventSingular) ?></th>
-          <th>Ημερομηνία</th>
-          <th style="text-align:right">Ώρες</th>
+          <th><?= e(t('team/member_certificate.011', 'Ημερομηνία')) ?></th>
+          <th style="text-align:right"><?= e(t('team/member_certificate.012', 'Ώρες')) ?></th>
         </tr>
       </thead>
       <tbody>
@@ -221,7 +220,7 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
         </tr>
         <?php endforeach; ?>
         <?php if (count($attended) > 12): ?>
-        <tr><td colspan="3" style="color:#9ca3af;font-style:italic">...και <?= count($attended) - 12 ?> ακόμη <?= e($eventPluralLc) ?></td></tr>
+        <tr><td colspan="3" style="color:#9ca3af;font-style:italic"><?= e(t('team/member_certificate.019', '...και')) ?> <?= count($attended) - 12 ?> <?= e(t('team/member_certificate.020', 'ακόμη')) ?> <?= e($eventPluralLc) ?></td></tr>
         <?php endif; ?>
       </tbody>
     </table>
@@ -231,15 +230,15 @@ $eventPluralLc = $terms['event_plural_lc'] ?? mb_strtolower($eventPlural, 'UTF-8
     <div class="cert-sigs">
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Υπεύθυνος Ομάδας</div>
+        <div class="sig-lbl"><?= e(t('team/member_certificate.014', 'Υπεύθυνος Ομάδας')) ?></div>
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Εκπρόσωπος Φορέα</div>
+        <div class="sig-lbl"><?= e(t('team/member_certificate.015', 'Εκπρόσωπος Φορέα')) ?></div>
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Ημερομηνία / Σφραγίδα</div>
+        <div class="sig-lbl"><?= e(t('team/member_certificate.016', 'Ημερομηνία / Σφραγίδα')) ?></div>
       </div>
     </div>
 

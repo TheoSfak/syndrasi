@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Σφάλμα | SynDrasi</title>
+<title><?= e(t('errors/error.001', 'Σφάλμα | SynDrasi')) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -23,7 +23,7 @@
     echo e($msg);
     ?>
   </p>
-  <a href="<?= e(url('/')) ?>" class="btn btn-primary mt-2">Επιστροφή στην αρχική</a>
+  <a href="<?= e(url('/')) ?>" class="btn btn-primary mt-2"><?= e(t('errors/error.002', 'Επιστροφή στην αρχική')) ?></a>
 </div>
 
 <?php if (!is_logged_in()): ?>

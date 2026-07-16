@@ -6,12 +6,11 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
 ?>
 <div class="d-flex flex-wrap align-items-start gap-3 mb-3">
   <div class="flex-grow-1">
-    <h1 class="h3 mb-1">Επιχειρησιακές Ενέργειες <?= status_badge($event['status']) ?></h1>
+    <h1 class="h3 mb-1"><?= e(t('team/operations.001', 'Επιχειρησιακές Ενέργειες')) ?> <?= status_badge($event['status']) ?></h1>
     <p class="text-muted mb-0">
       <strong><?= e($event['title']) ?></strong> ·
       <?= e(gr_time($event['start_datetime'])) ?>–<?= e(gr_time($event['end_datetime'])) ?> ·
-      <i class="bi bi-geo-alt"></i> <?= e($event['location_name'] ?: '—') ?> ·
-      Εγκεκριμένα άτομα: <strong><?= (int) $application['approved_people'] ?></strong>
+      <i class="bi bi-geo-alt"></i> <?= e($event['location_name'] ?: '—') ?> <?= e(t('team/operations.002', '· Εγκεκριμένα άτομα:')) ?> <strong><?= (int) $application['approved_people'] ?></strong>
     </p>
   </div>
   <?php if ($event['status'] === 'active'): ?>
@@ -25,7 +24,7 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
 
 <?php if ($event['status'] !== 'active'): ?>
   <div class="alert alert-warning">
-    Η <?= e($eventSingularLc) ?> δεν είναι ενεργή αυτή τη στιγμή. Οι επιχειρησιακές ενέργειες είναι διαθέσιμες όταν <?= e($orgLabel) ?> την ενεργοποιήσει.
+    Η <?= e($eventSingularLc) ?> <?= e(t('team/operations.058', 'δεν είναι ενεργή αυτή τη στιγμή. Οι επιχειρησιακές ενέργειες είναι διαθέσιμες όταν')) ?> <?= e($orgLabel) ?> <?= e(t('team/operations.059', 'την ενεργοποιήσει.')) ?>
   </div>
 <?php endif; ?>
 
@@ -40,27 +39,27 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
       <div class="card-body">
         <button type="button" id="sosBtn" class="btn btn-danger w-100 fw-bold py-3 d-flex align-items-center justify-content-center gap-2"
                 style="font-size:1.15rem" <?= !$opsActive ? 'disabled' : '' ?>>
-          <i class="bi bi-exclamation-octagon-fill fs-3"></i> SOS — ΚΙΝΔΥΝΟΣ
+          <i class="bi bi-exclamation-octagon-fill fs-3"></i> <?= e(t('team/operations.004', 'SOS — ΚΙΝΔΥΝΟΣ')) ?>
         </button>
         <div id="sosBanner" class="alert mt-2 mb-0 py-2 small" style="display:none"></div>
         <hr class="my-3">
-        <div class="small fw-semibold text-muted mb-2"><i class="bi bi-lightning-charge me-1"></i>Γρήγορη ενημέρωση</div>
+        <div class="small fw-semibold text-muted mb-2"><i class="bi bi-lightning-charge me-1"></i><?= e(t('team/operations.005', 'Γρήγορη ενημέρωση')) ?></div>
         <div class="d-flex flex-wrap gap-2">
-          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="arrived" <?= !$opsActive ? 'disabled' : '' ?>>Φτάσαμε στο σημείο</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="task_complete" <?= !$opsActive ? 'disabled' : '' ?>>Ολοκληρώθηκε</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="need_backup" <?= !$opsActive ? 'disabled' : '' ?>>Χρειαζόμαστε ενίσχυση</button>
-          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="returning" <?= !$opsActive ? 'disabled' : '' ?>>Επιστροφή στη βάση</button>
-          <button type="button" class="btn btn-outline-danger btn-sm ping-btn" data-code="incident" <?= !$opsActive ? 'disabled' : '' ?>>Έχουμε περιστατικό</button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="arrived" <?= !$opsActive ? 'disabled' : '' ?>><?= e(t('team/operations.006', 'Φτάσαμε στο σημείο')) ?></button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="task_complete" <?= !$opsActive ? 'disabled' : '' ?>><?= e(t('team/operations.007', 'Ολοκληρώθηκε')) ?></button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="need_backup" <?= !$opsActive ? 'disabled' : '' ?>><?= e(t('team/operations.008', 'Χρειαζόμαστε ενίσχυση')) ?></button>
+          <button type="button" class="btn btn-outline-secondary btn-sm ping-btn" data-code="returning" <?= !$opsActive ? 'disabled' : '' ?>><?= e(t('team/operations.009', 'Επιστροφή στη βάση')) ?></button>
+          <button type="button" class="btn btn-outline-danger btn-sm ping-btn" data-code="incident" <?= !$opsActive ? 'disabled' : '' ?>><?= e(t('team/operations.010', 'Έχουμε περιστατικό')) ?></button>
         </div>
       </div>
     </div>
   </div>
   <div class="col-lg-7">
     <div class="card shadow-sm h-100">
-      <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-dots me-1"></i> Επικοινωνία · <?= e($orgLabel) ?></div>
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-chat-dots me-1"></i> <?= e(t('team/operations.011', 'Επικοινωνία ·')) ?> <?= e($orgLabel) ?></div>
       <div class="card-body d-flex flex-column">
         <div id="msgList" class="flex-grow-1 mb-2" style="max-height:260px;overflow-y:auto;min-height:120px">
-          <div class="text-muted small text-center py-3">Φόρτωση…</div>
+          <div class="text-muted small text-center py-3"><?= e(t('team/operations.012', 'Φόρτωση…')) ?></div>
         </div>
         <div class="input-group">
           <input type="text" id="msgInput" class="form-control" placeholder="Μήνυμα προς <?= e($orgLabel) ?>…" maxlength="500">
@@ -74,13 +73,13 @@ $orgLabel = $terms['short_name'] ?? 'Φορέας';
 <!-- Δωμάτιο Επιχείρησης (κοινό κανάλι) -->
 <div class="card shadow-sm mb-4">
   <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-broadcast-pin me-1 text-success"></i> Δωμάτιο Επιχείρησης <span class="small text-muted">— κοινό κανάλι όλων</span></span>
+    <span><i class="bi bi-broadcast-pin me-1 text-success"></i> <?= e(t('team/operations.013', 'Δωμάτιο Επιχείρησης')) ?> <span class="small text-muted"><?= e(t('team/operations.014', '— κοινό κανάλι όλων')) ?></span></span>
     <span class="badge bg-success" id="roomBadge">0</span>
   </div>
   <div class="card-body">
-    <div id="roomList" style="max-height:240px;overflow-y:auto;min-height:90px"><div class="text-muted small text-center py-3">Φόρτωση…</div></div>
+    <div id="roomList" style="max-height:240px;overflow-y:auto;min-height:90px"><div class="text-muted small text-center py-3"><?= e(t('team/operations.012', 'Φόρτωση…')) ?></div></div>
     <div class="input-group mt-2">
-      <input type="text" id="roomInput" class="form-control" placeholder="Μήνυμα προς όλους…" maxlength="500">
+      <input type="text" id="roomInput" class="form-control" placeholder="<?= e(t('team/operations.054', 'Μήνυμα προς όλους…')) ?>" maxlength="500">
       <button class="btn btn-success" id="roomSend" type="button"><i class="bi bi-send"></i></button>
     </div>
   </div>
@@ -95,9 +94,9 @@ $tLng  = $lastPing && $lastPing['longitude'] !== null ? (float) $lastPing['longi
 ?>
 <div class="card shadow-sm mb-4">
   <div class="card-header bg-white fw-semibold d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-map me-1 text-success"></i> Χάρτης <?= e($eventSingular) ?></span>
-    <?php if ($lastPing): ?><span class="small text-muted">Τελευταίο στίγμα: <?= e(gr_time($lastPing['created_at'])) ?></span>
-    <?php else: ?><span class="small text-muted">Στείλτε στίγμα για να φανεί η θέση σας</span><?php endif; ?>
+    <span><i class="bi bi-map me-1 text-success"></i> <?= e(t('team/operations.015', 'Χάρτης')) ?> <?= e($eventSingular) ?></span>
+    <?php if ($lastPing): ?><span class="small text-muted"><?= e(t('team/operations.016', 'Τελευταίο στίγμα:')) ?> <?= e(gr_time($lastPing['created_at'])) ?></span>
+    <?php else: ?><span class="small text-muted"><?= e(t('team/operations.017', 'Στείλτε στίγμα για να φανεί η θέση σας')) ?></span><?php endif; ?>
   </div>
   <div id="teamMap" style="height:300px;border-radius:0 0 .5rem .5rem;background:#eef2f3"></div>
 </div>
@@ -132,11 +131,11 @@ window.addEventListener('load', function () {
     <?php if ($photoRequest): ?>
       <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-camera-fill fs-5"></i>
-        <div><strong><?= e($orgLabel) ?> ζήτησε φωτογραφία</strong> για αυτή τη <?= e($eventSingularLc) ?>. Τραβήξτε ή ανεβάστε μία παρακάτω.</div>
+        <div><strong><?= e($orgLabel) ?> <?= e(t('team/operations.018', 'ζήτησε φωτογραφία')) ?></strong> <?= e(t('team/operations.060', 'για αυτή τη')) ?> <?= e($eventSingularLc) ?><?= e(t('team/operations.061', '. Τραβήξτε ή ανεβάστε μία παρακάτω.')) ?></div>
       </div>
     <?php endif; ?>
-    <h2 class="h5 mb-1"><i class="bi bi-camera me-1 text-info"></i>Αποστολή Φωτογραφίας προς <?= e($orgLabel) ?></h2>
-    <p class="small text-muted">Εμφανίζεται στον επιχειρησιακό χάρτη του φορέα στο σημείο που τραβήχτηκε (αν επιτρέψετε τοποθεσία).</p>
+    <h2 class="h5 mb-1"><i class="bi bi-camera me-1 text-info"></i><?= e(t('team/operations.020', 'Αποστολή Φωτογραφίας προς')) ?> <?= e($orgLabel) ?></h2>
+    <p class="small text-muted"><?= e(t('team/operations.021', 'Εμφανίζεται στον επιχειρησιακό χάρτη του φορέα στο σημείο που τραβήχτηκε (αν επιτρέψετε τοποθεσία).')) ?></p>
     <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/photo')) ?>" enctype="multipart/form-data" id="photoForm">
       <?= csrf_field() ?>
       <input type="hidden" name="latitude" id="photoLat">
@@ -144,21 +143,21 @@ window.addEventListener('load', function () {
       <input type="hidden" name="request_id" value="<?= $photoRequest ? (int) $photoRequest['id'] : '' ?>">
       <div class="row g-2 align-items-end">
         <div class="col-sm-5">
-          <label class="form-label small mb-1">Φωτογραφία</label>
+          <label class="form-label small mb-1"><?= e(t('team/operations.022', 'Φωτογραφία')) ?></label>
           <input type="file" name="photo" accept="image/*" capture="environment" class="form-control" required>
         </div>
         <div class="col-sm-5">
-          <label class="form-label small mb-1">Σχόλιο (προαιρετικό)</label>
-          <input type="text" name="caption" maxlength="255" class="form-control" placeholder="π.χ. σημείο, κατάσταση…">
+          <label class="form-label small mb-1"><?= e(t('team/operations.023', 'Σχόλιο (προαιρετικό)')) ?></label>
+          <input type="text" name="caption" maxlength="255" class="form-control" placeholder="<?= e(t('team/operations.055', 'π.χ. σημείο, κατάσταση…')) ?>">
         </div>
         <div class="col-sm-2 d-grid">
-          <button class="btn btn-info text-white" id="photoSubmit"><i class="bi bi-upload me-1"></i>Αποστολή</button>
+          <button class="btn btn-info text-white" id="photoSubmit"><i class="bi bi-upload me-1"></i><?= e(t('team/operations.024', 'Αποστολή')) ?></button>
         </div>
       </div>
       <div id="photoGeoNote" class="small text-muted mt-1"></div>
     </form>
     <?php if (!empty($teamPhotos)): ?>
-      <div class="small text-muted mt-3 mb-1">Σταλμένες φωτογραφίες:</div>
+      <div class="small text-muted mt-3 mb-1"><?= e(t('team/operations.025', 'Σταλμένες φωτογραφίες:')) ?></div>
       <div class="d-flex flex-wrap gap-2">
         <?php foreach ($teamPhotos as $tp): ?>
           <a href="<?= e(url('/operations/photos/' . $tp['id'])) ?>" target="_blank" rel="noopener"
@@ -204,19 +203,19 @@ window.addEventListener('load', function () {
     <div class="card shadow-sm h-100 <?= !empty($gpsRequest) ? 'border-info border-2' : '' ?>">
       <div class="card-body text-center">
         <i class="bi bi-geo-alt display-6 text-primary"></i>
-        <h2 class="h5 mt-2">Αποστολή Στίγματος</h2>
+        <h2 class="h5 mt-2"><?= e(t('team/operations.026', 'Αποστολή Στίγματος')) ?></h2>
         <?php if (!empty($gpsRequest)): ?>
-          <div class="alert alert-info py-2 small mb-2"><i class="bi bi-geo-alt-fill me-1"></i><?= e($orgLabel) ?> ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».</div>
+          <div class="alert alert-info py-2 small mb-2"><i class="bi bi-geo-alt-fill me-1"></i><?= e($orgLabel) ?> <?= e(t('team/operations.027', 'ζήτησε το στίγμα σας — πατήστε «Αποστολή Στίγματος».')) ?></div>
         <?php endif; ?>
         <p class="small text-muted">
-          Στείλτε τη θέση της ομάδας σας προς <?= e($orgLabel) ?>. Το στίγμα στέλνεται μόνο όταν πατήσετε το κουμπί.
+          <?= e(t('team/operations.062', 'Στείλτε τη θέση της ομάδας σας προς')) ?> <?= e($orgLabel) ?><?= e(t('team/operations.063', '. Το στίγμα στέλνεται μόνο όταν πατήσετε το κουμπί.')) ?>
         </p>
         <?php if ($lastPing): ?>
-          <p class="small text-success mb-2"><i class="bi bi-check-circle me-1"></i>Τελευταίο στίγμα: <?= e(gr_datetime($lastPing['created_at'])) ?></p>
+          <p class="small text-success mb-2"><i class="bi bi-check-circle me-1"></i><?= e(t('team/operations.016', 'Τελευταίο στίγμα:')) ?> <?= e(gr_datetime($lastPing['created_at'])) ?></p>
         <?php endif; ?>
         <button type="button" class="btn btn-primary btn-op" id="sendLocationBtn"
                 onclick="sendTeamLocation(<?= (int) $event['id'] ?>)" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
-          <i class="bi bi-broadcast me-1"></i>Αποστολή Στίγματος
+          <i class="bi bi-broadcast me-1"></i><?= e(t('team/operations.026', 'Αποστολή Στίγματος')) ?>
         </button>
         <div id="locationResult" class="small mt-2"></div>
       </div>
@@ -227,17 +226,17 @@ window.addEventListener('load', function () {
     <div class="card shadow-sm h-100">
       <div class="card-body text-center">
         <i class="bi bi-person-check display-6 text-success"></i>
-        <h2 class="h5 mt-2">Δήλωση Παρουσίας</h2>
+        <h2 class="h5 mt-2"><?= e(t('team/operations.029', 'Δήλωση Παρουσίας')) ?></h2>
         <?php if ($lastCheckin): ?>
           <p class="small mb-2">
-            Τρέχουσα κατάσταση: <?= status_badge($lastCheckin['status']) ?>
+            <?= e(t('team/operations.064', 'Τρέχουσα κατάσταση:')) ?> <?= status_badge($lastCheckin['status']) ?>
             <?php if (in_array($lastCheckin['status'], ['present_full', 'present_partial'], true)): ?>
-              (<?= (int) $lastCheckin['present_people'] ?> άτομα)
+              (<?= (int) $lastCheckin['present_people'] ?> <?= e(t('team/operations.065', 'άτομα)')) ?>
             <?php endif; ?>
             <span class="text-muted">· <?= e(gr_time($lastCheckin['checked_in_at'])) ?></span>
           </p>
         <?php else: ?>
-          <p class="small text-muted mb-2">Δεν έχετε δηλώσει ακόμη παρουσία.</p>
+          <p class="small text-muted mb-2"><?= e(t('team/operations.031', 'Δεν έχετε δηλώσει ακόμη παρουσία.')) ?></p>
         <?php endif; ?>
 
         <div class="d-grid gap-2">
@@ -246,18 +245,18 @@ window.addEventListener('load', function () {
             <?= csrf_field() ?>
             <input type="hidden" name="status" value="present_full">
             <button class="btn btn-success btn-op" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
-              <i class="bi bi-check2-all me-1"></i>Παρών με όλη την ομάδα
+              <i class="bi bi-check2-all me-1"></i><?= e(t('team/operations.032', 'Παρών με όλη την ομάδα')) ?>
             </button>
           </form>
           <button class="btn btn-warning btn-op" type="button" data-bs-toggle="modal" data-bs-target="#partialModal" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
-            <i class="bi bi-check2 me-1"></i>Παρών με ελλείψεις
+            <i class="bi bi-check2 me-1"></i><?= e(t('team/operations.033', 'Παρών με ελλείψεις')) ?>
           </button>
           <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/checkin')) ?>"
                 onsubmit="return confirm(<?= e(json_encode('Δήλωση αποχώρησης της ομάδας από τη ' . $eventSingularLc . ';', JSON_UNESCAPED_UNICODE)) ?>)">
             <?= csrf_field() ?>
             <input type="hidden" name="status" value="departed">
             <button class="btn btn-outline-dark btn-op" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
-              <i class="bi bi-box-arrow-right me-1"></i>Αποχώρηση
+              <i class="bi bi-box-arrow-right me-1"></i><?= e(t('team/operations.034', 'Αποχώρηση')) ?>
             </button>
           </form>
         </div>
@@ -267,42 +266,42 @@ window.addEventListener('load', function () {
 </div>
 
 <div class="card shadow-sm mb-4">
-  <div class="card-header bg-white fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i> Αναφορά Έλλειψης</div>
+  <div class="card-header bg-white fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i> <?= e(t('team/operations.035', 'Αναφορά Έλλειψης')) ?></div>
   <div class="card-body">
     <form method="post" action="<?= e(url('/team/operations/events/' . $event['id'] . '/shortage')) ?>"
           onsubmit="return confirm(<?= e(json_encode('Να σταλεί η αναφορά έλλειψης προς ' . $orgLabel . ';', JSON_UNESCAPED_UNICODE)) ?>)">
       <?= csrf_field() ?>
       <div class="row g-2">
         <div class="col-md-4">
-          <label class="form-label small">Τύπος έλλειψης *</label>
+          <label class="form-label small"><?= e(t('team/operations.036', 'Τύπος έλλειψης *')) ?></label>
           <select name="shortage_type" class="form-select" required>
-            <option value="people">Άτομα</option>
-            <option value="equipment">Εξοπλισμός</option>
-            <option value="medical_supplies">Υγειονομικό υλικό</option>
-            <option value="vehicle">Όχημα</option>
-            <option value="other">Άλλο</option>
+            <option value="people"><?= e(t('team/operations.037', 'Άτομα')) ?></option>
+            <option value="equipment"><?= e(t('team/operations.038', 'Εξοπλισμός')) ?></option>
+            <option value="medical_supplies"><?= e(t('team/operations.039', 'Υγειονομικό υλικό')) ?></option>
+            <option value="vehicle"><?= e(t('team/operations.040', 'Όχημα')) ?></option>
+            <option value="other"><?= e(t('team/operations.041', 'Άλλο')) ?></option>
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label small">Σοβαρότητα</label>
+          <label class="form-label small"><?= e(t('team/operations.042', 'Σοβαρότητα')) ?></label>
           <select name="severity" class="form-select">
-            <option value="low">Χαμηλή</option>
-            <option value="medium" selected>Μεσαία</option>
-            <option value="high">Υψηλή</option>
-            <option value="critical">Κρίσιμη</option>
+            <option value="low"><?= e(t('team/operations.043', 'Χαμηλή')) ?></option>
+            <option value="medium" selected><?= e(t('team/operations.044', 'Μεσαία')) ?></option>
+            <option value="high"><?= e(t('team/operations.045', 'Υψηλή')) ?></option>
+            <option value="critical"><?= e(t('team/operations.046', 'Κρίσιμη')) ?></option>
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label small">Σύντομος τίτλος *</label>
-          <input type="text" name="title" class="form-control" required placeholder="π.χ. Λείπουν 2 άτομα">
+          <label class="form-label small"><?= e(t('team/operations.047', 'Σύντομος τίτλος *')) ?></label>
+          <input type="text" name="title" class="form-control" required placeholder="<?= e(t('team/operations.056', 'π.χ. Λείπουν 2 άτομα')) ?>">
         </div>
         <div class="col-12">
-          <label class="form-label small">Περιγραφή</label>
+          <label class="form-label small"><?= e(t('team/operations.048', 'Περιγραφή')) ?></label>
           <textarea name="description" class="form-control" rows="2"></textarea>
         </div>
         <div class="col-12">
           <button class="btn btn-danger btn-op" <?= $event['status'] !== 'active' ? 'disabled' : '' ?>>
-            <i class="bi bi-send me-1"></i>Αποστολή Αναφοράς Έλλειψης
+            <i class="bi bi-send me-1"></i><?= e(t('team/operations.049', 'Αποστολή Αναφοράς Έλλειψης')) ?>
           </button>
         </div>
       </div>
@@ -311,7 +310,7 @@ window.addEventListener('load', function () {
 </div>
 
 <div class="card shadow-sm" id="opShortageCard"<?= $shortages ? '' : ' style="display:none"' ?>>
-  <div class="card-header bg-white fw-semibold">Οι αναφορές μας για αυτή τη <?= e($eventSingularLc) ?></div>
+  <div class="card-header bg-white fw-semibold"><?= e(t('team/operations.050', 'Οι αναφορές μας για αυτή τη')) ?> <?= e($eventSingularLc) ?></div>
   <ul class="list-group list-group-flush" id="opShortageList">
     <?php foreach ($shortages as $s): ?>
       <li class="list-group-item small">
@@ -527,7 +526,7 @@ window.addEventListener('load', function () {
       <?= csrf_field() ?>
       <input type="hidden" name="status" value="present_partial">
       <div class="modal-header">
-        <h5 class="modal-title">Παρών με ελλείψεις</h5>
+        <h5 class="modal-title"><?= e(t('team/operations.033', 'Παρών με ελλείψεις')) ?></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -535,16 +534,16 @@ window.addEventListener('load', function () {
           <label class="form-label">Πόσα άτομα είναι παρόντα; *</label>
           <input type="number" name="present_people" class="form-control form-control-lg" min="1"
                  max="<?= max(1, (int) $application['approved_people'] - 1) ?>" required>
-          <div class="form-text">Εγκεκριμένα άτομα: <?= (int) $application['approved_people'] ?></div>
+          <div class="form-text"><?= e(t('team/operations.051', 'Εγκεκριμένα άτομα:')) ?> <?= (int) $application['approved_people'] ?></div>
         </div>
         <div class="mb-2">
-          <label class="form-label">Σχόλιο (προαιρετικό)</label>
-          <input type="text" name="message" class="form-control" placeholder="π.χ. Ένα μέλος ασθένησε">
+          <label class="form-label"><?= e(t('team/operations.023', 'Σχόλιο (προαιρετικό)')) ?></label>
+          <input type="text" name="message" class="form-control" placeholder="<?= e(t('team/operations.057', 'π.χ. Ένα μέλος ασθένησε')) ?>">
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Άκυρο</button>
-        <button type="submit" class="btn btn-warning">Δήλωση Παρουσίας</button>
+        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal"><?= e(t('team/operations.052', 'Άκυρο')) ?></button>
+        <button type="submit" class="btn btn-warning"><?= e(t('team/operations.029', 'Δήλωση Παρουσίας')) ?></button>
       </div>
     </form>
   </div>

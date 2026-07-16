@@ -38,7 +38,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
       <div class="card border-0 shadow-sm text-center h-100">
         <div class="card-body">
           <div class="fs-1 fw-bold text-primary"><?= (int)($stats['debrief_count'] ?? 0) ?>/<?= $approvedCount ?></div>
-          <div class="text-muted small">Ποσοστό Ολοκλήρωσης</div>
+          <div class="text-muted small"><?= e(t('events/debriefs.001', 'Ποσοστό Ολοκλήρωσης')) ?></div>
           <div class="progress mt-2" style="height:6px">
             <div class="progress-bar bg-primary" style="width:<?= $completionRate ?>%"></div>
           </div>
@@ -50,7 +50,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
       <div class="card border-0 shadow-sm text-center h-100">
         <div class="card-body">
           <div class="fs-1 fw-bold text-success"><?= number_format((float)($stats['total_hours'] ?? 0), 1) ?></div>
-          <div class="text-muted small">Συνολικές Ώρες</div>
+          <div class="text-muted small"><?= e(t('events/debriefs.002', 'Συνολικές Ώρες')) ?></div>
         </div>
       </div>
     </div>
@@ -58,7 +58,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
       <div class="card border-0 shadow-sm text-center h-100">
         <div class="card-body">
           <div class="fs-1 fw-bold text-danger"><?= (int)($stats['total_incidents'] ?? 0) ?></div>
-          <div class="text-muted small">Συνολικά Συμβάντα</div>
+          <div class="text-muted small"><?= e(t('events/debriefs.003', 'Συνολικά Συμβάντα')) ?></div>
         </div>
       </div>
     </div>
@@ -72,7 +72,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
               <i class="bi bi-star-fill fs-4"></i>
             <?php endif ?>
           </div>
-          <div class="text-muted small">Μέση Βαθμολογία Οργάνωσης</div>
+          <div class="text-muted small"><?= e(t('events/debriefs.004', 'Μέση Βαθμολογία Οργάνωσης')) ?></div>
         </div>
       </div>
     </div>
@@ -81,29 +81,29 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
   <!-- Municipality after-action report -->
   <div class="card shadow-sm mb-4 border-start border-4 border-primary">
     <div class="card-header bg-white fw-semibold">
-      <i class="bi bi-clipboard-check me-1"></i> Απολογισμός Φορέα (After-Action)
-      <?php if (!empty($muniReport)): ?><span class="badge text-bg-success ms-1">Αποθηκευμένος</span><?php endif; ?>
+      <i class="bi bi-clipboard-check me-1"></i> <?= e(t('events/debriefs.005', 'Απολογισμός Φορέα (After-Action)')) ?>
+      <?php if (!empty($muniReport)): ?><span class="badge text-bg-success ms-1"><?= e(t('events/debriefs.006', 'Αποθηκευμένος')) ?></span><?php endif; ?>
     </div>
     <div class="card-body">
       <form method="post" action="<?= e(url('/events/' . $event['id'] . '/municipality-debrief')) ?>">
         <?= csrf_field() ?>
         <div class="d-flex flex-wrap gap-3 mb-3 small text-muted">
-          <span>Σύνολα από αναφορές ομάδων:</span>
-          <span><strong><?= (int) ($teamAgg['i'] ?? 0) ?></strong> περιστατικά</span>
-          <span><strong><?= (int) ($teamAgg['t'] ?? 0) ?></strong> διακομιδές</span>
-          <span><strong><?= (int) ($teamAgg['f'] ?? 0) ?></strong> πρώτες βοήθειες</span>
+          <span><?= e(t('events/debriefs.007', 'Σύνολα από αναφορές ομάδων:')) ?></span>
+          <span><strong><?= (int) ($teamAgg['i'] ?? 0) ?></strong> <?= e(t('events/debriefs.008', 'περιστατικά')) ?></span>
+          <span><strong><?= (int) ($teamAgg['t'] ?? 0) ?></strong> <?= e(t('events/debriefs.009', 'διακομιδές')) ?></span>
+          <span><strong><?= (int) ($teamAgg['f'] ?? 0) ?></strong> <?= e(t('events/debriefs.010', 'πρώτες βοήθειες')) ?></span>
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Συνολική αξιολόγηση / Σύνοψη</label>
+          <label class="form-label fw-semibold"><?= e(t('events/debriefs.011', 'Συνολική αξιολόγηση / Σύνοψη')) ?></label>
           <textarea name="summary" class="form-control" rows="3" placeholder="Πώς πήγε η <?= e($eventSingularLc) ?> συνολικά, συντονισμός, ανταπόκριση ομάδων…"><?= e($muniReport['summary'] ?? '') ?></textarea>
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Συμπεράσματα &amp; βελτιώσεις (lessons learned)</label>
-          <textarea name="notes" class="form-control" rows="3" placeholder="Τι να βελτιωθεί, ενέργειες για την επόμενη φορά…"><?= e($muniReport['notes'] ?? '') ?></textarea>
+          <textarea name="notes" class="form-control" rows="3" placeholder="<?= e(t('events/debriefs.026', 'Τι να βελτιωθεί, ενέργειες για την επόμενη φορά…')) ?>"><?= e($muniReport['notes'] ?? '') ?></textarea>
         </div>
-        <button class="btn btn-primary"><i class="bi bi-save me-1"></i>Αποθήκευση Απολογισμού</button>
+        <button class="btn btn-primary"><i class="bi bi-save me-1"></i><?= e(t('events/debriefs.012', 'Αποθήκευση Απολογισμού')) ?></button>
         <?php if (!empty($muniReport)): ?>
-          <span class="small text-muted ms-2">Τελευταία ενημέρωση: <?= e(gr_datetime($muniReport['updated_at'] ?? $muniReport['created_at'])) ?></span>
+          <span class="small text-muted ms-2"><?= e(t('events/debriefs.013', 'Τελευταία ενημέρωση:')) ?> <?= e(gr_datetime($muniReport['updated_at'] ?? $muniReport['created_at'])) ?></span>
         <?php endif; ?>
       </form>
     </div>
@@ -113,7 +113,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
   <?php if (empty($debriefs)): ?>
     <div class="alert alert-info d-flex align-items-center gap-2">
       <i class="bi bi-info-circle-fill"></i>
-      Καμία ομάδα δεν έχει υποβάλει debrief ακόμα.
+      <?= e(t('events/debriefs.014', 'Καμία ομάδα δεν έχει υποβάλει debrief ακόμα.')) ?>
     </div>
   <?php else: ?>
     <div class="row g-4">
@@ -124,10 +124,10 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
               <i class="bi bi-people-fill text-primary"></i>
               <strong><?= e($db['team_name']) ?></strong>
               <span class="ms-auto text-muted small">
-                από <?= e($db['submitted_by_name']) ?>
+                <?= e(t('events/debriefs.027', 'από')) ?> <?= e($db['submitted_by_name']) ?>
                 · <?= date('d/m/Y H:i', strtotime($db['submitted_at'])) ?>
                 <?php if ($db['updated_at']): ?>
-                  <span class="text-info">(επεξεργάστηκε <?= date('d/m/Y H:i', strtotime($db['updated_at'])) ?>)</span>
+                  <span class="text-info"><?= e(t('events/debriefs.028', '(επεξεργάστηκε')) ?> <?= date('d/m/Y H:i', strtotime($db['updated_at'])) ?>)</span>
                 <?php endif ?>
               </span>
             </div>
@@ -140,7 +140,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
                     <i class="bi bi-person-check-fill text-success fs-5"></i>
                     <div>
                       <div class="fw-semibold"><?= (int)$db['actual_volunteers'] ?></div>
-                      <div class="text-muted small">Εθελοντές</div>
+                      <div class="text-muted small"><?= e(t('events/debriefs.017', 'Εθελοντές')) ?></div>
                     </div>
                   </div>
                 </div>
@@ -149,7 +149,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
                     <i class="bi bi-clock-fill text-primary fs-5"></i>
                     <div>
                       <div class="fw-semibold"><?= number_format((float)$db['volunteer_hours'], 1) ?>h</div>
-                      <div class="text-muted small">Ώρες</div>
+                      <div class="text-muted small"><?= e(t('events/debriefs.018', 'Ώρες')) ?></div>
                     </div>
                   </div>
                 </div>
@@ -158,7 +158,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
                     <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
                     <div>
                       <div class="fw-semibold"><?= (int)$db['incidents_count'] ?></div>
-                      <div class="text-muted small">Συμβάντα</div>
+                      <div class="text-muted small"><?= e(t('events/debriefs.019', 'Συμβάντα')) ?></div>
                     </div>
                   </div>
                 </div>
@@ -166,7 +166,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
 
               <!-- Rating -->
               <div class="mb-3 d-flex align-items-center gap-2">
-                <span class="text-muted small">Βαθμολογία:</span>
+                <span class="text-muted small"><?= e(t('events/debriefs.020', 'Βαθμολογία:')) ?></span>
                 <?php for ($s = 1; $s <= 5; $s++): ?>
                   <i class="bi bi-star<?= $s <= (int)$db['organization_rating'] ? '-fill' : '' ?>"
                      style="color:<?= $s <= (int)$db['organization_rating'] ? '#f59e0b' : '#d1d5db' ?>"></i>
@@ -179,7 +179,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
                 <?php if ($db['what_went_well']): ?>
                   <div class="col-md-6">
                     <div class="p-3 rounded" style="background:#f0fdf4;border-left:3px solid #22c55e">
-                      <div class="fw-semibold text-success small mb-1"><i class="bi bi-check-circle me-1"></i>Τι πήγε καλά</div>
+                      <div class="fw-semibold text-success small mb-1"><i class="bi bi-check-circle me-1"></i><?= e(t('events/debriefs.021', 'Τι πήγε καλά')) ?></div>
                       <div class="small"><?= nl2br(e($db['what_went_well'])) ?></div>
                     </div>
                   </div>
@@ -187,7 +187,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
                 <?php if ($db['what_went_wrong']): ?>
                   <div class="col-md-6">
                     <div class="p-3 rounded" style="background:#fff7ed;border-left:3px solid #f97316">
-                      <div class="fw-semibold text-warning small mb-1"><i class="bi bi-arrow-up-circle me-1"></i>Περιθώρια βελτίωσης</div>
+                      <div class="fw-semibold text-warning small mb-1"><i class="bi bi-arrow-up-circle me-1"></i><?= e(t('events/debriefs.022', 'Περιθώρια βελτίωσης')) ?></div>
                       <div class="small"><?= nl2br(e($db['what_went_wrong'])) ?></div>
                     </div>
                   </div>
@@ -195,7 +195,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
                 <?php if ($db['incidents_description']): ?>
                   <div class="col-12">
                     <div class="p-3 rounded" style="background:#fef2f2;border-left:3px solid #ef4444">
-                      <div class="fw-semibold text-danger small mb-1"><i class="bi bi-exclamation-circle me-1"></i>Περιγραφή Συμβάντων</div>
+                      <div class="fw-semibold text-danger small mb-1"><i class="bi bi-exclamation-circle me-1"></i><?= e(t('events/debriefs.023', 'Περιγραφή Συμβάντων')) ?></div>
                       <div class="small"><?= nl2br(e($db['incidents_description'])) ?></div>
                     </div>
                   </div>
@@ -203,7 +203,7 @@ $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-
                 <?php if ($db['comments']): ?>
                   <div class="col-12">
                     <div class="p-3 rounded bg-light">
-                      <div class="fw-semibold text-muted small mb-1"><i class="bi bi-chat-left-text me-1"></i>Σχόλια</div>
+                      <div class="fw-semibold text-muted small mb-1"><i class="bi bi-chat-left-text me-1"></i><?= e(t('events/debriefs.024', 'Σχόλια')) ?></div>
                       <div class="small"><?= nl2br(e($db['comments'])) ?></div>
                     </div>
                   </div>

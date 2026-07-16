@@ -21,7 +21,7 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
   <div>
     <a href="<?= e(url('/admin/municipalities')) ?>" class="text-muted small text-decoration-none">
-      <i class="bi bi-chevron-left"></i> Φορείς
+      <i class="bi bi-chevron-left"></i> <?= e(t('municipalities/show.001', 'Φορείς')) ?>
     </a>
     <h1 class="h3 mb-0 mt-1"><?= e($m['official_name'] ?: ($authorityContext['official_name'] ?? $m['name'])) ?></h1>
     <div class="small text-muted mt-1">
@@ -38,7 +38,7 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
     </span>
     <!-- Edit municipality modal trigger -->
     <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#editMuniModal">
-      <i class="bi bi-pencil me-1"></i>Επεξεργασία
+      <i class="bi bi-pencil me-1"></i><?= e(t('municipalities/show.002', 'Επεξεργασία')) ?>
     </button>
     <!-- Toggle status -->
     <form method="post" action="<?= e(url('/admin/municipalities/' . $m['id'] . '/toggle')) ?>">
@@ -58,42 +58,42 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-warning-subtle text-warning mb-2"><i class="bi bi-calendar-event"></i></div>
       <div class="stat-value"><?= (int) $stats['events_total'] ?></div>
-      <div class="text-muted small"><?= e($eventPlural) ?> συνολικά</div>
+      <div class="text-muted small"><?= e($eventPlural) ?> <?= e(t('municipalities/show.003', 'συνολικά')) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-md-4 col-xl-2">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-success-subtle text-success mb-2"><i class="bi bi-broadcast"></i></div>
       <div class="stat-value"><?= (int) $stats['events_active'] ?></div>
-      <div class="text-muted small">Ενεργές <?= e($eventPluralLc) ?></div>
+      <div class="text-muted small"><?= e(t('municipalities/show.004', 'Ενεργές')) ?> <?= e($eventPluralLc) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-md-4 col-xl-2">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-primary-subtle text-primary mb-2"><i class="bi bi-calendar-check"></i></div>
       <div class="stat-value"><?= (int) $stats['events_year'] ?></div>
-      <div class="text-muted small">Φέτος</div>
+      <div class="text-muted small"><?= e(t('municipalities/show.005', 'Φέτος')) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-md-4 col-xl-2">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-info-subtle text-info mb-2"><i class="bi bi-clipboard-check"></i></div>
       <div class="stat-value"><?= (int) $stats['applications'] ?></div>
-      <div class="text-muted small">Δηλώσεις</div>
+      <div class="text-muted small"><?= e(t('municipalities/show.006', 'Δηλώσεις')) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-md-4 col-xl-2">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-success-subtle text-success mb-2"><i class="bi bi-person-check"></i></div>
       <div class="stat-value"><?= (int) $stats['approved'] ?></div>
-      <div class="text-muted small">Εγκεκριμένες</div>
+      <div class="text-muted small"><?= e(t('municipalities/show.007', 'Εγκεκριμένες')) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-md-4 col-xl-2">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-icon bg-warning-subtle text-warning mb-2"><i class="bi bi-clock-history"></i></div>
       <div class="stat-value"><?= number_format($stats['volunteer_hours'], 0) ?></div>
-      <div class="text-muted small">Ώρες εθελοντισμού</div>
+      <div class="text-muted small"><?= e(t('municipalities/show.008', 'Ώρες εθελοντισμού')) ?></div>
     </div></div>
   </div>
 </div>
@@ -103,22 +103,22 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
   <div class="col-lg-8">
     <div class="card shadow-sm">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <span class="fw-semibold"><i class="bi bi-people me-1"></i> Χρήστες (<?= count($users) ?>)</span>
+        <span class="fw-semibold"><i class="bi bi-people me-1"></i> <?= e(t('municipalities/show.032', 'Χρήστες (')) ?><?= count($users) ?>)</span>
       </div>
       <div class="table-responsive">
         <table class="table table-hover mb-0 align-middle">
           <thead class="table-light">
             <tr>
-              <th>Όνομα</th>
-              <th>Ρόλος</th>
-              <th>Ομάδα</th>
-              <th>Κατάσταση</th>
+              <th><?= e(t('municipalities/show.010', 'Όνομα')) ?></th>
+              <th><?= e(t('municipalities/show.011', 'Ρόλος')) ?></th>
+              <th><?= e(t('municipalities/show.012', 'Ομάδα')) ?></th>
+              <th><?= e(t('municipalities/show.013', 'Κατάσταση')) ?></th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <?php if (!$users): ?>
-              <tr><td colspan="5" class="text-muted py-3 text-center">Δεν υπάρχουν χρήστες.</td></tr>
+              <tr><td colspan="5" class="text-muted py-3 text-center"><?= e(t('municipalities/show.014', 'Δεν υπάρχουν χρήστες.')) ?></td></tr>
             <?php endif; ?>
             <?php foreach ($users as $u): ?>
               <tr>
@@ -160,7 +160,7 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
   <div class="col-lg-4 d-flex flex-column gap-4">
     <!-- Municipality info -->
     <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> Στοιχεία Φορέα</div>
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-info-circle me-1"></i> <?= e(t('municipalities/show.015', 'Στοιχεία Φορέα')) ?></div>
       <ul class="list-group list-group-flush small">
         <?php if ($m['city']): ?>
           <li class="list-group-item"><i class="bi bi-geo me-2 text-muted"></i><?= e($m['city']) ?></li>
@@ -175,17 +175,17 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
           <li class="list-group-item"><i class="bi bi-telephone me-2 text-muted"></i><?= e($m['phone']) ?></li>
         <?php endif; ?>
         <?php if (!$m['city'] && !$m['address'] && !$m['email'] && !$m['phone']): ?>
-          <li class="list-group-item text-muted">Δεν έχουν καταχωρηθεί στοιχεία.</li>
+          <li class="list-group-item text-muted"><?= e(t('municipalities/show.016', 'Δεν έχουν καταχωρηθεί στοιχεία.')) ?></li>
         <?php endif; ?>
       </ul>
     </div>
 
     <!-- Teams list -->
     <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold"><i class="bi bi-people me-1"></i> Ομάδες (<?= count($teams) ?>)</div>
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-people me-1"></i> <?= e(t('municipalities/show.033', 'Ομάδες (')) ?><?= count($teams) ?>)</div>
       <ul class="list-group list-group-flush small">
         <?php if (!$teams): ?>
-          <li class="list-group-item text-muted">Δεν υπάρχουν ομάδες.</li>
+          <li class="list-group-item text-muted"><?= e(t('municipalities/show.018', 'Δεν υπάρχουν ομάδες.')) ?></li>
         <?php endif; ?>
         <?php foreach ($teams as $t): ?>
           <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -207,16 +207,16 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
       <?= csrf_field() ?>
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Επεξεργασία Φορέα</h5>
+          <h5 class="modal-title"><?= e(t('municipalities/show.019', 'Επεξεργασία Φορέα')) ?></h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label fw-semibold">Όνομα <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold"><?= e(t('municipalities/show.010', 'Όνομα')) ?> <span class="text-danger">*</span></label>
             <input type="text" name="name" class="form-control" value="<?= e($m['name']) ?>" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Τύπος φορέα</label>
+            <label class="form-label"><?= e(t('municipalities/show.020', 'Τύπος φορέα')) ?></label>
             <select name="authority_type" class="form-select">
               <?php foreach ($authorityOptions as $type => $opt): ?>
                 <option value="<?= e($type) ?>" <?= ($m['authority_type'] ?? 'municipality') === $type ? 'selected' : '' ?>><?= e($opt['label']) ?></option>
@@ -224,19 +224,19 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Πλήρες εμφανιζόμενο όνομα</label>
-            <input type="text" name="official_name" class="form-control" value="<?= e($m['official_name'] ?? '') ?>" placeholder="π.χ. Πυροσβεστική Ηρακλείου">
+            <label class="form-label"><?= e(t('municipalities/show.021', 'Πλήρες εμφανιζόμενο όνομα')) ?></label>
+            <input type="text" name="official_name" class="form-control" value="<?= e($m['official_name'] ?? '') ?>" placeholder="<?= e(t('municipalities/show.030', 'π.χ. Πυροσβεστική Ηρακλείου')) ?>">
           </div>
           <div class="mb-3">
-            <label class="form-label">Σύντομο όνομα</label>
-            <input type="text" name="short_name" class="form-control" value="<?= e($m['short_name'] ?? '') ?>" placeholder="π.χ. Πυρ/κή">
+            <label class="form-label"><?= e(t('municipalities/show.022', 'Σύντομο όνομα')) ?></label>
+            <input type="text" name="short_name" class="form-control" value="<?= e($m['short_name'] ?? '') ?>" placeholder="<?= e(t('municipalities/show.031', 'π.χ. Πυρ/κή')) ?>">
           </div>
           <div class="mb-3">
-            <label class="form-label">Πόλη</label>
+            <label class="form-label"><?= e(t('municipalities/show.023', 'Πόλη')) ?></label>
             <input type="text" name="city" class="form-control" value="<?= e($m['city'] ?? '') ?>">
           </div>
           <div class="mb-3">
-            <label class="form-label">Διεύθυνση</label>
+            <label class="form-label"><?= e(t('municipalities/show.024', 'Διεύθυνση')) ?></label>
             <input type="text" name="address" class="form-control" value="<?= e($m['address'] ?? '') ?>">
           </div>
           <div class="row g-3">
@@ -245,21 +245,21 @@ $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
               <input type="email" name="email" class="form-control" value="<?= e($m['email'] ?? '') ?>">
             </div>
             <div class="col-md-6">
-              <label class="form-label">Τηλέφωνο</label>
+              <label class="form-label"><?= e(t('municipalities/show.025', 'Τηλέφωνο')) ?></label>
               <input type="text" name="phone" class="form-control" value="<?= e($m['phone'] ?? '') ?>">
             </div>
           </div>
           <div class="mt-3">
-            <label class="form-label">Κατάσταση</label>
+            <label class="form-label"><?= e(t('municipalities/show.013', 'Κατάσταση')) ?></label>
             <select name="status" class="form-select">
-              <option value="active" <?= $m['status'] === 'active' ? 'selected' : '' ?>>Ενεργός</option>
-              <option value="inactive" <?= $m['status'] === 'inactive' ? 'selected' : '' ?>>Ανενεργός</option>
+              <option value="active" <?= $m['status'] === 'active' ? 'selected' : '' ?>><?= e(t('municipalities/show.026', 'Ενεργός')) ?></option>
+              <option value="inactive" <?= $m['status'] === 'inactive' ? 'selected' : '' ?>><?= e(t('municipalities/show.027', 'Ανενεργός')) ?></option>
             </select>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Άκυρο</button>
-          <button type="submit" class="btn btn-primary">Αποθήκευση</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= e(t('municipalities/show.028', 'Άκυρο')) ?></button>
+          <button type="submit" class="btn btn-primary"><?= e(t('municipalities/show.029', 'Αποθήκευση')) ?></button>
         </div>
       </div>
     </form>

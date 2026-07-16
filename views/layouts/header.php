@@ -29,11 +29,11 @@
 <?php if (!empty($_SESSION['impersonating_user_id'])): ?>
 <div role="alert" aria-live="assertive" style="background:#b45309;color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:700;position:sticky;top:0;z-index:2000;display:flex;align-items:center;justify-content:center;gap:16px;">
   <i class="bi bi-person-fill-gear"></i>
-  Λειτουργείτε ως <strong><?= e(current_user()['name'] ?? '–') ?></strong> (Impersonation από <?= e($_SESSION['impersonating_user_name'] ?? 'Super Admin') ?>)
+  <?= e(t('layouts/header.001', 'Λειτουργείτε ως')) ?> <strong><?= e(current_user()['name'] ?? '–') ?></strong> <?= e(t('layouts/header.009', '(Impersonation από')) ?> <?= e($_SESSION['impersonating_user_name'] ?? 'Super Admin') ?>)
   <form method="post" action="<?= e(url('/admin/stop-impersonation')) ?>" style="margin:0">
     <?= csrf_field() ?>
     <button type="submit" style="background:#fff;color:#92400e;border:none;border-radius:6px;padding:4px 14px;font-weight:700;cursor:pointer;font-size:13px;">
-      <i class="bi bi-box-arrow-right me-1"></i>Επιστροφή
+      <i class="bi bi-box-arrow-right me-1"></i><?= e(t('layouts/header.003', 'Επιστροφή')) ?>
     </button>
   </form>
 </div>
@@ -42,7 +42,7 @@
 <nav class="navbar navbar-dark syndrasi-topbar sticky-top">
   <div class="container-fluid">
     <div class="d-flex align-items-center">
-      <button class="btn btn-outline-light d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-label="Μενού">
+      <button class="btn btn-outline-light d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu" aria-label="<?= e(t('layouts/header.006', 'Μενού')) ?>">
         <i class="bi bi-list"></i>
       </button>
       <a class="navbar-brand fw-bold" href="<?= e(url('/')) ?>">
@@ -51,11 +51,11 @@
     </div>
     <div class="d-flex align-items-center gap-2">
       <?php if (is_logged_in()): ?>
-      <button id="pushBtn" class="btn btn-outline-light d-none" title="Ειδοποιήσεις Push" style="position:relative">
+      <button id="pushBtn" class="btn btn-outline-light d-none" title="<?= e(t('layouts/header.007', 'Ειδοποιήσεις Push')) ?>" style="position:relative">
         <i class="bi bi-bell-slash" id="pushIcon"></i>
       </button>
       <?php endif; ?>
-      <a href="<?= e(url('/notifications')) ?>" class="btn btn-outline-light position-relative" title="Ειδοποιήσεις" id="navNotifBell">
+      <a href="<?= e(url('/notifications')) ?>" class="btn btn-outline-light position-relative" title="<?= e(t('layouts/header.008', 'Ειδοποιήσεις')) ?>" id="navNotifBell">
         <i class="bi bi-bell"></i>
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
               id="navNotifBadge" <?= $unreadCount > 0 ? '' : 'style="display:none"' ?>><?= (int) $unreadCount ?></span>
@@ -66,12 +66,12 @@
           <span class="d-none d-md-inline"><?= e(current_user() ? current_user()['name'] : '') ?></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li><a class="dropdown-item" href="<?= e(url('/profile')) ?>"><i class="bi bi-person me-2"></i>Το προφίλ μου</a></li>
+          <li><a class="dropdown-item" href="<?= e(url('/profile')) ?>"><i class="bi bi-person me-2"></i><?= e(t('layouts/header.004', 'Το προφίλ μου')) ?></a></li>
           <li><hr class="dropdown-divider"></li>
           <li>
             <form method="post" action="<?= e(url('/logout')) ?>">
               <?= csrf_field() ?>
-              <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Αποσύνδεση</button>
+              <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i><?= e(t('layouts/header.005', 'Αποσύνδεση')) ?></button>
             </form>
           </li>
         </ul>

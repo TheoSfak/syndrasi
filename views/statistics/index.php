@@ -1,7 +1,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
   <h1 class="h3 mb-0">Στατιστικά &amp; Τάσεις</h1>
   <form method="get" action="<?= e(url('/statistics')) ?>" class="d-flex align-items-center gap-2">
-    <label class="small text-muted mb-0">Έτος</label>
+    <label class="small text-muted mb-0"><?= e(t('statistics/index.001', 'Έτος')) ?></label>
     <select name="year" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
       <?php for ($y = (int) date('Y'); $y >= (int) date('Y') - 6; $y--): ?>
         <option value="<?= $y ?>" <?= $y === (int) $year ? 'selected' : '' ?>><?= $y ?></option>
@@ -13,12 +13,12 @@
 <ul class="nav nav-tabs mb-3" id="statsTabs" role="tablist">
   <li class="nav-item" role="presentation">
     <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">
-      <i class="bi bi-bar-chart me-1"></i>Επισκόπηση <?= (int) $year ?>
+      <i class="bi bi-bar-chart me-1"></i><?= e(t('statistics/index.002', 'Επισκόπηση')) ?> <?= (int) $year ?>
     </button>
   </li>
   <li class="nav-item" role="presentation">
     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-trends" type="button">
-      <i class="bi bi-graph-up-arrow me-1"></i>Τάσεις (5ετία)
+      <i class="bi bi-graph-up-arrow me-1"></i><?= e(t('statistics/index.003', 'Τάσεις (5ετία)')) ?>
     </button>
   </li>
 </ul>

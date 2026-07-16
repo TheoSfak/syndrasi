@@ -37,7 +37,7 @@
       <div class="alert alert-<?= e($f['type']) ?> small"><?= e($f['message']) ?></div>
     <?php endforeach; ?>
 
-    <p class="text-muted small mb-3">Γεια σας <strong><?= e($r['member_name']) ?></strong>.</p>
+    <p class="text-muted small mb-3"><?= e(t('mobilizations/respond.001', 'Γεια σας')) ?> <strong><?= e($r['member_name']) ?></strong>.</p>
 
     <?php if ($r['description']): ?>
       <div class="card mb-3"><div class="card-body small"><?= nl2br(e($r['description'])) ?></div></div>
@@ -49,22 +49,21 @@
         <?= e($r['location_name'] ?: 'Τοποθεσία') ?>
         <?php if ($r['latitude'] && $r['longitude']): ?>
           · <a target="_blank" rel="noopener"
-               href="https://www.google.com/maps/search/?api=1&query=<?= e($r['latitude']) ?>,<?= e($r['longitude']) ?>">Χάρτης</a>
+               href="https://www.google.com/maps/search/?api=1&query=<?= e($r['latitude']) ?>,<?= e($r['longitude']) ?>"><?= e(t('mobilizations/respond.002', 'Χάρτης')) ?></a>
         <?php endif; ?>
       </div></div>
     <?php endif; ?>
 
     <?php if ($ended): ?>
-      <div class="alert alert-secondary text-center">Το κάλεσμα έχει λήξει. Ευχαριστούμε!</div>
+      <div class="alert alert-secondary text-center"><?= e(t('mobilizations/respond.003', 'Το κάλεσμα έχει λήξει. Ευχαριστούμε!')) ?></div>
     <?php else: ?>
 
       <?php if ($r['response'] !== 'pending'): ?>
         <div class="alert alert-light border small">
-          Η τρέχουσα απάντησή σας:
+          <?= e(t('mobilizations/respond.004', 'Η τρέχουσα απάντησή σας:')) ?>
           <strong>
             <?= $r['response'] === 'coming' ? 'Έρχομαι' : ($r['response'] === 'cant' ? 'Δεν μπορώ' : 'Ίσως') ?>
-          </strong><?php if ($r['eta_minutes'] !== null): ?> · ETA <?= (int) $r['eta_minutes'] ?>′<?php endif; ?>.
-          Μπορείτε να την αλλάξετε παρακάτω.
+          </strong><?php if ($r['eta_minutes'] !== null): ?> · ETA <?= (int) $r['eta_minutes'] ?>′<?php endif; ?><?= e(t('mobilizations/respond.019', '. Μπορείτε να την αλλάξετε παρακάτω.')) ?>
         </div>
       <?php endif; ?>
 
@@ -73,9 +72,9 @@
         <form method="post" action="<?= $action ?>" class="d-grid mb-3">
           <?= csrf_field() ?>
           <input type="hidden" name="action" value="departed">
-          <button class="btn btn-dark btn-xl"><i class="bi bi-box-arrow-right me-1"></i>Αποχωρώ από το σημείο</button>
+          <button class="btn btn-dark btn-xl"><i class="bi bi-box-arrow-right me-1"></i><?= e(t('mobilizations/respond.006', 'Αποχωρώ από το σημείο')) ?></button>
         </form>
-        <p class="text-center text-success small"><i class="bi bi-check-circle-fill"></i> Έχετε δηλώσει άφιξη.</p>
+        <p class="text-center text-success small"><i class="bi bi-check-circle-fill"></i> <?= e(t('mobilizations/respond.007', 'Έχετε δηλώσει άφιξη.')) ?></p>
       <?php elseif (!$r['departed_at']): ?>
 
         <form method="post" action="<?= $action ?>" class="mb-2">
@@ -85,15 +84,15 @@
           <div class="input-group mb-2">
             <select name="eta_minutes" class="form-select">
               <option value="">— ETA —</option>
-              <option value="10">10 λεπτά</option>
-              <option value="20">20 λεπτά</option>
-              <option value="30">30 λεπτά</option>
-              <option value="45">45 λεπτά</option>
-              <option value="60">1 ώρα</option>
-              <option value="90">1.5 ώρα</option>
+              <option value="10"><?= e(t('mobilizations/respond.008', '10 λεπτά')) ?></option>
+              <option value="20"><?= e(t('mobilizations/respond.009', '20 λεπτά')) ?></option>
+              <option value="30"><?= e(t('mobilizations/respond.010', '30 λεπτά')) ?></option>
+              <option value="45"><?= e(t('mobilizations/respond.011', '45 λεπτά')) ?></option>
+              <option value="60"><?= e(t('mobilizations/respond.012', '1 ώρα')) ?></option>
+              <option value="90"><?= e(t('mobilizations/respond.013', '1.5 ώρα')) ?></option>
             </select>
           </div>
-          <div class="d-grid"><button class="btn btn-success btn-xl"><i class="bi bi-check-lg me-1"></i>ΕΡΧΟΜΑΙ</button></div>
+          <div class="d-grid"><button class="btn btn-success btn-xl"><i class="bi bi-check-lg me-1"></i><?= e(t('mobilizations/respond.014', 'ΕΡΧΟΜΑΙ')) ?></button></div>
         </form>
 
         <div class="row g-2 mb-3">
@@ -101,14 +100,14 @@
             <form method="post" action="<?= $action ?>" class="d-grid">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="maybe">
-              <button class="btn btn-outline-info">Ίσως</button>
+              <button class="btn btn-outline-info"><?= e(t('mobilizations/respond.015', 'Ίσως')) ?></button>
             </form>
           </div>
           <div class="col-6">
             <form method="post" action="<?= $action ?>" class="d-grid">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="cant">
-              <button class="btn btn-outline-secondary">Δεν μπορώ</button>
+              <button class="btn btn-outline-secondary"><?= e(t('mobilizations/respond.016', 'Δεν μπορώ')) ?></button>
             </form>
           </div>
         </div>
@@ -117,12 +116,12 @@
           <form method="post" action="<?= $action ?>" class="d-grid">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="arrived">
-            <button class="btn btn-primary btn-xl"><i class="bi bi-geo-fill me-1"></i>Έφτασα στο σημείο</button>
+            <button class="btn btn-primary btn-xl"><i class="bi bi-geo-fill me-1"></i><?= e(t('mobilizations/respond.017', 'Έφτασα στο σημείο')) ?></button>
           </form>
         <?php endif; ?>
 
       <?php else: ?>
-        <div class="alert alert-secondary text-center">Έχετε δηλώσει αποχώρηση. Ευχαριστούμε για τη συμμετοχή!</div>
+        <div class="alert alert-secondary text-center"><?= e(t('mobilizations/respond.018', 'Έχετε δηλώσει αποχώρηση. Ευχαριστούμε για τη συμμετοχή!')) ?></div>
       <?php endif; ?>
 
     <?php endif; ?>

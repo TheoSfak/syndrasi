@@ -15,19 +15,19 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
   <div class="col-6 col-lg-3">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-value"><?= e(gr_number($stats['volunteer_hours'])) ?></div>
-      <div class="text-muted small">Ώρες παρουσίας</div>
+      <div class="text-muted small"><?= e(t('statistics/_team_stats.001', 'Ώρες παρουσίας')) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-lg-3">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-value"><?= (int) $stats['present_volunteers'] ?></div>
-      <div class="text-muted small">Συνολικές συμμετοχές εθελοντών</div>
+      <div class="text-muted small"><?= e(t('statistics/_team_stats.002', 'Συνολικές συμμετοχές εθελοντών')) ?></div>
     </div></div>
   </div>
   <div class="col-6 col-lg-3">
     <div class="card stat-card h-100"><div class="card-body">
       <div class="stat-value"><?= $stats['consistency_score'] !== null ? e(gr_number($stats['consistency_score'], 1)) . '%' : '—' ?></div>
-      <div class="text-muted small">Δείκτης συνέπειας</div>
+      <div class="text-muted small"><?= e(t('statistics/_team_stats.003', 'Δείκτης συνέπειας')) ?></div>
     </div></div>
   </div>
 </div>
@@ -35,9 +35,9 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 <div class="row g-4">
   <div class="col-lg-4">
     <div class="card shadow-sm mb-4">
-      <div class="card-header bg-white fw-semibold">Κατηγορίες <?= e($eventPluralLc) ?></div>
+      <div class="card-header bg-white fw-semibold"><?= e(t('statistics/_team_stats.004', 'Κατηγορίες')) ?> <?= e($eventPluralLc) ?></div>
       <?php if (!$stats['categories']): ?>
-        <div class="card-body text-muted">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> για το <?= (int) $year ?>.</div>
+        <div class="card-body text-muted"><?= e(t('statistics/_team_stats.017', 'Δεν υπάρχουν ολοκληρωμένες')) ?> <?= e($eventPluralLc) ?> <?= e(t('statistics/_team_stats.018', 'για το')) ?> <?= (int) $year ?>.</div>
       <?php else: ?>
         <ul class="list-group list-group-flush">
           <?php foreach ($stats['categories'] as $c): ?>
@@ -51,17 +51,17 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
     </div>
 
     <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold">Δείκτες</div>
+      <div class="card-header bg-white fw-semibold"><?= e(t('statistics/_team_stats.006', 'Δείκτες')) ?></div>
       <ul class="list-group list-group-flush">
         <li class="list-group-item d-flex justify-content-between">
-          <span>Εγκεκριμένοι εθελοντές</span><span class="fw-semibold"><?= (int) $stats['approved_volunteers'] ?></span>
+          <span><?= e(t('statistics/_team_stats.007', 'Εγκεκριμένοι εθελοντές')) ?></span><span class="fw-semibold"><?= (int) $stats['approved_volunteers'] ?></span>
         </li>
         <li class="list-group-item d-flex justify-content-between">
-          <span>Μέση ταχύτητα απόκρισης</span>
+          <span><?= e(t('statistics/_team_stats.008', 'Μέση ταχύτητα απόκρισης')) ?></span>
           <span class="fw-semibold"><?= $stats['avg_response_minutes'] !== null ? e(gr_number($stats['avg_response_minutes'])) . ' λεπτά' : '—' ?></span>
         </li>
         <li class="list-group-item d-flex justify-content-between">
-          <span>Αναφορές έλλειψης</span><span class="fw-semibold"><?= (int) $stats['shortage_reports'] ?></span>
+          <span><?= e(t('statistics/_team_stats.009', 'Αναφορές έλλειψης')) ?></span><span class="fw-semibold"><?= (int) $stats['shortage_reports'] ?></span>
         </li>
       </ul>
     </div>
@@ -69,13 +69,13 @@ $eventPluralLc = $terms['event_plural_lc'] ?? 'δράσεις';
 
   <div class="col-lg-8">
     <div class="card shadow-sm">
-      <div class="card-header bg-white fw-semibold">Ιστορικό <?= e($eventPluralLc) ?> <?= (int) $year ?></div>
+      <div class="card-header bg-white fw-semibold"><?= e(t('statistics/_team_stats.010', 'Ιστορικό')) ?> <?= e($eventPluralLc) ?> <?= (int) $year ?></div>
       <?php if (!$history): ?>
-        <div class="card-body text-muted">Δεν υπάρχουν ολοκληρωμένες <?= e($eventPluralLc) ?> για αυτό το έτος.</div>
+        <div class="card-body text-muted"><?= e(t('statistics/_team_stats.017', 'Δεν υπάρχουν ολοκληρωμένες')) ?> <?= e($eventPluralLc) ?> <?= e(t('statistics/_team_stats.019', 'για αυτό το έτος.')) ?></div>
       <?php else: ?>
         <div class="table-responsive">
           <table class="table mb-0">
-            <thead><tr><th><?= e($eventSingular) ?></th><th>Ημερομηνία</th><th>Κατηγορία</th><th>Εγκεκριμένα</th><th>Παρόντα</th><th>Παρουσία</th></tr></thead>
+            <thead><tr><th><?= e($eventSingular) ?></th><th><?= e(t('statistics/_team_stats.012', 'Ημερομηνία')) ?></th><th><?= e(t('statistics/_team_stats.013', 'Κατηγορία')) ?></th><th><?= e(t('statistics/_team_stats.014', 'Εγκεκριμένα')) ?></th><th><?= e(t('statistics/_team_stats.015', 'Παρόντα')) ?></th><th><?= e(t('statistics/_team_stats.016', 'Παρουσία')) ?></th></tr></thead>
             <tbody>
               <?php foreach ($history as $h): ?>
                 <tr>

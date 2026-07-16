@@ -155,13 +155,12 @@ $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
   <button class="btn-print" onclick="window.print()">&#128438; Εκτύπωση / PDF</button>
 </div>
 <div class="hint no-print">
-  Κάθε ομάδα εκτυπώνεται σε ξεχωριστή σελίδα.
-  Συνολικές ομάδες: <strong><?= count($teams) ?></strong>
+  <?= e(t('reports/pdf_certificate.001', 'Κάθε ομάδα εκτυπώνεται σε ξεχωριστή σελίδα. Συνολικές ομάδες:')) ?> <strong><?= count($teams) ?></strong>
 </div>
 
 <?php if (!$teams): ?>
   <div style="text-align:center;padding:60px;color:#6b7280">
-    Δεν υπάρχουν εγκεκριμένες ομάδες για αυτή τη <?= e($eventSingularLc) ?>.
+    <?= e(t('reports/pdf_certificate.014', 'Δεν υπάρχουν εγκεκριμένες ομάδες για αυτή τη')) ?> <?= e($eventSingularLc) ?>.
   </div>
 <?php endif; ?>
 
@@ -192,18 +191,18 @@ $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
     </div>
 
     <!-- Certificate label -->
-    <div class="cert-headline">Πιστοποιητικό Συμμετοχής</div>
+    <div class="cert-headline"><?= e(t('reports/pdf_certificate.003', 'Πιστοποιητικό Συμμετοχής')) ?></div>
 
-    <div class="cert-title">Συμμετοχή<br>σε Εθελοντική <?= e($eventSingular) ?></div>
+    <div class="cert-title"><?= e(t('reports/pdf_certificate.004', 'Συμμετοχή')) ?><br><?= e(t('reports/pdf_certificate.005', 'σε Εθελοντική')) ?> <?= e($eventSingular) ?></div>
 
     <div class="cert-body">
-      Πιστοποιείται ότι η εθελοντική ομάδα
+      <?= e(t('reports/pdf_certificate.006', 'Πιστοποιείται ότι η εθελοντική ομάδα')) ?>
     </div>
 
     <div class="cert-team"><?= e($t['team_name']) ?></div>
 
     <div class="cert-body">
-      συμμετείχε στη <?= e($eventSingularLc) ?>
+      <?= e(t('reports/pdf_certificate.007', 'συμμετείχε στη')) ?> <?= e($eventSingularLc) ?>
     </div>
 
     <div class="cert-event">«<?= e($event['title']) ?>»</div>
@@ -219,15 +218,15 @@ $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
     <div class="cert-stats">
       <div class="cert-stat">
         <div class="v"><?= $people ?></div>
-        <div class="l">Εθελοντές</div>
+        <div class="l"><?= e(t('reports/pdf_certificate.008', 'Εθελοντές')) ?></div>
       </div>
       <div class="cert-stat">
         <div class="v"><?= $durationH ?></div>
-        <div class="l">Ώρες υπηρεσίας</div>
+        <div class="l"><?= e(t('reports/pdf_certificate.009', 'Ώρες υπηρεσίας')) ?></div>
       </div>
       <div class="cert-stat">
         <div class="v"><?= round($people * $durationH, 1) ?></div>
-        <div class="l">Ώρες εθελοντισμού</div>
+        <div class="l"><?= e(t('reports/pdf_certificate.010', 'Ώρες εθελοντισμού')) ?></div>
       </div>
     </div>
 
@@ -235,15 +234,15 @@ $eventSingularLc = mb_strtolower($eventSingular, 'UTF-8');
     <div class="cert-sigs">
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Υπεύθυνος <?= e($eventSingular) ?></div>
+        <div class="sig-lbl"><?= e(t('reports/pdf_certificate.011', 'Υπεύθυνος')) ?> <?= e($eventSingular) ?></div>
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Εκπρόσωπος Φορέα</div>
+        <div class="sig-lbl"><?= e(t('reports/pdf_certificate.012', 'Εκπρόσωπος Φορέα')) ?></div>
       </div>
       <div class="cert-sig">
         <div class="sig-line"></div>
-        <div class="sig-lbl">Ημερομηνία / Σφραγίδα</div>
+        <div class="sig-lbl"><?= e(t('reports/pdf_certificate.013', 'Ημερομηνία / Σφραγίδα')) ?></div>
       </div>
     </div>
 

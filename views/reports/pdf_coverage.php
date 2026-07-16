@@ -206,40 +206,40 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
     </div>
     <div class="doc-title">
       <h1><?= e($orgName) ?></h1>
-      <div class="sub">Αναφορά Επιχειρησιακής Κάλυψης</div>
+      <div class="sub"><?= e(t('reports/pdf_coverage.001', 'Αναφορά Επιχειρησιακής Κάλυψης')) ?></div>
     </div>
     <div class="doc-stamp">
-      Εκτυπώθηκε<br><?= date('d/m/Y H:i') ?><br>
-      <strong>Αρ. <?= e($eventSingularLc) ?> #<?= (int) $event['id'] ?></strong>
+      <?= e(t('reports/pdf_coverage.002', 'Εκτυπώθηκε')) ?><br><?= date('d/m/Y H:i') ?><br>
+      <strong><?= e(t('reports/pdf_coverage.031', 'Αρ.')) ?> <?= e($eventSingularLc) ?> #<?= (int) $event['id'] ?></strong>
     </div>
   </div>
 
   <!-- Event info strip -->
   <div class="event-strip">
     <div class="field">
-      <label>Τίτλος <?= e($eventSingularLc) ?></label>
+      <label><?= e(t('reports/pdf_coverage.004', 'Τίτλος')) ?> <?= e($eventSingularLc) ?></label>
       <span><?= e($event['title']) ?></span>
     </div>
     <div class="field">
-      <label>Έναρξη</label>
+      <label><?= e(t('reports/pdf_coverage.005', 'Έναρξη')) ?></label>
       <span><?= e(gr_datetime($event['start_datetime'])) ?></span>
     </div>
     <div class="field">
-      <label>Λήξη</label>
+      <label><?= e(t('reports/pdf_coverage.006', 'Λήξη')) ?></label>
       <span><?= e(gr_datetime($event['end_datetime'])) ?></span>
     </div>
     <div class="field">
-      <label>Διάρκεια</label>
-      <span><?= $durationH ?> ώρες</span>
+      <label><?= e(t('reports/pdf_coverage.007', 'Διάρκεια')) ?></label>
+      <span><?= $durationH ?> <?= e(t('reports/pdf_coverage.008', 'ώρες')) ?></span>
     </div>
     <?php if ($event['location_name']): ?>
     <div class="field">
-      <label>Τοποθεσία</label>
+      <label><?= e(t('reports/pdf_coverage.009', 'Τοποθεσία')) ?></label>
       <span><?= e($event['location_name']) ?></span>
     </div>
     <?php endif; ?>
     <div class="field">
-      <label>Κατηγορία</label>
+      <label><?= e(t('reports/pdf_coverage.010', 'Κατηγορία')) ?></label>
       <span><?= e($event['category_name'] ?? '—') ?></span>
     </div>
   </div>
@@ -247,42 +247,42 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
   <div class="doc-body">
 
     <!-- Summary cards -->
-    <div class="section-title">Σύνοψη</div>
+    <div class="section-title"><?= e(t('reports/pdf_coverage.011', 'Σύνοψη')) ?></div>
     <div class="summary-grid">
       <div class="summary-card">
         <div class="val"><?= count($teams) ?></div>
-        <div class="lbl">Εγκεκριμένες ομάδες</div>
+        <div class="lbl"><?= e(t('reports/pdf_coverage.012', 'Εγκεκριμένες ομάδες')) ?></div>
       </div>
       <div class="summary-card">
         <div class="val"><?= $totalApproved ?></div>
-        <div class="lbl">Εγκεκριμένα άτομα</div>
+        <div class="lbl"><?= e(t('reports/pdf_coverage.013', 'Εγκεκριμένα άτομα')) ?></div>
       </div>
       <div class="summary-card">
         <div class="val"><?= $totalPresent ?></div>
-        <div class="lbl">Επιβεβαιωμένη παρουσία</div>
+        <div class="lbl"><?= e(t('reports/pdf_coverage.014', 'Επιβεβαιωμένη παρουσία')) ?></div>
       </div>
       <div class="summary-card">
         <div class="val" style="color:<?= $coverage >= 80 ? '#065f46' : ($coverage >= 50 ? '#854d0e' : '#991b1b') ?>">
           <?= $coverage ?>%
         </div>
-        <div class="lbl">Κάλυψη</div>
+        <div class="lbl"><?= e(t('reports/pdf_coverage.015', 'Κάλυψη')) ?></div>
       </div>
     </div>
 
     <!-- Teams table -->
-    <div class="section-title">Ανάπτυξη ομάδων</div>
+    <div class="section-title"><?= e(t('reports/pdf_coverage.016', 'Ανάπτυξη ομάδων')) ?></div>
     <?php if (!$teams): ?>
-      <p style="color:var(--grey)">Δεν υπάρχουν εγκεκριμένες ομάδες.</p>
+      <p style="color:var(--grey)"><?= e(t('reports/pdf_coverage.017', 'Δεν υπάρχουν εγκεκριμένες ομάδες.')) ?></p>
     <?php else: ?>
     <table>
       <thead>
         <tr>
-          <th>Ομάδα</th>
-          <th class="text-center">Εγκ. άτομα</th>
-          <th>Παρουσία</th>
-          <th class="text-center">Παρόντα</th>
-          <th>Δήλωση παρουσίας</th>
-          <th>Εξοπλισμός</th>
+          <th><?= e(t('reports/pdf_coverage.018', 'Ομάδα')) ?></th>
+          <th class="text-center"><?= e(t('reports/pdf_coverage.019', 'Εγκ. άτομα')) ?></th>
+          <th><?= e(t('reports/pdf_coverage.020', 'Παρουσία')) ?></th>
+          <th class="text-center"><?= e(t('reports/pdf_coverage.021', 'Παρόντα')) ?></th>
+          <th><?= e(t('reports/pdf_coverage.022', 'Δήλωση παρουσίας')) ?></th>
+          <th><?= e(t('reports/pdf_coverage.023', 'Εξοπλισμός')) ?></th>
         </tr>
       </thead>
       <tbody>
@@ -301,7 +301,7 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
           </tr>
         <?php endforeach; ?>
         <tr class="totals-row">
-          <td>ΣΥΝΟΛΑ</td>
+          <td><?= e(t('reports/pdf_coverage.024', 'ΣΥΝΟΛΑ')) ?></td>
           <td style="text-align:center"><?= $totalApproved ?></td>
           <td></td>
           <td style="text-align:center"><?= $totalPresent ?></td>
@@ -313,7 +313,7 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
 
     <!-- Shortage reports -->
     <?php if ($shortages): ?>
-    <div class="section-title" style="margin-top:30px">Αναφορές ελλείψεων (<?= count($shortages) ?>)</div>
+    <div class="section-title" style="margin-top:30px"><?= e(t('reports/pdf_coverage.032', 'Αναφορές ελλείψεων (')) ?><?= count($shortages) ?>)</div>
     <?php foreach ($shortages as $sh): ?>
       <div class="shortage-item">
         <?= sevBadge($sh['severity'] ?? 'low') ?>
@@ -324,7 +324,7 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
             <div style="margin-top:3px"><?= e($sh['description']) ?></div>
           <?php endif; ?>
           <?php if ($sh['items_needed']): ?>
-            <div style="color:var(--grey);font-size:11px">Ανάγκη: <?= e($sh['items_needed']) ?></div>
+            <div style="color:var(--grey);font-size:11px"><?= e(t('reports/pdf_coverage.026', 'Ανάγκη:')) ?> <?= e($sh['items_needed']) ?></div>
           <?php endif; ?>
         </div>
         <div style="margin-left:auto;font-size:11px;color:var(--grey)">
@@ -338,22 +338,22 @@ $coverage = $totalApproved > 0 ? round($totalPresent / $totalApproved * 100) : 0
     <div class="sig-block">
       <div class="sig-line">
         <div class="line"></div>
-        <div class="name-label">Υπεύθυνος <?= e($eventSingular) ?></div>
+        <div class="name-label"><?= e(t('reports/pdf_coverage.027', 'Υπεύθυνος')) ?> <?= e($eventSingular) ?></div>
       </div>
       <div class="sig-line">
         <div class="line"></div>
-        <div class="name-label">Διαχειριστής Φορέα</div>
+        <div class="name-label"><?= e(t('reports/pdf_coverage.028', 'Διαχειριστής Φορέα')) ?></div>
       </div>
       <div class="sig-line">
         <div class="line"></div>
-        <div class="name-label">Ημερομηνία / Σφραγίδα</div>
+        <div class="name-label"><?= e(t('reports/pdf_coverage.029', 'Ημερομηνία / Σφραγίδα')) ?></div>
       </div>
     </div>
 
   </div><!-- /doc-body -->
 
   <div class="doc-footer">
-    Παράχθηκε αυτόματα από το SynDrasi · <?= e($orgName) ?> · <?= date('d/m/Y H:i') ?>
+    <?= e(t('reports/pdf_coverage.033', 'Παράχθηκε αυτόματα από το SynDrasi ·')) ?> <?= e($orgName) ?> · <?= date('d/m/Y H:i') ?>
   </div>
 
 </div><!-- /doc -->
