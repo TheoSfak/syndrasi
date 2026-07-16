@@ -306,3 +306,5 @@ $router->post('/admin/updates/apply',       'MaintenanceController@applyUpdate',
 $router->post('/admin/migrations/run',      'MaintenanceController@runMigrations', ['roles' => [Role::SUPER_ADMIN]]);
 $router->get('/admin/backups/download',      'MaintenanceController@downloadBackup', ['roles' => [Role::SUPER_ADMIN]]);
 $router->post('/admin/backups/restore',      'MaintenanceController@restoreBackup', ['roles' => [Role::SUPER_ADMIN]]);
+$router->post('/admin/backups/delete',       'MaintenanceController@deleteBackup', ['roles' => [Role::SUPER_ADMIN]]);
+$router->post('/admin/backups/delete-bulk',  'MaintenanceController@deleteBackups', ['roles' => [Role::SUPER_ADMIN]]);

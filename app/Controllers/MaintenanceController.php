@@ -81,6 +81,46 @@ class MaintenanceController
         redirect('/admin/settings#updates');
     }
 
+    public function deleteBackup()
+    {
+        requireRole([Role::SUPER_ADMIN]);
+        $r = UpdateService::deleteBackup(post_str('file'));
+        if ($r['ok']) {
+            flash_set('success', sprintf(t('controllers/MaintenanceController.012', 'Το backup «%s» διαγράφηκε.'), $r['name']));
+        } else {
+            flash_set('danger', sprintf(t('controllers/MaintenanceController.013', 'Αποτυχία διαγραφής: %s'), $r['error']));
+        }
+        redirect('/admin/settings#updates');
+    }
+
+    public function deleteBackups()
+    {
+        requireRole([Role::SUPER_ADMIN]);
+        $files = $_POST['files'] ?? [];
+        if (!is_array($files) || !$files) {
+            flash_set('warning', t('controllers/MaintenanceController.014', 'Δεν επιλέξατε κανένα backup.'));
+            redirect('/admin/settings#updates');
+        }
+
+        $deleted = 0;
+        $failed  = [];
+        foreach ($files as $name) {
+            $r = UpdateService::deleteBackup((string) $name);
+            if ($r['ok']) {
+                $deleted++;
+            } else {
+                $failed[] = basename((string) $name);
+            }
+        }
+
+        if ($failed) {
+            flash_set('warning', sprintf(t('controllers/MaintenanceController.015', 'Διαγράφηκαν %s backups. Απέτυχαν: %s'), $deleted, implode(', ', $failed)));
+        } else {
+            flash_set('success', sprintf(t('controllers/MaintenanceController.016', 'Διαγράφηκαν %s backups.'), $deleted));
+        }
+        redirect('/admin/settings#updates');
+    }
+
     public function runMigrations()
     {
         requireRole([Role::SUPER_ADMIN]);

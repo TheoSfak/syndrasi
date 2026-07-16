@@ -4,6 +4,26 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.20.5-beta] — 2026-07-16
+
+### Feature — Διαγραφή αντιγράφων ασφαλείας (μεμονωμένα ή μαζικά)
+
+- Ρυθμίσεις Πλατφόρμας → Updates → Αντίγραφα ασφαλείας: νέο κουμπί
+  🗑️ διαγραφής σε κάθε γραμμή backup, με επιβεβαίωση πριν την οριστική
+  διαγραφή.
+- Νέα checkboxes ανά γραμμή + «select all» στην κεφαλίδα του πίνακα, με
+  κουμπί «Διαγραφή επιλεγμένων (N)» που ενεργοποιείται μόλις επιλεγεί
+  έστω ένα backup — μαζική διαγραφή σε ένα κλικ με ένα confirm.
+- Νέα: `UpdateService::deleteBackup()` (validation ταυτόσημη με
+  download/restore — απορρίπτει ονόματα εκτός `storage/backups/`),
+  `MaintenanceController::deleteBackup()` / `deleteBackups()`, routes
+  `POST /admin/backups/delete` και `/admin/backups/delete-bulk`.
+- Migration 048 (idempotent) + ενημερωμένο schema.sql. Επαληθευμένο: η
+  πραγματική `UpdateService::deleteBackup()` δοκιμάστηκε end-to-end
+  (μεμονωμένη διαγραφή, path-traversal απόρριψη, ανύπαρκτο αρχείο, μαζική
+  διαγραφή με μερική αποτυχία) και το markup αποδόθηκε μέσω πραγματικού
+  `AdminController::settings()` με πραγματικό αρχείο backup.
+
 ## [0.20.4-beta] — 2026-07-16
 
 ### Fix — Μεταφράζονται όλα τα μηνύματα flash (επιτυχία/σφάλμα) των controllers

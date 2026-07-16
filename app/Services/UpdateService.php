@@ -76,6 +76,20 @@ class UpdateService
         return is_file($path) ? $path : null;
     }
 
+    /** Permanently delete one backup file. */
+    public static function deleteBackup(string $name): array
+    {
+        $path = self::backupFile($name);
+        if ($path === null) {
+            return ['ok' => false, 'error' => 'Μη έγκυρο αρχείο backup.'];
+        }
+        if (!@unlink($path)) {
+            return ['ok' => false, 'error' => 'Δεν ήταν δυνατή η διαγραφή του αρχείου.'];
+        }
+        self::log('Deleted backup -> ' . basename($path));
+        return ['ok' => true, 'name' => basename($path)];
+    }
+
     /**
      * Restore a backup: snapshot the current state first, then extract the
      * backup over the app (config/ included; storage/ untouched — backups never

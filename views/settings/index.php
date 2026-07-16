@@ -230,16 +230,32 @@
         <?php if (empty($backups)): ?>
           <p class="small text-muted mb-0"><?= e(t('settings/index.038', 'Δεν υπάρχουν backups ακόμη. Πάτησε «Δημιουργία Backup» παραπάνω.')) ?></p>
         <?php else: ?>
+          <div class="d-flex justify-content-end mb-2">
+            <button type="button" id="backupsDeleteSelectedBtn" class="btn btn-sm btn-outline-danger py-0" disabled
+                    onclick="backupsDeleteSelected()">
+              <i class="bi bi-trash me-1"></i><?= e(t('settings/index.091', 'Διαγραφή επιλεγμένων')) ?>
+              (<span id="backupsSelectedCount">0</span>)
+            </button>
+          </div>
           <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
-              <thead class="table-light"><tr><th><?= e(t('settings/index.039', 'Αρχείο')) ?></th><th><?= e(t('settings/index.040', 'Ημερομηνία')) ?></th><th class="text-end"><?= e(t('settings/index.041', 'Μέγεθος')) ?></th><th></th></tr></thead>
+              <thead class="table-light">
+                <tr>
+                  <th style="width:2rem"><input type="checkbox" id="backupsSelectAll" onclick="backupsToggleAll(this)"></th>
+                  <th><?= e(t('settings/index.039', 'Αρχείο')) ?></th>
+                  <th><?= e(t('settings/index.040', 'Ημερομηνία')) ?></th>
+                  <th class="text-end"><?= e(t('settings/index.041', 'Μέγεθος')) ?></th>
+                  <th></th>
+                </tr>
+              </thead>
               <tbody>
                 <?php foreach ($backups as $b): ?>
                   <tr>
+                    <td><input type="checkbox" class="backups-row-check" value="<?= e($b['name']) ?>" onclick="backupsUpdateSelectedCount()"></td>
                     <td class="small"><?= e($b['name']) ?></td>
                     <td class="small text-muted"><?= e(gr_datetime(date('Y-m-d H:i:s', $b['mtime']))) ?></td>
                     <td class="small text-end"><?= gr_number(round($b['size'] / 1024)) ?> KB</td>
-                    <td class="text-end">
+                    <td class="text-end text-nowrap">
                       <a class="btn btn-sm btn-outline-primary py-0" title="<?= e(t('settings/index.067', 'Λήψη')) ?>"
                          href="<?= e(url('/admin/backups/download') . '?file=' . urlencode($b['name'])) ?>">
                         <i class="bi bi-download"></i>
@@ -249,6 +265,12 @@
                         <?= csrf_field() ?>
                         <input type="hidden" name="file" value="<?= e($b['name']) ?>">
                         <button class="btn btn-sm btn-outline-warning py-0"><i class="bi bi-arrow-counterclockwise me-1"></i><?= e(t('settings/index.042', 'Επαναφορά')) ?></button>
+                      </form>
+                      <form method="post" action="<?= e(url('/admin/backups/delete')) ?>" class="d-inline"
+                            onsubmit="return confirm('<?= e(t('settings/index.092', 'Οριστική διαγραφή αυτού του backup; Δεν μπορεί να αναιρεθεί.')) ?>');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="file" value="<?= e($b['name']) ?>">
+                        <button class="btn btn-sm btn-outline-danger py-0" title="<?= e(t('settings/index.093', 'Διαγραφή')) ?>"><i class="bi bi-trash"></i></button>
                       </form>
                     </td>
                   </tr>
@@ -262,6 +284,40 @@
         <i class="bi bi-info-circle me-1"></i><?= e(t('settings/index.043', 'Τα backups αποθηκεύονται στο')) ?> <code>storage/backups/</code> <?= e(t('settings/index.044', '(εκτός web root). Δημιουργούνται αυτόματα πριν από κάθε ενημέρωση/επαναφορά.')) ?>
       </div>
     </div>
+
+    <form id="backupsBulkDeleteForm" method="post" action="<?= e(url('/admin/backups/delete-bulk')) ?>" class="d-none">
+      <?= csrf_field() ?>
+    </form>
+    <script>
+    function backupsUpdateSelectedCount() {
+      var checks = document.querySelectorAll('.backups-row-check:checked');
+      document.getElementById('backupsSelectedCount').textContent = checks.length;
+      document.getElementById('backupsDeleteSelectedBtn').disabled = checks.length === 0;
+      var all = document.querySelectorAll('.backups-row-check');
+      document.getElementById('backupsSelectAll').checked = all.length > 0 && checks.length === all.length;
+    }
+    function backupsToggleAll(source) {
+      document.querySelectorAll('.backups-row-check').forEach(function (cb) { cb.checked = source.checked; });
+      backupsUpdateSelectedCount();
+    }
+    function backupsDeleteSelected() {
+      var checks = document.querySelectorAll('.backups-row-check:checked');
+      if (!checks.length) { return; }
+      if (!confirm(<?= e(json_encode(t('settings/index.094', 'Οριστική διαγραφή %d επιλεγμένων backups; Δεν μπορεί να αναιρεθεί.'), JSON_UNESCAPED_UNICODE)) ?>.replace('%d', checks.length))) {
+        return;
+      }
+      var form = document.getElementById('backupsBulkDeleteForm');
+      form.querySelectorAll('input[name="files[]"]').forEach(function (el) { el.remove(); });
+      checks.forEach(function (cb) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'files[]';
+        input.value = cb.value;
+        form.appendChild(input);
+      });
+      form.submit();
+    }
+    </script>
 
   </div>
 
