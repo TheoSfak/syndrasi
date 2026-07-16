@@ -233,6 +233,24 @@ Migrations now: **040** (`037` rate_limits, `038` shift reminded_at,
 `039` resource_requests, `040` event last_activity). `schema.sql` verified
 against the live migrated DB: 44 tables, identical.
 
+### ⚠️ OPcache gotcha (found & fixed in v0.20.1-beta — read before touching the updater)
+The v0.20.0-beta update failed its health check on production **three times
+in a row** ("Call to undefined function t()" in login.php, HTTP 500 →
+auto-rollback) even though every deployed file was correct on disk. Cause:
+`applyUpdate()` copied the files and probed `/login` within OPcache's
+revalidation window, so the always-hot `app/Helpers/functions.php` was
+served as **pre-update bytecode** (no `t()`) while the cold view compiled
+fresh — a genuine mixed old/new state. Fix: `applyUpdate()` now calls
+`opcache_reset()` right after `copyTree()`. Two standing lessons:
+1. Any file the updater itself relies on being fresh post-copy is subject
+   to OPcache staleness — never assume "on disk" means "what PHP runs".
+2. **A broken updater cannot self-deliver its own fix** (same lesson as the
+   HTTP 415 bug below): the old updater runs the update, hits its own bug,
+   and rolls back the fix. `UpdateService.php` had to be uploaded manually
+   once via the hosting file manager
+   (`/home/u858321845/domains/1stop.gr/public_html/app/Services/UpdateService.php`),
+   then the normal in-app update succeeded.
+
 ### Self-updater behaviour (changed in v0.16.4-beta)
 After copying files + running migrations, the updater probes its own
 `/login` page. HTTP 2xx/3xx → healthy. HTTP 5xx or connection refused →
