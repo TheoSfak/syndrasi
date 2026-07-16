@@ -373,4 +373,38 @@ final class LocalHttpTest extends TestCase
         $val = self::$pdo->query("SELECT language_code FROM users WHERE email = '" . self::TEST_EMAIL . "'")->fetchColumn();
         $this->assertSame('en', $val);
     }
+
+    /* ── View wiring actually changes rendered output ─────────────────── */
+
+    public function testDefaultLanguageRendersGreek(): void
+    {
+        $this->loginAs(self::TEST_EMAIL, self::TEST_PASS);
+        [$code, $html] = $this->http('GET', '/profile');
+        $this->assertSame(200, $code);
+        $this->assertStringContainsString('Το προφίλ μου', $html);
+    }
+
+    public function testEnglishLanguagePreferenceChangesRenderedText(): void
+    {
+        $this->loginAs(self::TEST_EMAIL, self::TEST_PASS);
+        [, $html] = $this->http('GET', '/profile');
+        $csrf = $this->csrfFrom($html);
+
+        [$code] = $this->http('POST', '/profile/language', [
+            'form' => ['language_code' => 'en', '_token' => $csrf],
+        ]);
+        $this->assertSame(302, $code);
+
+        [$code2, $html2] = $this->http('GET', '/profile');
+        $this->assertSame(200, $code2);
+        $this->assertStringNotContainsString('Το προφίλ μου', $html2, 'page should no longer render the Greek heading');
+
+        // Reset back to platform default so this test is independently re-runnable
+        // and doesn't leak state into other tests sharing the same fixture user.
+        [, $html3] = $this->http('GET', '/profile');
+        $csrf2 = $this->csrfFrom($html3);
+        $this->http('POST', '/profile/language', [
+            'form' => ['language_code' => '', '_token' => $csrf2],
+        ]);
+    }
 }
