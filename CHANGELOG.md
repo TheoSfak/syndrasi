@@ -4,6 +4,29 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.20.3-beta] — 2026-07-16
+
+### Fix — Μεταφράζονται οι Ρυθμίσεις Φορέα και ο κατάλογος Προτύπων Email
+
+- Συνέχεια του v0.20.2-beta σε ό,τι αφορά ελληνικά κείμενα μέσα σε PHP
+  arrays (αόρατα στο αυτόματο view-wiring): μεταφράστηκαν τα ονόματα, οι
+  παραλήπτες και οι περιγραφές placeholders και των 9 προτύπων email
+  (EmailTemplate::definitions() — 70 strings, νέα ομάδα κλειδιών emails/*).
+  Τα προεπιλεγμένα subject/body των email παραμένουν σκόπιμα στα Ελληνικά:
+  είναι περιεχόμενο που αποστέλλεται και προσαρμόζεται ανά φορέα.
+- Στις Ρυθμίσεις Φορέα (views/settings/municipality.php) μεταφράστηκαν:
+  οι γραμμές των καναλιών ειδοποιήσεων (labels + παραλήπτες), οι επιλογές
+  καναλιού (Καμία/Μόνο Email/Μόνο SMS), οι ζώνες ώρας, τα στατιστικά και
+  οι καταστάσεις του Ιστορικού Email, τα πεδία μελών (Ομάδα Αίματος κ.λπ.),
+  τα hints SMS/Telegram, το confirm διαγραφής ιστορικού και οι 2 δυναμικές
+  καρτέλες ορολογίας φορέα (π.χ. «Αποστολές» → “Missions”).
+- Νέα κλειδιά authority/<τύπος>.event_singular για τον ενικό όρο φορέα.
+- Νέο migration 046 (idempotent) + ενημερωμένο schema.sql — σύνολο
+  καταλόγου **2184 κλειδιά**. Το κλειδί settings/municipality.244 χτίζει
+  το ελληνικό ερωτηματικό-semicolon μέσω CHAR(59) λόγω του statement
+  splitting του MigrationRunner. Επαληθευμένο με πραγματικό render των
+  labels και στις δύο γλώσσες και με fresh install σε scratch βάση.
+
 ## [0.20.2-beta] — 2026-07-16
 
 ### Fix — Το αριστερό μενού (sidebar) μεταφράζεται πλέον και αυτό

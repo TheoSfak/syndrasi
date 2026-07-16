@@ -10,7 +10,7 @@
 <?php
 $authorityContext = authority_context((int) $municipality['id']);
 $orgShort = $authorityContext['short_name'] ?? 'φορέας';
-$eventSingularLc = mb_strtolower($authorityContext['event_singular'] ?? 'Δράση', 'UTF-8');
+$eventSingularLc = mb_strtolower(t('authority/' . ($authorityContext['authority_type'] ?? 'municipality') . '.event_singular', $authorityContext['event_singular'] ?? 'Δράση'), 'UTF-8');
 $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
 ?>
 <h1 class="h3 mb-1"><?= e(t('settings/municipality.001', 'Ρυθμίσεις Φορέα')) ?></h1>
@@ -35,13 +35,13 @@ $mailHistory = $mailHistory ?? [
 ];
 
 $tzOptions = [
-    'Europe/Athens'    => 'Αθήνα (UTC+2/+3)',
-    'Europe/Nicosia'   => 'Λευκωσία (UTC+2/+3)',
-    'Europe/Istanbul'  => 'Κωνσταντινούπολη (UTC+3)',
-    'Europe/Rome'      => 'Ρώμη (UTC+1/+2)',
-    'Europe/Paris'     => 'Παρίσι (UTC+1/+2)',
-    'Europe/Berlin'    => 'Βερολίνο (UTC+1/+2)',
-    'Europe/London'    => 'Λονδίνο (UTC+0/+1)',
+    'Europe/Athens'    => t('settings/municipality.226', 'Αθήνα (UTC+2/+3)'),
+    'Europe/Nicosia'   => t('settings/municipality.227', 'Λευκωσία (UTC+2/+3)'),
+    'Europe/Istanbul'  => t('settings/municipality.228', 'Κωνσταντινούπολη (UTC+3)'),
+    'Europe/Rome'      => t('settings/municipality.229', 'Ρώμη (UTC+1/+2)'),
+    'Europe/Paris'     => t('settings/municipality.230', 'Παρίσι (UTC+1/+2)'),
+    'Europe/Berlin'    => t('settings/municipality.231', 'Βερολίνο (UTC+1/+2)'),
+    'Europe/London'    => t('settings/municipality.232', 'Λονδίνο (UTC+0/+1)'),
     'UTC'              => 'UTC',
 ];
 ?>
@@ -54,7 +54,7 @@ $tzOptions = [
   <li class="nav-item"><a class="nav-link" href="#tab-notifications"  data-bs-toggle="tab"><i class="bi bi-bell me-1"></i><?= e(t('settings/municipality.005', 'Ειδοποιήσεις')) ?></a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-sms"            data-bs-toggle="tab"><i class="bi bi-chat-dots me-1"></i>SMS</a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-telegram"       data-bs-toggle="tab"><i class="bi bi-telegram me-1"></i>Telegram</a></li>
-  <li class="nav-item"><a class="nav-link" href="#tab-event-defaults" data-bs-toggle="tab"><i class="bi bi-calendar-plus me-1"></i><?= e($authorityContext['event_plural'] ?? 'Δράσεις') ?></a></li>
+  <li class="nav-item"><a class="nav-link" href="#tab-event-defaults" data-bs-toggle="tab"><i class="bi bi-calendar-plus me-1"></i><?= e(t('authority/' . ($authorityContext['authority_type'] ?? 'municipality') . '.event_plural', $authorityContext['event_plural'] ?? 'Δράσεις')) ?></a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-branding"       data-bs-toggle="tab"><i class="bi bi-palette me-1"></i><?= e(t('settings/municipality.006', 'Εμφάνιση')) ?></a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-members"          data-bs-toggle="tab"><i class="bi bi-people me-1"></i><?= e(t('settings/municipality.007', 'Μέλη Ομάδων')) ?></a></li>
   <li class="nav-item"><a class="nav-link" href="#tab-email-templates" data-bs-toggle="tab"><i class="bi bi-envelope-paper me-1"></i><?= e(t('settings/municipality.008', 'Πρότυπα Email')) ?></a></li>
@@ -103,7 +103,7 @@ $tzOptions = [
             <div class="col-md-6">
               <label class="form-label"><?= e(t('settings/municipality.018', 'Κωδικός SMTP')) ?></label>
               <input type="password" name="smtp_pass" class="form-control" autocomplete="new-password"
-                     placeholder="<?= $v('smtp_pass') !== '' ? '••••••••  (αφήστε κενό για να μην αλλάξει)' : '' ?>">
+                     placeholder="<?= $v('smtp_pass') !== '' ? t('settings/municipality.242', '••••••••  (αφήστε κενό για να μην αλλάξει)') : '' ?>">
             </div>
             <div class="col-md-6">
               <label class="form-label"><?= e(t('settings/municipality.019', 'Ασφάλεια σύνδεσης')) ?></label>
@@ -135,7 +135,7 @@ $tzOptions = [
           <ul class="list-group list-group-flush small">
             <li class="list-group-item d-flex justify-content-between">
               <span><?= e(t('settings/municipality.029', 'Ενεργός τρόπος')) ?></span>
-              <strong><?= e($effective['driver']) ?><?= $driver === '' ? ' (προεπιλογή)' : '' ?></strong>
+              <strong><?= e($effective['driver']) ?><?= $driver === '' ? ' ' . t('settings/municipality.243', '(προεπιλογή)') : '' ?></strong>
             </li>
             <li class="list-group-item d-flex justify-content-between">
               <span><?= e(t('settings/municipality.030', 'Αποστολέας')) ?></span>
@@ -160,28 +160,28 @@ $tzOptions = [
       $mhStats = $mailHistory['stats'] ?? [];
       $mailStatus = function ($row) {
           if (!empty($row['sent_at'])) {
-              return ['success', 'Στάλθηκε'];
+              return ['success', t('settings/municipality.233', 'Στάλθηκε')];
           }
           if ((int) ($row['attempts'] ?? 0) >= 3) {
-              return ['danger', 'Απέτυχε'];
+              return ['danger', t('settings/municipality.234', 'Απέτυχε')];
           }
-          return ['warning', 'Σε αναμονή'];
+          return ['warning', t('settings/municipality.235', 'Σε αναμονή')];
       };
     ?>
     <?php if (empty($mailHistory['available'])): ?>
       <div class="alert alert-warning">
         <div class="fw-semibold"><?= e(t('settings/municipality.031', 'Το ιστορικό email δεν είναι διαθέσιμο.')) ?></div>
-        <div class="small"><?= e($mailHistory['error'] ?? 'Δεν βρέθηκε ο πίνακας mail_queue.') ?></div>
+        <div class="small"><?= e($mailHistory['error'] ?? t('settings/municipality.236', 'Δεν βρέθηκε ο πίνακας mail_queue.')) ?></div>
       </div>
     <?php else: ?>
       <div class="row g-3 mb-3">
         <?php foreach ([
-          ['Σύνολο', 'total', 'envelope'],
-          ['Στάλθηκαν', 'sent', 'send-check'],
-          ['Σε αναμονή', 'pending', 'hourglass-split'],
-          ['Απέτυχαν', 'failed', 'exclamation-octagon'],
-          ['Τελευταίο 24ωρο', 'last_24h', 'clock'],
-          ['Τελευταίες 7 ημέρες', 'last_7d', 'calendar-week'],
+          [t('settings/municipality.237', 'Σύνολο'), 'total', 'envelope'],
+          [t('settings/municipality.238', 'Στάλθηκαν'), 'sent', 'send-check'],
+          [t('settings/municipality.235', 'Σε αναμονή'), 'pending', 'hourglass-split'],
+          [t('settings/municipality.239', 'Απέτυχαν'), 'failed', 'exclamation-octagon'],
+          [t('settings/municipality.240', 'Τελευταίο 24ωρο'), 'last_24h', 'clock'],
+          [t('settings/municipality.241', 'Τελευταίες 7 ημέρες'), 'last_7d', 'calendar-week'],
         ] as [$label, $key, $icon]): ?>
           <div class="col-sm-6 col-lg-2">
             <div class="card shadow-sm h-100">
@@ -284,7 +284,7 @@ $tzOptions = [
             <div class="card-body">
               <p class="small text-muted"><?= e(t('settings/municipality.215', 'Διαγράφει όλες τις εγγραφές `mail_queue` αυτού του φορέα (')) ?><?= e($orgShort) ?><?= e(t('settings/municipality.216', '), μαζί με επιτυχημένες, αποτυχημένες και pending αποστολές.')) ?></p>
               <form method="post" action="<?= e(url('/settings/mail/history/clear')) ?>"
-                    onsubmit="return confirm(<?= e(json_encode('Να διαγραφεί οριστικά όλο το ιστορικό email αυτού του φορέα;', JSON_UNESCAPED_UNICODE)) ?>);">
+                    onsubmit="return confirm(<?= e(json_encode(t('settings/municipality.244', 'Να διαγραφεί οριστικά όλο το ιστορικό email αυτού του φορέα;'), JSON_UNESCAPED_UNICODE)) ?>);">
                 <?= csrf_field() ?>
                 <label class="form-label small fw-semibold"><?= e(t('settings/municipality.048', 'Πληκτρολογήστε DELETE')) ?></label>
                 <input type="text" name="confirm" class="form-control mb-2" placeholder="DELETE" autocomplete="off">
@@ -408,30 +408,30 @@ $tzOptions = [
             $eventPluralLc = $authorityContext['event_plural_lc'] ?? 'δράσεις';
             $orgShort = $authorityContext['short_name'] ?? $authorityContext['short'] ?? 'Φορέας';
             $notifTypes = [
-                ['event_published',        'Νέα ' . $eventSingularLc . ' δημοσιεύτηκε',  'Σε όλες τις ενεργές ομάδες'],
-                ['application_submitted',  'Νέα δήλωση συμμετοχής',   'Στους διαχειριστές φορέα'],
-                ['application_approved',   'Έγκριση συμμετοχής',      'Στην ομάδα'],
-                ['application_rejected',   'Απόρριψη συμμετοχής',     'Στην ομάδα'],
-                ['shortage_reported',      'Αναφορά έλλειψης',        'Στους διαχειριστές φορέα'],
-                ['event_reminder',         'Υπενθύμιση ' . $eventSingularLc,       'Χειροκίνητη, κουμπί «Υπενθύμιση»'],
-                ['event_completed',        'Ολοκλήρωση ' . $eventSingularLc,       'Στο command group και στις εγκεκριμένες ομάδες'],
+                ['event_published',        t('emails/event_published.label', 'Νέα αποστολή/δράση δημοσιεύτηκε'),  t('settings/municipality.246', 'Σε όλες τις ενεργές ομάδες')],
+                ['application_submitted',  t('emails/application_submitted.label', 'Νέα δήλωση συμμετοχής'),   t('settings/municipality.247', 'Στους διαχειριστές φορέα')],
+                ['application_approved',   t('emails/application_approved.label', 'Έγκριση συμμετοχής'),      t('settings/municipality.248', 'Στην ομάδα')],
+                ['application_rejected',   t('emails/application_rejected.label', 'Απόρριψη συμμετοχής'),     t('settings/municipality.248', 'Στην ομάδα')],
+                ['shortage_reported',      t('emails/shortage_reported.label', 'Αναφορά έλλειψης'),        t('settings/municipality.247', 'Στους διαχειριστές φορέα')],
+                ['event_reminder',         t('emails/event_reminder.label', 'Υπενθύμιση αποστολής/δράσης'),       t('settings/municipality.249', 'Χειροκίνητη, κουμπί «Υπενθύμιση»')],
+                ['event_completed',        t('settings/municipality.245', 'Ολοκλήρωση αποστολής/δράσης'),       t('settings/municipality.250', 'Στο command group και στις εγκεκριμένες ομάδες')],
             ];
             $opsNotifTypes = [
-                ['photo_request',          'Αίτημα φωτογραφίας',      'Στην ομάδα κατά την ενεργή ' . $eventSingularLc],
-                ['video_request',          'Αίτημα βίντεο',           'Στην ομάδα κατά την ενεργή ' . $eventSingularLc],
-                ['gps_request',            'Αίτημα στίγματος GPS',    'Στην ομάδα κατά την ενεργή ' . $eventSingularLc],
-                ['photo_uploaded',         'Φωτογραφία ελήφθη',       'Στους διαχειριστές φορέα'],
-                ['video_uploaded',         'Βίντεο ελήφθη',           'Στους διαχειριστές φορέα'],
-                ['gps_arrived',            'Στίγμα GPS ελήφθη',       'Στους διαχειριστές φορέα'],
-                ['ops_message',            'Μήνυμα επιχειρήσεων',     $orgShort . ' ↔ ομάδα, μη κρίσιμο'],
-                ['ops_geo',                'Σημείο/μετακίνηση',       'Μη κρίσιμο ή forced όταν είναι εντολή'],
-                ['team_silent',            'Ομάδα σε σίγη',           'Στους διαχειριστές φορέα'],
-                ['shortage_update',        'Ενημέρωση έλλειψης',      'Στην ομάδα'],
-                ['sos_ack',                'Επιβεβαίωση SOS',         'Στην ομάδα'],
+                ['photo_request',          t('settings/municipality.251', 'Αίτημα φωτογραφίας'),      t('settings/municipality.252', 'Στην ομάδα κατά την ενεργή αποστολή/δράση')],
+                ['video_request',          t('settings/municipality.253', 'Αίτημα βίντεο'),           t('settings/municipality.252', 'Στην ομάδα κατά την ενεργή αποστολή/δράση')],
+                ['gps_request',            t('settings/municipality.254', 'Αίτημα στίγματος GPS'),    t('settings/municipality.252', 'Στην ομάδα κατά την ενεργή αποστολή/δράση')],
+                ['photo_uploaded',         t('settings/municipality.255', 'Φωτογραφία ελήφθη'),       t('settings/municipality.247', 'Στους διαχειριστές φορέα')],
+                ['video_uploaded',         t('settings/municipality.256', 'Βίντεο ελήφθη'),           t('settings/municipality.247', 'Στους διαχειριστές φορέα')],
+                ['gps_arrived',            t('settings/municipality.257', 'Στίγμα GPS ελήφθη'),       t('settings/municipality.247', 'Στους διαχειριστές φορέα')],
+                ['ops_message',            t('settings/municipality.258', 'Μήνυμα επιχειρήσεων'),     $orgShort . ' ' . t('settings/municipality.259', '↔ ομάδα, μη κρίσιμο')],
+                ['ops_geo',                t('settings/municipality.260', 'Σημείο/μετακίνηση'),       t('settings/municipality.261', 'Μη κρίσιμο ή forced όταν είναι εντολή')],
+                ['team_silent',            t('settings/municipality.262', 'Ομάδα σε σίγη'),           t('settings/municipality.247', 'Στους διαχειριστές φορέα')],
+                ['shortage_update',        t('settings/municipality.263', 'Ενημέρωση έλλειψης'),      t('settings/municipality.248', 'Στην ομάδα')],
+                ['sos_ack',                t('settings/municipality.264', 'Επιβεβαίωση SOS'),         t('settings/municipality.248', 'Στην ομάδα')],
             ];
             $telegramExternalTypes = [
-                ['fire_service_crete',      'Συμβάντα Πυροσβεστικής Κρήτης', 'Νέα συμβάντα ή αλλαγές κατάστασης σε ΣΕ ΕΞΕΛΙΞΗ / ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ'],
-                ['fire_risk_crete',         'Χάρτης κινδύνου πυρκαγιάς Κρήτης', 'Ημερήσια πρόβλεψη κινδύνου ανά Π.Ε. Κρήτης από την Πολιτική Προστασία'],
+                ['fire_service_crete',      t('settings/municipality.265', 'Συμβάντα Πυροσβεστικής Κρήτης'), t('settings/municipality.266', 'Νέα συμβάντα ή αλλαγές κατάστασης σε ΣΕ ΕΞΕΛΙΞΗ / ΜΕΡΙΚΟΣ ΕΛΕΓΧΟΣ')],
+                ['fire_risk_crete',         t('settings/municipality.267', 'Χάρτης κινδύνου πυρκαγιάς Κρήτης'), t('settings/municipality.268', 'Ημερήσια πρόβλεψη κινδύνου ανά Π.Ε. Κρήτης από την Πολιτική Προστασία')],
             ];
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
@@ -441,7 +441,7 @@ $tzOptions = [
             $fireRiskIngestCommand = 'curl -s -H "Authorization: Bearer TOKEN" -F "map_date=YYYY-MM-DD" -F "fire_risk_map=@/path/to/map.jpg" "' . $fireRiskIngestUrl . '"';
             $fireRiskDefaultDate = date('Y-m-d', strtotime('+1 day'));
             $opsTypeKeys = array_map(static function ($row) { return $row[0]; }, $opsNotifTypes);
-            $channelOpts = ['off' => 'Καμία', 'email' => 'Μόνο Email', 'sms' => 'Μόνο SMS', 'both' => 'Email + SMS'];
+            $channelOpts = ['off' => t('settings/municipality.269', 'Καμία'), 'email' => t('settings/municipality.270', 'Μόνο Email'), 'sms' => t('settings/municipality.271', 'Μόνο SMS'), 'both' => 'Email + SMS'];
             // Effective channel: explicit notify_channel_*, else legacy notify_email_*.
             $channelOf = function ($type) use ($settings, $opsTypeKeys) {
                 $ch = $settings['notify_channel_' . $type] ?? null;
@@ -624,8 +624,8 @@ $tzOptions = [
             <div class="col-md-6">
               <label class="form-label">API Key / Password / sesskey</label>
               <input type="password" name="sms_api_key" class="form-control" autocomplete="new-password"
-                     placeholder="<?= $smsKeySet ? '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)' : 'password (με username) ή sesskey' ?>">
-              <div class="form-text"><?= $smsKeySet ? 'Υπάρχει ήδη αποθηκευμένο. Συμπληρώστε μόνο για αλλαγή.' : 'Με username → βάλτε password. Χωρίς username → βάλτε sesskey (λήγει σε 2 ώρες).' ?></div>
+                     placeholder="<?= $smsKeySet ? t('settings/municipality.272', '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)') : t('settings/municipality.273', 'password (με username) ή sesskey') ?>">
+              <div class="form-text"><?= $smsKeySet ? t('settings/municipality.274', 'Υπάρχει ήδη αποθηκευμένο. Συμπληρώστε μόνο για αλλαγή.') : t('settings/municipality.275', 'Με username → βάλτε password. Χωρίς username → βάλτε sesskey (λήγει σε 2 ώρες).') ?></div>
             </div>
             <div class="col-md-6">
               <label class="form-label"><?= e(t('settings/municipality.114', 'Endpoint (μόνο για γενικό HTTP gateway)')) ?></label>
@@ -686,8 +686,8 @@ $tzOptions = [
             <div class="col-12">
               <label class="form-label">Bot Token</label>
               <input type="password" name="telegram_bot_token" class="form-control" autocomplete="new-password"
-                     placeholder="<?= $tgTokenSet ? '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)' : '123456789:AA...' ?>">
-              <div class="form-text"><?= $tgTokenSet ? 'Υπάρχει ήδη αποθηκευμένο token. Συμπληρώστε μόνο για αλλαγή.' : 'Δημιουργείται από το BotFather.' ?></div>
+                     placeholder="<?= $tgTokenSet ? t('settings/municipality.272', '•••••••• (αποθηκευμένο — αφήστε κενό για να μην αλλάξει)') : '123456789:AA...' ?>">
+              <div class="form-text"><?= $tgTokenSet ? t('settings/municipality.276', 'Υπάρχει ήδη αποθηκευμένο token. Συμπληρώστε μόνο για αλλαγή.') : t('settings/municipality.277', 'Δημιουργείται από το BotFather.') ?></div>
             </div>
             <div class="col-12">
               <label class="form-label"><?= e(t('settings/municipality.128', 'Command / Φορέας Chat ID')) ?></label>
@@ -767,7 +767,7 @@ $tzOptions = [
       <div class="col-lg-7">
         <form method="post" action="<?= e(url('/settings/event-defaults')) ?>" class="card shadow-sm">
           <?= csrf_field() ?>
-          <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-plus me-1"></i> <?= e(t('settings/municipality.161', 'Προεπιλογές')) ?> <?= e($authorityContext['event_plural'] ?? 'Δράσεων') ?></div>
+          <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-plus me-1"></i> <?= e(t('settings/municipality.161', 'Προεπιλογές')) ?> <?= e(t('authority/' . ($authorityContext['authority_type'] ?? 'municipality') . '.event_plural', $authorityContext['event_plural'] ?? 'Δράσεων')) ?></div>
           <div class="card-body row g-3">
             <div class="col-md-5">
               <label class="form-label"><?= e(t('settings/municipality.162', 'Προθεσμία δηλώσεων')) ?></label>
@@ -839,11 +839,11 @@ $tzOptions = [
     $memberFieldsRaw = $v('member_fields_config', '');
     $mfc = $memberFieldsRaw ? (json_decode($memberFieldsRaw, true) ?: []) : [];
     $memberFieldDefs = [
-        'blood_type'      => ['label' => 'Ομάδα Αίματος',          'hint' => 'π.χ. A+, O−'],
-        'driving_license' => ['label' => 'Δίπλωμα Οδήγησης',       'hint' => 'Κατηγορία αδείας οδήγησης'],
-        'certifications'  => ['label' => 'Πιστοποιήσεις',           'hint' => 'ΕΚΑΒ, πρώτες βοήθειες κλπ.'],
-        'id_number'       => ['label' => 'Αριθμός Ταυτότητας',      'hint' => 'ΑΔΤ μέλους'],
-        'amka'            => ['label' => 'ΑΜΚΑ',                    'hint' => 'Αριθμός Μητρώου Κοιν. Ασφάλισης'],
+        'blood_type'      => ['label' => t('settings/municipality.278', 'Ομάδα Αίματος'),          'hint' => t('settings/municipality.279', 'π.χ. A+, O−')],
+        'driving_license' => ['label' => t('settings/municipality.280', 'Δίπλωμα Οδήγησης'),       'hint' => t('settings/municipality.281', 'Κατηγορία αδείας οδήγησης')],
+        'certifications'  => ['label' => t('settings/municipality.282', 'Πιστοποιήσεις'),           'hint' => t('settings/municipality.283', 'ΕΚΑΒ, πρώτες βοήθειες κλπ.')],
+        'id_number'       => ['label' => t('settings/municipality.284', 'Αριθμός Ταυτότητας'),      'hint' => t('settings/municipality.285', 'ΑΔΤ μέλους')],
+        'amka'            => ['label' => t('settings/municipality.286', 'ΑΜΚΑ'),                    'hint' => t('settings/municipality.287', 'Αριθμός Μητρώου Κοιν. Ασφάλισης')],
     ];
     ?>
     <div class="row g-4">
