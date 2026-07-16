@@ -289,7 +289,7 @@ class OperationController
         if (wants_json()) {
             json_out(['ok' => true]);
         }
-        flash_set('success', 'Ζητήθηκε φωτογραφία από την ομάδα «' . $team['name'] . '».');
+        flash_set('success', sprintf(t('controllers/OperationController.004', 'Ζητήθηκε φωτογραφία από την ομάδα «%s».'), $team['name']));
         redirect('/operations/events/' . $event['id']);
     }
 
@@ -310,7 +310,7 @@ class OperationController
         if (wants_json()) {
             json_out(['ok' => true]);
         }
-        flash_set('success', 'Ζητήθηκε στίγμα GPS από την ομάδα «' . $team['name'] . '».');
+        flash_set('success', sprintf(t('controllers/OperationController.005', 'Ζητήθηκε στίγμα GPS από την ομάδα «%s».'), $team['name']));
         redirect('/operations/events/' . $event['id']);
     }
 
@@ -358,7 +358,7 @@ class OperationController
         }
         if (!$valid) {
             if (wants_json()) { json_out(['ok' => false, 'error' => 'no_teams'], 422); }
-            flash_set('danger', 'Δεν βρέθηκε έγκυρη ομάδα για το αίτημα βίντεο.');
+            flash_set('danger', t('controllers/OperationController.001', 'Δεν βρέθηκε έγκυρη ομάδα για το αίτημα βίντεο.'));
             redirect('/operations/events/' . $event['id']);
         }
 
@@ -820,7 +820,7 @@ class OperationController
         audit('sos_acknowledged', 'event', (int) $alert['event_id'], 'sos ' . $id);
         Event::touchActivity((int) $alert['event_id']);
         if (wants_json()) { json_out(['ok' => true]); }
-        flash_set('success', 'Το SOS επιβεβαιώθηκε· η ομάδα ενημερώθηκε.');
+        flash_set('success', t('controllers/OperationController.002', 'Το SOS επιβεβαιώθηκε· η ομάδα ενημερώθηκε.'));
         redirect('/operations/events/' . $alert['event_id']);
     }
 
@@ -836,7 +836,7 @@ class OperationController
         audit('sos_resolved', 'event', (int) $alert['event_id'], 'sos ' . $id);
         Event::touchActivity((int) $alert['event_id']);
         if (wants_json()) { json_out(['ok' => true]); }
-        flash_set('success', 'Το SOS έκλεισε.');
+        flash_set('success', t('controllers/OperationController.003', 'Το SOS έκλεισε.'));
         redirect('/operations/events/' . $alert['event_id']);
     }
 
@@ -998,7 +998,7 @@ class OperationController
         audit('shortage_' . $action, 'event', (int) $sh['event_id'], 'shortage ' . $id);
         Event::touchActivity((int) $sh['event_id']);
         if (wants_json()) { json_out(['ok' => true]); }
-        flash_set('success', $action === 'resolved' ? 'Η έλλειψη επιλύθηκε.' : 'Η έλλειψη επιβεβαιώθηκε.');
+        flash_set('success', $action === 'resolved' ? t('controllers/OperationController.006', 'Η έλλειψη επιλύθηκε.') : t('controllers/OperationController.007', 'Η έλλειψη επιβεβαιώθηκε.'));
         redirect('/operations/events/' . $sh['event_id']);
     }
 

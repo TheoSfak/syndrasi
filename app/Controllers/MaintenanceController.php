@@ -24,9 +24,9 @@ class MaintenanceController
         requireRole([Role::SUPER_ADMIN]);
         $r = UpdateService::backupNow();
         if ($r['ok']) {
-            flash_set('success', 'Δημιουργήθηκε αντίγραφο ασφαλείας: ' . $r['name']);
+            flash_set('success', sprintf(t('controllers/MaintenanceController.004', 'Δημιουργήθηκε αντίγραφο ασφαλείας: %s'), $r['name']));
         } else {
-            flash_set('danger', 'Αποτυχία backup: ' . $r['error']);
+            flash_set('danger', sprintf(t('controllers/MaintenanceController.005', 'Αποτυχία backup: %s'), $r['error']));
         }
         redirect('/admin/settings#updates');
     }
@@ -49,7 +49,7 @@ class MaintenanceController
                  . ' · Backup: ' . $r['backup'];
             flash_set('success', $msg);
         } else {
-            flash_set('danger', 'Η ενημέρωση απέτυχε: ' . $r['error']);
+            flash_set('danger', sprintf(t('controllers/MaintenanceController.006', 'Η ενημέρωση απέτυχε: %s'), $r['error']));
         }
         unset($_SESSION['update_check']);
         redirect('/admin/settings#updates');
@@ -74,10 +74,9 @@ class MaintenanceController
         requireRole([Role::SUPER_ADMIN]);
         $r = UpdateService::restoreBackup(post_str('file'));
         if ($r['ok']) {
-            flash_set('success', 'Επαναφορά από backup «' . $r['name']
-                . '». Δημιουργήθηκε αυτόματα και νέο backup της προηγούμενης κατάστασης.');
+            flash_set('success', sprintf(t('controllers/MaintenanceController.007', 'Επαναφορά από backup «%s». Δημιουργήθηκε αυτόματα και νέο backup της προηγούμενης κατάστασης.'), $r['name']));
         } else {
-            flash_set('danger', 'Αποτυχία επαναφοράς: ' . $r['error']);
+            flash_set('danger', sprintf(t('controllers/MaintenanceController.008', 'Αποτυχία επαναφοράς: %s'), $r['error']));
         }
         redirect('/admin/settings#updates');
     }
@@ -87,11 +86,11 @@ class MaintenanceController
         requireRole([Role::SUPER_ADMIN]);
         $r = MigrationRunner::runPending();
         if ($r['error']) {
-            flash_set('danger', 'Migration απέτυχε: ' . $r['error']);
+            flash_set('danger', sprintf(t('controllers/MaintenanceController.009', 'Migration απέτυχε: %s'), $r['error']));
         } elseif (empty($r['applied'])) {
-            flash_set('info', 'Δεν υπήρχαν εκκρεμείς migrations.');
+            flash_set('info', t('controllers/MaintenanceController.001', 'Δεν υπήρχαν εκκρεμείς migrations.'));
         } else {
-            flash_set('success', 'Εφαρμόστηκαν migrations: ' . implode(', ', $r['applied']));
+            flash_set('success', sprintf(t('controllers/MaintenanceController.010', 'Εφαρμόστηκαν migrations: %s'), implode(', ', $r['applied'])));
         }
         redirect('/admin/settings#updates');
     }
@@ -102,7 +101,7 @@ class MaintenanceController
     {
         requireRole([Role::SUPER_ADMIN]);
         if (post_str('confirm') !== 'ΔΙΑΓΡΑΦΗ') {
-            flash_set('danger', 'Η διαγραφή ακυρώθηκε — η λέξη επιβεβαίωσης δεν ταίριαξε.');
+            flash_set('danger', t('controllers/MaintenanceController.002', 'Η διαγραφή ακυρώθηκε — η λέξη επιβεβαίωσης δεν ταίριαξε.'));
             redirect('/admin/settings#danger');
             return;
         }
@@ -143,12 +142,12 @@ class MaintenanceController
             db()->exec('SET FOREIGN_KEY_CHECKS = 1');
         } catch (Throwable $e) {
             db()->exec('SET FOREIGN_KEY_CHECKS = 1');
-            flash_set('danger', 'Σφάλμα κατά τη διαγραφή: ' . $e->getMessage());
+            flash_set('danger', sprintf(t('controllers/MaintenanceController.011', 'Σφάλμα κατά τη διαγραφή: %s'), $e->getMessage()));
             redirect('/admin/settings#danger');
             return;
         }
 
-        flash_set('success', 'Όλα τα δεδομένα δράσεων, εκτάκτων και στατιστικών διαγράφηκαν. Χρήστες και ομάδες παρέμειναν άθικτοι.');
+        flash_set('success', t('controllers/MaintenanceController.003', 'Όλα τα δεδομένα δράσεων, εκτάκτων και στατιστικών διαγράφηκαν. Χρήστες και ομάδες παρέμειναν άθικτοι.'));
         redirect('/admin/settings#danger');
     }
 }

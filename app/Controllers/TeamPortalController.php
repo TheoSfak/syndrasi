@@ -134,7 +134,7 @@ class TeamPortalController
             'readiness_items_json'    => $this->readinessItemsJson(),
         ]);
         audit('team_readiness_updated', 'volunteer_team', (int) $team['id']);
-        flash_set('success', 'Η ετοιμότητα της ομάδας ενημερώθηκε.');
+        flash_set('success', t('controllers/TeamPortalController.001', 'Η ετοιμότητα της ομάδας ενημερώθηκε.'));
         redirect('/team/readiness');
     }
 
@@ -246,12 +246,12 @@ class TeamPortalController
             abort(404, 'Δεν βρέθηκε η δήλωση.');
         }
         if ($application['status'] !== 'approved' || empty($application['mission_commander_id'])) {
-            flash_set('danger', 'Δεν υπάρχει εγκεκριμένη δήλωση με Mission Υπεύθυνο.');
+            flash_set('danger', t('controllers/TeamPortalController.002', 'Δεν υπάρχει εγκεκριμένη δήλωση με Mission Υπεύθυνο.'));
             redirect('/team/events/' . $application['event_id']);
         }
         $commander = TeamMember::find((int) $application['mission_commander_id']);
         if (!$commander || empty($commander['phone'])) {
-            flash_set('danger', 'Ο Mission Υπεύθυνος δεν έχει καταχωρημένο τηλέφωνο.');
+            flash_set('danger', t('controllers/TeamPortalController.003', 'Ο Mission Υπεύθυνος δεν έχει καταχωρημένο τηλέφωνο.'));
             redirect('/team/events/' . $application['event_id']);
         }
         $token = EventApplication::ensureFieldToken((int) $application['id']);
@@ -279,7 +279,7 @@ class TeamPortalController
         }
         $pin = EventApplication::regenerateFieldPin((int) $application['id']);
         audit('field_pin_regenerated', 'event_application', (int) $application['id'], 'rotated');
-        flash_set('success', 'Νέο PIN: ' . $pin . '. Οι ήδη συνδεδεμένες συσκευές θα ζητήσουν ξανά κωδικό.');
+        flash_set('success', sprintf(t('controllers/TeamPortalController.023', 'Νέο PIN: %s. Οι ήδη συνδεδεμένες συσκευές θα ζητήσουν ξανά κωδικό.'), $pin));
         redirect('/team/events/' . $application['event_id']);
     }
 
@@ -292,12 +292,12 @@ class TeamPortalController
         }
         if (!in_array($event['status'], ['open', 'review', 'active'], true)) {
             $terms = $this->authorityTerms((int) $event['municipality_id']);
-            flash_set('warning', 'Η ' . $terms['event_singular_lc'] . ' δεν δέχεται πλέον δηλώσεις συμμετοχής.');
+            flash_set('warning', sprintf(t('controllers/TeamPortalController.024', 'Η %s δεν δέχεται πλέον δηλώσεις συμμετοχής.'), $terms['event_singular_lc']));
             redirect('/team/events/' . $event['id']);
         }
         if (EventApplication::findByEventTeam($event['id'], current_team_id())) {
             $terms = $this->authorityTerms((int) $event['municipality_id']);
-            flash_set('warning', 'Έχετε ήδη υποβάλει δήλωση για αυτή τη ' . $terms['event_singular_lc'] . '.');
+            flash_set('warning', sprintf(t('controllers/TeamPortalController.025', 'Έχετε ήδη υποβάλει δήλωση για αυτή τη %s.'), $terms['event_singular_lc']));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -305,13 +305,13 @@ class TeamPortalController
         $memberIds = isset($_POST['member_ids']) && is_array($_POST['member_ids'])
             ? array_map('intval', $_POST['member_ids']) : [];
         if (empty($memberIds)) {
-            flash_set('danger', 'Επιλέξτε τουλάχιστον ένα μέλος για τη δήλωση.');
+            flash_set('danger', t('controllers/TeamPortalController.004', 'Επιλέξτε τουλάχιστον ένα μέλος για τη δήλωση.'));
             redirect('/team/events/' . $event['id']);
         }
 
         $commanderId = post_int('mission_commander_id');
         if (!$commanderId || !in_array($commanderId, $memberIds, true)) {
-            flash_set('danger', 'Ορίστε Mission Υπεύθυνο από τα επιλεγμένα μέλη.');
+            flash_set('danger', t('controllers/TeamPortalController.005', 'Ορίστε Mission Υπεύθυνο από τα επιλεγμένα μέλη.'));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -321,7 +321,7 @@ class TeamPortalController
         $validIds    = array_column($validMembers, 'id');
         foreach ($memberIds as $mid) {
             if (!in_array($mid, $validIds, false)) {
-                flash_set('danger', 'Μη έγκυρο μέλος επιλέχθηκε.');
+                flash_set('danger', t('controllers/TeamPortalController.006', 'Μη έγκυρο μέλος επιλέχθηκε.'));
                 redirect('/team/events/' . $event['id']);
             }
         }
@@ -352,7 +352,7 @@ class TeamPortalController
         } catch (Exception $e) {
             $pdo->rollBack();
             error_log('apply() transaction failed: ' . $e->getMessage());
-            flash_set('danger', 'Σφάλμα κατά την υποβολή δήλωσης. Παρακαλώ δοκιμάστε ξανά.');
+            flash_set('danger', t('controllers/TeamPortalController.007', 'Σφάλμα κατά την υποβολή δήλωσης. Παρακαλώ δοκιμάστε ξανά.'));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -366,7 +366,7 @@ class TeamPortalController
         NotificationService::notifyMembersAssigned($event, $memberIds, $commanderId, $appId);
         dbq('UPDATE event_applications SET members_notified_at = NOW() WHERE id = :id', ['id' => $appId]);
 
-        flash_set('success', 'Η δήλωση υποβλήθηκε με ' . $offeredPeople . ' μέλη.');
+        flash_set('success', sprintf(t('controllers/TeamPortalController.026', 'Η δήλωση υποβλήθηκε με %s μέλη.'), $offeredPeople));
         redirect('/team/events/' . $event['id']);
     }
 
@@ -381,7 +381,7 @@ class TeamPortalController
         $tid         = current_team_id();
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application) {
-            flash_set('danger', 'Δεν βρέθηκε δήλωση συμμετοχής.');
+            flash_set('danger', t('controllers/TeamPortalController.008', 'Δεν βρέθηκε δήλωση συμμετοχής.'));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -391,20 +391,20 @@ class TeamPortalController
             ['aid' => $application['id']]
         )->fetchColumn();
         if ($hasCheckin) {
-            flash_set('danger', 'Δεν επιτρέπεται αλλαγή μελών μετά το πρώτο check-in.');
+            flash_set('danger', t('controllers/TeamPortalController.009', 'Δεν επιτρέπεται αλλαγή μελών μετά το πρώτο check-in.'));
             redirect('/team/events/' . $event['id']);
         }
 
         $memberIds = isset($_POST['member_ids']) && is_array($_POST['member_ids'])
             ? array_map('intval', $_POST['member_ids']) : [];
         if (empty($memberIds)) {
-            flash_set('danger', 'Επιλέξτε τουλάχιστον ένα μέλος.');
+            flash_set('danger', t('controllers/TeamPortalController.010', 'Επιλέξτε τουλάχιστον ένα μέλος.'));
             redirect('/team/events/' . $event['id']);
         }
 
         $commanderId = post_int('mission_commander_id');
         if (!$commanderId || !in_array($commanderId, $memberIds, true)) {
-            flash_set('danger', 'Ορίστε Mission Υπεύθυνο από τα επιλεγμένα μέλη.');
+            flash_set('danger', t('controllers/TeamPortalController.011', 'Ορίστε Mission Υπεύθυνο από τα επιλεγμένα μέλη.'));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -413,7 +413,7 @@ class TeamPortalController
         $validIds     = array_column($validMembers, 'id');
         foreach ($memberIds as $mid) {
             if (!in_array($mid, $validIds, false)) {
-                flash_set('danger', 'Μη έγκυρο μέλος.');
+                flash_set('danger', t('controllers/TeamPortalController.012', 'Μη έγκυρο μέλος.'));
                 redirect('/team/events/' . $event['id']);
             }
         }
@@ -431,7 +431,7 @@ class TeamPortalController
         } catch (Exception $e) {
             $pdo2->rollBack();
             error_log('updateApplicationMembers() transaction failed: ' . $e->getMessage());
-            flash_set('danger', 'Σφάλμα κατά την ενημέρωση μελών. Παρακαλώ δοκιμάστε ξανά.');
+            flash_set('danger', t('controllers/TeamPortalController.013', 'Σφάλμα κατά την ενημέρωση μελών. Παρακαλώ δοκιμάστε ξανά.'));
             redirect('/team/events/' . $event['id']);
         }
         audit('application_members_updated', 'event_application', $application['id'],
@@ -441,7 +441,7 @@ class TeamPortalController
         NotificationService::notifyMembersAssigned($event, $memberIds, $commanderId, $application['id']);
         dbq('UPDATE event_applications SET members_notified_at = NOW() WHERE id = :id', ['id' => $application['id']]);
 
-        flash_set('success', 'Ο κατάλογος μελών ενημερώθηκε.');
+        flash_set('success', t('controllers/TeamPortalController.014', 'Ο κατάλογος μελών ενημερώθηκε.'));
         redirect('/team/events/' . $event['id']);
     }
 
@@ -454,12 +454,12 @@ class TeamPortalController
         }
         requireTeamAccess($application['team_id']);
         if ($application['status'] !== 'pending') {
-            flash_set('warning', 'Μόνο εκκρεμείς δηλώσεις μπορούν να ακυρωθούν.');
+            flash_set('warning', t('controllers/TeamPortalController.015', 'Μόνο εκκρεμείς δηλώσεις μπορούν να ακυρωθούν.'));
             redirect('/team/applications');
         }
         EventApplication::cancel($application['id']);
         audit('application_cancelled', 'event_application', $application['id']);
-        flash_set('success', 'Η δήλωση ακυρώθηκε.');
+        flash_set('success', t('controllers/TeamPortalController.016', 'Η δήλωση ακυρώθηκε.'));
         redirect('/team/applications');
     }
 
@@ -591,7 +591,7 @@ class TeamPortalController
         audit('photo_uploaded', 'event', $event['id'], 'team ' . $tid);
 
         $terms = $this->authorityTerms((int) $event['municipality_id']);
-        flash_set('success', 'Η φωτογραφία στάλθηκε προς ' . $terms['short_name'] . '.' . ($result['lat'] === null ? ' (χωρίς τοποθεσία)' : ''));
+        flash_set('success', sprintf(t('controllers/TeamPortalController.027', 'Η φωτογραφία στάλθηκε προς %s.%s'), $terms['short_name'], $result['lat'] === null ? ' ' . t('controllers/FieldController.no_location', '(χωρίς τοποθεσία)') : ''));
         redirect($back);
     }
 
@@ -617,7 +617,7 @@ class TeamPortalController
         audit('video_uploaded', 'event', $event['id'], 'team ' . $tid);
 
         $terms = $this->authorityTerms((int) $event['municipality_id']);
-        flash_set('success', 'Το βίντεο στάλθηκε προς ' . $terms['short_name'] . '.' . ($result['lat'] === null ? ' (χωρίς τοποθεσία)' : ''));
+        flash_set('success', sprintf(t('controllers/TeamPortalController.028', 'Το βίντεο στάλθηκε προς %s.%s'), $terms['short_name'], $result['lat'] === null ? ' ' . t('controllers/FieldController.no_location', '(χωρίς τοποθεσία)') : ''));
         redirect($back);
     }
 
@@ -632,7 +632,7 @@ class TeamPortalController
         $status = post_str('status');
         $allowed = ['present_full', 'present_partial', 'not_present', 'departed'];
         if (!in_array($status, $allowed, true)) {
-            flash_set('danger', 'Μη έγκυρη κατάσταση παρουσίας.');
+            flash_set('danger', t('controllers/TeamPortalController.017', 'Μη έγκυρη κατάσταση παρουσίας.'));
             redirect('/team/operations/events/' . $event['id']);
         }
 
@@ -642,7 +642,7 @@ class TeamPortalController
         } elseif ($status === 'present_partial') {
             $present = post_int('present_people');
             if ($present < 1 || $present >= $expected) {
-                flash_set('danger', 'Για μερική παρουσία δηλώστε αριθμό ατόμων μικρότερο από τα εγκεκριμένα (' . $expected . ').');
+                flash_set('danger', sprintf(t('controllers/TeamPortalController.029', 'Για μερική παρουσία δηλώστε αριθμό ατόμων μικρότερο από τα εγκεκριμένα (%s).'), $expected));
                 redirect('/team/operations/events/' . $event['id']);
             }
         } elseif ($status === 'departed') {
@@ -664,7 +664,7 @@ class TeamPortalController
         audit('team_checked_in', 'event', $event['id'], 'status: ' . $status . ', present: ' . $present);
         Event::touchActivity((int) $event['id']);
 
-        flash_set('success', 'Η δήλωση παρουσίας καταχωρήθηκε: ' . greek_status($status) . '.');
+        flash_set('success', sprintf(t('controllers/TeamPortalController.030', 'Η δήλωση παρουσίας καταχωρήθηκε: %s.'), greek_status($status)));
         $from = post_str('_from');
         if ($from === 'qr') {
             redirect('/team/qr-checkin/' . $event['id']);
@@ -731,7 +731,7 @@ class TeamPortalController
 
         $type = post_str('shortage_type');
         if (!in_array($type, ['people', 'equipment', 'medical_supplies', 'vehicle', 'other'], true)) {
-            flash_set('danger', 'Μη έγκυρος τύπος έλλειψης.');
+            flash_set('danger', t('controllers/TeamPortalController.018', 'Μη έγκυρος τύπος έλλειψης.'));
             redirect('/team/operations/events/' . $event['id']);
         }
         $severity = post_str('severity');
@@ -740,7 +740,7 @@ class TeamPortalController
         }
         $title = trim(post_str('title'));
         if ($title === '') {
-            flash_set('danger', 'Συμπληρώστε τίτλο έλλειψης.');
+            flash_set('danger', t('controllers/TeamPortalController.019', 'Συμπληρώστε τίτλο έλλειψης.'));
             redirect('/team/operations/events/' . $event['id']);
         }
 
@@ -767,7 +767,7 @@ class TeamPortalController
             'shortage'
         );
 
-        flash_set('success', 'Η έλλειψη αναφέρθηκε στο κέντρο επιχειρήσεων.');
+        flash_set('success', t('controllers/TeamPortalController.020', 'Η έλλειψη αναφέρθηκε στο κέντρο επιχειρήσεων.'));
         $from = post_str('_from');
         redirect($from === 'live' ? '/team/live/' . $event['id'] : '/team/operations/events/' . $event['id']);
     }
@@ -960,7 +960,7 @@ class TeamPortalController
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application || $application['status'] !== 'approved') {
             $terms = $this->authorityTerms((int) $event['municipality_id']);
-            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη ' . $terms['event_singular_lc'] . '.');
+            flash_set('danger', sprintf(t('controllers/TeamPortalController.031', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη %s.'), $terms['event_singular_lc']));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -995,7 +995,7 @@ class TeamPortalController
             );
         }
         audit('team_report_submitted', 'event', $event['id']);
-        flash_set('success', 'Η αναφορά καταχωρήθηκε.');
+        flash_set('success', t('controllers/TeamPortalController.021', 'Η αναφορά καταχωρήθηκε.'));
         redirect('/team/events/' . $event['id']);
     }
 
@@ -1047,7 +1047,7 @@ class TeamPortalController
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application || $application['status'] !== 'approved') {
             $terms = $this->authorityTerms((int) $event['municipality_id']);
-            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη ' . $terms['event_singular_lc'] . '.');
+            flash_set('danger', sprintf(t('controllers/TeamPortalController.031', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη %s.'), $terms['event_singular_lc']));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -1074,7 +1074,7 @@ class TeamPortalController
         $application = EventApplication::findByEventTeam($event['id'], $tid);
         if (!$application || $application['status'] !== 'approved') {
             $terms = $this->authorityTerms((int) $event['municipality_id']);
-            flash_set('danger', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη ' . $terms['event_singular_lc'] . '.');
+            flash_set('danger', sprintf(t('controllers/TeamPortalController.031', 'Η ομάδα σας δεν συμμετείχε σε αυτή τη %s.'), $terms['event_singular_lc']));
             redirect('/team/events/' . $event['id']);
         }
 
@@ -1099,7 +1099,7 @@ class TeamPortalController
         ]);
         audit('team_debrief_submitted', 'event', $event['id']);
 
-        flash_set('success', 'Ο απολογισμός υποβλήθηκε. Ευχαριστούμε!');
+        flash_set('success', t('controllers/TeamPortalController.022', 'Ο απολογισμός υποβλήθηκε. Ευχαριστούμε!'));
         redirect('/team/events/' . $event['id']);
     }
 
@@ -1122,7 +1122,7 @@ class TeamPortalController
         }
         if ($requireActive && $event['status'] !== 'active') {
             $terms = $this->authorityTerms((int) $event['municipality_id']);
-            flash_set('warning', 'Η ' . $terms['event_singular_lc'] . ' δεν είναι ενεργή αυτή τη στιγμή.');
+            flash_set('warning', sprintf(t('controllers/TeamPortalController.032', 'Η %s δεν είναι ενεργή αυτή τη στιγμή.'), $terms['event_singular_lc']));
             redirect('/team/operations/events/' . $event['id']);
         }
         return ['event' => $event, 'application' => $application];

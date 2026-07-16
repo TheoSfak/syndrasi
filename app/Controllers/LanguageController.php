@@ -58,17 +58,17 @@ class LanguageController
         $name = trim(post_str('name'));
 
         if (!preg_match('/^[a-z]{2,10}$/', $code) || $name === '') {
-            flash_set('danger', 'Μη έγκυρος κωδικός ή όνομα γλώσσας.');
+            flash_set('danger', t('controllers/LanguageController.001', 'Μη έγκυρος κωδικός ή όνομα γλώσσας.'));
             redirect('/admin/settings#languages');
         }
         if (Language::find($code)) {
-            flash_set('danger', 'Η γλώσσα υπάρχει ήδη.');
+            flash_set('danger', t('controllers/LanguageController.002', 'Η γλώσσα υπάρχει ήδη.'));
             redirect('/admin/settings#languages');
         }
 
         Language::create($code, $name);
         audit('language_added', 'languages', null, ['code' => $code]);
-        flash_set('success', 'Η γλώσσα «' . $name . '» προστέθηκε.');
+        flash_set('success', sprintf(t('controllers/LanguageController.005', 'Η γλώσσα «%s» προστέθηκε.'), $name));
         redirect('/admin/settings#languages');
     }
 
@@ -79,11 +79,11 @@ class LanguageController
         $active = (bool) post_bool('active');
 
         if (!Language::setActive($code, $active)) {
-            flash_set('danger', 'Δεν είναι δυνατή η απενεργοποίηση της γλώσσας πηγής.');
+            flash_set('danger', t('controllers/LanguageController.003', 'Δεν είναι δυνατή η απενεργοποίηση της γλώσσας πηγής.'));
             redirect('/admin/settings#languages');
         }
 
-        flash_set('success', 'Η κατάσταση της γλώσσας ενημερώθηκε.');
+        flash_set('success', t('controllers/LanguageController.004', 'Η κατάσταση της γλώσσας ενημερώθηκε.'));
         redirect('/admin/settings#languages');
     }
 

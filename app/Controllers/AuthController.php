@@ -26,7 +26,7 @@ class AuthController
         $password = (string) (isset($_POST['password']) ? $_POST['password'] : '');
 
         if ($email === '' || $password === '') {
-            flash_set('danger', 'Συμπληρώστε email και κωδικό πρόσβασης.');
+            flash_set('danger', t('controllers/AuthController.001', 'Συμπληρώστε email και κωδικό πρόσβασης.'));
             redirect('/login');
         }
 
@@ -38,7 +38,7 @@ class AuthController
 
         if ($lockUntil && time() < (int) $lockUntil) {
             $minutes = ceil(((int) $lockUntil - time()) / 60);
-            flash_set('danger', "Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε {$minutes} λεπτό(α).");
+            flash_set('danger', sprintf(t('controllers/AuthController.016', 'Πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε %s λεπτό(α).'), $minutes));
             redirect('/login');
         }
         // ──────────────────────────────────────────────────────────────────────
@@ -52,9 +52,9 @@ class AuthController
             if ($failures >= 5) {
                 $this->setRateSetting($lockKey, time() + 900); // lock 15 min
                 $this->setRateSetting($ratKey, 0);
-                flash_set('danger', 'Πάρα πολλές αποτυχημένες προσπάθειες. Ο λογαριασμός κλειδώθηκε για 15 λεπτά.');
+                flash_set('danger', t('controllers/AuthController.002', 'Πάρα πολλές αποτυχημένες προσπάθειες. Ο λογαριασμός κλειδώθηκε για 15 λεπτά.'));
             } else {
-                flash_set('danger', 'Λάθος email ή κωδικός πρόσβασης. (' . $failures . '/5 αποτυχίες)');
+                flash_set('danger', sprintf(t('controllers/AuthController.017', 'Λάθος email ή κωδικός πρόσβασης. (%s/5 αποτυχίες)'), $failures));
             }
             audit('login_failed', 'user', null, 'email: ' . $email);
             redirect('/login');
@@ -65,7 +65,7 @@ class AuthController
         $this->setRateSetting($lockKey, 0);
 
         if ($user['status'] !== 'active') {
-            flash_set('danger', 'Ο λογαριασμός σας είναι ανενεργός. Επικοινωνήστε με τον διαχειριστή.');
+            flash_set('danger', t('controllers/AuthController.003', 'Ο λογαριασμός σας είναι ανενεργός. Επικοινωνήστε με τον διαχειριστή.'));
             redirect('/login');
         }
 
@@ -73,7 +73,7 @@ class AuthController
         if ($user['role'] !== 'super_admin' && $user['municipality_id']) {
             $mun = Municipality::find($user['municipality_id']);
             if (!$mun || $mun['status'] !== 'active') {
-                flash_set('danger', 'Ο φορέας σας δεν είναι ενεργός στην πλατφόρμα.');
+                flash_set('danger', t('controllers/AuthController.004', 'Ο φορέας σας δεν είναι ενεργός στην πλατφόρμα.'));
                 redirect('/login');
             }
         }
@@ -87,7 +87,7 @@ class AuthController
         User::updateLastLogin($user['id']);
         audit('login', 'user', $user['id']);
 
-        flash_set('success', 'Καλώς ήρθατε, ' . $user['name'] . '!');
+        flash_set('success', sprintf(t('controllers/AuthController.018', 'Καλώς ήρθατε, %s!'), $user['name']));
         redirect(role_home());
     }
 
@@ -133,14 +133,14 @@ class AuthController
         if (is_logged_in()) redirect(role_home());
         $email = mb_strtolower(trim(post_str('email')));
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            flash_set('danger', 'Συμπληρώστε έγκυρο email.');
+            flash_set('danger', t('controllers/AuthController.005', 'Συμπληρώστε έγκυρο email.'));
             redirect('/forgot-password');
         }
 
         $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
         $rateKey = 'reset_req_' . hash('sha256', $ip . '|' . $email);
         if (!$this->allowResetRequest($rateKey)) {
-            flash_set('success', 'Αν το email υπάρχει στο σύστημα, θα λάβετε οδηγίες επαναφοράς αμέσως.');
+            flash_set('success', t('controllers/AuthController.006', 'Αν το email υπάρχει στο σύστημα, θα λάβετε οδηγίες επαναφοράς αμέσως.'));
             redirect('/forgot-password');
         }
 
@@ -173,7 +173,7 @@ class AuthController
             audit('password_reset_requested', 'user', $user['id']);
         }
 
-        flash_set('success', 'Αν το email υπάρχει στο σύστημα, θα λάβετε οδηγίες επαναφοράς αμέσως.');
+        flash_set('success', t('controllers/AuthController.007', 'Αν το email υπάρχει στο σύστημα, θα λάβετε οδηγίες επαναφοράς αμέσως.'));
         redirect('/forgot-password');
     }
 
@@ -203,7 +203,7 @@ class AuthController
         if (is_logged_in()) redirect(role_home());
         $token = isset($_GET['token']) ? trim($_GET['token']) : '';
         if (!$this->validResetToken($token)) {
-            flash_set('danger', 'Ο σύνδεσμος επαναφοράς είναι άκυρος ή έχει λήξει.');
+            flash_set('danger', t('controllers/AuthController.008', 'Ο σύνδεσμος επαναφοράς είναι άκυρος ή έχει λήξει.'));
             redirect('/forgot-password');
         }
         render('auth/reset_password', ['pageTitle' => 'Νέος κωδικός', 'token' => $token], false);
@@ -218,7 +218,7 @@ class AuthController
 
         $row = $this->validResetToken($token);
         if (!$row) {
-            flash_set('danger', 'Ο σύνδεσμος επαναφοράς είναι άκυρος ή έχει λήξει.');
+            flash_set('danger', t('controllers/AuthController.009', 'Ο σύνδεσμος επαναφοράς είναι άκυρος ή έχει λήξει.'));
             redirect('/forgot-password');
         }
         if ($pwErr = password_error($password, $confirm)) {
@@ -228,14 +228,14 @@ class AuthController
 
         $user = User::findByEmail($row['email']);
         if (!$user) {
-            flash_set('danger', 'Σφάλμα: ο χρήστης δεν βρέθηκε.');
+            flash_set('danger', t('controllers/AuthController.010', 'Σφάλμα: ο χρήστης δεν βρέθηκε.'));
             redirect('/forgot-password');
         }
 
         User::updatePassword($user['id'], password_hash($password, PASSWORD_DEFAULT));
         dbq("UPDATE password_resets SET used_at = NOW() WHERE token = :token", ['token' => hash('sha256', $token)]);
         audit('password_reset_completed', 'user', $user['id']);
-        flash_set('success', 'Ο κωδικός σας άλλαξε επιτυχώς. Συνδεθείτε τώρα.');
+        flash_set('success', t('controllers/AuthController.011', 'Ο κωδικός σας άλλαξε επιτυχώς. Συνδεθείτε τώρα.'));
         redirect('/login');
     }
 
@@ -277,7 +277,7 @@ class AuthController
         $confirm = (string) (isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '');
 
         if (!password_verify($current, $user['password_hash'])) {
-            flash_set('danger', 'Ο τρέχων κωδικός δεν είναι σωστός.');
+            flash_set('danger', t('controllers/AuthController.012', 'Ο τρέχων κωδικός δεν είναι σωστός.'));
             redirect('/profile');
         }
         if ($pwErr = password_error($new, $confirm)) {
@@ -287,7 +287,7 @@ class AuthController
 
         User::updatePassword($user['id'], password_hash($new, PASSWORD_DEFAULT));
         audit('password_changed', 'user', $user['id']);
-        flash_set('success', 'Ο κωδικός πρόσβασης άλλαξε με επιτυχία.');
+        flash_set('success', t('controllers/AuthController.013', 'Ο κωδικός πρόσβασης άλλαξε με επιτυχία.'));
         redirect('/profile');
     }
 
@@ -298,12 +298,12 @@ class AuthController
         $code = post_str('language_code');
 
         if ($code !== '' && !Language::isActiveCode($code)) {
-            flash_set('danger', 'Μη έγκυρη γλώσσα.');
+            flash_set('danger', t('controllers/AuthController.014', 'Μη έγκυρη γλώσσα.'));
             redirect('/profile');
         }
 
         User::updateLanguage($user['id'], $code !== '' ? $code : null);
-        flash_set('success', 'Η γλώσσα ενημερώθηκε.');
+        flash_set('success', t('controllers/AuthController.015', 'Η γλώσσα ενημερώθηκε.'));
         redirect('/profile');
     }
 }

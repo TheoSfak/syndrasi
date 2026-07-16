@@ -43,7 +43,7 @@ class NotificationController
     {
         requireLogin();
         Notification::markAllRead(current_user_id());
-        flash_set('success', 'Όλες οι ειδοποιήσεις σημειώθηκαν ως αναγνωσμένες.');
+        flash_set('success', t('controllers/NotificationController.001', 'Όλες οι ειδοποιήσεις σημειώθηκαν ως αναγνωσμένες.'));
         redirect('/notifications');
     }
 }

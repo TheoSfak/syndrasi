@@ -284,14 +284,14 @@ class FieldController
 
         $type = post_str('shortage_type');
         if (!in_array($type, ['people', 'equipment', 'medical_supplies', 'vehicle', 'other'], true)) {
-            flash_set('danger', 'Μη έγκυρος τύπος έλλειψης.');
+            flash_set('danger', t('controllers/FieldController.001', 'Μη έγκυρος τύπος έλλειψης.'));
             redirect($back);
         }
         $severity = post_str('severity');
         if (!in_array($severity, ['low', 'medium', 'high', 'critical'], true)) { $severity = 'medium'; }
         $title = trim(post_str('title'));
         if ($title === '') {
-            flash_set('danger', 'Συμπληρώστε τίτλο έλλειψης.');
+            flash_set('danger', t('controllers/FieldController.002', 'Συμπληρώστε τίτλο έλλειψης.'));
             redirect($back);
         }
         dbq(
@@ -314,7 +314,7 @@ class FieldController
             );
         } catch (Throwable $e) { error_log('[Field::shortage] ' . $e->getMessage()); }
         $ctx = $this->authorityFor($app);
-        flash_set('success', 'Η αναφορά έλλειψης στάλθηκε προς ' . $ctx['short_name'] . '.');
+        flash_set('success', sprintf(t('controllers/FieldController.003', 'Η αναφορά έλλειψης στάλθηκε προς %s.'), $ctx['short_name']));
         redirect($back);
     }
 
@@ -352,7 +352,7 @@ class FieldController
         try { NotificationService::photoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) { error_log('[photoUploaded] ' . $e->getMessage()); }
 
         $authCtx = $this->authorityFor($app);
-        flash_set('success', 'Η φωτογραφία στάλθηκε προς ' . $authCtx['short_name'] . '.' . ($result['lat'] === null ? ' (χωρίς τοποθεσία)' : ''));
+        flash_set('success', sprintf(t('controllers/FieldController.004', 'Η φωτογραφία στάλθηκε προς %s.%s'), $authCtx['short_name'], $result['lat'] === null ? ' ' . t('controllers/FieldController.no_location', '(χωρίς τοποθεσία)') : ''));
         redirect($back);
     }
 
@@ -375,7 +375,7 @@ class FieldController
         try { NotificationService::videoUploaded($this->eventArr($app), (int) $app['team_id']); } catch (Throwable $e) { error_log('[videoUploaded] ' . $e->getMessage()); }
 
         $authCtx = $this->authorityFor($app);
-        flash_set('success', 'Το βίντεο στάλθηκε προς ' . $authCtx['short_name'] . '.' . ($result['lat'] === null ? ' (χωρίς τοποθεσία)' : ''));
+        flash_set('success', sprintf(t('controllers/FieldController.005', 'Το βίντεο στάλθηκε προς %s.%s'), $authCtx['short_name'], $result['lat'] === null ? ' ' . t('controllers/FieldController.no_location', '(χωρίς τοποθεσία)') : ''));
         redirect($back);
     }
 }

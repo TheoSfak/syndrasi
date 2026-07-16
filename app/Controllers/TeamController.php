@@ -39,7 +39,7 @@ class TeamController
         $adminEmail = post_str('admin_email');
         if ($adminEmail !== '' && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
             if (User::findByEmail($adminEmail)) {
-                flash_set('warning', 'Η ομάδα δημιουργήθηκε, αλλά υπάρχει ήδη χρήστης με αυτό το email — δεν δημιουργήθηκε λογαριασμός.');
+                flash_set('warning', t('controllers/TeamController.001', 'Η ομάδα δημιουργήθηκε, αλλά υπάρχει ήδη χρήστης με αυτό το email — δεν δημιουργήθηκε λογαριασμός.'));
             } else {
                 $password = bin2hex(random_bytes(4)); // 8 hex chars
                 dbq(
@@ -64,11 +64,11 @@ class TeamController
                     . "Παρακαλούμε συνδεθείτε και αλλάξτε τον κωδικό σας.",
                     current_municipality_id()
                 );
-                flash_set('info', 'Δημιουργήθηκε λογαριασμός υπευθύνου ομάδας. Ο προσωρινός κωδικός στάλθηκε με email.');
+                flash_set('info', t('controllers/TeamController.002', 'Δημιουργήθηκε λογαριασμός υπευθύνου ομάδας. Ο προσωρινός κωδικός στάλθηκε με email.'));
             }
         }
 
-        flash_set('success', 'Η ομάδα δημιουργήθηκε.');
+        flash_set('success', t('controllers/TeamController.003', 'Η ομάδα δημιουργήθηκε.'));
         redirect('/teams');
     }
 
@@ -105,7 +105,7 @@ class TeamController
         }
         VolunteerTeam::update($team['id'], $data);
         audit('team_updated', 'volunteer_team', $team['id'], $data['name']);
-        flash_set('success', 'Η ομάδα ενημερώθηκε.');
+        flash_set('success', t('controllers/TeamController.004', 'Η ομάδα ενημερώθηκε.'));
         redirect('/teams');
     }
 
@@ -115,7 +115,7 @@ class TeamController
         $team = $this->findOwn($id);
         VolunteerTeam::toggleStatus($team['id']);
         audit('team_status_toggled', 'volunteer_team', $team['id']);
-        flash_set('success', 'Η κατάσταση της ομάδας άλλαξε.');
+        flash_set('success', t('controllers/TeamController.005', 'Η κατάσταση της ομάδας άλλαξε.'));
         redirect('/teams');
     }
 
@@ -129,9 +129,9 @@ class TeamController
         }
 
         if (TeamMemberController::revokeAssistantFromMunicipality((int) $member['id'])) {
-            flash_set('success', 'Η πρόσβαση Βοηθού Αρχηγού αφαιρέθηκε.');
+            flash_set('success', t('controllers/TeamController.006', 'Η πρόσβαση Βοηθού Αρχηγού αφαιρέθηκε.'));
         } else {
-            flash_set('warning', 'Το μέλος δεν είναι Βοηθός Αρχηγού.');
+            flash_set('warning', t('controllers/TeamController.007', 'Το μέλος δεν είναι Βοηθός Αρχηγού.'));
         }
         redirect('/teams/' . $team['id'] . '/assistants');
     }
@@ -151,7 +151,7 @@ class TeamController
         $name = post_str('name');
         if ($name === '') {
             remember_old();
-            flash_set('danger', 'Το όνομα της ομάδας είναι υποχρεωτικό.');
+            flash_set('danger', t('controllers/TeamController.008', 'Το όνομα της ομάδας είναι υποχρεωτικό.'));
             return null;
         }
         return [

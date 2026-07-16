@@ -41,24 +41,24 @@ class SettingsController
 
         $driver = post_str('mail_driver');
         if (!in_array($driver, ['', 'log', 'mail', 'smtp'], true)) {
-            flash_set('danger', 'Μη έγκυρος τρόπος αποστολής email.');
+            flash_set('danger', t('controllers/SettingsController.001', 'Μη έγκυρος τρόπος αποστολής email.'));
             redirect('/settings');
         }
 
         $fromEmail = post_str('mail_from_email');
         if ($fromEmail !== '' && !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
-            flash_set('danger', 'Μη έγκυρη διεύθυνση αποστολέα (From).');
+            flash_set('danger', t('controllers/SettingsController.002', 'Μη έγκυρη διεύθυνση αποστολέα (From).'));
             redirect('/settings');
         }
 
         $port = post_int('smtp_port');
         if ($driver === 'smtp') {
             if (post_str('smtp_host') === '') {
-                flash_set('danger', 'Για SMTP απαιτείται SMTP Host.');
+                flash_set('danger', t('controllers/SettingsController.003', 'Για SMTP απαιτείται SMTP Host.'));
                 redirect('/settings');
             }
             if ($port < 1 || $port > 65535) {
-                flash_set('danger', 'Μη έγκυρη θύρα SMTP (συνήθως 587 ή 465).');
+                flash_set('danger', t('controllers/SettingsController.004', 'Μη έγκυρη θύρα SMTP (συνήθως 587 ή 465).'));
                 redirect('/settings');
             }
         }
@@ -87,7 +87,7 @@ class SettingsController
         MunicipalitySetting::setMany($mid, $settings);
         audit('municipality_mail_settings_updated', 'municipality', $mid, 'driver: ' . ($driver !== '' ? $driver : 'default'));
 
-        flash_set('success', 'Οι ρυθμίσεις email αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.005', 'Οι ρυθμίσεις email αποθηκεύτηκαν.'));
         redirect('/settings');
     }
 
@@ -120,12 +120,12 @@ class SettingsController
 
         if ($ok) {
             if ($effective['driver'] === 'log') {
-                flash_set('success', 'Το δοκιμαστικό email καταγράφηκε στο storage/logs/mail.log (τρόπος αποστολής: log).');
+                flash_set('success', t('controllers/SettingsController.006', 'Το δοκιμαστικό email καταγράφηκε στο storage/logs/mail.log (τρόπος αποστολής: log).'));
             } else {
-                flash_set('success', 'Το δοκιμαστικό email στάλθηκε στο ' . $user['email'] . '. Ελέγξτε τα εισερχόμενά σας.');
+                flash_set('success', sprintf(t('controllers/SettingsController.029', 'Το δοκιμαστικό email στάλθηκε στο %s. Ελέγξτε τα εισερχόμενά σας.'), $user['email']));
             }
         } else {
-            flash_set('danger', 'Αποτυχία αποστολής: ' . (MailService::$lastError ?: 'Άγνωστο σφάλμα.'));
+            flash_set('danger', sprintf(t('controllers/SettingsController.030', 'Αποτυχία αποστολής: %s'), MailService::$lastError ?: t('controllers/SettingsController.031', 'Άγνωστο σφάλμα.')));
         }
         redirect('/settings');
     }
@@ -136,16 +136,16 @@ class SettingsController
         $mid = current_municipality_id();
 
         if (post_str('confirm') !== 'DELETE') {
-            flash_set('danger', 'Για διαγραφή ιστορικού email πληκτρολογήστε DELETE.');
+            flash_set('danger', t('controllers/SettingsController.007', 'Για διαγραφή ιστορικού email πληκτρολογήστε DELETE.'));
             redirect('/settings#tab-mail-history');
         }
 
         try {
             $deleted = dbq('DELETE FROM mail_queue WHERE municipality_id = :mid', ['mid' => $mid])->rowCount();
             audit('municipality_mail_history_cleared', 'municipality', $mid, ['deleted' => $deleted]);
-            flash_set('success', 'Διαγράφηκαν ' . (int) $deleted . ' εγγραφές ιστορικού email.');
+            flash_set('success', sprintf(t('controllers/SettingsController.032', 'Διαγράφηκαν %s εγγραφές ιστορικού email.'), (int) $deleted));
         } catch (Throwable $e) {
-            flash_set('danger', 'Δεν ήταν δυνατή η διαγραφή ιστορικού email: ' . $e->getMessage());
+            flash_set('danger', sprintf(t('controllers/SettingsController.033', 'Δεν ήταν δυνατή η διαγραφή ιστορικού email: %s'), $e->getMessage()));
         }
         redirect('/settings#tab-mail-history');
     }
@@ -162,11 +162,11 @@ class SettingsController
         $zoom = post_int('map_zoom');
 
         if ($lat !== '' && (!is_numeric($lat) || (float) $lat < -90 || (float) $lat > 90)) {
-            flash_set('danger', 'Μη έγκυρο γεωγρ. πλάτος (−90 έως 90).');
+            flash_set('danger', t('controllers/SettingsController.008', 'Μη έγκυρο γεωγρ. πλάτος (−90 έως 90).'));
             redirect('/settings');
         }
         if ($lng !== '' && (!is_numeric($lng) || (float) $lng < -180 || (float) $lng > 180)) {
-            flash_set('danger', 'Μη έγκυρο γεωγρ. μήκος (−180 έως 180).');
+            flash_set('danger', t('controllers/SettingsController.009', 'Μη έγκυρο γεωγρ. μήκος (−180 έως 180).'));
             redirect('/settings');
         }
         if ($zoom < 1 || $zoom > 19) { $zoom = 13; }
@@ -178,7 +178,7 @@ class SettingsController
         ]);
         audit('municipality_map_settings_updated', 'municipality', $mid, 'lat:' . $lat . ' lng:' . $lng . ' zoom:' . $zoom);
 
-        flash_set('success', 'Οι ρυθμίσεις χάρτη αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.010', 'Οι ρυθμίσεις χάρτη αποθηκεύτηκαν.'));
         redirect('/settings');
     }
 
@@ -207,7 +207,7 @@ class SettingsController
         ]);
         audit('municipality_award_settings_updated', 'municipality', $mid, 'bronze:' . $bronze . ' silver:' . $silver . ' gold:' . $gold);
 
-        flash_set('success', 'Οι ρυθμίσεις βραβείων αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.011', 'Οι ρυθμίσεις βραβείων αποθηκεύτηκαν.'));
         redirect('/settings');
     }
 
@@ -274,7 +274,7 @@ class SettingsController
         MunicipalitySetting::setMany($mid, $settings);
         audit('municipality_notification_settings_updated', 'municipality', $mid);
 
-        flash_set('success', 'Οι ρυθμίσεις ειδοποιήσεων αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.012', 'Οι ρυθμίσεις ειδοποιήσεων αποθηκεύτηκαν.'));
         redirect('/settings#tab-notifications');
     }
 
@@ -287,10 +287,10 @@ class SettingsController
         if ($result['success']) {
             $sent = (int) ($result['telegram_sent'] ?? 0);
             $date = !empty($result['map_date']) ? gr_date($result['map_date']) : 'τον τελευταίο χάρτη';
-            flash_set('success', 'Ο έλεγχος χάρτη κινδύνου ολοκληρώθηκε για ' . $date . '. '
-                . ($sent > 0 ? 'Στάλθηκε ειδοποίηση Telegram.' : 'Δεν υπήρχε νέα ειδοποίηση Telegram για αποστολή.'));
+            flash_set('success', sprintf(t('controllers/SettingsController.034', 'Ο έλεγχος χάρτη κινδύνου ολοκληρώθηκε για %s. %s'), $date,
+                $sent > 0 ? t('controllers/SettingsController.035', 'Στάλθηκε ειδοποίηση Telegram.') : t('controllers/SettingsController.036', 'Δεν υπήρχε νέα ειδοποίηση Telegram για αποστολή.')));
         } else {
-            flash_set('danger', 'Ο έλεγχος χάρτη κινδύνου απέτυχε: ' . ($result['error'] ?? 'άγνωστο σφάλμα'));
+            flash_set('danger', sprintf(t('controllers/SettingsController.037', 'Ο έλεγχος χάρτη κινδύνου απέτυχε: %s'), $result['error'] ?? t('controllers/SettingsController.038', 'άγνωστο σφάλμα')));
         }
 
         audit('fire_risk_map_manual_sync', 'municipality', $mid, $result);
@@ -305,21 +305,21 @@ class SettingsController
         $file = $_FILES['fire_risk_map'] ?? null;
 
         if (!$file || !is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            flash_set('danger', 'Ανεβάστε εικόνα χάρτη κινδύνου.');
+            flash_set('danger', t('controllers/SettingsController.013', 'Ανεβάστε εικόνα χάρτη κινδύνου.'));
             redirect('/settings#tab-notifications');
         }
         if ((int) ($file['size'] ?? 0) <= 0 || (int) $file['size'] > 12 * 1024 * 1024) {
-            flash_set('danger', 'Η εικόνα χάρτη πρέπει να είναι έως 12MB.');
+            flash_set('danger', t('controllers/SettingsController.014', 'Η εικόνα χάρτη πρέπει να είναι έως 12MB.'));
             redirect('/settings#tab-notifications');
         }
         if (!is_uploaded_file((string) ($file['tmp_name'] ?? ''))) {
-            flash_set('danger', 'Μη έγκυρο αρχείο upload.');
+            flash_set('danger', t('controllers/SettingsController.015', 'Μη έγκυρο αρχείο upload.'));
             redirect('/settings#tab-notifications');
         }
 
         $binary = file_get_contents((string) $file['tmp_name']);
         if ($binary === false || $binary === '') {
-            flash_set('danger', 'Δεν ήταν δυνατή η ανάγνωση της εικόνας χάρτη.');
+            flash_set('danger', t('controllers/SettingsController.016', 'Δεν ήταν δυνατή η ανάγνωση της εικόνας χάρτη.'));
             redirect('/settings#tab-notifications');
         }
 
@@ -328,10 +328,10 @@ class SettingsController
         if ($result['success']) {
             $sent = (int) ($result['telegram_sent'] ?? 0);
             $dateLabel = !empty($result['map_date']) ? gr_date($result['map_date']) : 'την επιλεγμένη ημερομηνία';
-            flash_set('success', 'Ο χάρτης ανέβηκε και αναλύθηκε για ' . $dateLabel . '. '
-                . ($sent > 0 ? 'Στάλθηκε ειδοποίηση Telegram.' : 'Δεν υπήρχε νέα ειδοποίηση Telegram για αποστολή.'));
+            flash_set('success', sprintf(t('controllers/SettingsController.039', 'Ο χάρτης ανέβηκε και αναλύθηκε για %s. %s'), $dateLabel,
+                $sent > 0 ? t('controllers/SettingsController.035', 'Στάλθηκε ειδοποίηση Telegram.') : t('controllers/SettingsController.036', 'Δεν υπήρχε νέα ειδοποίηση Telegram για αποστολή.')));
         } else {
-            flash_set('danger', 'Το ανέβασμα χάρτη απέτυχε: ' . ($result['error'] ?? 'άγνωστο σφάλμα'));
+            flash_set('danger', sprintf(t('controllers/SettingsController.040', 'Το ανέβασμα χάρτη απέτυχε: %s'), $result['error'] ?? t('controllers/SettingsController.038', 'άγνωστο σφάλμα')));
         }
 
         audit('fire_risk_map_manual_upload', 'municipality', $mid, $result);
@@ -347,18 +347,18 @@ class SettingsController
 
         $driver = post_str('sms_driver');
         if (!in_array($driver, ['', 'log', 'http', 'smsbox', 'none'], true)) {
-            flash_set('danger', 'Μη έγκυρος τρόπος αποστολής SMS.');
+            flash_set('danger', t('controllers/SettingsController.017', 'Μη έγκυρος τρόπος αποστολής SMS.'));
             redirect('/settings#tab-sms');
         }
 
         $endpoint = post_str('sms_endpoint');
         if ($endpoint !== '' && !filter_var($endpoint, FILTER_VALIDATE_URL)) {
-            flash_set('danger', 'Μη έγκυρο URL gateway (SMS Endpoint).');
+            flash_set('danger', t('controllers/SettingsController.018', 'Μη έγκυρο URL gateway (SMS Endpoint).'));
             redirect('/settings#tab-sms');
         }
 
         if ($driver === 'http' && $endpoint === '') {
-            flash_set('danger', 'Για τον τρόπο HTTP απαιτείται το URL του gateway (Endpoint).');
+            flash_set('danger', t('controllers/SettingsController.019', 'Για τον τρόπο HTTP απαιτείται το URL του gateway (Endpoint).'));
             redirect('/settings#tab-sms');
         }
 
@@ -378,7 +378,7 @@ class SettingsController
         MunicipalitySetting::setMany($mid, $settings);
         audit('municipality_sms_settings_updated', 'municipality', $mid, 'driver: ' . ($driver !== '' ? $driver : 'default'));
 
-        flash_set('success', 'Οι ρυθμίσεις SMS αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.020', 'Οι ρυθμίσεις SMS αποθηκεύτηκαν.'));
         redirect('/settings#tab-sms');
     }
 
@@ -391,7 +391,7 @@ class SettingsController
 
         $to = preg_replace('/[^\d+]/', '', (string) post_str('test_to'));
         if ($to === '') {
-            flash_set('danger', 'Δώστε αριθμό κινητού για τη δοκιμή.');
+            flash_set('danger', t('controllers/SettingsController.021', 'Δώστε αριθμό κινητού για τη δοκιμή.'));
             redirect('/settings#tab-sms');
         }
         $ok = SmsService::send($to, 'SynDrasi: δοκιμαστικό SMS — η σύνδεση λειτουργεί.', $mid);
@@ -403,7 +403,7 @@ class SettingsController
                 ? 'Το δοκιμαστικό SMS καταγράφηκε στο storage/logs/sms.log (driver: log).'
                 : 'Το δοκιμαστικό SMS στάλθηκε στο ' . $to . '.');
         } else {
-            flash_set('danger', 'Αποτυχία αποστολής SMS: ' . (SmsService::lastError() ?: 'άγνωστο σφάλμα'));
+            flash_set('danger', sprintf(t('controllers/SettingsController.041', 'Αποτυχία αποστολής SMS: %s'), SmsService::lastError() ?: t('controllers/SettingsController.038', 'άγνωστο σφάλμα')));
         }
         redirect('/settings#tab-sms');
     }
@@ -433,7 +433,7 @@ class SettingsController
         MunicipalitySetting::setMany($mid, $settings);
         audit('municipality_telegram_settings_updated', 'municipality', $mid, 'enabled: ' . $enabled);
 
-        flash_set('success', 'Οι ρυθμίσεις Telegram αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.022', 'Οι ρυθμίσεις Telegram αποθηκεύτηκαν.'));
         redirect('/settings#tab-telegram');
     }
 
@@ -478,7 +478,7 @@ class SettingsController
             }
             flash_set('success', $message);
         } else {
-            flash_set('danger', 'Αποτυχία αποστολής Telegram: ' . (TelegramService::lastError() ?: 'άγνωστο σφάλμα'));
+            flash_set('danger', sprintf(t('controllers/SettingsController.042', 'Αποτυχία αποστολής Telegram: %s'), TelegramService::lastError() ?: t('controllers/SettingsController.038', 'άγνωστο σφάλμα')));
         }
         redirect('/settings#tab-telegram');
     }
@@ -499,7 +499,7 @@ class SettingsController
         ]);
         audit('municipality_event_defaults_updated', 'municipality', $mid);
 
-        flash_set('success', 'Οι προεπιλογές δράσεων αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.023', 'Οι προεπιλογές δράσεων αποθηκεύτηκαν.'));
         redirect('/settings');
     }
 
@@ -524,7 +524,7 @@ class SettingsController
         MunicipalitySetting::setMany($mid, ['member_fields_config' => json_encode($config)]);
         audit('municipality_member_fields_updated', 'municipality', $mid);
 
-        flash_set('success', 'Η διαμόρφωση πεδίων μελών αποθηκεύτηκε.');
+        flash_set('success', t('controllers/SettingsController.024', 'Η διαμόρφωση πεδίων μελών αποθηκεύτηκε.'));
         redirect('/settings#tab-members');
     }
 
@@ -560,7 +560,7 @@ class SettingsController
         MunicipalitySetting::setMany($mid, $toSave);
         audit('municipality_email_templates_updated', 'municipality', $mid);
 
-        flash_set('success', 'Τα πρότυπα email αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.025', 'Τα πρότυπα email αποθηκεύτηκαν.'));
         redirect('/settings#tab-email-templates');
     }
 
@@ -573,7 +573,7 @@ class SettingsController
 
         $logoUrl = post_str('branding_logo_url');
         if ($logoUrl !== '' && !filter_var($logoUrl, FILTER_VALIDATE_URL)) {
-            flash_set('danger', 'Μη έγκυρο URL λογότυπου. Χρησιμοποιήστε πλήρες URL (https://...).');
+            flash_set('danger', t('controllers/SettingsController.026', 'Μη έγκυρο URL λογότυπου. Χρησιμοποιήστε πλήρες URL (https://...).'));
             redirect('/settings');
         }
 
@@ -588,7 +588,7 @@ class SettingsController
         ]);
         audit('municipality_branding_updated', 'municipality', $mid, 'tz:' . $tz);
 
-        flash_set('success', 'Οι ρυθμίσεις εμφάνισης αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/SettingsController.027', 'Οι ρυθμίσεις εμφάνισης αποθηκεύτηκαν.'));
         redirect('/settings');
     }
 
@@ -597,7 +597,7 @@ class SettingsController
     public function saveOrganisation()
     {
         requireRole([Role::MUNICIPALITY_ADMIN]);
-        flash_set('warning', 'Ο τύπος και η ονομασία φορέα ορίζονται πλέον μόνο από τον Super Admin.');
+        flash_set('warning', t('controllers/SettingsController.028', 'Ο τύπος και η ονομασία φορέα ορίζονται πλέον μόνο από τον Super Admin.'));
         redirect('/settings');
     }
 

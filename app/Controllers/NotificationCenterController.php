@@ -47,7 +47,7 @@ class NotificationCenterController
         );
         NotificationDelivery::markExternalRef('mail_queue:' . $mailId, 'queued', 0, null);
         audit('notification_center_email_retry', 'mail_queue', $mailId);
-        flash_set('success', 'Το email μπήκε ξανά στην ουρά αποστολής.');
+        flash_set('success', t('controllers/NotificationCenterController.001', 'Το email μπήκε ξανά στην ουρά αποστολής.'));
         redirect('/notification-center?channel=email&status=queued');
     }
 
@@ -56,7 +56,7 @@ class NotificationCenterController
         requireRole([Role::MUNICIPALITY_ADMIN]);
         $mid = (int) current_municipality_id();
         if (post_str('confirm') !== 'DELETE') {
-            flash_set('danger', 'Για διαγραφή ιστορικού πληκτρολογήστε DELETE.');
+            flash_set('danger', t('controllers/NotificationCenterController.002', 'Για διαγραφή ιστορικού πληκτρολογήστε DELETE.'));
             redirect('/notification-center');
         }
 
@@ -82,9 +82,9 @@ class NotificationCenterController
                 )->rowCount();
             }
             audit('notification_center_history_cleared', 'municipality', $mid, ['scope' => $scope, 'deleted' => $deleted]);
-            flash_set('success', 'Το ιστορικό ειδοποιήσεων διαγράφηκε για τον επιλεγμένο τύπο.');
+            flash_set('success', t('controllers/NotificationCenterController.003', 'Το ιστορικό ειδοποιήσεων διαγράφηκε για τον επιλεγμένο τύπο.'));
         } catch (Throwable $e) {
-            flash_set('danger', 'Δεν ήταν δυνατή η διαγραφή ιστορικού: ' . $e->getMessage());
+            flash_set('danger', sprintf(t('controllers/NotificationCenterController.004', 'Δεν ήταν δυνατή η διαγραφή ιστορικού: %s'), $e->getMessage()));
         }
         redirect('/notification-center');
     }

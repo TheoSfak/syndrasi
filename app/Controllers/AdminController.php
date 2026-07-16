@@ -52,12 +52,12 @@ class AdminController
     {
         requireRole([Role::SUPER_ADMIN]);
         if (isset($_SESSION['impersonating_user_id'])) {
-            flash_set('danger', 'Είστε ήδη σε λειτουργία impersonation.');
+            flash_set('danger', t('controllers/AdminController.001', 'Είστε ήδη σε λειτουργία impersonation.'));
             redirect('/admin/dashboard');
         }
         $target = User::find($userId);
         if (!$target || $target['role'] === 'super_admin') {
-            flash_set('danger', 'Δεν επιτρέπεται impersonation αυτού του χρήστη.');
+            flash_set('danger', t('controllers/AdminController.002', 'Δεν επιτρέπεται impersonation αυτού του χρήστη.'));
             redirect('/admin/users');
         }
         $_SESSION['impersonating_user_id']   = $_SESSION['user_id'];
@@ -67,7 +67,7 @@ class AdminController
         $_SESSION['municipality_id']= $target['municipality_id'];
         $_SESSION['team_id']        = $target['team_id'];
         audit('impersonation_start', 'user', (int) $target['id'], 'impersonator: ' . $_SESSION['impersonating_user_id']);
-        flash_set('warning', 'Λειτουργείτε ως ' . $target['name'] . '. Κάντε κλικ στο "Επιστροφή" για να επιστρέψετε.');
+        flash_set('warning', sprintf(t('controllers/AdminController.019', 'Λειτουργείτε ως %s. Κάντε κλικ στο "Επιστροφή" για να επιστρέψετε.'), $target['name']));
         redirect('/');
     }
 
@@ -87,7 +87,7 @@ class AdminController
         $_SESSION['municipality_id'] = $orig['municipality_id'];
         $_SESSION['team_id']         = $orig['team_id'];
         unset($_SESSION['impersonating_user_id'], $_SESSION['impersonating_user_name']);
-        flash_set('success', 'Επιστρέψατε στον λογαριασμό Super Admin.');
+        flash_set('success', t('controllers/AdminController.003', 'Επιστρέψατε στον λογαριασμό Super Admin.'));
         redirect('/admin/users');
     }
 
@@ -108,7 +108,7 @@ class AdminController
         requireRole([Role::SUPER_ADMIN]);
         $name = post_str('name');
         if ($name === '') {
-            flash_set('danger', 'Το όνομα του φορέα είναι υποχρεωτικό.');
+            flash_set('danger', t('controllers/AdminController.004', 'Το όνομα του φορέα είναι υποχρεωτικό.'));
             redirect('/admin/municipalities');
         }
         $authorityType = normalize_authority_type(post_str('authority_type', 'municipality'));
@@ -127,7 +127,7 @@ class AdminController
             'status' => 'active',
         ]);
         audit('municipality_created', 'municipality', $id, $name);
-        flash_set('success', 'Ο φορέας δημιουργήθηκε.');
+        flash_set('success', t('controllers/AdminController.005', 'Ο φορέας δημιουργήθηκε.'));
         redirect('/admin/municipalities');
     }
 
@@ -140,7 +140,7 @@ class AdminController
         }
         $name = post_str('name');
         if ($name === '') {
-            flash_set('danger', 'Το όνομα του φορέα είναι υποχρεωτικό.');
+            flash_set('danger', t('controllers/AdminController.006', 'Το όνομα του φορέα είναι υποχρεωτικό.'));
             redirect('/admin/municipalities');
         }
         $authorityType = normalize_authority_type(post_str('authority_type', $m['authority_type'] ?? 'municipality'));
@@ -159,7 +159,7 @@ class AdminController
             'status' => post_str('status') === 'inactive' ? 'inactive' : 'active',
         ]);
         audit('municipality_updated', 'municipality', $m['id'], $name);
-        flash_set('success', 'Ο φορέας ενημερώθηκε.');
+        flash_set('success', t('controllers/AdminController.007', 'Ο φορέας ενημερώθηκε.'));
         redirect('/admin/municipalities');
     }
 
@@ -175,7 +175,7 @@ class AdminController
             ['id' => $m['id']]
         );
         audit('municipality_status_toggled', 'municipality', $m['id']);
-        flash_set('success', 'Η κατάσταση του φορέα άλλαξε.');
+        flash_set('success', t('controllers/AdminController.008', 'Η κατάσταση του φορέα άλλαξε.'));
         redirect('/admin/municipalities');
     }
 
@@ -362,11 +362,11 @@ class AdminController
         $pass  = post_str('password');
         $validRoles = ['super_admin', 'municipality_admin', 'team_admin', 'event_operator'];
         if ($name === '' || $email === '' || !in_array($role, $validRoles, true) || password_error($pass) !== null) {
-            flash_set('danger', 'Συμπληρώστε όλα τα πεδία (κωδικός τουλάχιστον 8 χαρακτήρες).');
+            flash_set('danger', t('controllers/AdminController.009', 'Συμπληρώστε όλα τα πεδία (κωδικός τουλάχιστον 8 χαρακτήρες).'));
             redirect('/admin/users');
         }
         if (User::findByEmail($email)) {
-            flash_set('danger', 'Υπάρχει ήδη χρήστης με αυτό το email.');
+            flash_set('danger', t('controllers/AdminController.010', 'Υπάρχει ήδη χρήστης με αυτό το email.'));
             redirect('/admin/users');
         }
         $mid = post_int('municipality_id') ?: null;
@@ -380,7 +380,7 @@ class AdminController
              'phone' => post_str('phone') ?: null, 'ph' => password_hash($pass, PASSWORD_DEFAULT), 'role' => $role]
         );
         audit('user_created', 'user', (int) db()->lastInsertId(), $email);
-        flash_set('success', 'Ο χρήστης δημιουργήθηκε.');
+        flash_set('success', t('controllers/AdminController.011', 'Ο χρήστης δημιουργήθηκε.'));
         redirect('/admin/users');
     }
 
@@ -394,12 +394,12 @@ class AdminController
         $role  = post_str('role');
         $validRoles = ['super_admin', 'municipality_admin', 'team_admin', 'event_operator'];
         if ($name === '' || $email === '' || !in_array($role, $validRoles, true)) {
-            flash_set('danger', 'Συμπληρώστε σωστά όλα τα πεδία.');
+            flash_set('danger', t('controllers/AdminController.012', 'Συμπληρώστε σωστά όλα τα πεδία.'));
             redirect('/admin/users');
         }
         $existing = User::findByEmail($email);
         if ($existing && (int) $existing['id'] !== (int) $user['id']) {
-            flash_set('danger', 'Το email χρησιμοποιείται ήδη από άλλον χρήστη.');
+            flash_set('danger', t('controllers/AdminController.013', 'Το email χρησιμοποιείται ήδη από άλλον χρήστη.'));
             redirect('/admin/users');
         }
         $mid = post_int('municipality_id') ?: null;
@@ -413,7 +413,7 @@ class AdminController
              'role' => $role, 'mid' => $mid, 'tid' => $tid, 'id' => $user['id']]
         );
         audit('user_updated', 'user', (int) $user['id'], $email);
-        flash_set('success', 'Ο χρήστης ενημερώθηκε.');
+        flash_set('success', t('controllers/AdminController.014', 'Ο χρήστης ενημερώθηκε.'));
         redirect('/admin/users');
     }
 
@@ -429,7 +429,7 @@ class AdminController
         }
         User::updatePassword((int) $user['id'], password_hash($pass, PASSWORD_DEFAULT));
         audit('user_password_reset', 'user', (int) $user['id']);
-        flash_set('success', 'Ο κωδικός του χρήστη ενημερώθηκε.');
+        flash_set('success', t('controllers/AdminController.015', 'Ο κωδικός του χρήστη ενημερώθηκε.'));
         redirect('/admin/users');
     }
 
@@ -439,7 +439,7 @@ class AdminController
         $user = User::find($id);
         if (!$user) { abort(404, 'Ο χρήστης δεν βρέθηκε.'); }
         if ((int) $user['id'] === current_user_id()) {
-            flash_set('danger', 'Δεν μπορείτε να αλλάξετε την κατάσταση του εαυτού σας.');
+            flash_set('danger', t('controllers/AdminController.016', 'Δεν μπορείτε να αλλάξετε την κατάσταση του εαυτού σας.'));
             redirect('/admin/users');
         }
         dbq(
@@ -447,7 +447,7 @@ class AdminController
             ['id' => $user['id']]
         );
         audit('user_status_toggled', 'user', (int) $user['id']);
-        flash_set('success', 'Η κατάσταση του χρήστη άλλαξε.');
+        flash_set('success', t('controllers/AdminController.017', 'Η κατάσταση του χρήστη άλλαξε.'));
         redirect('/admin/users');
     }
 
@@ -505,7 +505,7 @@ class AdminController
             );
         }
         audit('platform_settings_updated', 'app_settings', null);
-        flash_set('success', 'Οι ρυθμίσεις αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/AdminController.018', 'Οι ρυθμίσεις αποθηκεύτηκαν.'));
         redirect('/admin/settings');
     }
 }

@@ -66,7 +66,7 @@ class TeamMemberController
         $newId = TeamMember::create($data);
         audit('team_member_created', 'team_member', $newId, 'team: ' . $tid);
 
-        flash_set('success', 'Το μέλος «' . htmlspecialchars($data['full_name']) . '» προστέθηκε.');
+        flash_set('success', sprintf(t('controllers/TeamMemberController.009', 'Το μέλος «%s» προστέθηκε.'), htmlspecialchars($data['full_name'])));
         redirect('/team/members');
     }
 
@@ -104,7 +104,7 @@ class TeamMemberController
         TeamMember::update($id, $data);
         audit('team_member_updated', 'team_member', $id);
 
-        flash_set('success', 'Τα στοιχεία του μέλους ενημερώθηκαν.');
+        flash_set('success', t('controllers/TeamMemberController.001', 'Τα στοιχεία του μέλους ενημερώθηκαν.'));
         redirect('/team/members');
     }
 
@@ -116,7 +116,7 @@ class TeamMemberController
         $member = $this->requireOwned($id);
 
         if (!empty($member['is_team_admin']) && empty($member['is_assistant_admin'])) {
-            flash_set('warning', 'Ο Διαχειριστής Ομάδας δεν μπορεί να απενεργοποιηθεί εδώ.');
+            flash_set('warning', t('controllers/TeamMemberController.002', 'Ο Διαχειριστής Ομάδας δεν μπορεί να απενεργοποιηθεί εδώ.'));
             redirect('/team/members');
         }
 
@@ -128,7 +128,7 @@ class TeamMemberController
         $newStatus = $member['status'] === 'active' ? 'απενεργοποιήθηκε' : 'ενεργοποιήθηκε';
         audit('team_member_toggled', 'team_member', $id, 'status: ' . $newStatus);
 
-        flash_set('success', 'Το μέλος «' . htmlspecialchars($member['full_name']) . '» ' . $newStatus . '.');
+        flash_set('success', sprintf(t('controllers/TeamMemberController.010', 'Το μέλος «%s» %s.'), htmlspecialchars($member['full_name']), $newStatus));
         redirect('/team/members');
     }
 
@@ -141,17 +141,17 @@ class TeamMemberController
         $member = $this->requireOwned($id);
 
         if ($member['status'] !== 'active') {
-            flash_set('danger', 'Μπορείτε να ορίσετε βοηθό μόνο ενεργό μέλος.');
+            flash_set('danger', t('controllers/TeamMemberController.003', 'Μπορείτε να ορίσετε βοηθό μόνο ενεργό μέλος.'));
             redirect('/team/members');
         }
         if (!empty($member['is_team_admin']) && empty($member['is_assistant_admin'])) {
-            flash_set('warning', 'Αυτό το μέλος είναι ήδη ο αρχηγός/διαχειριστής της ομάδας.');
+            flash_set('warning', t('controllers/TeamMemberController.004', 'Αυτό το μέλος είναι ήδη ο αρχηγός/διαχειριστής της ομάδας.'));
             redirect('/team/members');
         }
 
         $email = mb_strtolower(trim((string) ($member['email'] ?? '')));
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            flash_set('danger', 'Για να οριστεί Βοηθός Αρχηγού, το μέλος πρέπει να έχει έγκυρο email.');
+            flash_set('danger', t('controllers/TeamMemberController.005', 'Για να οριστεί Βοηθός Αρχηγού, το μέλος πρέπει να έχει έγκυρο email.'));
             redirect('/team/members/' . $id . '/edit');
         }
 
@@ -159,7 +159,7 @@ class TeamMemberController
         $linkedUser = !empty($member['user_id']) ? User::find((int) $member['user_id']) : null;
 
         if ($existing && (!$linkedUser || (int) $existing['id'] !== (int) $linkedUser['id'])) {
-            flash_set('danger', 'Το email χρησιμοποιείται ήδη από άλλον λογαριασμό. Δεν δόθηκε πρόσβαση βοηθού.');
+            flash_set('danger', t('controllers/TeamMemberController.006', 'Το email χρησιμοποιείται ήδη από άλλον λογαριασμό. Δεν δόθηκε πρόσβαση βοηθού.'));
             redirect('/team/members');
         }
 
@@ -206,9 +206,9 @@ class TeamMemberController
         ]);
 
         if ($mailOk) {
-            flash_set('success', 'Ο/Η «' . htmlspecialchars($member['full_name']) . '» ορίστηκε Βοηθός Αρχηγού και στάλθηκε πρόσκληση email.');
+            flash_set('success', sprintf(t('controllers/TeamMemberController.011', 'Ο/Η «%s» ορίστηκε Βοηθός Αρχηγού και στάλθηκε πρόσκληση email.'), htmlspecialchars($member['full_name'])));
         } else {
-            flash_set('warning', 'Ο βοηθός ενεργοποιήθηκε, αλλά το email πρόσκλησης δεν στάλθηκε: ' . htmlspecialchars(MailService::$lastError));
+            flash_set('warning', sprintf(t('controllers/TeamMemberController.012', 'Ο βοηθός ενεργοποιήθηκε, αλλά το email πρόσκλησης δεν στάλθηκε: %s'), htmlspecialchars(MailService::$lastError)));
         }
         redirect('/team/members');
     }
@@ -305,7 +305,7 @@ class TeamMemberController
     private function requireAssistantManager(): void
     {
         if (!$this->canCurrentUserManageAssistants()) {
-            flash_set('danger', 'Οι Βοηθοί Αρχηγού έχουν πλήρη πρόσβαση στην ομάδα, αλλά δεν μπορούν να ορίζουν ή να αφαιρούν άλλους βοηθούς.');
+            flash_set('danger', t('controllers/TeamMemberController.007', 'Οι Βοηθοί Αρχηγού έχουν πλήρη πρόσβαση στην ομάδα, αλλά δεν μπορούν να ορίζουν ή να αφαιρούν άλλους βοηθούς.'));
             redirect('/team/members');
         }
     }
@@ -313,7 +313,7 @@ class TeamMemberController
     private function revokeAssistantMember(array $member): void
     {
         if (empty($member['is_assistant_admin'])) {
-            flash_set('warning', 'Το μέλος δεν είναι Βοηθός Αρχηγού.');
+            flash_set('warning', t('controllers/TeamMemberController.008', 'Το μέλος δεν είναι Βοηθός Αρχηγού.'));
             return;
         }
         TeamMember::revokeAssistant((int) $member['id'], true);
@@ -321,7 +321,7 @@ class TeamMemberController
             'team_id' => (int) $member['team_id'],
             'user_id' => !empty($member['user_id']) ? (int) $member['user_id'] : null,
         ]);
-        flash_set('success', 'Η πρόσβαση Βοηθού Αρχηγού αφαιρέθηκε από τον/την «' . htmlspecialchars($member['full_name']) . '».');
+        flash_set('success', sprintf(t('controllers/TeamMemberController.013', 'Η πρόσβαση Βοηθού Αρχηγού αφαιρέθηκε από τον/την «%s».'), htmlspecialchars($member['full_name'])));
     }
 
     private function sendAssistantInvite(array $member, string $email): bool

@@ -47,7 +47,7 @@ class ApplicationController
 
         $approvedPeople = post_int('approved_people');
         if ($approvedPeople < 1) {
-            flash_set('danger', 'Συμπληρώστε τον εγκεκριμένο αριθμό ατόμων (τουλάχιστον 1).');
+            flash_set('danger', t('controllers/ApplicationController.001', 'Συμπληρώστε τον εγκεκριμένο αριθμό ατόμων (τουλάχιστον 1).'));
             redirect('/events/' . $application['event_id'] . '/applications');
         }
 
@@ -60,7 +60,7 @@ class ApplicationController
         $application['approved_people'] = $approvedPeople;
         try { NotificationService::applicationApproved($event, $application); } catch (Throwable $e) { error_log($e); }
 
-        flash_set('success', 'Η συμμετοχή της ομάδας "' . $application['team_name'] . '" εγκρίθηκε.');
+        flash_set('success', sprintf(t('controllers/ApplicationController.004', 'Η συμμετοχή της ομάδας "%s" εγκρίθηκε.'), $application['team_name']));
         redirect('/events/' . $application['event_id'] . '/applications');
     }
 
@@ -77,7 +77,7 @@ class ApplicationController
         $event = Event::find($application['event_id']);
         try { NotificationService::applicationRejected($event, $application, (string) $comment); } catch (Throwable $e) { error_log($e); }
 
-        flash_set('success', 'Η δήλωση της ομάδας "' . $application['team_name'] . '" απορρίφθηκε.');
+        flash_set('success', sprintf(t('controllers/ApplicationController.005', 'Η δήλωση της ομάδας "%s" απορρίφθηκε.'), $application['team_name']));
         redirect('/events/' . $application['event_id'] . '/applications');
     }
 
@@ -91,11 +91,11 @@ class ApplicationController
             ? array_map('intval', $_POST['app_ids']) : [];
 
         if (empty($appIds)) {
-            flash_set('warning', 'Δεν επιλέξατε καμία δήλωση.');
+            flash_set('warning', t('controllers/ApplicationController.002', 'Δεν επιλέξατε καμία δήλωση.'));
             redirect('/events/' . $event['id'] . '/applications');
         }
         if (!in_array($action, ['approve', 'reject'], true)) {
-            flash_set('warning', 'Μη έγκυρη ενέργεια.');
+            flash_set('warning', t('controllers/ApplicationController.003', 'Μη έγκυρη ενέργεια.'));
             redirect('/events/' . $event['id'] . '/applications');
         }
 
@@ -134,7 +134,7 @@ class ApplicationController
         }
 
         $label = $action === 'approve' ? 'εγκρίθηκαν' : 'απορρίφθηκαν';
-        flash_set('success', $count . ' δηλώσεις ' . $label . '.');
+        flash_set('success', sprintf(t('controllers/ApplicationController.006', '%s δηλώσεις %s.'), $count, $label));
         redirect('/events/' . $event['id'] . '/applications');
     }
 

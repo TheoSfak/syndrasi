@@ -208,10 +208,10 @@ class EventController
             NotificationService::eventPublished($event);
             audit('event_published', 'event', $id);
             $terms = authority_context((int) $data['municipality_id']);
-            flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' δημιουργήθηκε και δημοσιεύθηκε στις ομάδες.');
+            flash_set('success', sprintf(t('controllers/EventController.006', 'Η %s δημιουργήθηκε και δημοσιεύθηκε στις ομάδες.'), mb_strtolower($terms['event_singular'], 'UTF-8')));
         } else {
             $terms = authority_context((int) $data['municipality_id']);
-            flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' αποθηκεύτηκε ως πρόχειρη.');
+            flash_set('success', sprintf(t('controllers/EventController.007', 'Η %s αποθηκεύτηκε ως πρόχειρη.'), mb_strtolower($terms['event_singular'], 'UTF-8')));
         }
         redirect('/events/' . $id);
     }
@@ -271,7 +271,7 @@ class EventController
         Event::update($event['id'], $data);
         audit('event_updated', 'event', $event['id'], $data['title']);
         $terms = authority_context((int) $event['municipality_id']);
-        flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' ενημερώθηκε.');
+        flash_set('success', sprintf(t('controllers/EventController.008', 'Η %s ενημερώθηκε.'), mb_strtolower($terms['event_singular'], 'UTF-8')));
         redirect('/events/' . $event['id']);
     }
 
@@ -284,14 +284,14 @@ class EventController
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if ($event['status'] !== 'draft') {
-            flash_set('danger', 'Μόνο πρόχειρες ' . $terms['event_plural_lc'] . ' μπορούν να δημοσιευθούν.');
+            flash_set('danger', sprintf(t('controllers/EventController.009', 'Μόνο πρόχειρες %s μπορούν να δημοσιευθούν.'), $terms['event_plural_lc']));
             redirect('/events/' . $event['id']);
         }
         Event::markPublished($event['id']);
         $event = Event::find($event['id']);
         try { NotificationService::eventPublished($event); } catch (Throwable $e) { error_log($e); }
         audit('event_published', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η ' . $eventLc . ' δημοσιεύθηκε και οι ομάδες ειδοποιήθηκαν.');
+        flash_set('success', sprintf(t('controllers/EventController.010', 'Η %s δημοσιεύθηκε και οι ομάδες ειδοποιήθηκαν.'), $eventLc));
         redirect('/events/' . $event['id']);
     }
 
@@ -303,12 +303,12 @@ class EventController
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'active')) {
-            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να ενεργοποιηθεί από αυτή την κατάσταση.');
+            flash_set('danger', sprintf(t('controllers/EventController.011', 'Η %s δεν μπορεί να ενεργοποιηθεί από αυτή την κατάσταση.'), $eventLc));
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'active');
         audit('event_activated', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η ' . $eventLc . ' ενεργοποιήθηκε.');
+        flash_set('success', sprintf(t('controllers/EventController.012', 'Η %s ενεργοποιήθηκε.'), $eventLc));
         redirect('/operations/events/' . $event['id']);
     }
 
@@ -390,13 +390,13 @@ class EventController
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'closed')) {
-            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να κλείσει από αυτή την κατάσταση.');
+            flash_set('danger', sprintf(t('controllers/EventController.013', 'Η %s δεν μπορεί να κλείσει από αυτή την κατάσταση.'), $eventLc));
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'closed');
         audit('event_closed', 'event', $event['id'], $event['title']);
         try { NotificationService::eventClosed($event); } catch (Throwable $e) { error_log('[EventClosed] ' . $e->getMessage()); }
-        flash_set('success', 'Η ' . $eventLc . ' έκλεισε. Οι ομάδες ειδοποιήθηκαν για το debrief — συμπληρώστε και τον απολογισμό φορέα παρακάτω.');
+        flash_set('success', sprintf(t('controllers/EventController.014', 'Η %s έκλεισε. Οι ομάδες ειδοποιήθηκαν για το debrief — συμπληρώστε και τον απολογισμό φορέα παρακάτω.'), $eventLc));
         redirect('/events/' . $event['id'] . '/debriefs');
     }
 
@@ -407,13 +407,13 @@ class EventController
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'completed')) {
-            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να ολοκληρωθεί από αυτή την κατάσταση.');
+            flash_set('danger', sprintf(t('controllers/EventController.015', 'Η %s δεν μπορεί να ολοκληρωθεί από αυτή την κατάσταση.'), $eventLc));
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'completed');
         audit('event_completed', 'event', $event['id'], $event['title']);
         try { NotificationService::eventCompleted($event); } catch (Throwable $e) { error_log('[EventCompleted] ' . $e->getMessage()); }
-        flash_set('success', 'Η ' . $eventLc . ' ολοκληρώθηκε και οι ειδοποιήσεις στάλθηκαν.');
+        flash_set('success', sprintf(t('controllers/EventController.016', 'Η %s ολοκληρώθηκε και οι ειδοποιήσεις στάλθηκαν.'), $eventLc));
         redirect('/operations');
     }
 
@@ -423,7 +423,7 @@ class EventController
         $event = Event::findForCurrent((int) $id);
         $terms = authority_context((int) $event['municipality_id']);
         if (!in_array($event['status'], ['open', 'review', 'confirmed', 'active'], true)) {
-            flash_set('danger', 'Δεν μπορεί να σταλεί υπενθύμιση για ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' σε αυτή την κατάσταση.');
+            flash_set('danger', sprintf(t('controllers/EventController.017', 'Δεν μπορεί να σταλεί υπενθύμιση για %s σε αυτή την κατάσταση.'), mb_strtolower($terms['event_singular'], 'UTF-8')));
             redirect('/events/' . $event['id']);
         }
 
@@ -431,12 +431,12 @@ class EventController
             $sent = NotificationService::eventReminder($event);
         } catch (Throwable $e) {
             error_log('[EventReminder] ' . $e->getMessage());
-            flash_set('danger', 'Η υπενθύμιση δεν στάλθηκε. Δοκιμάστε ξανά.');
+            flash_set('danger', t('controllers/EventController.001', 'Η υπενθύμιση δεν στάλθηκε. Δοκιμάστε ξανά.'));
             redirect('/events/' . $event['id']);
         }
 
         audit('event_reminder_sent', 'event', $event['id'], 'teams: ' . $sent);
-        flash_set('success', 'Η υπενθύμιση στάλθηκε σε ' . $sent . ' εγκεκριμένες ομάδα/ες.');
+        flash_set('success', sprintf(t('controllers/EventController.018', 'Η υπενθύμιση στάλθηκε σε %s εγκεκριμένες ομάδα/ες.'), $sent));
         redirect('/events/' . $event['id']);
     }
 
@@ -447,13 +447,13 @@ class EventController
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'cancelled')) {
-            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να ακυρωθεί από αυτή την κατάσταση.');
+            flash_set('danger', sprintf(t('controllers/EventController.019', 'Η %s δεν μπορεί να ακυρωθεί από αυτή την κατάσταση.'), $eventLc));
             redirect('/events/' . $event['id']);
         }
 
         Event::setStatus($event['id'], 'cancelled');
         audit('event_cancelled', 'event', $event['id'], $event['title']);
-        flash_set('success', 'Η ' . $eventLc . ' ακυρώθηκε.');
+        flash_set('success', sprintf(t('controllers/EventController.020', 'Η %s ακυρώθηκε.'), $eventLc));
         redirect('/events');
     }
 
@@ -465,13 +465,13 @@ class EventController
         $terms = authority_context((int) $event['municipality_id']);
         $eventLc = mb_strtolower($terms['event_singular'], 'UTF-8');
         if (!Event::canTransition($event['status'], 'completed')) {
-            flash_set('danger', 'Η ' . $eventLc . ' δεν μπορεί να αρχειοθετηθεί από αυτή την κατάσταση.');
+            flash_set('danger', sprintf(t('controllers/EventController.021', 'Η %s δεν μπορεί να αρχειοθετηθεί από αυτή την κατάσταση.'), $eventLc));
             redirect('/events/' . $event['id']);
         }
         Event::setStatus($event['id'], 'completed');
         audit('event_archived', 'event', $event['id'], $event['title']);
         try { NotificationService::eventCompleted($event); } catch (Throwable $e) { error_log('[EventArchiveCompleted] ' . $e->getMessage()); }
-        flash_set('success', 'Η ' . $eventLc . ' αρχειοθετήθηκε, μετακινήθηκε στις Ολοκληρωμένες και οι ειδοποιήσεις στάλθηκαν.');
+        flash_set('success', sprintf(t('controllers/EventController.022', 'Η %s αρχειοθετήθηκε, μετακινήθηκε στις Ολοκληρωμένες και οι ειδοποιήσεις στάλθηκαν.'), $eventLc));
         redirect('/events/completed');
     }
 
@@ -504,7 +504,7 @@ class EventController
         $event = Event::findForCurrent($id);
         $terms = authority_context((int) $event['municipality_id']);
         if ($event['status'] !== 'closed') {
-            flash_set('warning', 'Μόνο κλειστές ' . $terms['event_plural_lc'] . ' επιτρέπουν αρχειοθέτηση.');
+            flash_set('warning', sprintf(t('controllers/EventController.023', 'Μόνο κλειστές %s επιτρέπουν αρχειοθέτηση.'), $terms['event_plural_lc']));
             redirect('/events/' . $event['id']);
         }
 
@@ -591,12 +591,12 @@ class EventController
         } catch (Exception $e) {
             $pdo->rollBack();
             error_log('saveReconciliation() transaction failed: ' . $e->getMessage());
-            flash_set('danger', 'Σφάλμα κατά την αποθήκευση. Παρακαλώ δοκιμάστε ξανά.');
+            flash_set('danger', t('controllers/EventController.002', 'Σφάλμα κατά την αποθήκευση. Παρακαλώ δοκιμάστε ξανά.'));
             redirect('/events/' . $event['id'] . '/reconcile');
         }
 
         audit('event_reconciled', 'event', $event['id']);
-        flash_set('success', 'Τα δεδομένα αρχειοθέτησης αποθηκεύτηκαν.');
+        flash_set('success', t('controllers/EventController.003', 'Τα δεδομένα αρχειοθέτησης αποθηκεύτηκαν.'));
         redirect('/events/' . $event['id'] . '/reconcile');
     }
 
@@ -631,7 +631,7 @@ class EventController
         $newId = Event::create($data);
         audit('event_cloned', 'event', $newId, 'cloned from #' . $event['id'] . ': ' . $event['title']);
         $terms = authority_context((int) $event['municipality_id']);
-        flash_set('success', 'Η ' . mb_strtolower($terms['event_singular'], 'UTF-8') . ' αντιγράφηκε ως πρόχειρο. Ενημερώστε τις ημερομηνίες και δημοσιεύστε.');
+        flash_set('success', sprintf(t('controllers/EventController.024', 'Η %s αντιγράφηκε ως πρόχειρο. Ενημερώστε τις ημερομηνίες και δημοσιεύστε.'), mb_strtolower($terms['event_singular'], 'UTF-8')));
         redirect('/events/' . $newId . '/edit');
     }
 
@@ -713,7 +713,7 @@ class EventController
             );
         }
         audit('municipality_debrief_saved', 'event', (int) $event['id']);
-        flash_set('success', 'Ο απολογισμός φορέα αποθηκεύτηκε.');
+        flash_set('success', t('controllers/EventController.004', 'Ο απολογισμός φορέα αποθηκεύτηκε.'));
         redirect('/events/' . $event['id'] . '/debriefs');
     }
 
@@ -761,7 +761,7 @@ class EventController
             'created_by'                  => $_SESSION['user_id'],
         ]);
         audit('event_template_created', 'event', $event['id'], $name);
-        flash_set('success', 'Το πρότυπο «' . $name . '» αποθηκεύτηκε.');
+        flash_set('success', sprintf(t('controllers/EventController.025', 'Το πρότυπο «%s» αποθηκεύτηκε.'), $name));
         redirect('/events/' . $event['id']);
     }
 
@@ -771,7 +771,7 @@ class EventController
         requireRole([Role::MUNICIPALITY_ADMIN]);
         EventTemplate::delete((int) $id, current_municipality_id());
         audit('event_template_deleted', 'event_template', (int) $id);
-        flash_set('success', 'Το πρότυπο διαγράφηκε.');
+        flash_set('success', t('controllers/EventController.005', 'Το πρότυπο διαγράφηκε.'));
         redirect('/events');
     }
 

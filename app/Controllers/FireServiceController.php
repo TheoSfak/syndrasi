@@ -37,10 +37,10 @@ class FireServiceController
         $result = FireServiceIncidentService::sync();
         if ($result['success']) {
             $telegramSent = (int) ($result['telegram_sent'] ?? 0);
-            flash_set('success', 'Η ενημέρωση ολοκληρώθηκε. Βρέθηκαν ' . (int) $result['incidents'] . ' συμβάντα.'
-                . ($telegramSent > 0 ? ' Στάλθηκαν ' . $telegramSent . ' ειδοποιήσεις Telegram.' : ' Δεν υπήρχαν νέες ειδοποιήσεις Telegram.'));
+            flash_set('success', sprintf(t('controllers/FireServiceController.002', 'Η ενημέρωση ολοκληρώθηκε. Βρέθηκαν %s συμβάντα.%s'), (int) $result['incidents'],
+                $telegramSent > 0 ? sprintf(t('controllers/FireServiceController.003', ' Στάλθηκαν %s ειδοποιήσεις Telegram.'), $telegramSent) : t('controllers/FireServiceController.004', ' Δεν υπήρχαν νέες ειδοποιήσεις Telegram.')));
         } else {
-            flash_set('danger', 'Η ενημέρωση απέτυχε: ' . $result['error']);
+            flash_set('danger', sprintf(t('controllers/FireServiceController.005', 'Η ενημέρωση απέτυχε: %s'), $result['error']));
         }
         audit('fire_service_sync', 'fire_service_fetch', $result['fetch_id'] ?? null, $result);
         redirect('/fire-service');
@@ -54,7 +54,7 @@ class FireServiceController
             $terms = authority_context(current_municipality_id());
             $eventSingularLc = mb_strtolower($terms['event_singular'] ?? 'Δράση', 'UTF-8');
             audit('fire_service_event_created', 'fire_service_incident', (int) $id, ['event_id' => $eventId]);
-            flash_set('success', 'Δημιουργήθηκε πρόχειρη ' . $eventSingularLc . ' από το συμβάν. Ελέγξτε τα στοιχεία πριν από δημοσίευση.');
+            flash_set('success', sprintf(t('controllers/FireServiceController.006', 'Δημιουργήθηκε πρόχειρη %s από το συμβάν. Ελέγξτε τα στοιχεία πριν από δημοσίευση.'), $eventSingularLc));
             redirect('/events/' . $eventId . '/edit');
         } catch (Throwable $e) {
             flash_set('danger', $e->getMessage());
@@ -98,9 +98,9 @@ class FireServiceController
             ]);
             audit('fire_service_mobilization_created', 'fire_service_incident', (int) $id, $result);
             if (!empty($result['existing'])) {
-                flash_set('info', 'Υπάρχει ήδη ενεργό κάλεσμα για αυτό το συμβάν. Ανοίγει ο ζωντανός πίνακας.');
+                flash_set('info', t('controllers/FireServiceController.001', 'Υπάρχει ήδη ενεργό κάλεσμα για αυτό το συμβάν. Ανοίγει ο ζωντανός πίνακας.'));
             } else {
-                flash_set('success', 'Ξεκίνησε κάλεσμα έκτακτης ανάγκης σε ' . (int) $result['targeted'] . ' εθελοντές.');
+                flash_set('success', sprintf(t('controllers/FireServiceController.007', 'Ξεκίνησε κάλεσμα έκτακτης ανάγκης σε %s εθελοντές.'), (int) $result['targeted']));
             }
             redirect('/mobilizations/' . (int) $result['mobilization_id']);
         } catch (Throwable $e) {

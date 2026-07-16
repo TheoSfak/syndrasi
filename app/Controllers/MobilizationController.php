@@ -40,7 +40,7 @@ class MobilizationController
         $title    = post_str('title');
         $severity = post_str('severity', 'high');
         if ($title === '' || !in_array($severity, Mobilization::VALID_SEVERITIES, true)) {
-            flash_set('danger', 'Συμπληρώστε τίτλο και επιλέξτε σοβαρότητα.');
+            flash_set('danger', t('controllers/MobilizationController.001', 'Συμπληρώστε τίτλο και επιλέξτε σοβαρότητα.'));
             remember_old();
             redirect('/mobilizations/new');
         }
@@ -53,7 +53,7 @@ class MobilizationController
             $members = array_values(array_filter($members, fn($m) => in_array((int) $m['team_id'], $teamIds, true)));
         }
         if (!$members) {
-            flash_set('warning', 'Δεν βρέθηκαν ενεργά μέλη για κλήση με αυτά τα κριτήρια.');
+            flash_set('warning', t('controllers/MobilizationController.002', 'Δεν βρέθηκαν ενεργά μέλη για κλήση με αυτά τα κριτήρια.'));
             redirect('/mobilizations/new');
         }
 
@@ -78,7 +78,7 @@ class MobilizationController
         audit('mobilization_created', 'mobilization', $mobId,
             ['severity' => $severity, 'targeted' => count($targets)]);
 
-        flash_set('success', 'Το κάλεσμα στάλθηκε σε ' . count($targets) . ' εθελοντές.');
+        flash_set('success', sprintf(t('controllers/MobilizationController.007', 'Το κάλεσμα στάλθηκε σε %s εθελοντές.'), count($targets)));
         redirect('/mobilizations/' . $mobId);
     }
 
@@ -107,7 +107,7 @@ class MobilizationController
         $mob = Mobilization::findForCurrent($id);
         Mobilization::standDown((int) $mob['id']);
         audit('mobilization_stood_down', 'mobilization', (int) $mob['id']);
-        flash_set('info', 'Το κάλεσμα έκλεισε.');
+        flash_set('info', t('controllers/MobilizationController.003', 'Το κάλεσμα έκλεισε.'));
         redirect('/mobilizations/' . $mob['id']);
     }
 
@@ -160,10 +160,10 @@ class MobilizationController
 
         if ($action === 'arrived') {
             MobilizationResponse::checkIn($rid);
-            flash_set('success', 'Καταγράφηκε η άφιξή σας. Ευχαριστούμε!');
+            flash_set('success', t('controllers/MobilizationController.004', 'Καταγράφηκε η άφιξή σας. Ευχαριστούμε!'));
         } elseif ($action === 'departed') {
             MobilizationResponse::depart($rid);
-            flash_set('info', 'Καταγράφηκε η αποχώρησή σας.');
+            flash_set('info', t('controllers/MobilizationController.005', 'Καταγράφηκε η αποχώρησή σας.'));
         } elseif (in_array($action, ['coming', 'cant', 'maybe'], true)) {
             $eta = ($action === 'coming') ? (post_int('eta_minutes') ?: null) : null;
             MobilizationResponse::setResponse($rid, $action, $eta);
@@ -171,7 +171,7 @@ class MobilizationController
                 ? 'Καταγράφηκε ότι δεν μπορείτε. Ευχαριστούμε για την ενημέρωση.'
                 : 'Η απάντησή σας καταγράφηκε. Ευχαριστούμε!');
         } else {
-            flash_set('danger', 'Μη έγκυρη επιλογή.');
+            flash_set('danger', t('controllers/MobilizationController.006', 'Μη έγκυρη επιλογή.'));
         }
 
         redirect('/m/' . $row['token']);

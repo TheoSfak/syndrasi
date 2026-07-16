@@ -4,6 +4,25 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.20.4-beta] — 2026-07-16
+
+### Fix — Μεταφράζονται όλα τα μηνύματα flash (επιτυχία/σφάλμα) των controllers
+
+- Και τα 235 μηνύματα flash_set() σε όλους τους 17 controllers (κάθε
+  μήνυμα «αποθηκεύτηκε», «απέτυχε», «διαγράφηκε» κ.λπ. μετά από ενέργεια)
+  ήταν αόρατα στο αυτόματο view-wiring (server-side PHP strings, όχι
+  markup). Μεταφράστηκαν όλα: 137 απλά literals άμεσα, και 74 με
+  μεταβλητές (ονόματα, αριθμοί, μηνύματα σφάλματος) μέσω προτύπων
+  sprintf()+t() με %s placeholders — π.χ. `sprintf(t('key', 'Η %s
+  ενημερώθηκε.'), $eventLc)`.
+- Νέο migration 047 (idempotent) + ενημερωμένο schema.sql — σύνολο
+  καταλόγου **2403 κλειδιά**. Επαληθευμένο: lint σε όλους τους
+  controllers, πλήρες PHPStan + PHPUnit πράσινο, fresh install από
+  schema.sql σε scratch βάση, και πραγματικό render (ξεχωριστές
+  διεργασίες PHP ανά γλώσσα, όπως πραγματικά αιτήματα HTTP) των
+  πολυπλοκότερων περιπτώσεων (πολλαπλά %s, εμφωλευμένο t() για
+  υποπερίπτωση Telegram).
+
 ## [0.20.3-beta] — 2026-07-16
 
 ### Fix — Μεταφράζονται οι Ρυθμίσεις Φορέα και ο κατάλογος Προτύπων Email

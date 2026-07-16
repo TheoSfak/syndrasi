@@ -39,7 +39,7 @@ class ShiftController
             'notes'           => post_str('notes'),
         ]);
         audit('shift_created', 'event', $event['id']);
-        flash_set('success', 'Η βάρδια «' . $name . '» προστέθηκε.');
+        flash_set('success', sprintf(t('controllers/ShiftController.008', 'Η βάρδια «%s» προστέθηκε.'), $name));
         redirect('/events/' . $event['id'] . '#tab-shifts');
     }
 
@@ -55,7 +55,7 @@ class ShiftController
         $name   = post_str('name');
 
         if ($name === '' || $start === '' || $end === '' || $start >= $end) {
-            flash_set('danger', 'Ελέγξτε τα στοιχεία της βάρδιας.');
+            flash_set('danger', t('controllers/ShiftController.001', 'Ελέγξτε τα στοιχεία της βάρδιας.'));
             redirect('/events/' . $event['id'] . '#tab-shifts');
         }
 
@@ -67,7 +67,7 @@ class ShiftController
             'notes'           => post_str('notes'),
         ]);
         audit('shift_updated', 'event_shift', $shiftId);
-        flash_set('success', 'Η βάρδια ενημερώθηκε.');
+        flash_set('success', t('controllers/ShiftController.002', 'Η βάρδια ενημερώθηκε.'));
         redirect('/events/' . $event['id'] . '#tab-shifts');
     }
 
@@ -80,7 +80,7 @@ class ShiftController
 
         EventShift::delete($shiftId);
         audit('shift_deleted', 'event_shift', $shiftId);
-        flash_set('success', 'Η βάρδια διαγράφηκε.');
+        flash_set('success', t('controllers/ShiftController.003', 'Η βάρδια διαγράφηκε.'));
         redirect('/events/' . $event['id'] . '#tab-shifts');
     }
 
@@ -100,7 +100,7 @@ class ShiftController
         $event = Event::find($app['event_id']);
         NotificationService::shiftApplicationApproved($event, $app, $people);
 
-        flash_set('success', 'Η αίτηση εγκρίθηκε.');
+        flash_set('success', t('controllers/ShiftController.004', 'Η αίτηση εγκρίθηκε.'));
         redirect('/events/' . $app['event_id'] . '#tab-shifts');
     }
 
@@ -116,7 +116,7 @@ class ShiftController
         $event = Event::find($app['event_id']);
         NotificationService::shiftApplicationRejected($event, $app);
 
-        flash_set('success', 'Η αίτηση απορρίφθηκε.');
+        flash_set('success', t('controllers/ShiftController.005', 'Η αίτηση απορρίφθηκε.'));
         redirect('/events/' . $app['event_id'] . '#tab-shifts');
     }
 
@@ -150,7 +150,7 @@ class ShiftController
         $team = VolunteerTeam::find($teamId);
         NotificationService::shiftApplicationSubmitted($event, $shift, $team, (int) post_str('offered_people'));
 
-        flash_set('success', 'Η δήλωσή σας για τη βάρδια καταχωρήθηκε.');
+        flash_set('success', t('controllers/ShiftController.006', 'Η δήλωσή σας για τη βάρδια καταχωρήθηκε.'));
         redirect('/team/events/' . $eventId . '#tab-shifts');
     }
 
@@ -163,7 +163,7 @@ class ShiftController
 
         EventShift::cancelApplication($app['shift_id'], $app['team_id']);
         audit('shift_cancelled', 'shift_application', $id);
-        flash_set('success', 'Η δήλωση ακυρώθηκε.');
+        flash_set('success', t('controllers/ShiftController.007', 'Η δήλωση ακυρώθηκε.'));
         redirect('/team/events/' . $app['event_id'] . '#tab-shifts');
     }
 }
