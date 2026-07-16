@@ -235,7 +235,8 @@ foreach ($files as $path) {
     $rows = dbq(
         "SELECT tk.str_key, tv.value FROM translation_keys tk
          JOIN translation_values tv ON tv.key_id = tk.id AND tv.language_code = 'el'
-         WHERE tk.str_group = :g",
+         WHERE tk.str_group = :g
+         ORDER BY tk.id",
         ['g' => $group]
     )->fetchAll();
     foreach ($rows as $row) {
@@ -303,13 +304,19 @@ foreach ($files as $path) {
         ];
     }
 
-    foreach ($newRows as $key => $clean) {
-        dbq('INSERT INTO translation_keys (str_key, str_group) VALUES (:k, :g)', ['k' => $key, 'g' => $group]);
-        $keyId = $pdo->lastInsertId();
-        dbq("INSERT INTO translation_values (key_id, language_code, value) VALUES (:kid, 'el', :v)", ['kid' => $keyId, 'v' => $clean]);
-        file_put_contents($newKeysLog, $key . "\n", FILE_APPEND);
-        $totalNewKeys++;
-        echo "  NEW KEY: $key = \"$clean\"\n";
+    if ($newRows) {
+        $pdo->beginTransaction();
+        foreach ($newRows as $key => $clean) {
+            dbq('INSERT INTO translation_keys (str_key, str_group) VALUES (:k, :g)', ['k' => $key, 'g' => $group]);
+            $keyId = $pdo->lastInsertId();
+            dbq("INSERT INTO translation_values (key_id, language_code, value) VALUES (:kid, 'el', :v)", ['kid' => $keyId, 'v' => $clean]);
+        }
+        $pdo->commit();
+        foreach ($newRows as $key => $clean) {
+            file_put_contents($newKeysLog, $key . "\n", FILE_APPEND);
+            $totalNewKeys++;
+            echo "  NEW KEY: $key = \"$clean\"\n";
+        }
     }
 
     usort($replacements, function ($a, $b) { return $b['offset'] <=> $a['offset']; });
