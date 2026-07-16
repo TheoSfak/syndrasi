@@ -49,7 +49,7 @@
             </select>
           </div>
           <p class="small text-muted mb-2">
-            <?= e(t('auth/profile.017', 'Η επιλογή γλώσσας θα εφαρμοστεί σε επόμενη ενημέρωση της εφαρμογής.')) ?>
+            <?= e(t('auth/profile.017', 'Η αλλαγή γλώσσας εφαρμόζεται άμεσα σε όλες τις σελίδες.')) ?>
           </p>
           <button class="btn btn-primary btn-sm" type="submit"><?= e(t('auth/profile.014', 'Αποθήκευση')) ?></button>
         </form>

@@ -4,6 +4,30 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.20.2-beta] — 2026-07-16
+
+### Fix — Το αριστερό μενού (sidebar) μεταφράζεται πλέον και αυτό
+
+- Οι ετικέτες του αριστερού μενού ζουν μέσα σε PHP array στο
+  `views/layouts/sidebar.php` (κώδικας, όχι markup), οπότε το αυτόματο
+  view-wiring του v0.20.0-beta δεν τις είδε ποτέ — το sidebar έμενε στα
+  Ελληνικά για χρήστες με English. Και οι 19 στατικές ετικέτες (και για
+  τους 4 ρόλους) συνδέθηκαν με τον κατάλογο (`layouts/sidebar.003`–`.021`),
+  με ορολογία συνεπή με τις υπάρχουσες μεταφράσεις των αντίστοιχων σελίδων.
+- Μεταφράζονται πλέον και οι 2 δυναμικές ετικέτες του μενού που προέρχονται
+  από την ορολογία φορέα (π.χ. «Αποστολές» → “Missions”, «Ομάδες / Κλιμάκια»
+  → “Teams / Units”): νέα κλειδιά `authority/<τύπος>.event_plural` /
+  `.team_plural` και για τους 4 τύπους φορέα, με lookup βάσει του
+  `authority_type` στο sidebar.
+- Διορθώθηκε το παρωχημένο κείμενο στην κάρτα «Γλώσσα» του `/profile` που
+  έλεγε ότι η αλλαγή «θα εφαρμοστεί σε επόμενη ενημέρωση της εφαρμογής» —
+  η αλλαγή εφαρμόζεται άμεσα (νέο κείμενο και στις δύο γλώσσες).
+- Νέο migration `045_sidebar_menu_translations.sql` (idempotent) +
+  ενημερωμένο `schema.sql` — σύνολο καταλόγου πλέον **2048 κλειδιά**.
+  Επαληθευμένο με πραγματικό render του sidebar και στις δύο γλώσσες
+  απέναντι σε ζωντανή βάση, και με fresh install από το `schema.sql`
+  σε scratch βάση.
+
 ## [0.20.1-beta] — 2026-07-16
 
 ### Fix — Self-updater could deploy a broken mixed old/new codebase
