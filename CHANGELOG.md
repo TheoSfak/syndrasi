@@ -4,6 +4,28 @@ All notable changes to SynDrasi are documented here.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/);
 versioning is `MAJOR.MINOR.PATCH` (beta line until feature-complete).
 
+## [0.20.6-beta] — 2026-07-16
+
+### Fix — Η ενημέρωση σε v0.20.4/0.20.5-beta απέτυχε (σφάλμα SQL στο migration 047)
+
+- Production update απέτυχε: `047_controller_flash_message_translations.sql
+  — SQLSTATE[42000] ... near ''The SOS was acknowledged'`. Αιτία: 3 τιμές
+  μετάφρασης (1 στο migration 047, 2 στο 048) περιείχαν κυριολεκτικό `;`
+  μέσα στο string — το αγγλικό διαχωριστικό «acknowledged; the team» και
+  το ελληνικό ερωτηματικό «backup; Δεν μπορεί» (ίδιο, ήδη γνωστό θέμα με
+  τα `team/debrief.022` / `settings/municipality.244`). Ο πραγματικός
+  parser του `mysql` client δεν το πιάνει (γι' αυτό πέρασε τον τοπικό
+  έλεγχο), αλλά ο απλοϊκός `explode(';', ...)` του `MigrationRunner` σε
+  production έσπασε τη δήλωση στη μέση.
+- Διορθώθηκαν και οι 3 τιμές με `CONCAT('...', CHAR(59), '...')` (ίδιο
+  keys/περιεχόμενο — καμία αλλαγή στο εμφανιζόμενο κείμενο). Migrations
+  047 και 048 τώρα εφαρμόζονται καθαρά.
+- Επαληθεύτηκε αυτή τη φορά με τον **πραγματικό**
+  `MigrationRunner::runPending()` (όχι μόνο `mysql < file.sql`) πάνω σε
+  scratch βάση — η μέθοδος επαλήθευσης που έλειπε και επέτρεψε στο bug
+  να περάσει. Νέα σημείωση στο `DEPLOY.md` για μελλοντικά migrations με
+  μεταφράσεις.
+
 ## [0.20.5-beta] — 2026-07-16
 
 ### Feature — Διαγραφή αντιγράφων ασφαλείας (μεμονωμένα ή μαζικά)

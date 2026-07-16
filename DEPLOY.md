@@ -175,6 +175,28 @@ find app routes config -name '*.php' -print0 | xargs -0 -n1 /c/xampp/php/php.exe
 /c/xampp/php/php.exe vendor/bin/phpunit                                               # ALL suites
 ```
 
+**⚠️ New migrations containing `translation_values` — never test with `mysql <
+file.sql` alone (v0.20.6-beta):** the `mysql` CLI is a real SQL parser and
+happily accepts a literal `;` inside a quoted string. `MigrationRunner`'s
+`splitStatements()` is **not** a parser — it's a naive `explode(';', ...)`
+over the whole file (see its docblock: "SynDrasi migrations never contain
+`;` inside string literals"). A translation value with a raw semicolon
+(English "A; B" separators, or the Greek rhetorical `;` used as a question
+mark) passes `mysql < file.sql` cleanly but throws a real SQL syntax error
+the moment the self-updater's `MigrationRunner::runPending()` tries to run
+the *same file* in production — this recurred three times in one day
+(migration 044's `team/debrief.022`, migration 046's
+`settings/municipality.244`, and migrations 047+048 shipped in
+v0.20.4/0.20.5-beta, caught only after a real production update failed).
+**Before shipping any migration with translation seed data:**
+1. `grep` every `'el'`/`'en'` value for a literal `;` — if found, rewrite as
+   `CONCAT('...text before', CHAR(59), ' text after...')` (see migration
+   044/046 for the pattern), keeping `SELECT` and `ON DUPLICATE KEY UPDATE`
+   sides identical.
+2. Actually exercise `MigrationRunner::runPending()` (not just `mysql <
+   file.sql`) against a scratch DB seeded with `schema_migrations` up to the
+   prior migration, so the naive splitter is the thing under test.
+
 What the test suites cover (37 tests as of v0.16.4-beta):
 - **`tests/Unit/`** — pure logic (event state machine, Greek helpers,
   authority terminology, MediaUploader rejection paths) **plus two release
